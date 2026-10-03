@@ -158,6 +158,11 @@
         "isGameEstimate": false
       }
     },
+    "launchPeriod": {
+      "open": { "value": "2013-11-18", "unit": "date", "source": "NASA: The 2013 MAVEN Mission To Mars (presentation): '20-Day Launch Period: November 18 - December 7, 2013', 'Orbit Insertion: 22 Sept 2014'", "url": "https://mars.nasa.gov/files/resources/MAVENPresentation2013.pdf", "isGameEstimate": false },
+      "close": { "value": "2013-12-07", "unit": "date", "source": "NASA: The 2013 MAVEN Mission To Mars (presentation): '20-Day Launch Period: November 18 - December 7, 2013', 'Orbit Insertion: 22 Sept 2014'", "url": "https://mars.nasa.gov/files/resources/MAVENPresentation2013.pdf", "isGameEstimate": false },
+      "plannedOrbitInsertion": { "value": "2014-09-22", "unit": "date", "source": "NASA: The 2013 MAVEN Mission To Mars (presentation): '20-Day Launch Period: November 18 - December 7, 2013', 'Orbit Insertion: 22 Sept 2014'", "url": "https://mars.nasa.gov/files/resources/MAVENPresentation2013.pdf", "isGameEstimate": false }
+    },
     "published": {
       "wetMass_kg": {
         "value": 2454,

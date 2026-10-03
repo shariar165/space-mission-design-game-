@@ -34,6 +34,8 @@ export interface MissionPreset {
   history: string;
   historyUrl?: string;
   design: PresetDesign;
+  /** Published launch period (ISO dates), where known. */
+  launchPeriod?: { open: S<string>; close: S<string>; plannedOrbitInsertion?: S<string> };
   published: Record<string, S<number>>;
 }
 

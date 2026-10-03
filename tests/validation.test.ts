@@ -10,7 +10,7 @@ import { DESTINATIONS, LAUNCH_VEHICLES, PARTS } from '../src/engine/data';
 import { evaluateDesign, monteCarloMission } from '../src/engine/index';
 import { missionPreset, presetDesign } from '../src/engine/missions';
 import { propellantBurned } from '../src/engine/propulsion';
-import { bestArrival, hohmann, orbitPeriod } from '../src/engine/trajectory';
+import { bestArrival, bestLaunchWindow, hohmann, lambertTransfer, orbitPeriod } from '../src/engine/trajectory';
 
 const TOLERANCE = 0.1;
 
@@ -107,6 +107,19 @@ describe('MAVEN (Mars, 2013) — NASA Science', () => {
     const err = within('validation', M, 'Transfer time (best Lambert arrival from launch date)', best.flightDays, pub.transferDays!.value, 'days', 'μ☉ (approx.)');
     info(M, '  ↳ best arrival date / C3 / v∞ at that date', `${best.arrivalDate} / ${best.c3_km2s2.toFixed(2)} km²/s² / ${(best.vInfArr_ms / 1000).toFixed(2)} km/s`);
     expect(Math.abs(err)).toBeLessThanOrEqual(TOLERANCE);
+  });
+
+  it('launch-window search lands inside the MAVEN published 20-day launch period (Nov 18 – Dec 7, 2013)', () => {
+    // bestLaunchWindow minimises departure v∞ + arrival v∞ (spec: "Best launch window"). A real launch period is
+    // the set of days the vehicle can deliver the needed C3 to a fixed arrival, so its opening day is not the
+    // optimum; the check is that the optimum lies inside the published period.
+    const lp = missionPreset('maven').launchPeriod!;
+    const w = bestLaunchWindow('mars', '2013-06-01');
+    const inside = w.launchDate >= lp.open.value && w.launchDate <= lp.close.value;
+    flag(M, 'Launch-window search (min v∞,dep + v∞,arr) inside the published launch period', inside, `${w.launchDate} (C3 ${w.c3_km2s2.toFixed(2)} km²/s²)`, `${lp.open.value} – ${lp.close.value}`, 'μ☉ (approx.); JPL approximate ephemeris');
+    const open = lambertTransfer('mars', lp.open.value, lp.plannedOrbitInsertion!.value);
+    info(M, '  ↳ C3 on the opening day to the planned Sept 22, 2014 arrival', `${open.c3_km2s2.toFixed(2)} km²/s²`, '—', 'launch periods open where the vehicle first meets the C3, not at the optimum');
+    expect(inside).toBe(true);
   });
 
   it('Hohmann minimum-energy transfer time (Cadet explanation, for information only)', () => {
