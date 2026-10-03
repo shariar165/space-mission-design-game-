@@ -155,6 +155,12 @@ describe('MAVEN (Mars, 2013) — NASA Science', () => {
     info(M, 'Capture → science orbit 150 × 6,300 km (vis-viva)', `${b.orbitTransfer_ms.toFixed(0)} m/s`);
     info(M, 'Trajectory corrections + maintenance (1-yr prime mission)', `${(b.trajectoryCorrections_ms + b.maintenance_ms).toFixed(0)} m/s`, '—', '50 m/s rule; 20 m/s/yr estimate');
     info(M, 'Lifetime reserve (planned prime mission = science phase)', `${b.lifetimeReserve_ms.toFixed(0)} m/s`, '—', 'no extended mission planned at launch');
+    // Decision 8: planned 1-year prime mission (NASAfacts), not the as-flown 4,094 days.
+    // lifetime 365 d = science 365 d → reserve = 20 m/s/yr × (365 − 365)/365.25 = 0 m/s
+    // maintenance = 20 m/s/yr × 365/365.25 = 19.99 m/s; corrections = 50 m/s (game rules)
+    expect(b.lifetimeReserve_ms).toBe(0);
+    expect(b.maintenance_ms).toBeCloseTo(19.986, 3);
+    expect(b.trajectoryCorrections_ms).toBe(50);
     info(M, 'Δv required (total)', `${b.total_ms.toFixed(0)} m/s`);
     info(M, 'Δv margin (capability vs required)', fmtPct(ev.meters.deltaV.margin), 'band 10–30%', 'deep-dip campaigns (NASAfacts: five dips to ~125 km) are not modelled');
     info(M, 'Light delay on arrival day', `${(ev.details.lightDelayAtArrival_s / 60).toFixed(1)} min`);

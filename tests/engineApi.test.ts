@@ -29,11 +29,13 @@ describe('evaluateDesign details for the UI', () => {
 
   it('massBreakdown is the concept roll-up: dry = subtotal + 30% growth', () => {
     // bus 450 + payload 65 + array 12 m² × 4 kg/m² = 48 + battery + comms + tanks 0.12 × 1645 = 197.4
+    // comms = 5 kg electronics + 8 kg/m² × π (2.0 m / 2)² + 0.1 kg/W × 100 W = 5 + 25.13 + 10 = 40.13 kg
     const m = ev.details.massBreakdown;
     expect(m.bus).toBe(450);
     expect(m.instruments).toEqual([{ id: 'maven-science-payload', kg: 65 }]);
     expect(m.powerGeneration).toBeCloseTo(48, 9);
     expect(m.tanks).toBeCloseTo(197.4, 9);
+    expect(m.comms).toBeCloseTo(5 + 8 * Math.PI + 10, 9);
     const subtotal = m.bus + 65 + m.powerGeneration + m.battery + m.comms + m.tanks;
     expect(m.subtotal).toBeCloseTo(subtotal, 9);
     expect(m.growthMargin).toBeCloseTo(0.3 * subtotal, 9);
@@ -91,17 +93,34 @@ describe('designDelta (catalogue cards)', () => {
 });
 
 describe('compareWithRealMission (Debrief "You vs MAVEN")', () => {
-  it('MAVEN against itself: every row equal, relDiff 0', () => {
+  it('the MAVEN column matches NASA figures and hand calculations', () => {
     const c = compareWithRealMission(maven, ev)!;
     expect(c.missionId).toBe('maven');
-    for (const r of c.rows) {
-      expect(r.relDiff).toBe(0);
-      expect(r.themSource.source.length).toBeGreaterThan(0);
-    }
-    // 809 kg dry + 1,645 kg propellant = 2,454 kg wet (NASA Science: MAVEN)
-    expect(c.rows.find((r) => r.metric === 'wetMass')!.them).toBe(2454);
-    // the dry-mass source is the published Sourced value, not a computed one
-    expect(c.rows.find((r) => r.metric === 'dryMass')!.themSource.isGameEstimate).toBe(false);
+    const them = (k: string) => c.rows.find((r) => r.metric === k)!;
+    // NASA Science: MAVEN — 2,454 kg wet, 809 kg dry, so 2,454 − 809 = 1,645 kg propellant
+    expect(them('wetMass').them).toBe(2454);
+    expect(them('dryMass').them).toBe(809);
+    expect(them('propellant').them).toBe(1645);
+    expect(them('dryMass').themSource.isGameEstimate).toBe(false);
+    // Δv = Isp g₀ ln(m_wet / m_dry) = 225 × 9.80665 × ln(2454 / 809)
+    //    = 2206.496 × ln(3.033375) = 2206.496 × 1.109676 = 2448.50 m/s
+    expect(them('deltaVCapability').them).toBeCloseTo(2448.5, 1);
+    // NASA Science: MAVEN — the 12 m² arrays make 1,150–1,700 W at Mars; arrival-day power must lie in that range
+    expect(them('powerAtArrival').them).toBeGreaterThanOrEqual(1150);
+    expect(them('powerAtArrival').them).toBeLessThanOrEqual(1700);
+  });
+
+  it('a concept MAVEN (30% growth margin, no as-flown mass) shows the gap where it should', () => {
+    // Same parts, but dry mass from the roll-up: subtotal × 1.3 instead of the published 809 kg.
+    // Only dry mass (and wet mass, Δv) can differ; propellant is identical (1,645 kg both).
+    const { asFlownDryMass_kg: _drop, ...concept } = maven;
+    const c = compareWithRealMission(concept)!;
+    const dry = c.rows.find((r) => r.metric === 'dryMass')!;
+    const cev = evaluateDesign(concept);
+    // relDiff = (roll-up − 809) / 809, with roll-up = 1.3 × subtotal
+    expect(dry.relDiff).toBeCloseTo((1.3 * cev.details.massBreakdown.subtotal - 809) / 809, 9);
+    expect(c.rows.find((r) => r.metric === 'propellant')!.relDiff).toBe(0);
+    expect(c.biggestGap).toBe('dryMass');
   });
 
   it('compares mass, power and Δv only (no cost: different accounting basis)', () => {
