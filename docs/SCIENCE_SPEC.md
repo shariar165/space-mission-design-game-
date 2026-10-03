@@ -1,6 +1,8 @@
-# Mission Drafting Table — Science Spec v0.1
+# Mission Drafting Table — Science Spec v0.3
 
 Oct 3, 2026 · @Shariar
+
+v0.2 (Oct 3, 2026) added the decisions taken while building the engine. v0.3 (Oct 3, 2026) adds the UI rules. All decisions are applied in the sections below and listed in the **Decision log** at the end.
 
 ## Purpose and model philosophy
 
@@ -87,10 +89,26 @@ An elliptical capture orbit costs much less than a low circular one. This is a r
 **Special cases**
 
 - **Moon:** Earth-centred, not Sun-centred. The launch vehicle does trans-lunar injection; the spacecraft does lunar orbit insertion with the same capture equation (μ of the Moon).
-- **Bennu:** gravity is negligible, so rendezvous Δv ≈ arrival v∞. The real OSIRIS-REx used an Earth flyby; the game must say it does not model flybys.
+- **Bennu:** gravity is negligible, so rendezvous Δv ≈ arrival v∞. The real OSIRIS-REx used an Earth flyby; the game must say it does not model flybys. The player can also pick a fixed, clearly labelled **"NASA real route (Earth flyby)"** option. It uses the published launch C3 = 29.29678 km²/s² ([Lauretta et al. 2017, arXiv 1702.06981](https://arxiv.org/pdf/1702.06981)) and the published launch date. The flyby is not simulated: only the post-flyby leg (flyby → start of approach, Aug 13, 2018) is computed by Lambert, to get the arrival v∞. The deep-space manoeuvre (Dec 28, 2016) is charged to the spacecraft as Δv; its size is a game estimate.
 - **Jupiter:** a direct Hohmann transfer needs C3 ≈ 77 km²/s², which almost no launch vehicle can give a useful payload. Real missions use gravity assists. The game should show this as the reason Jupiter is "very hard", not hide it.
 
-Open question: the Lambert solver is the biggest coding task in the engine. If time runs short, ship Hohmann + phase angle first and add Lambert after the core loop works.
+**Transfer cap (decided).** The Lambert solver is zero-revolution only; there are no multi-revolution solutions. A direct player transfer must take less than one revolution of the minimum-energy transfer orbit:
+
+```latex
+t_{flight} < 2\,t_{Hohmann}
+```
+
+That is about 518 days to Mars and 399 days to Bennu. Longer flights are blocked with a plain-language message. Reason: a zero-revolution Lambert solution for a longer flight is still mathematically valid but physically absurd. For OSIRIS-REx's real 816-day dates it dives to 0.03 AU and needs C3 ≈ 1,755 km²/s².
+
+**Best arrival date.** For a given launch date, the engine scans arrival dates within the cap and picks the lowest departure v∞ + arrival v∞. For MAVEN's launch on Nov 18, 2013 this gives 300 days, against 307 days flown.
+
+**Orbits are altitudes.** Capture and science orbits are given as periapsis and apoapsis **altitudes** above the equatorial radius. When only a period is published, the apoapsis is derived by Kepler's third law: a = (μT²/4π²)^{1/3}.
+
+**Science-orbit transfer.** If the science orbit differs from the capture orbit, the spacecraft pays a two-burn transfer with each burn at an apsis (vis-viva, cheaper of the two burn orders):
+
+```latex
+v = \sqrt{\mu\left(\frac{2}{r} - \frac{2}{r_p + r_a}\right)}
+```
 
 ## Propulsion
 
@@ -112,7 +130,13 @@ Isp values are typical textbook ranges, not from a single sourced datasheet yet.
 
 **Propellant tanks.** Tank and feed-system dry mass = 12% of propellant mass (game approximation, shown in the Assumptions page).
 
-**Δv budget.** Required Δv = capture burn + trajectory corrections (fixed 50 m/s for planets) + orbit maintenance over the mission. Margin = (capability − required) / required. Below 10% margin, the craft gets a warning; below 0%, it cannot launch.
+**Δv budget.** Required Δv = capture burn + capture→science orbit transfer + trajectory corrections (fixed 50 m/s) + orbit maintenance over the planned science phase + lifetime reserve + any fixed-route manoeuvre.
+
+- Orbit maintenance is 20 m/s per year (game estimate).
+- Lifetime reserve = maintenance rate × (planned lifetime − planned science days). It is zero when no extended mission is planned at launch.
+- Real-mission presets use the **planned** prime mission, not the as-flown lifetime.
+
+Margin = (capability − required) / required. Below 10% margin, the craft gets a warning; below 0%, it cannot launch.
 
 **Check with MAVEN.** NASA lists MAVEN at 809 kg dry and 2,454 kg wet, fuelled with hydrazine ([NASA Science: MAVEN](https://science.nasa.gov/mission/maven/)). That is 1,645 kg of propellant. At Isp 220–230 s, the equation gives roughly 2.4–2.5 km/s of Δv. The engine must show this number for MAVEN, not a hand-typed one.
 
@@ -156,7 +180,7 @@ S₀ = 1361 W/m², r = distance from the Sun on that mission day (from the ephem
 
 **Power budget.** Required power = bus + instruments + comms transmit + heaters. Heater power rises as sunlight falls (game approximation). Margin = (available − required) / required, shown on the Power meter.
 
-**Batteries.** Must cover the longest eclipse in the science orbit. Battery mass = energy needed / specific energy (game value for Li-ion, to be sourced). Eclipse length comes from the orbit geometry.
+**Batteries.** Must cover the longest eclipse in the science orbit (worst case: cylindrical shadow centred on apoapsis). Battery mass = energy needed / specific energy (game value for Li-ion, to be sourced). Eclipse length comes from the orbit geometry.
 
 ## Communications
 
@@ -217,6 +241,12 @@ p_{fail,phase} = p_{base,phase} \cdot \prod_i f_i(\text{margin}_i)
 
 fᵢ = 1 at the recommended margin, rising as a margin shrinks (for example, Δv margin below 10% raises capture-burn risk). Launch uses the vehicle's p\_success from the Launch vehicles section. Other base rates are game values and are labelled as such.
 
+**Decided values (game estimates, labelled):**
+- **Margin factor:** f(m) = 1 for m ≥ 10%, rising linearly to 3 at 0%. Below 0% the phase fails for certain.
+- **Which margins feed which phase:** cruise ← power; arrival (capture or rendezvous) ← Δv; science ← power; sample return ← Δv.
+- **Base rates:** cruise 2%, arrival 4%, science 2% per year, sample return 3%.
+- **Risk meter:** shows 1 − Π(1 − p_phase) against an acceptable mission risk of 20%.
+
 **Monte Carlo in Engineer mode.** Run the mission 1,000 times with the same design and show the success rate. This teaches that a good design lowers risk but never removes it.
 
 **Crisis cards (first set).** One card per flight, drawn from those that fit the mission phase.
@@ -234,6 +264,12 @@ These are summaries from general knowledge. Before release, each card's text mus
 
 **Timeline rule.** A card's day number must fall inside its phase. A Mars transfer takes about 8–10 months, so a day-214 event is a cruise event, not an orbit event.
 
+**Crisis simplification (decided).**
+- Each option has costs (Δv, budget, science days, or a minimum power margin) and a failure chance (game estimates). An option the player's spare margins cannot pay for is not offered; the free option is always there.
+- A bad outcome ends the phase that option affects.
+- Costs apply only if the crisis is reached, except a test bought before launch (Genesis card), which is always paid.
+- Crisis handling score: safe choice and fine 100 · risky and fine 70 · safe and unlucky 50 · risky and lost 0.
+
 ## Validation set
 
 The engine passes validation when it reproduces each real mission's key numbers within ±10% using the same equations as the player. The results table goes on the Sources & Assumptions page; it is the strongest evidence for the Validity score.
@@ -248,19 +284,32 @@ MAVEN's mission ended after contact was lost on Dec. 6, 2025; NASA declared the 
 
 **How to run it.** A unit test file `validation.test.ts` loads each mission as a player design, runs the full engine, and asserts the tolerance. If a test fails, fix the model or the data, never the expected value.
 
+**Row kinds (decided).** Every row in the results table is labelled:
+- **validation:** engine output vs an independent published value.
+- **calibration:** a constant was fitted to this value, so agreement is by construction (MAVEN power → η\_sys).
+- **info:** not a pass/fail check.
+
+**MAVEN checks added in v0.2**, from [NASAfacts: MAVEN Orbit Insertion](https://science.nasa.gov/wp-content/uploads/2024/03/44740_MAVEN-Fact-Sheet.pdf):
+- Capture orbit: 35-hour period, 380 km periapsis.
+- Science orbit: about 150 × 6,300 km. Kepler's third law must give the published 4.5-hour period.
+- The orbit-insertion burn must use more than half the propellant.
+- 1-Earth-year primary mission.
+
+**Known gap:** the Atlas V payload curves are placeholders until NASA LSP points are exported, so the launch-capacity rows are not real evidence yet.
+
 ## Scoring
 
 The total is a weighted sum shown openly in Engineer mode, so the Debrief number always adds up. Science comes first, because that is why missions fly.
 
 ```latex
-Score = 100 \sum_i w_i \, s_i, \qquad s_i \in [0, 100], \quad \sum_i w_i = 1
+Score = \sum_i w_i \, s_i, \qquad s_i \in [0, 100], \quad \sum_i w_i = 1 \qquad (\text{Score} \in [0, 100])
 ```
 
 | Category | Weight | How sᵢ is computed |
 | --- | --- | --- |
-| Science return | 0.30 | Data downlinked ÷ data the science goal needs (capped at 100) |
+| Science return | 0.30 | Data downlinked ÷ science goal (capped at 100). Science goal = Σ instrument data/day × planned science days, so the radio or a lost mission lowers it |
 | Mission success | 0.20 | 100 if all phases complete; partial credit per phase reached |
-| Budget discipline | 0.15 | 100 at or under cap; falls steeply above it |
+| Budget discipline | 0.15 | 100 at or under cap; falls linearly to 0 at 20% over (game rule) |
 | Propellant (Δv) margin | 0.10 | Margin band score (below) |
 | Power margin | 0.10 | Margin band score |
 | Mass margin | 0.10 | Margin band score |
@@ -274,6 +323,8 @@ Score = 100 \sum_i w_i \, s_i, \qquad s_i \in [0, 100], \quad \sum_i w_i = 1
 2. Science return ≥ 70%.
 3. Every margin inside its band at the end of the mission.
 
+Stars are earned in order. The end-of-mission Δv margin includes crisis spending, and the power margin is computed at the end of the science phase.
+
 The Debrief's "For the next star" hint is computed by the engine (for example, extra propellant from the rocket equation, checked against unused launch capacity).
 
 ## Assumptions (for the Sources & Assumptions page)
@@ -282,7 +333,7 @@ These are stated openly in the game. Each one is a standard simplification for e
 
 1. Patched conics: only one body's gravity acts at a time.
 2. Planet positions from JPL's approximate Keplerian elements (valid 1800–2050), not a full ephemeris.
-3. Launch windows from a Lambert solver (or Hohmann + phase angle in the first version); no gravity assists, no deep-space manoeuvres.
+3. Launch windows from a zero-revolution Lambert solver, capped at less than one revolution of the Hohmann transfer orbit; no gravity assists or deep-space manoeuvres, except the fixed, labelled NASA real route to Bennu.
 4. Launch vehicle performance interpolated from NASA LSP points; mission-specific analysis would change it.
 5. Impulsive burns: engines change speed instantly. Ion engines are limited to cruise and rendezvous to stay honest about this.
 6. Solar power from the inverse-square law with one calibrated efficiency (η\_sys = 0.20 from MAVEN).
@@ -291,6 +342,7 @@ These are stated openly in the game. Each one is a standard simplification for e
 9. Part costs are estimates until sourced; caps follow NASA Discovery / New Frontiers conventions.
 10. Base failure rates for non-launch phases are game values; launch reliability uses each vehicle's flight record.
 11. Thermal, radiation dose and atmospheric drag are not modelled, except through crisis cards.
+12. Real-mission presets use published as-built dry mass (no 30% growth margin on top) and their planned prime-mission duration.
 
 Any game value must be labelled "game estimate" in its ⓘ popover, never presented as NASA data.
 
@@ -311,7 +363,9 @@ src/engine/
   risk.ts             // phase risk, Monte Carlo
   crisis.ts           // crisis cards + effects
   scoring.ts          // weights, margin bands, stars, next-star hint
-  index.ts            // evaluateDesign(), simulateMission()
+  missions.ts         // real-mission presets → Design
+  index.ts            // evaluateDesign(), simulateMission(), monteCarloMission(), previewCrisis()
+  compare.ts          // designDelta() for part cards, compareWithRealMission() for the Debrief
 src/data/
   destinations.json   launchVehicles.json   parts.json
   missions.json       // MAVEN, OSIRIS-REx, LRO presets
@@ -331,17 +385,60 @@ interface Design {
   power: { type: 'solar' | 'rtg'; arrayArea_m2?: number; rtgCount?: number };
   comms: { dishDiameter_m: number; txPower_W: number; groundDish_m: 34 | 70 };
   engineId: string; propellant_kg: number;
-  captureOrbit: { periapsis_km: number; apoapsis_km: number };
+  captureOrbit: { periapsis_km: number; apoapsis_km: number };      // altitudes
+  missionClass?: 'discovery' | 'newFrontiers';                        // cost cap; default discovery
+  scienceDays?: number;                                               // planned science phase; default 365
+  lifetimeDays?: number;                                              // planned lifetime ≥ scienceDays (Δv reserve)
+  scienceOrbit?: { periapsis_km: number; apoapsis_km: number };      // altitudes; default = capture orbit
+  trajectoryOption?: 'direct' | 'nasa-earth-flyby';                   // fixed route: Bennu only
+  asFlownDryMass_kg?: Sourced<number>;                                // real-mission presets only
 }
 
 interface Meter { used: number; limit: number; margin: number; status: 'ok' | 'warning' | 'over';
-  equation: string; inputs: Record<string, Sourced<number>> }
+  equation: string; inputs: Record<string, Sourced<number>>; calibrated?: boolean }
 
 interface Evaluation {
   meters: { mass: Meter; power: Meter; deltaV: Meter; data: Meter; cost: Meter; risk: Meter };
   blockers: string[];          // plain language, e.g. "Too heavy by 120 kg"
-  trajectory: { c3: number; vInfArr: number; flightDays: number; path: [number, number][] };
+  notes: string[];             // non-blocking, e.g. "flybys are not modelled"
+  trajectory: { c3: number; vInfArr: number; flightDays: number; path: [number, number][];
+    method: 'lambert' | 'hohmann' | 'fixed-route'; maxFlightDays?: number };
+  details: { /* masses, Δv budget, power at arrival and end of science, cost and mass breakdowns,
+               phase risks, light delay … everything the Build Bay and Debrief show */ };
 }
 ```
 
+Entry points: `evaluateDesign`, `simulateMission`, `monteCarloMission` and `previewCrisis` (`index.ts`); `designDelta` and `compareWithRealMission` (`compare.ts`); `bestLaunchWindow` (`trajectory.ts`).
+
 Build order: constants → ephemeris → trajectory → propulsion → launch → power → comms → massCost → validation tests → risk, crisis, scoring. Don't build UI on a module until its tests pass.
+
+## UI rules
+
+The UI (`src/ui/`, React + Vite) follows the Claude Design mockups for Build Bay and Debrief (reference copies in `docs/design/`).
+
+1. **The engine computes every number on screen.** The UI only converts units for display (the display rules in "Constants and units"). Part-card effects come from `designDelta`, the real-mission comparison from `compareWithRealMission`, the crisis card from `previewCrisis`, and starter launch dates from `bestLaunchWindow`.
+2. **Engineer mode** shows each meter's `equation` and every entry in `inputs`. **ⓘ** opens the `Sourced<T>` record: source, unit, link, and a "game estimate" badge when `isGameEstimate` is true.
+3. **Status** is always shown with an icon, a colour and a label. Over-limit bars are also hatched.
+4. **Mission Budget meters:** mass, power, Δv, data, cost and risk. The mockup's "Reliability ≥ 85% (Π Rᵢ)" meter is replaced by the engine's Risk meter (mission failure probability against 20%, game estimate). No series-reliability model exists.
+5. **Debrief comparison** with a real mission uses mass, power and Δv only (see "MAVEN cost"), with the biggest gap flagged. Mars is compared with MAVEN and Bennu with OSIRIS-REx. Other destinations have no comparison until a sourced preset exists.
+6. **Score** is shown as 0–100. Category grades are STRONG ≥ 70, FAIR 40–69, WEAK < 40 (game rule). The row the next-star hint is about is highlighted.
+7. **English only for now.** The language toggle is hidden until engine messages are returned as codes with values.
+8. **Until the Window and Flight screens exist:** Build Bay → Launch → one crisis card (only the options the margins can pay for) → Debrief.
+
+## Decision log
+
+| # | Date | Decision |
+| --- | --- | --- |
+| 1 | Oct 3, 2026 | **Toolchain** in `.venv` (Node via nodeenv). Values the spec marks approx./to verify are kept but flagged `isGameEstimate`, and are listed in `TODO_DATA.md`. |
+| 2 | Oct 3, 2026 | **Real-mission presets** use published as-built dry mass; the 30% growth margin is for concept designs only. |
+| 3 | Oct 3, 2026 | **Atlas V curves** are placeholder estimates: the NASA LSP query tool cannot be exported by script. |
+| 4 | Oct 3, 2026 | **Δv budget** adds the capture→science orbit transfer (vis-viva) and a mission-lifetime reserve. |
+| 5 | Oct 3, 2026 | **No multi-revolution Lambert.** Direct transfers are capped at < 2 t_Hohmann. For Bennu, a fixed "NASA real route (Earth flyby)" uses the published C3 of 29.29678 km²/s², clearly labelled. |
+| 6 | Oct 3, 2026 | **Validation rows** are labelled validation, calibration or info. MAVEN power is calibration. |
+| 7 | Oct 3, 2026 | **Approved:** score on 0–100 (Σ wᵢsᵢ); game-estimate values for base risks, acceptable risk, budget fall-off and crisis outcomes, all labelled; the crisis simplification; the Bennu cap. |
+| 8 | Oct 3, 2026 | **MAVEN Δv reserve** uses the planned prime mission (1 Earth year), not the as-flown 4,094 days. Capture and science orbits come from NASAfacts: MAVEN Orbit Insertion (35 h, 380 km; 150 × 6,300 km, 4.5 h). |
+| 9 | Oct 3, 2026 | **Science goal** = Σ instrument data/day × planned science days, replacing per-destination goals. |
+| 10 | Oct 3, 2026 | **UI stack:** React + Vite, English only (no language toggle yet). Every tool and package is installed through `.venv` (venv Node and npm, pip into `.venv`), never globally. |
+| 11 | Oct 3, 2026 | **The engine computes every displayed number,** including part-card deltas, the real-mission comparison, the crisis preview and launch windows. The UI only formats units. |
+| 12 | Oct 3, 2026 | **No Reliability meter:** the mockup's Π Rᵢ reliability meter becomes the engine's Risk meter. The Debrief compares mass, power and Δv only (no cost or downlink rows). |
+| 13 | Oct 3, 2026 | **Score display** 0–100, with STRONG / FAIR / WEAK grades at 70 / 40 (game rule). **Flight bridge:** Build → Launch → one crisis card → Debrief until the Window and Flight screens exist. |
