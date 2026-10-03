@@ -1,0 +1,392 @@
+{
+  "maven": {
+    "label": "MAVEN (2013–2025)",
+    "history": "Contact was lost on Dec. 6, 2025; NASA declared the end of mission on June 3, 2026. MAVEN was a Mars Scout mission, not Discovery.",
+    "historyUrl": "https://science.nasa.gov/mission/maven/",
+    "design": {
+      "destination": {
+        "value": "mars",
+        "unit": "",
+        "source": "NASA Science: MAVEN",
+        "url": "https://science.nasa.gov/mission/maven/",
+        "isGameEstimate": false
+      },
+      "launchVehicleId": {
+        "value": "atlas-v-401",
+        "unit": "",
+        "source": "NASA Science: MAVEN (Atlas V 401, November 2013)",
+        "url": "https://science.nasa.gov/mission/maven/",
+        "isGameEstimate": false
+      },
+      "launchDate": {
+        "value": "2013-11-18",
+        "unit": "UTC date",
+        "source": "NASA Science: MAVEN (launched Nov. 18, 2013)",
+        "url": "https://science.nasa.gov/mission/maven/",
+        "isGameEstimate": false
+      },
+      "arrivalDate": {
+        "value": "2014-09-21",
+        "unit": "date",
+        "source": "NASA Science: MAVEN (Mars orbit insertion Sept. 21, 2014)",
+        "url": "https://science.nasa.gov/mission/maven/",
+        "isGameEstimate": false
+      },
+      "busId": {
+        "value": "medium-bus",
+        "unit": "",
+        "source": "Game stand-in: generic medium bus (MAVEN's own bus breakdown not sourced)",
+        "isGameEstimate": true
+      },
+      "instrumentIds": {
+        "value": [
+          "maven-science-payload"
+        ],
+        "unit": "",
+        "source": "NASA Science: MAVEN (65 kg science payload)",
+        "url": "https://science.nasa.gov/mission/maven/",
+        "isGameEstimate": false
+      },
+      "power": {
+        "type": {
+          "value": "solar",
+          "unit": "",
+          "source": "NASA Science: MAVEN",
+          "url": "https://science.nasa.gov/mission/maven/",
+          "isGameEstimate": false
+        },
+        "arrayArea_m2": {
+          "value": 12,
+          "unit": "m²",
+          "source": "NASA Science: MAVEN (12 m² of solar arrays)",
+          "url": "https://science.nasa.gov/mission/maven/",
+          "isGameEstimate": false
+        }
+      },
+      "comms": {
+        "dishDiameter_m": {
+          "value": 2,
+          "unit": "m",
+          "source": "NASA Science: MAVEN (2 m high-gain antenna)",
+          "url": "https://science.nasa.gov/mission/maven/",
+          "isGameEstimate": false
+        },
+        "txPower_W": {
+          "value": 100,
+          "unit": "W (RF)",
+          "source": "Game estimate; to be sourced from a MAVEN telecom description",
+          "isGameEstimate": true
+        },
+        "groundDish_m": {
+          "value": 34,
+          "unit": "m",
+          "source": "Game default: DSN 34 m antenna",
+          "isGameEstimate": true
+        }
+      },
+      "engineId": {
+        "value": "hydrazine-mono",
+        "unit": "",
+        "source": "NASA Science: MAVEN (fuelled with hydrazine)",
+        "url": "https://science.nasa.gov/mission/maven/",
+        "isGameEstimate": false
+      },
+      "propellant_kg": {
+        "value": 1645,
+        "unit": "kg",
+        "source": "NASA Science: MAVEN, 2,454 kg wet − 809 kg dry",
+        "url": "https://science.nasa.gov/mission/maven/",
+        "isGameEstimate": false
+      },
+      "captureOrbit": {
+        "periapsis_km": {
+          "value": 380,
+          "unit": "km altitude",
+          "source": "Game estimate of MAVEN's capture orbit periapsis; to verify",
+          "isGameEstimate": true
+        },
+        "apoapsis_km": {
+          "value": 44600,
+          "unit": "km altitude",
+          "source": "Game estimate of MAVEN's ~35-hour capture orbit apoapsis; to verify",
+          "isGameEstimate": true
+        }
+      },
+      "asFlownDryMass_kg": {
+        "value": 809,
+        "unit": "kg",
+        "source": "NASA Science: MAVEN (809 kg dry)",
+        "url": "https://science.nasa.gov/mission/maven/",
+        "isGameEstimate": false
+      },
+      "scienceDays": {
+        "value": 365,
+        "unit": "days",
+        "source": "Game estimate: one Earth year of prime science (to verify)",
+        "isGameEstimate": true
+      },
+      "missionClass": {
+        "value": "discovery",
+        "unit": "",
+        "source": "Game convention only: MAVEN was a Mars Scout mission; cost is not compared (spec: MAVEN cost)",
+        "isGameEstimate": true
+      },
+      "scienceOrbit": {
+        "periapsis_km": {
+          "value": 150,
+          "unit": "km altitude",
+          "source": "MAVEN science orbit periapsis ~150 km; to verify against NASA Science: MAVEN",
+          "url": "https://science.nasa.gov/mission/maven/",
+          "isGameEstimate": true
+        },
+        "apoapsis_km": {
+          "value": 6200,
+          "unit": "km altitude",
+          "source": "MAVEN science orbit apoapsis ~6,200 km; to verify against NASA Science: MAVEN",
+          "url": "https://science.nasa.gov/mission/maven/",
+          "isGameEstimate": true
+        }
+      },
+      "lifetimeDays": {
+        "value": 4094,
+        "unit": "days",
+        "source": "As flown: Mars orbit insertion Sept. 21, 2014 to loss of contact Dec. 6, 2025 (NASA Science: MAVEN)",
+        "url": "https://science.nasa.gov/mission/maven/",
+        "isGameEstimate": false
+      }
+    },
+    "published": {
+      "wetMass_kg": {
+        "value": 2454,
+        "unit": "kg",
+        "source": "NASA Science: MAVEN",
+        "url": "https://science.nasa.gov/mission/maven/",
+        "isGameEstimate": false
+      },
+      "dryMass_kg": {
+        "value": 809,
+        "unit": "kg",
+        "source": "NASA Science: MAVEN",
+        "url": "https://science.nasa.gov/mission/maven/",
+        "isGameEstimate": false
+      },
+      "solarPowerMax_W": {
+        "value": 1700,
+        "unit": "W",
+        "source": "NASA Science: MAVEN (1,150–1,700 W depending on position in Mars orbit)",
+        "url": "https://science.nasa.gov/mission/maven/",
+        "isGameEstimate": false
+      },
+      "solarPowerMin_W": {
+        "value": 1150,
+        "unit": "W",
+        "source": "NASA Science: MAVEN (1,150–1,700 W depending on position in Mars orbit)",
+        "url": "https://science.nasa.gov/mission/maven/",
+        "isGameEstimate": false
+      },
+      "deltaVCapability_ms": {
+        "value": 2450,
+        "unit": "m/s",
+        "source": "Spec: Propulsion, 'Check with MAVEN' (roughly 2.4–2.5 km/s at Isp 220–230 s; midpoint)",
+        "isGameEstimate": false
+      },
+      "transferDays": {
+        "value": 307,
+        "unit": "days",
+        "source": "NASA Science: MAVEN, launch Nov. 18, 2013 to Mars orbit insertion Sept. 21, 2014 (~10 months)",
+        "url": "https://science.nasa.gov/mission/maven/",
+        "isGameEstimate": false
+      }
+    }
+  },
+  "osiris-rex": {
+    "label": "OSIRIS-REx (2016)",
+    "history": "The real mission used an Earth gravity-assist flyby in September 2017, which the game does not model.",
+    "historyUrl": "https://arxiv.org/pdf/1702.06981",
+    "design": {
+      "destination": {
+        "value": "bennu",
+        "unit": "",
+        "source": "OSIRIS-REx mission description paper (arXiv 1702.06981)",
+        "url": "https://arxiv.org/pdf/1702.06981",
+        "isGameEstimate": false
+      },
+      "launchVehicleId": {
+        "value": "atlas-v-411",
+        "unit": "",
+        "source": "OSIRIS-REx mission description paper (arXiv 1702.06981)",
+        "url": "https://arxiv.org/pdf/1702.06981",
+        "isGameEstimate": false
+      },
+      "launchDate": {
+        "value": "2016-09-08",
+        "unit": "UTC date",
+        "source": "Lauretta et al. 2017 (arXiv 1702.06981): launched Sept. 8, 2016",
+        "url": "https://arxiv.org/pdf/1702.06981",
+        "isGameEstimate": false
+      },
+      "arrivalDate": {
+        "value": "2018-12-03",
+        "unit": "date",
+        "source": "Arrival at Bennu Dec. 3, 2018 (to verify against a NASA source)",
+        "isGameEstimate": true
+      },
+      "busId": {
+        "value": "medium-bus",
+        "unit": "",
+        "source": "Game stand-in: generic medium bus",
+        "isGameEstimate": true
+      },
+      "instrumentIds": {
+        "value": [
+          "camera",
+          "spectrometer"
+        ],
+        "unit": "",
+        "source": "Game stand-in for the OSIRIS-REx instrument suite",
+        "isGameEstimate": true
+      },
+      "power": {
+        "type": {
+          "value": "solar",
+          "unit": "",
+          "source": "Lauretta et al. 2017 (arXiv 1702.06981): gallium-arsenide solar arrays",
+          "url": "https://arxiv.org/pdf/1702.06981",
+          "isGameEstimate": false
+        },
+        "arrayArea_m2": {
+          "value": 8.5,
+          "unit": "m²",
+          "source": "Game estimate; to verify",
+          "isGameEstimate": true
+        }
+      },
+      "comms": {
+        "dishDiameter_m": {
+          "value": 2,
+          "unit": "m",
+          "source": "Game estimate; to verify",
+          "isGameEstimate": true
+        },
+        "txPower_W": {
+          "value": 100,
+          "unit": "W (RF)",
+          "source": "Game estimate; to verify",
+          "isGameEstimate": true
+        },
+        "groundDish_m": {
+          "value": 34,
+          "unit": "m",
+          "source": "Game default: DSN 34 m antenna",
+          "isGameEstimate": true
+        }
+      },
+      "engineId": {
+        "value": "hydrazine-mono",
+        "unit": "",
+        "source": "Lauretta et al. 2017 (arXiv 1702.06981): all thrusters fed from a central hydrazine tank",
+        "url": "https://arxiv.org/pdf/1702.06981",
+        "isGameEstimate": false
+      },
+      "propellant_kg": {
+        "value": 1235,
+        "unit": "kg",
+        "source": "2,105 kg wet − 870 kg dry (dry mass is a midpoint estimate)",
+        "isGameEstimate": true
+      },
+      "captureOrbit": {
+        "periapsis_km": {
+          "value": 1,
+          "unit": "km altitude",
+          "source": "Not used for a rendezvous",
+          "isGameEstimate": true
+        },
+        "apoapsis_km": {
+          "value": 1,
+          "unit": "km altitude",
+          "source": "Not used for a rendezvous",
+          "isGameEstimate": true
+        }
+      },
+      "asFlownDryMass_kg": {
+        "value": 870,
+        "unit": "kg",
+        "source": "Midpoint of ~860–880 kg (sources differ; spec: Validation set)",
+        "url": "https://arxiv.org/pdf/1702.06981",
+        "isGameEstimate": true
+      },
+      "scienceDays": {
+        "value": 500,
+        "unit": "days",
+        "source": "Game estimate; to verify",
+        "isGameEstimate": true
+      },
+      "missionClass": {
+        "value": "newFrontiers",
+        "unit": "",
+        "source": "OSIRIS-REx was a New Frontiers mission",
+        "isGameEstimate": false
+      },
+      "trajectoryOption": {
+        "value": "nasa-earth-flyby",
+        "unit": "",
+        "source": "Real mission used an Earth gravity assist (arXiv 1702.06981); offered as the fixed 'NASA real route' option",
+        "url": "https://arxiv.org/pdf/1702.06981",
+        "isGameEstimate": false
+      }
+    },
+    "published": {
+      "wetMass_kg": {
+        "value": 2105,
+        "unit": "kg",
+        "source": "Lauretta et al. 2017 (arXiv 1702.06981): total spacecraft mass 2105 kg",
+        "url": "https://arxiv.org/pdf/1702.06981",
+        "isGameEstimate": false
+      },
+      "launchC3_km2s2": {
+        "value": 29.29678,
+        "unit": "km²/s²",
+        "source": "Lauretta et al. 2017 (arXiv 1702.06981): hyperbolic injection C3 = 29.29678 km²/s²",
+        "url": "https://arxiv.org/pdf/1702.06981",
+        "isGameEstimate": false
+      },
+      "solarPowerMin_W": {
+        "value": 1226,
+        "unit": "W",
+        "source": "Lauretta et al. 2017 (arXiv 1702.06981): arrays deliver 1,226–2,500 W depending on distance from the Sun",
+        "url": "https://arxiv.org/pdf/1702.06981",
+        "isGameEstimate": false
+      },
+      "solarPowerMax_W": {
+        "value": 2500,
+        "unit": "W",
+        "source": "Lauretta et al. 2017 (arXiv 1702.06981): arrays deliver 1,226–2,500 W depending on distance from the Sun",
+        "url": "https://arxiv.org/pdf/1702.06981",
+        "isGameEstimate": false
+      }
+    }
+  },
+  "lro": {
+    "label": "LRO (2009)",
+    "history": "To verify: open the NASA LRO mission page and fill wet mass, dry mass, power and data rate.",
+    "toVerify": true,
+    "launchVehicleId": {
+      "value": "atlas-v-401",
+      "unit": "",
+      "source": "Spec: Validation set",
+      "isGameEstimate": false
+    },
+    "wetMass_kg": {
+      "value": null,
+      "unit": "kg",
+      "source": "To verify: NASA LRO mission page",
+      "isGameEstimate": true
+    },
+    "dryMass_kg": {
+      "value": null,
+      "unit": "kg",
+      "source": "To verify: NASA LRO mission page",
+      "isGameEstimate": true
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "mission-drafting-table",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Mission Drafting Table — simulation engine (no UI). See docs/SCIENCE_SPEC.md.",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:validation": "vitest run tests/validation.test.ts",
+    "typecheck": "tsc --noEmit",
+    "todo-data": "vitest run tests/dataAudit.test.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.2",
+    "vitest": "^5.0.3"
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "unit-mismatch": {
+    "title": "Unit mismatch",
+    "eventPhase": "cruise",
+    "missionTypes": ["orbiter", "rendezvous"],
+    "needsReturn": false,
+    "marginThatMatters": "deltaV",
+    "realHistory": { "value": "Mars Climate Orbiter, 1999: one team used imperial units, the other metric; the craft flew too low and was lost.", "unit": "", "source": "Summary from general knowledge (spec); check against NASA LLIS or the official failure report before release", "url": "https://llis.nasa.gov/", "isGameEstimate": true },
+    "prompt": "Navigation numbers from two teams don't quite agree. Check again?",
+    "options": [
+      { "id": "nav-check", "label": "Spend propellant on an extra navigation check", "cost": { "deltaV_ms": { "value": 15, "unit": "m/s", "source": "Game estimate", "isGameEstimate": true } }, "failureChance": { "value": 0.005, "unit": "probability", "source": "Game estimate", "isGameEstimate": true }, "affects": "arrival" },
+      { "id": "trust-plan", "label": "Trust the plan", "cost": {}, "failureChance": { "value": 0.15, "unit": "probability", "source": "Game estimate", "isGameEstimate": true }, "affects": "arrival" }
+    ]
+  },
+  "upside-down-sensor": {
+    "title": "Upside-down sensor",
+    "eventPhase": "return",
+    "decisionBeforeLaunch": true,
+    "missionTypes": ["rendezvous", "lander"],
+    "needsReturn": true,
+    "marginThatMatters": "budget",
+    "realHistory": { "value": "Genesis, 2004: deceleration sensors were installed backwards; the parachute never opened.", "unit": "", "source": "Summary from general knowledge (spec); check against NASA LLIS or the official failure report before release", "url": "https://llis.nasa.gov/", "isGameEstimate": true },
+    "prompt": "Before launch: the capsule's sensors have only been checked on paper. Pay for an extra test?",
+    "options": [
+      { "id": "extra-test", "label": "Pay for an extra test before launch", "cost": { "budget_M": { "value": 5, "unit": "$M", "source": "Game estimate", "isGameEstimate": true } }, "failureChance": { "value": 0.005, "unit": "probability", "source": "Game estimate", "isGameEstimate": true }, "affects": "return" },
+      { "id": "skip-test", "label": "Skip it", "cost": {}, "failureChance": { "value": 0.25, "unit": "probability", "source": "Game estimate", "isGameEstimate": true }, "affects": "return" }
+    ]
+  },
+  "false-touchdown": {
+    "title": "False touchdown",
+    "eventPhase": "arrival",
+    "missionTypes": ["lander"],
+    "needsReturn": false,
+    "marginThatMatters": "none",
+    "realHistory": { "value": "Mars Polar Lander, 1999: likely shut its engine early after reading leg vibration as touchdown.", "unit": "", "source": "Summary from general knowledge (spec); check against NASA LLIS or the official failure report before release", "url": "https://llis.nasa.gov/", "isGameEstimate": true },
+    "prompt": "Not used for orbiters; kept for future lander missions.",
+    "options": [
+      { "id": "add-logic", "label": "Add a software check that ignores early leg signals", "cost": { "budget_M": { "value": 3, "unit": "$M", "source": "Game estimate", "isGameEstimate": true } }, "failureChance": { "value": 0.01, "unit": "probability", "source": "Game estimate", "isGameEstimate": true }, "affects": "arrival" },
+      { "id": "fly-as-is", "label": "Fly as designed", "cost": {}, "failureChance": { "value": 0.3, "unit": "probability", "source": "Game estimate", "isGameEstimate": true }, "affects": "arrival" }
+    ]
+  },
+  "memory-full": {
+    "title": "Memory full",
+    "eventPhase": "science",
+    "missionTypes": ["orbiter", "rendezvous"],
+    "needsReturn": false,
+    "marginThatMatters": "data",
+    "realHistory": { "value": "Spirit rover, 2004: too many files filled flash memory and caused reboots; fixed from Earth.", "unit": "", "source": "Summary from general knowledge (spec); check against NASA LLIS or the official failure report before release", "url": "https://llis.nasa.gov/", "isGameEstimate": true },
+    "prompt": "The onboard memory is full and the computer keeps rebooting.",
+    "options": [
+      { "id": "pause-fix", "label": "Pause science to fix it", "cost": { "scienceDays": { "value": 14, "unit": "days", "source": "Game estimate", "isGameEstimate": true } }, "failureChance": { "value": 0.005, "unit": "probability", "source": "Game estimate", "isGameEstimate": true }, "affects": "science" },
+      { "id": "keep-going", "label": "Keep going at risk", "cost": {}, "failureChance": { "value": 0.1, "unit": "probability", "source": "Game estimate", "isGameEstimate": true }, "affects": "science" }
+    ]
+  },
+  "lost-attitude": {
+    "title": "Lost attitude",
+    "eventPhase": "cruise",
+    "missionTypes": ["orbiter", "rendezvous"],
+    "needsReturn": false,
+    "marginThatMatters": "power, deltaV",
+    "realHistory": { "value": "SOHO, 1998: lost attitude control and contact; recovered months later.", "unit": "", "source": "Summary from general knowledge (spec); check against NASA LLIS or the official failure report before release", "url": "https://llis.nasa.gov/", "isGameEstimate": true },
+    "prompt": "The craft is tumbling and has lost its lock on the Sun.",
+    "options": [
+      { "id": "recover-now", "label": "Spend propellant and power to recover now", "cost": { "deltaV_ms": { "value": 20, "unit": "m/s", "source": "Game estimate", "isGameEstimate": true } }, "requires": { "powerMargin": { "value": 0.05, "unit": "fraction", "source": "Game estimate: power margin needed to run recovery", "isGameEstimate": true } }, "failureChance": { "value": 0.01, "unit": "probability", "source": "Game estimate", "isGameEstimate": true }, "affects": "cruise" },
+      { "id": "wait", "label": "Wait", "cost": {}, "failureChance": { "value": 0.2, "unit": "probability", "source": "Game estimate", "isGameEstimate": true }, "affects": "cruise" }
+    ]
+  },
+  "solar-storm": {
+    "title": "Solar storm",
+    "eventPhase": "any",
+    "missionTypes": ["orbiter", "rendezvous"],
+    "needsReturn": false,
+    "marginThatMatters": "power, deltaV",
+    "realHistory": { "value": "Solar particle events can trigger spacecraft safe mode.", "unit": "", "source": "Summary from general knowledge (spec); check against NASA LLIS before release", "url": "https://llis.nasa.gov/", "isGameEstimate": true },
+    "prompt": "A solar particle storm is on its way.",
+    "options": [
+      { "id": "raise-orbit", "label": "Raise orbit / shelter (costs propellant)", "cost": { "deltaV_ms": { "value": 25, "unit": "m/s", "source": "Game estimate", "isGameEstimate": true } }, "failureChance": { "value": 0.01, "unit": "probability", "source": "Game estimate", "isGameEstimate": true }, "affects": "science" },
+      { "id": "ride-it-out", "label": "Ride it out (risk to instruments)", "cost": {}, "failureChance": { "value": 0.08, "unit": "probability", "source": "Game estimate", "isGameEstimate": true }, "affects": "science" }
+    ]
+  }
+}

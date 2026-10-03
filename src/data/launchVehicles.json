@@ -1,0 +1,46 @@
+{
+  "atlas-v-401": {
+    "name": "Atlas V 401",
+    "payloadCurve": {
+      "value": [
+        [-2, 4580],
+        [0, 4360],
+        [5, 3830],
+        [10, 3350],
+        [15, 2920],
+        [20, 2530],
+        [30, 1850],
+        [40, 1280]
+      ],
+      "unit": "[C3 km²/s², payload kg]",
+      "source": "PLACEHOLDER game estimate — replace with NASA LSP performance points (elvperf.ksc.nasa.gov Performance Query could not be exported automatically)",
+      "url": "https://elvperf.ksc.nasa.gov/",
+      "isGameEstimate": true
+    },
+    "flights": { "value": 41, "unit": "flights", "source": "Game estimate of the Atlas V 401 flight record; verify against the official launch record", "isGameEstimate": true },
+    "successes": { "value": 40, "unit": "flights", "source": "Game estimate (one partial failure counted as a failure); verify against the official launch record", "isGameEstimate": true },
+    "price_M": { "value": 110, "unit": "$M", "source": "Game estimate; spec: collect launch price from NASA Announcement of Opportunity documents", "isGameEstimate": true }
+  },
+  "atlas-v-411": {
+    "name": "Atlas V 411",
+    "payloadCurve": {
+      "value": [
+        [-2, 5450],
+        [0, 5200],
+        [5, 4580],
+        [10, 4020],
+        [15, 3520],
+        [20, 3060],
+        [30, 2280],
+        [40, 1630]
+      ],
+      "unit": "[C3 km²/s², payload kg]",
+      "source": "PLACEHOLDER game estimate — replace with NASA LSP performance points (elvperf.ksc.nasa.gov Performance Query could not be exported automatically)",
+      "url": "https://elvperf.ksc.nasa.gov/",
+      "isGameEstimate": true
+    },
+    "flights": { "value": 6, "unit": "flights", "source": "Game estimate of the Atlas V 411 flight record; verify against the official launch record", "isGameEstimate": true },
+    "successes": { "value": 6, "unit": "flights", "source": "Game estimate; verify against the official launch record", "isGameEstimate": true },
+    "price_M": { "value": 130, "unit": "$M", "source": "Game estimate; spec: collect launch price from NASA Announcement of Opportunity documents", "isGameEstimate": true }
+  }
+}

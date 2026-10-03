@@ -1,0 +1,79 @@
+{
+  "earth": {
+    "value": {
+      "kind": "jpl-approx",
+      "a": [1.00000261, 0.00000562],
+      "e": [0.01671123, -0.00004392],
+      "I": [-0.00001531, -0.01294668],
+      "L": [100.46457166, 35999.37244981],
+      "varpi": [102.93768193, 0.32327364],
+      "Omega": [0.0, 0.0]
+    },
+    "unit": "[element at J2000, rate per Julian century]; a in au, angles in deg",
+    "source": "JPL Approximate Positions of the Planets, Table 1 (1800 AD - 2050 AD), Earth-Moon barycenter",
+    "url": "https://ssd.jpl.nasa.gov/planets/approx_pos.html",
+    "isGameEstimate": false
+  },
+  "venus": {
+    "value": {
+      "kind": "jpl-approx",
+      "a": [0.72333566, 0.0000039],
+      "e": [0.00677672, -0.00004107],
+      "I": [3.39467605, -0.0007889],
+      "L": [181.9790995, 58517.81538729],
+      "varpi": [131.60246718, 0.00268329],
+      "Omega": [76.67984255, -0.27769418]
+    },
+    "unit": "[element at J2000, rate per Julian century]; a in au, angles in deg",
+    "source": "JPL Approximate Positions of the Planets, Table 1 (1800 AD - 2050 AD), Venus",
+    "url": "https://ssd.jpl.nasa.gov/planets/approx_pos.html",
+    "isGameEstimate": false
+  },
+  "mars": {
+    "value": {
+      "kind": "jpl-approx",
+      "a": [1.52371034, 0.00001847],
+      "e": [0.0933941, 0.00007882],
+      "I": [1.84969142, -0.00813131],
+      "L": [-4.55343205, 19140.30268499],
+      "varpi": [-23.94362959, 0.44441088],
+      "Omega": [49.55953891, -0.29257343]
+    },
+    "unit": "[element at J2000, rate per Julian century]; a in au, angles in deg",
+    "source": "JPL Approximate Positions of the Planets, Table 1 (1800 AD - 2050 AD), Mars",
+    "url": "https://ssd.jpl.nasa.gov/planets/approx_pos.html",
+    "isGameEstimate": false
+  },
+  "jupiter": {
+    "value": {
+      "kind": "jpl-approx",
+      "a": [5.202887, -0.00011607],
+      "e": [0.04838624, -0.00013253],
+      "I": [1.30439695, -0.00183714],
+      "L": [34.39644051, 3034.74612775],
+      "varpi": [14.72847983, 0.21252668],
+      "Omega": [100.47390909, 0.20469106]
+    },
+    "unit": "[element at J2000, rate per Julian century]; a in au, angles in deg",
+    "source": "JPL Approximate Positions of the Planets, Table 1 (1800 AD - 2050 AD), Jupiter",
+    "url": "https://ssd.jpl.nasa.gov/planets/approx_pos.html",
+    "isGameEstimate": false
+  },
+  "bennu": {
+    "value": {
+      "kind": "osculating",
+      "epochJD": 2455562.5,
+      "a": 1.126391025894812,
+      "e": 0.2037450762416414,
+      "i": 6.03494377024794,
+      "om": 2.06086619569642,
+      "w": 66.22306084084298,
+      "ma": 101.703952002457,
+      "n": 0.8244613503320309
+    },
+    "unit": "osculating heliocentric ecliptic J2000 elements; a in au, angles in deg, n in deg/day, epoch in JD (TDB)",
+    "source": "JPL Small-Body Database, 101955 Bennu, orbit solution 118 (2021-01-07), full precision",
+    "url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=101955",
+    "isGameEstimate": false
+  }
+}

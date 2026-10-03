@@ -1,0 +1,351 @@
+{
+  "moon": {
+    "name": "Moon",
+    "missionType": "orbiter",
+    "centralBody": "earth",
+    "difficulty": "easy",
+    "sunDistance_1e6km": {
+      "value": 149.6,
+      "unit": "10⁶ km",
+      "source": "Spec: Destinations table (same as Earth)",
+      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/index.html",
+      "isGameEstimate": false
+    },
+    "earthDistance_1e6km": {
+      "value": 0.384,
+      "unit": "10⁶ km",
+      "source": "Spec: Destinations table (0.384 from Earth); copy from NASA Moon Fact Sheet",
+      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html",
+      "isGameEstimate": true
+    },
+    "orbitPeriod_days": {
+      "value": 27.3,
+      "unit": "days (around Earth)",
+      "source": "Spec: Destinations table; copy from NASA Moon Fact Sheet",
+      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html",
+      "isGameEstimate": true
+    },
+    "gm_km3s2": {
+      "value": 4902.8,
+      "unit": "km³/s²",
+      "source": "Spec: Destinations table (approx.); copy from NASA Moon Fact Sheet",
+      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html",
+      "isGameEstimate": true
+    },
+    "radius_km": {
+      "value": 1738.1,
+      "unit": "km",
+      "source": "Spec: Destinations table (approx.); copy from NASA Moon Fact Sheet",
+      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html",
+      "isGameEstimate": true
+    },
+    "sunlightVsEarth": {
+      "value": 1.0,
+      "unit": "fraction of 1 AU sunlight",
+      "source": "Spec: Destinations table",
+      "isGameEstimate": false
+    },
+    "scienceGoal_Gbit": {
+      "value": 500,
+      "unit": "Gbit downlinked over the mission",
+      "source": "Game estimate: data the science goal needs (spec: Scoring, science return)",
+      "isGameEstimate": true
+    },
+    "notes": []
+  },
+  "venus": {
+    "name": "Venus",
+    "missionType": "orbiter",
+    "centralBody": "sun",
+    "difficulty": "medium",
+    "sunDistance_1e6km": {
+      "value": 108.2,
+      "unit": "10⁶ km",
+      "source": "NASA Planetary Fact Sheet (spec: Destinations table)",
+      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/index.html",
+      "isGameEstimate": false
+    },
+    "orbitPeriod_days": {
+      "value": 224.7,
+      "unit": "days",
+      "source": "NASA Planetary Fact Sheet (spec: Destinations table)",
+      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/index.html",
+      "isGameEstimate": false
+    },
+    "synodicPeriod_days": {
+      "value": 583.9,
+      "unit": "days",
+      "source": "Spec: computed from S = 1/|1/T_Earth − 1/T_planet|",
+      "isGameEstimate": false
+    },
+    "gm_km3s2": {
+      "value": 324859,
+      "unit": "km³/s²",
+      "source": "Spec: Destinations table (approx.); copy from NASA Venus Fact Sheet",
+      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/venusfact.html",
+      "isGameEstimate": true
+    },
+    "radius_km": {
+      "value": 6051.8,
+      "unit": "km",
+      "source": "Spec: Destinations table (approx.); copy from NASA Venus Fact Sheet",
+      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/venusfact.html",
+      "isGameEstimate": true
+    },
+    "sunlightVsEarth": {
+      "value": 1.91,
+      "unit": "fraction of 1 AU sunlight",
+      "source": "Spec: Destinations table (~191%)",
+      "isGameEstimate": true
+    },
+    "scienceGoal_Gbit": {
+      "value": 400,
+      "unit": "Gbit downlinked over the mission",
+      "source": "Game estimate: data the science goal needs (spec: Scoring, science return)",
+      "isGameEstimate": true
+    },
+    "notes": []
+  },
+  "mars": {
+    "name": "Mars",
+    "missionType": "orbiter",
+    "centralBody": "sun",
+    "difficulty": "medium",
+    "sunDistance_1e6km": {
+      "value": 227.956,
+      "unit": "10⁶ km",
+      "source": "NASA Mars Fact Sheet (semimajor axis)",
+      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html",
+      "isGameEstimate": false
+    },
+    "perihelion_1e6km": {
+      "value": 206.65,
+      "unit": "10⁶ km",
+      "source": "NASA Mars Fact Sheet",
+      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html",
+      "isGameEstimate": false
+    },
+    "aphelion_1e6km": {
+      "value": 249.26,
+      "unit": "10⁶ km",
+      "source": "NASA Mars Fact Sheet",
+      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html",
+      "isGameEstimate": false
+    },
+    "minEarthDistance_1e6km": {
+      "value": 54.6,
+      "unit": "10⁶ km",
+      "source": "NASA Mars Fact Sheet (minimum distance from Earth)",
+      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html",
+      "isGameEstimate": false
+    },
+    "maxEarthDistance_1e6km": {
+      "value": 401.4,
+      "unit": "10⁶ km",
+      "source": "NASA Mars Fact Sheet (maximum distance from Earth)",
+      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html",
+      "isGameEstimate": false
+    },
+    "orbitPeriod_days": {
+      "value": 686.98,
+      "unit": "days",
+      "source": "NASA Mars Fact Sheet (sidereal orbit period)",
+      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html",
+      "isGameEstimate": false
+    },
+    "synodicPeriod_days": {
+      "value": 779.94,
+      "unit": "days",
+      "source": "NASA Mars Fact Sheet (synodic period)",
+      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html",
+      "isGameEstimate": false
+    },
+    "gm_km3s2": {
+      "value": 42828,
+      "unit": "km³/s²",
+      "source": "NASA Mars Fact Sheet",
+      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html",
+      "isGameEstimate": false
+    },
+    "radius_km": {
+      "value": 3396.2,
+      "unit": "km",
+      "source": "NASA Mars Fact Sheet (equatorial radius)",
+      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html",
+      "isGameEstimate": false
+    },
+    "sunlightVsEarth": {
+      "value": 0.431,
+      "unit": "fraction of 1 AU sunlight",
+      "source": "NASA Mars Fact Sheet (solar irradiance ratio)",
+      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html",
+      "isGameEstimate": false
+    },
+    "scienceGoal_Gbit": {
+      "value": 500,
+      "unit": "Gbit downlinked over the mission",
+      "source": "Game estimate: data the science goal needs (spec: Scoring, science return)",
+      "isGameEstimate": true
+    },
+    "notes": []
+  },
+  "bennu": {
+    "name": "Bennu (asteroid)",
+    "missionType": "rendezvous",
+    "centralBody": "sun",
+    "difficulty": "hard",
+    "sunDistance_1e6km": {
+      "value": 168,
+      "unit": "10⁶ km",
+      "source": "Spec: Destinations table (~168, approx.); JPL SBDB gives a = 1.12639 au = 168.5 × 10⁶ km",
+      "url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=101955",
+      "isGameEstimate": true
+    },
+    "orbitPeriod_days": {
+      "value": 437,
+      "unit": "days",
+      "source": "Spec: Destinations table (~437, approx.); JPL SBDB gives 436.65 d",
+      "url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=101955",
+      "isGameEstimate": true
+    },
+    "gm_km3s2": {
+      "value": 4.8904e-09,
+      "unit": "km³/s²",
+      "source": "JPL Small-Body Database (Chesley et al. 2020, JGR Planets 125, e06363); spec: negligible",
+      "url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=101955",
+      "isGameEstimate": false
+    },
+    "radius_km": {
+      "value": 0.25,
+      "unit": "km",
+      "source": "Spec: Destinations table (~0.25, approx.); JPL SBDB diameter 0.48444 km",
+      "url": "https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=101955",
+      "isGameEstimate": true
+    },
+    "sunlightVsEarth": {
+      "value": 0.79,
+      "unit": "fraction of 1 AU sunlight",
+      "source": "Spec: Destinations table (~79%)",
+      "isGameEstimate": true
+    },
+    "scienceGoal_Gbit": {
+      "value": 150,
+      "unit": "Gbit downlinked over the mission",
+      "source": "Game estimate: data the science goal needs (spec: Scoring, science return)",
+      "isGameEstimate": true
+    },
+    "notes": [
+      "Gravity assists (flybys) are not modelled. The real OSIRIS-REx used an Earth flyby in September 2017; the game flies a direct transfer instead.",
+      "Bennu's gravity is negligible, so the rendezvous Δv is the arrival speed v∞."
+    ],
+    "fixedRoutes": {
+      "nasa-earth-flyby": {
+        "label": "NASA real route (Earth flyby)",
+        "description": "OSIRIS-REx's flown route: launch, a one-year Earth-to-Earth loop with a deep-space manoeuvre, an Earth gravity assist, then a second leg to Bennu. The flyby itself is not simulated; launch C3 is the published value and only the post-flyby leg is computed.",
+        "launchDate": {
+          "value": "2016-09-08",
+          "unit": "UTC date",
+          "source": "Lauretta et al. 2017, OSIRIS-REx mission description (arXiv 1702.06981): launched 7:05 p.m. EDT, Sept. 8, 2016",
+          "url": "https://arxiv.org/pdf/1702.06981",
+          "isGameEstimate": false
+        },
+        "launchC3_km2s2": {
+          "value": 29.29678,
+          "unit": "km²/s²",
+          "source": "Lauretta et al. 2017 (arXiv 1702.06981): hyperbolic injection C3 = 29.29678 km²/s²",
+          "url": "https://arxiv.org/pdf/1702.06981",
+          "isGameEstimate": false
+        },
+        "dsmDate": {
+          "value": "2016-12-28",
+          "unit": "date",
+          "source": "Lauretta et al. 2017 (arXiv 1702.06981): large Deep Space Maneuver on Dec. 28, 2016",
+          "url": "https://arxiv.org/pdf/1702.06981",
+          "isGameEstimate": false
+        },
+        "dsmDeltaV_ms": {
+          "value": 431,
+          "unit": "m/s",
+          "source": "Game estimate: DSM-1 size not given in the paper (NASA mission updates reported ~431 m/s); to verify",
+          "isGameEstimate": true
+        },
+        "flybyDate": {
+          "value": "2017-09-22",
+          "unit": "date",
+          "source": "Earth gravity assist after a one-year Earth-to-Earth loop (paper); exact day Sept. 22, 2017 to verify",
+          "url": "https://arxiv.org/pdf/1702.06981",
+          "isGameEstimate": true
+        },
+        "approachStartDate": {
+          "value": "2018-08-13",
+          "unit": "date",
+          "source": "Lauretta et al. 2017 (arXiv 1702.06981): beginning of Approach Phase on Aug. 13, 2018",
+          "url": "https://arxiv.org/pdf/1702.06981",
+          "isGameEstimate": false
+        },
+        "arrivalDate": {
+          "value": "2018-12-03",
+          "unit": "date",
+          "source": "Arrival at Bennu Dec. 3, 2018 (paper gives 'November 2018 rendezvous'); to verify against a NASA source",
+          "url": "https://arxiv.org/pdf/1702.06981",
+          "isGameEstimate": true
+        }
+      }
+    }
+  },
+  "jupiter": {
+    "name": "Jupiter",
+    "missionType": "orbiter",
+    "centralBody": "sun",
+    "difficulty": "very hard",
+    "sunDistance_1e6km": {
+      "value": 778.5,
+      "unit": "10⁶ km",
+      "source": "NASA Planetary Fact Sheet (spec: Destinations table)",
+      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/index.html",
+      "isGameEstimate": false
+    },
+    "orbitPeriod_days": {
+      "value": 4331,
+      "unit": "days",
+      "source": "NASA Planetary Fact Sheet (spec: Destinations table)",
+      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/index.html",
+      "isGameEstimate": false
+    },
+    "synodicPeriod_days": {
+      "value": 398.9,
+      "unit": "days",
+      "source": "Spec: computed from S = 1/|1/T_Earth − 1/T_planet|",
+      "isGameEstimate": false
+    },
+    "gm_km3s2": {
+      "value": 126686534,
+      "unit": "km³/s²",
+      "source": "Spec: Destinations table (approx.); copy from NASA Jupiter Fact Sheet",
+      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/jupiterfact.html",
+      "isGameEstimate": true
+    },
+    "radius_km": {
+      "value": 71492,
+      "unit": "km",
+      "source": "Spec: Destinations table (approx.); copy from NASA Jupiter Fact Sheet",
+      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/jupiterfact.html",
+      "isGameEstimate": true
+    },
+    "sunlightVsEarth": {
+      "value": 0.037,
+      "unit": "fraction of 1 AU sunlight",
+      "source": "Spec: Destinations table (~3.7%)",
+      "isGameEstimate": true
+    },
+    "scienceGoal_Gbit": {
+      "value": 200,
+      "unit": "Gbit downlinked over the mission",
+      "source": "Game estimate: data the science goal needs (spec: Scoring, science return)",
+      "isGameEstimate": true
+    },
+    "notes": [
+      "Very hard: a direct transfer needs C3 ≈ 77 km²/s², which almost no launch vehicle can give a useful payload. Real Jupiter missions use gravity assists, which the game does not model."
+    ]
+  }
+}

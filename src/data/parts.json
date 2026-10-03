@@ -1,0 +1,106 @@
+{
+  "buses": {
+    "small-bus": {
+      "name": "Small bus",
+      "mass_kg": { "value": 250, "unit": "kg", "source": "Game estimate; candidate sources: NASA Cost Estimating Handbook", "isGameEstimate": true },
+      "power_W": { "value": 250, "unit": "W", "source": "Game estimate", "isGameEstimate": true },
+      "heaterBase_W": { "value": 50, "unit": "W at 1 AU", "source": "Game estimate", "isGameEstimate": true },
+      "cost_M": { "value": 120, "unit": "$M (FY2019)", "source": "Game estimate; candidate sources: NASA Cost Estimating Handbook", "isGameEstimate": true }
+    },
+    "medium-bus": {
+      "name": "Medium bus",
+      "mass_kg": { "value": 450, "unit": "kg", "source": "Game estimate; candidate sources: NASA Cost Estimating Handbook", "isGameEstimate": true },
+      "power_W": { "value": 400, "unit": "W", "source": "Game estimate", "isGameEstimate": true },
+      "heaterBase_W": { "value": 80, "unit": "W at 1 AU", "source": "Game estimate", "isGameEstimate": true },
+      "cost_M": { "value": 180, "unit": "$M (FY2019)", "source": "Game estimate; candidate sources: NASA Cost Estimating Handbook", "isGameEstimate": true }
+    },
+    "large-bus": {
+      "name": "Large bus",
+      "mass_kg": { "value": 700, "unit": "kg", "source": "Game estimate; candidate sources: NASA Cost Estimating Handbook", "isGameEstimate": true },
+      "power_W": { "value": 600, "unit": "W", "source": "Game estimate", "isGameEstimate": true },
+      "heaterBase_W": { "value": 120, "unit": "W at 1 AU", "source": "Game estimate", "isGameEstimate": true },
+      "cost_M": { "value": 260, "unit": "$M (FY2019)", "source": "Game estimate; candidate sources: NASA Cost Estimating Handbook", "isGameEstimate": true }
+    }
+  },
+  "instruments": {
+    "camera": {
+      "name": "Camera",
+      "mass_kg": { "value": 15, "unit": "kg", "source": "Game estimate; candidate sources: NASA instrument cost models", "isGameEstimate": true },
+      "power_W": { "value": 20, "unit": "W", "source": "Game estimate", "isGameEstimate": true },
+      "data_Mbit_per_day": { "value": 2000, "unit": "Mbit/day", "source": "Game estimate", "isGameEstimate": true },
+      "cost_M": { "value": 25, "unit": "$M (FY2019)", "source": "Game estimate; candidate sources: NASA instrument cost models", "isGameEstimate": true }
+    },
+    "spectrometer": {
+      "name": "Spectrometer",
+      "mass_kg": { "value": 25, "unit": "kg", "source": "Game estimate; candidate sources: NASA instrument cost models", "isGameEstimate": true },
+      "power_W": { "value": 30, "unit": "W", "source": "Game estimate", "isGameEstimate": true },
+      "data_Mbit_per_day": { "value": 1000, "unit": "Mbit/day", "source": "Game estimate", "isGameEstimate": true },
+      "cost_M": { "value": 35, "unit": "$M (FY2019)", "source": "Game estimate; candidate sources: NASA instrument cost models", "isGameEstimate": true }
+    },
+    "magnetometer": {
+      "name": "Magnetometer",
+      "mass_kg": { "value": 5, "unit": "kg", "source": "Game estimate; candidate sources: NASA instrument cost models", "isGameEstimate": true },
+      "power_W": { "value": 5, "unit": "W", "source": "Game estimate", "isGameEstimate": true },
+      "data_Mbit_per_day": { "value": 50, "unit": "Mbit/day", "source": "Game estimate", "isGameEstimate": true },
+      "cost_M": { "value": 10, "unit": "$M (FY2019)", "source": "Game estimate; candidate sources: NASA instrument cost models", "isGameEstimate": true }
+    },
+    "radar": {
+      "name": "Radar sounder",
+      "mass_kg": { "value": 50, "unit": "kg", "source": "Game estimate; candidate sources: NASA instrument cost models", "isGameEstimate": true },
+      "power_W": { "value": 120, "unit": "W", "source": "Game estimate", "isGameEstimate": true },
+      "data_Mbit_per_day": { "value": 4000, "unit": "Mbit/day", "source": "Game estimate", "isGameEstimate": true },
+      "cost_M": { "value": 60, "unit": "$M (FY2019)", "source": "Game estimate; candidate sources: NASA instrument cost models", "isGameEstimate": true }
+    },
+    "maven-science-payload": {
+      "name": "MAVEN science payload (8 instruments)",
+      "mass_kg": { "value": 65, "unit": "kg", "source": "NASA Science: MAVEN (65 kg science payload)", "url": "https://science.nasa.gov/mission/maven/", "isGameEstimate": false },
+      "power_W": { "value": 120, "unit": "W", "source": "Game estimate; to be sourced", "isGameEstimate": true },
+      "data_Mbit_per_day": { "value": 1500, "unit": "Mbit/day", "source": "Game estimate; to be sourced", "isGameEstimate": true },
+      "cost_M": { "value": 80, "unit": "$M (FY2019)", "source": "Game estimate; to be sourced", "isGameEstimate": true }
+    }
+  },
+  "engines": {
+    "hydrazine-mono": {
+      "name": "Hydrazine monopropellant",
+      "isp_s": { "value": 225, "unit": "s", "source": "Typical textbook range 220–230 s (midpoint); spec: replace with a named flight engine and its published Isp", "isGameEstimate": true },
+      "canCapture": true,
+      "power_W": { "value": 0, "unit": "W", "source": "Game rule: chemical thrusters draw negligible power in the budget", "isGameEstimate": true },
+      "cost_M": { "value": 15, "unit": "$M (FY2019)", "source": "Game estimate", "isGameEstimate": true }
+    },
+    "biprop-mmh-nto": {
+      "name": "Bipropellant (MMH/NTO)",
+      "isp_s": { "value": 315, "unit": "s", "source": "Typical textbook range 310–320 s (midpoint); spec: replace with a named flight engine and its published Isp", "isGameEstimate": true },
+      "canCapture": true,
+      "power_W": { "value": 0, "unit": "W", "source": "Game rule: chemical thrusters draw negligible power in the budget", "isGameEstimate": true },
+      "cost_M": { "value": 25, "unit": "$M (FY2019)", "source": "Game estimate", "isGameEstimate": true }
+    },
+    "ion-xenon": {
+      "name": "Solar-electric ion (xenon)",
+      "isp_s": { "value": 3000, "unit": "s", "source": "Typical textbook value ~3000 s; spec: replace with a named flight engine and its published Isp", "isGameEstimate": true },
+      "canCapture": false,
+      "power_W": { "value": 2500, "unit": "W", "source": "Game estimate of thruster power while thrusting", "isGameEstimate": true },
+      "cost_M": { "value": 40, "unit": "$M (FY2019)", "source": "Game estimate", "isGameEstimate": true }
+    }
+  },
+  "power": {
+    "solarArraySpecificMass_kg_per_m2": { "value": 4, "unit": "kg/m²", "source": "Game estimate", "isGameEstimate": true },
+    "solarArrayCost_M_per_m2": { "value": 1.5, "unit": "$M/m² (FY2019)", "source": "Game estimate", "isGameEstimate": true },
+    "solarDegradation_perYear": { "value": 0.01, "unit": "fraction per year", "source": "Game estimate; not given in spec", "isGameEstimate": true },
+    "rtgPower_W": { "value": 110, "unit": "W at launch", "source": "NASA MMRTG fact sheet (about 110 W at launch)", "url": "https://science.nasa.gov/wp-content/uploads/2024/02/mmrtg-factsheet-updated-5-18-20-1.pdf", "isGameEstimate": false },
+    "rtgMass_kg": { "value": 45, "unit": "kg", "source": "NASA MMRTG fact sheet (about 45 kg)", "url": "https://science.nasa.gov/wp-content/uploads/2024/02/mmrtg-factsheet-updated-5-18-20-1.pdf", "isGameEstimate": false },
+    "rtgCost_M": { "value": 75, "unit": "$M (FY2019)", "source": "Game estimate (spec: RTGs are expensive and scarce)", "isGameEstimate": true },
+    "batterySpecificEnergy_Wh_per_kg": { "value": 100, "unit": "Wh/kg", "source": "Game value for Li-ion, to be sourced (spec: Power)", "isGameEstimate": true },
+    "heaterSunlightFactor": { "value": 2, "unit": "dimensionless", "source": "Game rule: heater power = base × (1 + k·(1 − sunlight fraction)), k = 2", "isGameEstimate": true }
+  },
+  "comms": {
+    "electronicsMass_kg": { "value": 5, "unit": "kg", "source": "Game estimate", "isGameEstimate": true },
+    "dishArealMass_kg_per_m2": { "value": 8, "unit": "kg/m² of dish aperture", "source": "Game estimate", "isGameEstimate": true },
+    "transmitterMass_kg_per_W": { "value": 0.1, "unit": "kg per W RF", "source": "Game estimate", "isGameEstimate": true },
+    "dcToRfEfficiency": { "value": 0.35, "unit": "fraction", "source": "Game estimate (amplifier DC-to-RF efficiency)", "isGameEstimate": true },
+    "baseCost_M": { "value": 10, "unit": "$M (FY2019)", "source": "Game estimate", "isGameEstimate": true },
+    "dishCost_M_per_m2": { "value": 3, "unit": "$M/m² (FY2019)", "source": "Game estimate", "isGameEstimate": true }
+  },
+  "operations": {
+    "opsCost_M_per_year": { "value": 20, "unit": "$M/year (FY2019)", "source": "Game estimate (Phases E–F, counted outside the cap)", "isGameEstimate": true }
+  }
+}

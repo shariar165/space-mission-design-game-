@@ -1,0 +1,112 @@
+// Spec section: "Mass and cost". Mass roll-up with concept growth margin; development cost vs class cap.
+import { GAME_RULES } from './constants';
+import { LAUNCH_VEHICLES, lookup, PARTS } from './data';
+import { makeMeter } from './meter';
+import { tankMass } from './propulsion';
+import { gameEstimate, sourced, type Design, type Meter, type MissionClass, type Sourced } from './types';
+
+/** Caps on development cost (Phases A–D); launch vehicle and operations (Phases E–F) are excluded. */
+export const COST_CAPS: Record<MissionClass, Sourced<number>> = {
+  discovery: sourced(500, '$M (FY2019)', 'NASA Discovery 2019 AO overview (excludes launch vehicle, Phases E–F, contributions)', {
+    url: 'https://discovery.larc.nasa.gov/PDF_FILES/03a_Brown_Overview.pdf',
+  }),
+  newFrontiers: gameEstimate(
+    850,
+    '$M',
+    'Approx. from SpaceNews on the New Frontiers 4 AO; replace with the NASA AO itself (excludes launch and operations)',
+    'https://spacenews.com/?p=64699',
+  ),
+};
+
+export interface ComponentMasses {
+  bus: number;
+  instruments: number[];
+  power: number;
+  comms: number;
+  tanks: number;
+}
+
+/** m_dry = (1 + k_margin)(m_bus + Σ m_instruments + m_power + m_comms + m_tanks), k_margin = 0.30. */
+export function massRollup(c: ComponentMasses): { subtotal_kg: number; growthMargin_kg: number; dry_kg: number } {
+  const subtotal_kg = c.bus + c.instruments.reduce((a, b) => a + b, 0) + c.power + c.comms + c.tanks;
+  const k = GAME_RULES.massGrowthMargin.value;
+  return { subtotal_kg, growthMargin_kg: k * subtotal_kg, dry_kg: (1 + k) * subtotal_kg };
+}
+
+/** m_wet = m_dry + m_prop */
+export function wetMass(dry_kg: number, propellant_kg: number): number {
+  return dry_kg + propellant_kg;
+}
+
+const dishArea = (d_m: number) => Math.PI * (d_m / 2) ** 2;
+
+/** Component masses for a design, read from the parts catalogue. Battery mass comes from power.ts. */
+export function componentMasses(design: Design, batteryMass_kg: number): ComponentMasses {
+  const bus = lookup(PARTS.buses, design.busId, 'bus');
+  const p = PARTS.power;
+  const c = PARTS.comms;
+  const generation =
+    design.power.type === 'solar'
+      ? (design.power.arrayArea_m2 ?? 0) * p.solarArraySpecificMass_kg_per_m2.value
+      : (design.power.rtgCount ?? 0) * p.rtgMass_kg.value;
+  return {
+    bus: bus.mass_kg.value,
+    instruments: design.instrumentIds.map((id) => lookup(PARTS.instruments, id, 'instrument').mass_kg.value),
+    power: generation + batteryMass_kg,
+    comms:
+      c.electronicsMass_kg.value +
+      c.dishArealMass_kg_per_m2.value * dishArea(design.comms.dishDiameter_m) +
+      c.transmitterMass_kg_per_W.value * design.comms.txPower_W,
+    tanks: tankMass(design.propellant_kg),
+  };
+}
+
+/** Development cost (Phases A–D) from part costs. All part costs are game estimates until sourced. */
+export function developmentCost(design: Design): number {
+  const p = PARTS.power;
+  const c = PARTS.comms;
+  const power =
+    design.power.type === 'solar'
+      ? (design.power.arrayArea_m2 ?? 0) * p.solarArrayCost_M_per_m2.value
+      : (design.power.rtgCount ?? 0) * p.rtgCost_M.value;
+  return (
+    lookup(PARTS.buses, design.busId, 'bus').cost_M.value +
+    design.instrumentIds.reduce((s, id) => s + lookup(PARTS.instruments, id, 'instrument').cost_M.value, 0) +
+    lookup(PARTS.engines, design.engineId, 'engine').cost_M.value +
+    power +
+    c.baseCost_M.value +
+    c.dishCost_M_per_m2.value * dishArea(design.comms.dishDiameter_m)
+  );
+}
+
+/** Development cost vs cap. Margin = (cap − development)/cap. */
+export function costMeter(development_M: number, cap_M: number, inputs: Record<string, Sourced<number>>): Meter {
+  return makeMeter(
+    development_M,
+    cap_M,
+    (cap_M - development_M) / cap_M,
+    'Development (Phases A–D) = Σ part costs; margin = (cap − development)/cap. Launch and operations are counted separately.',
+    inputs,
+  );
+}
+
+export function costEvaluation(design: Design): {
+  meter: Meter;
+  development_M: number;
+  launch_M: number;
+  operations_M: number;
+  total_M: number;
+} {
+  const cap = COST_CAPS[design.missionClass ?? 'discovery'];
+  const development_M = developmentCost(design);
+  const lv = lookup(LAUNCH_VEHICLES, design.launchVehicleId, 'launch vehicle');
+  const launch_M = lv.price_M.value;
+  const operations_M = PARTS.operations.opsCost_M_per_year.value * ((design.scienceDays ?? 365) / 365.25);
+  return {
+    meter: costMeter(development_M, cap.value, { cap, launchPrice: lv.price_M, opsPerYear: PARTS.operations.opsCost_M_per_year }),
+    development_M,
+    launch_M,
+    operations_M,
+    total_M: development_M + launch_M + operations_M,
+  };
+}
