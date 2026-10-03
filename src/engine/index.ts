@@ -204,6 +204,7 @@ export function evaluateDesign(design: Design): FullEvaluation {
     passHours: GAME_RULES.dsnPassHours,
   });
   if (!COMMS_CALIBRATED) notes.push('Comms meter is uncalibrated: the reference link is a placeholder.');
+  if (REFERENCE_LINK.groundDish_m.isGameEstimate) notes.push('Data rates scale from the published MRO link; the 34-m station for that figure is inferred.');
   if (produced > downlinked) notes.push('The radio, not the instruments, limits the science return.');
 
   // --- Cost ---
@@ -312,11 +313,11 @@ export interface SimulationResult {
   goal_Gbit: number;
   /**
    * Data sent home: each science day, min(data produced, downlink capacity that day). The capacity comes from
-   * the scaled link budget, so while the comms reference link is a placeholder this is a game estimate.
+   * the scaled link budget anchored to MRO's published link (station pairing inferred).
    */
   downlinked_Gbit: number;
   downlinkCalibrated: boolean;
-  /** The reference-link value the downlink capacity scales from (ⓘ). */
+  /** The reference-link value behind the downlink capacity (ⓘ): its estimated part if any, else the rate. */
   downlinkAnchor: Sourced<number>;
   radioLimited: boolean;
   endMargins: { deltaV: number; power: number; mass: number };
@@ -436,7 +437,7 @@ function run(p: Prepared, rng: () => number, policy: CrisisPolicy): SimulationRe
       ...rest,
       goal_Gbit: p.goal_Gbit,
       downlinkCalibrated: COMMS_CALIBRATED,
-      downlinkAnchor: REFERENCE_LINK.rate_bps,
+      downlinkAnchor: REFERENCE_LINK.groundDish_m.isGameEstimate ? REFERENCE_LINK.groundDish_m : REFERENCE_LINK.rate_bps,
       plannedScienceDays: p.scienceDays,
       earthDistanceAtEnd_m: earthDistance(design.destination, jdLaunch + r.endDay),
       endMargins,

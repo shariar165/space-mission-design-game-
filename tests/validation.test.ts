@@ -9,6 +9,7 @@ import { AU_M, MU_SUN_SI, km, mu, toDays } from '../src/engine/constants';
 import { DESTINATIONS, LAUNCH_VEHICLES, PARTS } from '../src/engine/data';
 import { evaluateDesign, monteCarloMission } from '../src/engine/index';
 import { missionPreset, presetDesign } from '../src/engine/missions';
+import { dataRate, REFERENCE_LINK } from '../src/engine/comms';
 import { propellantBurned } from '../src/engine/propulsion';
 import { bestArrival, bestLaunchWindow, hohmann, lambertTransfer, orbitPeriod } from '../src/engine/trajectory';
 
@@ -189,6 +190,19 @@ describe('MAVEN (Mars, 2013) — NASA Science', () => {
 });
 
 // ---------------------------------------------------------------------------
+describe('Comms reference link — MRO (DESCANSO Article 12)', () => {
+  const C = 'Comms (MRO link)';
+  it('scaled link vs the other MRO rates in the same article (information, not a check)', () => {
+    const mro = { txPower_W: 100, dishDiameter_m: 3, groundDish_m: 34 as const, distance_m: 100e9 };
+    // Anchor: ≥500 kbps at 400 million km. Inverse-square scaling to 100 million km: × (400/100)² = × 16 → 8 Mbps (34 m)
+    const r34 = dataRate(mro);
+    const r70 = dataRate({ ...mro, groundDish_m: 70 });
+    info(C, 'Anchor (by construction)', `${(dataRate({ ...mro, distance_m: REFERENCE_LINK.distance_m.value }) / 1e3).toFixed(0)} kbps at 400 million km`, '≥ 500 kbps at 400 million km', 'station for the anchor inferred (34 m)');
+    info(C, 'Model at 100 million km, 34 m / 70 m', `${(r34 / 1e6).toFixed(1)} / ${(r70 / 1e6).toFixed(1)} Mbps`, '3–4 Mbps "for several months"; "as high as 6 Mbps"', 'published close-range rates are capped by coding and decoder limits (e.g. turbo decoding ≤ 1.6 Mbps), which the game does not model');
+    expect(r34 / 1e6).toBeCloseTo(8, 6);
+  });
+});
+
 describe('OSIRIS-REx (Bennu, 2016) — arXiv 1702.06981', () => {
   const preset = missionPreset('osiris-rex');
   const design = presetDesign('osiris-rex');

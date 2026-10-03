@@ -202,13 +202,18 @@ Pₜ = transmitter power, D\_sc = spacecraft dish diameter, D\_gs = ground dish 
 
 **Reference link.** Pick one mission whose data rate, distance, transmitter power and both antenna sizes are all published, ideally from JPL's DESCANSO telecom summaries. Ground station parameters come from the [DSN Telecommunications Link Design Handbook (810-005)](https://deepspace.jpl.nasa.gov/dsndocs/810-005/), which NASA tells proposers to use when designing spacecraft radios ([DSN mission documents](https://deepspace.jpl.nasa.gov/about/commitments-office/mission-documents/)). Until that anchor is filled in, the Comms meter must show "uncalibrated" in Engineer mode.
 
+**Reference link (decided): MRO.** [DESCANSO Article 12, Mars Reconnaissance Orbiter Telecommunications](https://descanso.jpl.nasa.gov/DPSummary/MRO_092106.pdf) (JPL, 2006) gives MRO's X-band design point: "at a maximum distance from Earth (400 million km) … at least 500 kbps", with a 100 W X-band TWTA and a 3 m high-gain antenna.
+- The article does not name the ground station for that figure. **34 m is inferred**: MRO schedules two 34-m stations daily, and a 34-m link budget built from the 810-005 gains is consistent with 500 kbps. That one anchor value stays a labelled game estimate, and the Data meter's limit badge points to it.
+- The ground term is the ratio of the 810-005 X-band receive gains, not (D_gs/D_gs,ref)²: 74.55 dBi for the 70 m (DSS-14, module 101 Rev. I, Table 2) against 68.24 dBi for the 34 m BWG (DSS-24, module 104 Rev. Q, Table 6). That is 6.31 dB, or 4.28×, close to the (70/34)² = 4.24 the diameter rule gives.
+- **Known limit:** inverse-square scaling of the 400-million-km anchor predicts 8 Mbps at 100 million km on a 34 m. MRO's article cites 3–4 Mbps there ("as high as 6 Mbps"), because its coding and ground decoders cap the rate (turbo decoding ≤ 1.6 Mbps). The game does not model those caps, so close-range rates are optimistic. The validation table shows this as an info row.
+
 **Data per day.** Volume = R × DSN pass length. Default one 8-hour pass per day; a 70 m pass costs more but gives about (70/34)² ≈ 4.2× the rate.
 
 **Light delay.** t = d / c. For Mars this ranges from about 3.0 to 22.3 minutes (54.6 to 401.4 million km, [Mars Fact Sheet](https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html)). This is shown on the Flight screen and is why crisis decisions cannot be made in real time.
 
 **Science return link.** Science data produced per day is capped by data downlinked per day. The Debrief must say when the radio, not the instruments, limited the science.
 
-**Downlink caps science (decided).** The science **goal** is Σ instrument data/day × planned science days. It does not depend on the radio. The data actually **sent home** does: on each science day the engine adds min(data produced, downlink capacity that day), with the capacity taken from the scaled link budget at that day's Earth distance. The Science return score (downlinked ÷ goal) and the "radio-limited" note therefore rest on the comms reference link. That link is a placeholder, so the Debrief marks the downlink figures and the Science return row "game estimate". The Data meter's limit carries the same badge, until a published reference link is chosen.
+**Downlink caps science (decided).** The science **goal** is Σ instrument data/day × planned science days. It does not depend on the radio. The data actually **sent home** does: on each science day the engine adds min(data produced, downlink capacity that day), with the capacity taken from the scaled link budget at that day's Earth distance. The Science return score (downlinked ÷ goal) and the "radio-limited" note therefore rest on the comms reference link. That link is now MRO's published design point, but its ground station is inferred, so the Debrief still marks the downlink figures and the Science return row "rests on an estimate", and the Data meter's limit carries the same badge. The badges go when a published link that names its station replaces the anchor.
 
 ## Mass and cost
 
@@ -465,3 +470,4 @@ The UI (`src/ui/`, React + Vite) follows the Claude Design mockups for Build Bay
 | 15 | Oct 3, 2026 | **Downlink caps daily science** through the uncalibrated link budget, so the science return figures carry a "game estimate" badge. |
 | 16 | Oct 3, 2026 | **Risk limit 20%** stays a labelled game estimate (no numeric NASA source found), shown on the meter. **Reliability → Risk** swap recorded with its reasons. |
 | 17 | Oct 3, 2026 | **Monte Carlo is seeded** (default 2013, shown on screen) for reproducible demos. |
+| 18 | Oct 4, 2026 | **Comms anchored to MRO** (DESCANSO Article 12: ≥500 kbps at 400 million km, 100 W, 3 m HGA). The ground term uses DSN 810-005 X-band gains (70 m 74.55 dBi, 34 m 68.24 dBi). The 34 m pairing is inferred and stays labelled. Close-range rates are optimistic (no coding or decoder caps). |

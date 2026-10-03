@@ -177,7 +177,7 @@ export function Debrief({ design, ev, sim, missionName, engineer, seed, seedFrom
                   {hl ? 'This is what stands between you and the next star. ' : ''}
                   {categoryNote(b.category, sim, ev)}
                 </div>
-                {b.category === 'science' && !sim.downlinkCalibrated && <DownlinkBadge sim={sim} />}
+                {b.category === 'science' && (!sim.downlinkCalibrated || sim.downlinkAnchor.isGameEstimate) && <DownlinkBadge sim={sim} />}
               </div>
             );
           })}
@@ -308,7 +308,7 @@ function Why({ sim, ev, destName }: { sim: SimulationResult; ev: FullEvaluation;
         <p>
           At {destName} the craft did <b>{f.num(sim.scienceDaysAchieved)}</b> of <b>{f.num(sim.plannedScienceDays)}</b> planned science days and sent home <b>{f.gbit(sim.downlinked_Gbit)}</b> of the{' '}
           <b>{f.gbit(sim.goal_Gbit)}</b> goal.{sim.radioLimited ? ' The radio, not the instruments, limited the science.' : ''}
-          {!sim.downlinkCalibrated && (
+          {(!sim.downlinkCalibrated || sim.downlinkAnchor.isGameEstimate) && (
             <>
               {' '}
               <DownlinkBadge sim={sim} />
@@ -320,12 +320,12 @@ function Why({ sim, ev, destName }: { sim: SimulationResult; ev: FullEvaluation;
   );
 }
 
-/** The downlink cap comes from the scaled link budget, whose reference link is still a placeholder. */
+/** The downlink cap scales from the reference link; shown while any part of that anchor is an estimate. */
 function DownlinkBadge({ sim }: { sim: SimulationResult }) {
   return (
     <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center', verticalAlign: 'middle' }}>
-      <span className="badge est">DOWNLINK IS A GAME ESTIMATE</span>
-      <SourceInfo s={sim.downlinkAnchor} title="Comms reference link (placeholder)" />
+      <span className="badge est">{sim.downlinkCalibrated ? 'DOWNLINK RESTS ON AN ESTIMATE' : 'DOWNLINK IS A GAME ESTIMATE'}</span>
+      <SourceInfo s={sim.downlinkAnchor} title="Comms reference link" />
     </span>
   );
 }

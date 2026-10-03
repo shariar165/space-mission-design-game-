@@ -261,13 +261,14 @@ describe('limits that are game estimates are labelled at the meter', () => {
     expect(ev.meters.cost.limitSource?.value).toBe(500);
     expect(ev.meters.cost.limitSource?.isGameEstimate).toBe(false);
   });
-  it('data limit rests on the placeholder comms reference link', () => {
-    expect(ev.meters.data.calibrated).toBe(false);
+  it('data limit rests on the published MRO link, whose station pairing is inferred (labelled)', () => {
+    expect(ev.meters.data.calibrated).toBe(true);
+    expect(ev.meters.data.limitSource?.value).toBe(34);
     expect(ev.meters.data.limitSource?.isGameEstimate).toBe(true);
   });
 });
 
-describe('science return depends on the (uncalibrated) downlink', () => {
+describe('science return depends on the downlink', () => {
   it('each day sends min(produced, capacity): a radio far too small caps the science', () => {
     // A 0.1 m dish has (0.1 / 2)² = 1/400 of the 2 m dish gain, so capacity falls ~400× and the radio,
     // not the instruments, limits the science.
@@ -276,7 +277,7 @@ describe('science return depends on the (uncalibrated) downlink', () => {
     expect(r.completed).toBe(true);
     expect(r.radioLimited).toBe(true);
     expect(r.downlinked_Gbit).toBeLessThan(r.goal_Gbit);
-    expect(r.downlinkCalibrated).toBe(false);
+    expect(r.downlinkCalibrated).toBe(true);
     expect(r.downlinkAnchor.isGameEstimate).toBe(true);
   });
 });

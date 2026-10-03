@@ -8,7 +8,7 @@ import launchVehicles from '../src/data/launchVehicles.json';
 import missions from '../src/data/missions.json';
 import orbitalElements from '../src/data/orbitalElements.json';
 import parts from '../src/data/parts.json';
-import { REFERENCE_LINK } from '../src/engine/comms';
+import { DSN_X_BAND_GAIN_DBI, REFERENCE_LINK } from '../src/engine/comms';
 import { CONSTANTS } from '../src/engine/constants';
 import { COST_CAPS } from '../src/engine/massCost';
 import { ETA_SYS } from '../src/engine/power';
@@ -63,6 +63,7 @@ const DATA_FILES: Record<string, unknown> = {
 const ENGINE_VALUES: Record<string, Record<string, Sourced<unknown>>> = {
   'constants.ts': CONSTANTS,
   'comms.ts REFERENCE_LINK': REFERENCE_LINK,
+  'comms.ts DSN_X_BAND_GAIN_DBI': { '34m': DSN_X_BAND_GAIN_DBI[34], '70m': DSN_X_BAND_GAIN_DBI[70] },
   'massCost.ts COST_CAPS': COST_CAPS,
   'power.ts': { ETA_SYS },
   'risk.ts': { ...BASE_RISK, MARGIN_RISK_FACTOR_AT_ZERO, ACCEPTABLE_MISSION_RISK },
@@ -94,7 +95,7 @@ describe('data audit', () => {
 const OPEN_ITEMS = [
   'Export 6–8 payload-vs-C3 points per vehicle (C3 −2 to 40 km²/s²) from the NASA LSP Performance Query (elvperf.ksc.nasa.gov) into launchVehicles.json. The site only works interactively, so this needs a person.',
   'Launch price per vehicle, from NASA Announcement of Opportunity documents (not news articles).',
-  'Comms reference link: choose one mission with published data rate, distance, transmitter power and both antenna sizes (JPL DESCANSO telecom summaries); DSN parameters from 810-005. Until then the Comms meter is "uncalibrated".',
+  'Comms reference link: MRO (DESCANSO Article 12) gives rate, distance, transmitter power and HGA size, but not the ground station for its 500 kbps figure (34 m inferred). Find a published link that names the station.',
   'Replace each engine Isp with a named flight engine and its published Isp.',
   'LRO (Moon, 2009): wet mass, dry mass, lunar orbit insertion Δv, power and data rate from the NASA LRO mission page.',
   'Copy Venus, Moon and Jupiter values from each body\'s NASA fact sheet; Bennu values from the JPL Small-Body Database (SBDB already gives a = 1.12639 au, period 436.65 d, diameter 0.48444 km, GM 4.8904e-9 km³/s²).',

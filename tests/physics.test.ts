@@ -493,18 +493,45 @@ describe('comms', () => {
   const same = {
     txPower_W: ref.txPower_W.value,
     dishDiameter_m: ref.dishDiameter_m.value,
-    groundDish_m: ref.groundDish_m.value,
+    groundDish_m: ref.groundDish_m.value as 34 | 70,
     distance_m: ref.distance_m.value,
   };
+
+  it('the reference link is MRO (DESCANSO Article 12): ≥500 kbps at 400 million km, 100 W, 3 m HGA', () => {
+    expect(ref.rate_bps.value).toBe(500_000);
+    expect(ref.distance_m.value).toBe(400e9);
+    expect(ref.txPower_W.value).toBe(100);
+    expect(ref.dishDiameter_m.value).toBe(3);
+    for (const k of ['rate_bps', 'distance_m', 'txPower_W', 'dishDiameter_m'] as const) {
+      expect(ref[k].isGameEstimate, k).toBe(false);
+      expect(ref[k].url).toMatch(/descanso\.jpl\.nasa\.gov/);
+    }
+    // The article does not name the station for the 500 kbps figure; 34 m is inferred, so it stays labelled.
+    expect(ref.groundDish_m.value).toBe(34);
+    expect(ref.groundDish_m.isGameEstimate).toBe(true);
+  });
 
   it('reproduces the reference rate with the reference link', () => {
     expect(CM.dataRate(same)).toBeCloseTo(ref.rate_bps.value, 6);
   });
 
-  it('70 m vs 34 m ground dish gives (70/34)² ≈ 4.24× the rate', () => {
+  it('70 m vs 34 m uses the DSN 810-005 X-band gains: 74.55 − 68.24 = 6.31 dB → 4.276×', () => {
+    // 810-005 101 Rev I Table 2: DSS-14 X-only 74.55 dBi (8420 MHz); 104 Rev Q Table 6: DSS-24 X-only 68.24 dBi (8425 MHz)
+    // 10^(6.31/10) = 4.2756 (close to the (70/34)² = 4.24 diameter rule the spec used before)
+    expect(CM.DSN_X_BAND_GAIN_DBI[70].value).toBe(74.55);
+    expect(CM.DSN_X_BAND_GAIN_DBI[34].value).toBe(68.24);
+    expect(CM.DSN_X_BAND_GAIN_DBI[70].isGameEstimate).toBe(false);
     const r34 = CM.dataRate({ ...same, groundDish_m: 34 });
     const r70 = CM.dataRate({ ...same, groundDish_m: 70 });
-    expect(r70 / r34).toBeCloseTo(4.2388, 4);
+    expect(r70 / r34).toBeCloseTo(4.2756, 4);
+  });
+
+  it('a 2 m, 100 W craft at 1 AU to a 34 m dish', () => {
+    // R = 500 kbps × (100/100) × (2/3)² × (400e9 / 1.495978707e11)² = 500e3 × 0.44444 × 7.1494 = 1.5888 Mbps
+    const r = CM.dataRate({ txPower_W: 100, dishDiameter_m: 2, groundDish_m: 34, distance_m: 1.495978707e11 });
+    expect(r).toBeCloseTo(1_588_754, -1);
+    // same to a 70 m dish: × 4.2756 = 6.7929 Mbps
+    expect(CM.dataRate({ txPower_W: 100, dishDiameter_m: 2, groundDish_m: 70, distance_m: 1.495978707e11 })).toBeCloseTo(6_792_922, -1);
   });
 
   it('rate ∝ P_t, ∝ D_sc², ∝ 1/d²', () => {
@@ -525,11 +552,12 @@ describe('comms', () => {
     expect(CM.lightDelay_s(401.4e9) / 60).toBeCloseTo(22.32, 2);
   });
 
-  it('the reference link is a placeholder, so the meter reports uncalibrated', () => {
-    expect(CM.COMMS_CALIBRATED).toBe(false);
-    for (const v of Object.values(ref)) expect(v.isGameEstimate).toBe(true);
+  it('one anchor value is inferred, so the meter is calibrated but still shows that estimate', () => {
+    expect(CM.COMMS_CALIBRATED).toBe(true);
     const m = CM.dataMeter(1000e6, 500e6, {});
-    expect(m.calibrated).toBe(false);
+    expect(m.calibrated).toBe(true);
+    // the meter's limit badge points at the inferred station pairing
+    expect(m.limitSource).toBe(ref.groundDish_m);
     expect(m.margin).toBeCloseTo(-0.5, 12);
     expect(m.status).toBe('over');
   });

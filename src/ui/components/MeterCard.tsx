@@ -41,7 +41,7 @@ export function MeterCard({ k, m, ev, design, engineer }: { k: MeterKey; m: Mete
       <div className="meter-say">{v.say}</div>
       {(m.calibrated === false || m.limitSource?.isGameEstimate) && (
         <span className="badge est" title={m.limitSource?.source}>
-          {m.calibrated === false ? 'UNCALIBRATED · GAME ESTIMATE' : 'LIMIT IS A GAME ESTIMATE'}
+          {m.calibrated === false ? 'UNCALIBRATED · GAME ESTIMATE' : 'LIMIT RESTS ON A GAME ESTIMATE'}
         </span>
       )}
       {engineer && (

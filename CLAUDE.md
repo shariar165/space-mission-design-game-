@@ -97,6 +97,6 @@ There is no lint step.
 
 These show up as validation caveats:
 - The Atlas V payload-vs-C3 curves in `launchVehicles.json` are **placeholders**. NASA's LSP site can't be scraped, so a person must export the points. Launch-capacity validation rows are therefore not real evidence.
-- The comms reference link is a placeholder, so the Data meter reports `calibrated: false`.
+- The comms link is anchored to MRO's published design point (DESCANSO Article 12), and the DSN gains come from 810-005. But the ground station behind MRO's 500 kbps figure is inferred (34 m), so the Data meter and the Debrief downlink still show a "rests on an estimate" badge.
 
 See `TODO_DATA.md` and the README's "Known model limits".
