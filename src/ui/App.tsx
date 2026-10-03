@@ -77,7 +77,6 @@ export function App() {
           sim={sim}
           missionName={missionName}
           engineer={mode === 'engineer'}
-          seed={seed}
           onRetry={() => {
             setSeed(newSeed());
             setSim(undefined);

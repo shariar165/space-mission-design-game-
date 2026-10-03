@@ -74,6 +74,11 @@ export interface Meter {
   inputs: Record<string, Sourced<number>>;
   /** False when the model behind the meter has no real anchor yet (Comms). */
   calibrated?: boolean;
+  /**
+   * Where the limit comes from, when it is a single Sourced value or rests on one (cost cap, acceptable
+   * risk, the comms reference link). The UI shows its ⓘ and a "game estimate" badge next to the limit.
+   */
+  limitSource?: Sourced<number>;
 }
 
 export interface Evaluation {

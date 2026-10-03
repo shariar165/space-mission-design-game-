@@ -2,7 +2,7 @@
 // Hand calculations are in the comments, as in physics.test.ts.
 import { describe, expect, it } from 'vitest';
 import { compareWithRealMission, designDelta, METER_KEYS, REAL_MISSION_FOR } from '../src/engine/compare';
-import { evaluateDesign, previewCrisis, simulateMission } from '../src/engine/index';
+import { evaluateDesign, MONTE_CARLO_SEED, monteCarloMission, previewCrisis, simulateMission } from '../src/engine/index';
 import { presetDesign } from '../src/engine/missions';
 import { MAX_SCORE, nextStar, nextStarHint, SCORE_GRADES, scoreGrade } from '../src/engine/scoring';
 import { bestLaunchWindow, lambertTransfer } from '../src/engine/trajectory';
@@ -231,12 +231,11 @@ describe('score grades and the next-star category', () => {
 
 describe('bestLaunchWindow', () => {
   it('finds the 2013 Mars window that MAVEN launched in', () => {
-    // Hohmann phase rule: Mars must lead Earth by ~44°, recurring every ~780 days. Searching from
-    // June 2013 must land within a month of MAVEN's Nov 18, 2013 launch (NASA Science: MAVEN), and must
-    // be at least as cheap (C3) as MAVEN's real dates, which Lambert gives as 12.18 km²/s².
+    // Searching from June 2013 must land inside MAVEN's published 20-day launch period,
+    // Nov 18 – Dec 7, 2013 (NASA: The 2013 MAVEN Mission To Mars), and must be no more expensive (C3)
+    // than MAVEN's real dates.
     const w = bestLaunchWindow('mars', '2013-06-01');
-    const days = (Date.parse(w.launchDate) - Date.parse('2013-11-18')) / 86_400_000;
-    expect(Math.abs(days)).toBeLessThanOrEqual(30);
+    expect(w.launchDate >= '2013-11-18' && w.launchDate <= '2013-12-07').toBe(true);
     expect(w.c3_km2s2).toBeLessThanOrEqual(lambertTransfer('mars', '2013-11-18', '2014-09-21').c3_km2s2);
     expect(w.flightDays).toBeLessThan(518); // inside the < 2 t_Hohmann cap
   });
@@ -250,5 +249,43 @@ describe('bestLaunchWindow', () => {
   it('Jupiter direct needs C3 far above what the Atlas V curve covers (the "very hard" lesson)', () => {
     // Hohmann alone needs C3 ≈ 77 km²/s² (spec: Special cases)
     expect(bestLaunchWindow('jupiter', '2026-10-03').c3_km2s2).toBeGreaterThan(70);
+  });
+});
+
+describe('limits that are game estimates are labelled at the meter', () => {
+  it('risk limit is the 20% acceptable mission risk, a game estimate', () => {
+    expect(ev.meters.risk.limitSource?.value).toBe(0.2);
+    expect(ev.meters.risk.limitSource?.isGameEstimate).toBe(true);
+  });
+  it('cost limit is the NASA Discovery cap ($500M FY2019), not an estimate', () => {
+    expect(ev.meters.cost.limitSource?.value).toBe(500);
+    expect(ev.meters.cost.limitSource?.isGameEstimate).toBe(false);
+  });
+  it('data limit rests on the placeholder comms reference link', () => {
+    expect(ev.meters.data.calibrated).toBe(false);
+    expect(ev.meters.data.limitSource?.isGameEstimate).toBe(true);
+  });
+});
+
+describe('science return depends on the (uncalibrated) downlink', () => {
+  it('each day sends min(produced, capacity): a radio far too small caps the science', () => {
+    // A 0.1 m dish has (0.1 / 2)² = 1/400 of the 2 m dish gain, so capacity falls ~400× and the radio,
+    // not the instruments, limits the science.
+    const tiny = { ...maven, comms: { ...maven.comms, dishDiameter_m: 0.1 } };
+    const r = simulateMission(tiny, { rng: () => 0.999999 });
+    expect(r.completed).toBe(true);
+    expect(r.radioLimited).toBe(true);
+    expect(r.downlinked_Gbit).toBeLessThan(r.goal_Gbit);
+    expect(r.downlinkCalibrated).toBe(false);
+    expect(r.downlinkAnchor.isGameEstimate).toBe(true);
+  });
+});
+
+describe('Monte Carlo is reproducible', () => {
+  it('same design, default seed → identical result, and the seed is reported', () => {
+    const a = monteCarloMission(maven, { runs: 200 });
+    const b = monteCarloMission(maven, { runs: 200 });
+    expect(a).toEqual(b);
+    expect(a.seed).toBe(MONTE_CARLO_SEED);
   });
 });

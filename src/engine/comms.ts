@@ -44,7 +44,7 @@ export function lightDelay_s(distance_m: number): number {
 
 /** Science data produced per day vs data downlinked per day. Margin = (downlinked − produced)/produced. */
 export function dataMeter(produced_bits: number, downlinked_bits: number, inputs: Record<string, Sourced<number>>): Meter {
-  return makeMeter(
+  const m = makeMeter(
     produced_bits,
     downlinked_bits,
     produced_bits > 0 ? (downlinked_bits - produced_bits) / produced_bits : Infinity,
@@ -52,4 +52,7 @@ export function dataMeter(produced_bits: number, downlinked_bits: number, inputs
     inputs,
     COMMS_CALIBRATED,
   );
+  // The downlink limit scales from the reference link's data rate, a placeholder until a real link is chosen.
+  m.limitSource = REFERENCE_LINK.rate_bps;
+  return m;
 }

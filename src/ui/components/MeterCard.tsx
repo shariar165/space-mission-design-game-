@@ -25,9 +25,12 @@ export function MeterCard({ k, m, ev, design, engineer }: { k: MeterKey; m: Mete
         <StatusChip status={m.status} />
       </div>
       <div className="meter-vals">
-        <span className="big">
-          {v.used}
-          <span className="unit"> / {v.limit}</span>
+        <span className="big" style={{ display: 'inline-flex', alignItems: 'baseline', gap: 6, flexWrap: 'wrap' }}>
+          <span>
+            {v.used}
+            <span className="unit"> / {v.limit}</span>
+          </span>
+          {m.limitSource && <SourceInfo s={m.limitSource} title={`${v.title} limit`} />}
         </span>
         <span style={{ fontSize: 12, color: `var(--${m.status === 'ok' ? 'ok' : m.status === 'warning' ? 'warn' : 'bad'})` }}>{signedPct(m.margin)}</span>
       </div>
@@ -36,14 +39,14 @@ export function MeterCard({ k, m, ev, design, engineer }: { k: MeterKey; m: Mete
         <div className="bar-limit" style={{ left: `${g.limitAt * 100}%` }} />
       </div>
       <div className="meter-say">{v.say}</div>
+      {(m.calibrated === false || m.limitSource?.isGameEstimate) && (
+        <span className="badge est" title={m.limitSource?.source}>
+          {m.calibrated === false ? 'UNCALIBRATED · GAME ESTIMATE' : 'LIMIT IS A GAME ESTIMATE'}
+        </span>
+      )}
       {engineer && (
         <div className="eng">
           <div className="eq">{m.equation}</div>
-          {m.calibrated === false && (
-            <span className="badge est" title="The reference link is a placeholder until a published link is chosen">
-              UNCALIBRATED
-            </span>
-          )}
           <div className="inputs">
             {inputs.map(([key, s]) => (
               <Row key={key} name={label(key)} value={sourcedValue(s)}>

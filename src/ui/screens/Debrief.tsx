@@ -41,12 +41,11 @@ interface Props {
   sim: SimulationResult;
   missionName: string;
   engineer: boolean;
-  seed: number;
   onRetry: () => void;
   onEngineer: () => void;
 }
 
-export function Debrief({ design, ev, sim, missionName, engineer, seed, onRetry, onEngineer }: Props) {
+export function Debrief({ design, ev, sim, missionName, engineer, onRetry, onEngineer }: Props) {
   const dest = DESTINATIONS[design.destination];
   const cmp = useMemo(() => compareWithRealMission(design, ev), [design, ev]);
   const orbiter = dest.missionType === 'orbiter';
@@ -165,6 +164,7 @@ export function Debrief({ design, ev, sim, missionName, engineer, seed, onRetry,
                   {hl ? 'This is what stands between you and the next star. ' : ''}
                   {categoryNote(b.category, sim, ev)}
                 </div>
+                {b.category === 'science' && !sim.downlinkCalibrated && <DownlinkBadge sim={sim} />}
               </div>
             );
           })}
@@ -244,7 +244,7 @@ export function Debrief({ design, ev, sim, missionName, engineer, seed, onRetry,
               <div className="muted">There is no sourced NASA preset for {dest.name} yet, so the game does not compare your design with a real mission here.</div>
             </section>
           )}
-          {engineer && <MonteCarlo design={design} seed={seed} />}
+          {engineer && <MonteCarlo design={design} />}
         </div>
       </div>
     </div>
@@ -295,9 +295,25 @@ function Why({ sim, ev, destName }: { sim: SimulationResult; ev: FullEvaluation;
         <p>
           At {destName} the craft did <b>{f.num(sim.scienceDaysAchieved)}</b> of <b>{f.num(sim.plannedScienceDays)}</b> planned science days and sent home <b>{f.gbit(sim.downlinked_Gbit)}</b> of the{' '}
           <b>{f.gbit(sim.goal_Gbit)}</b> goal.{sim.radioLimited ? ' The radio, not the instruments, limited the science.' : ''}
+          {!sim.downlinkCalibrated && (
+            <>
+              {' '}
+              <DownlinkBadge sim={sim} />
+            </>
+          )}
         </p>
       ) : null}
     </>
+  );
+}
+
+/** The downlink cap comes from the scaled link budget, whose reference link is still a placeholder. */
+function DownlinkBadge({ sim }: { sim: SimulationResult }) {
+  return (
+    <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center', verticalAlign: 'middle' }}>
+      <span className="badge est">DOWNLINK IS A GAME ESTIMATE</span>
+      <SourceInfo s={sim.downlinkAnchor} title="Comms reference link (placeholder)" />
+    </span>
   );
 }
 
@@ -373,13 +389,13 @@ function ScoreMath({ sim }: { sim: SimulationResult }) {
   );
 }
 
-function MonteCarlo({ design, seed }: { design: Design; seed: number }) {
+function MonteCarlo({ design }: { design: Design }) {
   const [mc, setMc] = useState<ReturnType<typeof monteCarloMission>>();
   return (
     <section className="card" aria-label="Monte Carlo">
       <div className="card-head">
         <span className="t">Fly it many times</span>
-        <button className="btn-sm" onClick={() => setMc(monteCarloMission(design, { runs: 1000, seed }))}>
+        <button className="btn-sm" onClick={() => setMc(monteCarloMission(design, { runs: 1000 }))}>
           Run Monte Carlo
         </button>
       </div>
@@ -389,7 +405,7 @@ function MonteCarlo({ design, seed }: { design: Design; seed: number }) {
       {mc && (
         <div className="eng">
           <div>
-            {f.num(mc.runs)} flights · success rate <span style={{ color: 'var(--ink)' }}>{f.pct(mc.successRate)}</span> · mean score {f.num(mc.meanScore, 1)}
+            {f.num(mc.runs)} flights · seed {mc.seed} (same result every time) · success rate <span style={{ color: 'var(--ink)' }}>{f.pct(mc.successRate)}</span> · mean score {f.num(mc.meanScore, 1)}
           </div>
           <div>
             stars {mc.starsHistogram.map((n, i) => `${i}★ ${f.num(n)}`).join(' · ')}

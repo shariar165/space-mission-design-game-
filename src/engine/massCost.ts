@@ -115,7 +115,7 @@ export function costEvaluation(design: Design): {
   const launch_M = lv.price_M.value;
   const operations_M = PARTS.operations.opsCost_M_per_year.value * ((design.scienceDays ?? 365) / 365.25);
   return {
-    meter: costMeter(development_M, cap.value, { cap, launchPrice: lv.price_M, opsPerYear: PARTS.operations.opsCost_M_per_year }),
+    meter: { ...costMeter(development_M, cap.value, { cap, launchPrice: lv.price_M, opsPerYear: PARTS.operations.opsCost_M_per_year }), limitSource: cap },
     development_M,
     launch_M,
     operations_M,

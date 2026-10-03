@@ -12,7 +12,7 @@ import { deltaVBudget, deltaVCapability, deltaVMeter, engineBlockers, propellant
 import { makeRng, phaseRisks, riskMeter, type Phase, type PhaseRisk } from './risk';
 import { budgetScore, marginBandScore, missionSuccessScore, nextStar, scienceGoal_Gbit, scienceScore, stars, totalScore, type Category } from './scoring';
 import { arrivalDeltaV, maxFlightDays, orbitChangeDeltaV, sunDistanceExtremes, transferForDesign } from './trajectory';
-import { sourced, type Design, type Evaluation, type Meter } from './types';
+import { sourced, type Design, type Evaluation, type Meter, type Sourced } from './types';
 
 const derived = (value: number, unit: string, equation: string) => sourced(value, unit, `Computed by the engine: ${equation}`);
 
@@ -310,7 +310,14 @@ export interface SimulationResult {
   plannedScienceDays: number;
   /** Science goal = Σ instrument data/day × planned science days. */
   goal_Gbit: number;
+  /**
+   * Data sent home: each science day, min(data produced, downlink capacity that day). The capacity comes from
+   * the scaled link budget, so while the comms reference link is a placeholder this is a game estimate.
+   */
   downlinked_Gbit: number;
+  downlinkCalibrated: boolean;
+  /** The reference-link value the downlink capacity scales from (ⓘ). */
+  downlinkAnchor: Sourced<number>;
   radioLimited: boolean;
   endMargins: { deltaV: number; power: number; mass: number };
   scores: Record<Category, number>;
@@ -396,7 +403,7 @@ function run(p: Prepared, rng: () => number, policy: CrisisPolicy): SimulationRe
 
   type FinishInput = Omit<
     SimulationResult,
-    'scores' | 'score' | 'breakdown' | 'stars' | 'hint' | 'hintCategory' | 'endMargins' | 'goal_Gbit' | 'plannedScienceDays' | 'earthDistanceAtEnd_m'
+    'scores' | 'score' | 'breakdown' | 'stars' | 'hint' | 'hintCategory' | 'endMargins' | 'goal_Gbit' | 'plannedScienceDays' | 'earthDistanceAtEnd_m' | 'downlinkCalibrated' | 'downlinkAnchor'
   > & { dvMargin: number; crisisScoreValue: number };
   const finish = (r: FinishInput): SimulationResult => {
     const endMargins = { deltaV: r.dvMargin, power: endPowerMargin, mass: massMargin };
@@ -428,6 +435,8 @@ function run(p: Prepared, rng: () => number, policy: CrisisPolicy): SimulationRe
     return {
       ...rest,
       goal_Gbit: p.goal_Gbit,
+      downlinkCalibrated: COMMS_CALIBRATED,
+      downlinkAnchor: REFERENCE_LINK.rate_bps,
       plannedScienceDays: p.scienceDays,
       earthDistanceAtEnd_m: earthDistance(design.destination, jdLaunch + r.endDay),
       endMargins,
@@ -561,13 +570,17 @@ export function simulateMission(design: Design, opts: { seed?: number; rng?: () 
   return run(prepare(design), opts.rng ?? makeRng(opts.seed ?? 1), opts.crisisPolicy ?? 'safe');
 }
 
-/** Engineer mode: fly the same design n times (default 1,000) and report the success rate. */
+/** Default Monte Carlo seed: the same design always gives the same 1,000-run result (reproducible demos). */
+export const MONTE_CARLO_SEED = 2013;
+
+/** Engineer mode: fly the same design n times (default 1,000) and report the success rate. Seeded, so reproducible. */
 export function monteCarloMission(
   design: Design,
   opts: { runs?: number; seed?: number; crisisPolicy?: CrisisPolicy } = {},
-): { runs: number; successRate: number; meanScore: number; starsHistogram: number[]; failuresByPhase: Partial<Record<Phase, number>> } {
+): { runs: number; seed: number; successRate: number; meanScore: number; starsHistogram: number[]; failuresByPhase: Partial<Record<Phase, number>> } {
   const p = prepare(design);
-  const rng = makeRng(opts.seed ?? 1);
+  const seed = opts.seed ?? MONTE_CARLO_SEED;
+  const rng = makeRng(seed);
   const n = opts.runs ?? 1000;
   let successes = 0;
   let scoreSum = 0;
@@ -580,7 +593,7 @@ export function monteCarloMission(
     starsHistogram[r.stars]! += 1;
     if (r.failedPhase) failuresByPhase[r.failedPhase] = (failuresByPhase[r.failedPhase] ?? 0) + 1;
   }
-  return { runs: n, successRate: successes / n, meanScore: scoreSum / n, starsHistogram, failuresByPhase };
+  return { runs: n, seed, successRate: successes / n, meanScore: scoreSum / n, starsHistogram, failuresByPhase };
 }
 
 export type { Design, Evaluation, Meter, Sourced } from './types';
