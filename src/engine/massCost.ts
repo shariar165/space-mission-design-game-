@@ -61,22 +61,34 @@ export function componentMasses(design: Design, batteryMass_kg: number): Compone
   };
 }
 
-/** Development cost (Phases A–D) from part costs. All part costs are game estimates until sourced. */
-export function developmentCost(design: Design): number {
+export interface CostBreakdown {
+  bus: number;
+  instruments: { id: string; cost_M: number }[];
+  engine: number;
+  power: number;
+  comms: number;
+}
+
+/** Development cost of each part group ($M). All part costs are game estimates until sourced. */
+export function costBreakdown(design: Design): CostBreakdown {
   const p = PARTS.power;
   const c = PARTS.comms;
-  const power =
-    design.power.type === 'solar'
-      ? (design.power.arrayArea_m2 ?? 0) * p.solarArrayCost_M_per_m2.value
-      : (design.power.rtgCount ?? 0) * p.rtgCost_M.value;
-  return (
-    lookup(PARTS.buses, design.busId, 'bus').cost_M.value +
-    design.instrumentIds.reduce((s, id) => s + lookup(PARTS.instruments, id, 'instrument').cost_M.value, 0) +
-    lookup(PARTS.engines, design.engineId, 'engine').cost_M.value +
-    power +
-    c.baseCost_M.value +
-    c.dishCost_M_per_m2.value * dishArea(design.comms.dishDiameter_m)
-  );
+  return {
+    bus: lookup(PARTS.buses, design.busId, 'bus').cost_M.value,
+    instruments: design.instrumentIds.map((id) => ({ id, cost_M: lookup(PARTS.instruments, id, 'instrument').cost_M.value })),
+    engine: lookup(PARTS.engines, design.engineId, 'engine').cost_M.value,
+    power:
+      design.power.type === 'solar'
+        ? (design.power.arrayArea_m2 ?? 0) * p.solarArrayCost_M_per_m2.value
+        : (design.power.rtgCount ?? 0) * p.rtgCost_M.value,
+    comms: c.baseCost_M.value + c.dishCost_M_per_m2.value * dishArea(design.comms.dishDiameter_m),
+  };
+}
+
+/** Development cost (Phases A–D) = Σ part costs. */
+export function developmentCost(design: Design): number {
+  const b = costBreakdown(design);
+  return b.bus + b.instruments.reduce((s, i) => s + i.cost_M, 0) + b.engine + b.power + b.comms;
 }
 
 /** Development cost vs cap. Margin = (cap − development)/cap. */
@@ -103,7 +115,7 @@ export function costEvaluation(design: Design): {
   const launch_M = lv.price_M.value;
   const operations_M = PARTS.operations.opsCost_M_per_year.value * ((design.scienceDays ?? 365) / 365.25);
   return {
-    meter: costMeter(development_M, cap.value, { cap, launchPrice: lv.price_M, opsPerYear: PARTS.operations.opsCost_M_per_year }),
+    meter: { ...costMeter(development_M, cap.value, { cap, launchPrice: lv.price_M, opsPerYear: PARTS.operations.opsCost_M_per_year }), limitSource: cap },
     development_M,
     launch_M,
     operations_M,

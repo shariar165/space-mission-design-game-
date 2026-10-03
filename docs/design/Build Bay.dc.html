@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0;background:#E4E2DC;font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}a{color:#FF9F57}a:hover{color:#FFB880}.dv-turn{padding:40px 44px 32px;border-bottom:1px solid rgba(0,0,0,.08);scroll-margin-top:16px}.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 20px}.dv-tid{font:600 10px ui-monospace,Menlo,monospace;padding:3px 7px;background:#1a1a1a;color:#fff;border-radius:4px;text-decoration:none}.dv-tname{font:600 13px/1.2 system-ui,sans-serif;color:#1a1a1a}.dv-opts{display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start}.dv-opt{flex:none;display:flex;flex-direction:column;gap:9px;scroll-margin-top:16px}.dv-oid{font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:5px;text-decoration:none}.dv-olabel{display:flex;align-items:baseline;gap:8px;font:400 11px/1.3 system-ui,sans-serif;color:rgba(0,0,0,.55)}.dv-card{max-width:100%;background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.06);overflow:hidden}.dv-opt:target .dv-oid{background:#2a78d6;color:#fff}.dv-next{margin:22px 0 0;font:12px/1.5 system-ui,sans-serif;color:rgba(0,0,0,.5)}</style>
+</helmet>
+<section class="dv-turn" id="t1">
+<div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">Build Bay — Mission Drafting Table</span></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:8px 32px;max-width:1440px;margin:0 0 28px;font:12.5px/1.5 Inter,system-ui,sans-serif;color:rgba(0,0,0,.62)">
+<div><b style="color:#1a1a1a">State shown.</b> MAVEN-class Mars orbiter, Atlas V 401. Launch is blocked: cost is over cap, Δv margin is thin. The player is dragging a larger solar array onto the left power bay.</div>
+<div><b style="color:#1a1a1a">Status rule.</b> Margin ≥ 10% = OK · 0–10% = WARNING · &lt; 0 = OVER LIMIT. Always icon + colour + label; over-limit bars are also hatched.</div>
+<div><b style="color:#1a1a1a">Numbers.</b> All placeholder values, internally consistent (Δv from Tsiolkovsky, power from 1/r²). Data values stay in Latin digits + SI units in Bangla, prose uses Bangla numerals.</div>
+<div><b style="color:#1a1a1a">Interactive.</b> In <a class="dv-oid" href="#1a">1a</a> the Cadet / Engineer toggle works, and the ⓘ next to Power opens the Source popover.</div>
+</div>
+<div class="dv-opts">
+
+<div class="dv-opt" id="1a"><div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>Desktop 1440 · Cadet mode (toggle to Engineer) · Source popover open</div>
+<div class="dv-card" style="width:1440px;border:none">
+<div data-screen-label="Build Bay · Desktop" style="--bg:#0A1430;--panel:#0E1B3B;--panel2:#13244A;--line:rgba(143,186,255,0.14);--line2:rgba(143,186,255,0.28);--grid:rgba(120,170,255,0.10);--grid2:rgba(120,170,255,0.045);--ink:#EAF0FA;--ink2:#A9B8D6;--ink3:#8193B8;--bp:#8EC5FF;--acc:#FF9F57;--accInk:#1C1006;--ok:#3CD3C1;--warn:#F2C744;--bad:#FF6B8A;width:1440px;height:960px;background:var(--bg);color:var(--ink);font-family:Inter,sans-serif;display:grid;grid-template-rows:64px minmax(0,1fr) 108px;position:relative;overflow:hidden">
+
+<header style="display:flex;align-items:center;gap:20px;padding:0 20px;border-bottom:1px solid var(--line);background:var(--panel)">
+<div style="display:flex;align-items:center;gap:12px;min-width:250px">
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="5" style="fill:var(--bp)"></circle><ellipse cx="16" cy="16" rx="14" ry="7" transform="rotate(-25 16 16)" style="stroke:var(--bp)" stroke-width="1.5"></ellipse><rect x="25" y="6" width="5" height="5" transform="rotate(45 27.5 8.5)" style="fill:var(--acc)"></rect></svg>
+<div style="display:flex;flex-direction:column;gap:2px">
+<div style="font:600 15px/1 'Space Grotesk',sans-serif;letter-spacing:-0.01em">Mission Drafting Table</div>
+<div style="font:500 10.5px/1 'JetBrains Mono',monospace;color:var(--ink2);letter-spacing:0.06em">RED ATMOSPHERE-1 · MARS ORBITER</div>
+</div>
+</div>
+<nav style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px">
+<div style="display:flex;align-items:center;gap:8px;height:36px;padding:0 14px 0 6px;border-radius:999px;color:var(--ink2)"><span style="width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:rgba(60,211,193,0.16);color:var(--ok)"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2.5 6.2l2.2 2.2L9.5 3.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><span style="font:500 13px/1 'Space Grotesk',sans-serif">Mission</span></div>
+<span style="width:20px;height:1px;background:var(--line2)"></span>
+<div style="display:flex;align-items:center;gap:8px;height:36px;padding:0 16px 0 6px;border-radius:999px;background:rgba(255,159,87,0.14);border:1px solid rgba(255,159,87,0.45)"><span style="width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:var(--acc);color:var(--accInk);font:600 12px/1 'JetBrains Mono',monospace">2</span><span style="font:600 13px/1 'Space Grotesk',sans-serif">Build</span></div>
+<span style="width:20px;height:1px;background:var(--line2)"></span>
+<div style="display:flex;align-items:center;gap:8px;height:36px;padding:0 14px 0 6px;color:var(--ink3)"><span style="width:24px;height:24px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line2);font:500 12px/1 'JetBrains Mono',monospace">3</span><span style="font:500 13px/1 'Space Grotesk',sans-serif">Window</span></div>
+<span style="width:20px;height:1px;background:var(--line2)"></span>
+<div style="display:flex;align-items:center;gap:8px;height:36px;padding:0 14px 0 6px;color:var(--ink3)"><span style="width:24px;height:24px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line2);font:500 12px/1 'JetBrains Mono',monospace">4</span><span style="font:500 13px/1 'Space Grotesk',sans-serif">Flight</span></div>
+<span style="width:20px;height:1px;background:var(--line2)"></span>
+<div style="display:flex;align-items:center;gap:8px;height:36px;padding:0 14px 0 6px;color:var(--ink3)"><span style="width:24px;height:24px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line2);font:500 12px/1 'JetBrains Mono',monospace">5</span><span style="font:500 13px/1 'Space Grotesk',sans-serif">Debrief</span></div>
+</nav>
+<div style="display:flex;align-items:center;gap:10px;min-width:250px;justify-content:flex-end">
+<div style="display:flex;padding:3px;border-radius:999px;border:1px solid var(--line2)">
+<span style="height:30px;padding:0 12px;border-radius:999px;display:grid;place-items:center;background:var(--panel2);font:600 12px/1 Inter,sans-serif;box-shadow:inset 0 0 0 1px var(--line2)">EN</span>
+<span style="height:30px;padding:0 12px;border-radius:999px;display:grid;place-items:center;color:var(--ink2);font:500 13px/1 'Hind Siliguri',sans-serif">বাংলা</span>
+</div>
+<div style="display:flex;padding:3px;border-radius:999px;border:1px solid var(--line2)">
+<sc-if value="{{ isCadet }}" hint-placeholder-val="{{ true }}">
+<button onClick="{{ setCadet }}" style="height:30px;padding:0 12px;border-radius:999px;border:none;background:var(--panel2);box-shadow:inset 0 0 0 1px var(--line2);color:var(--ink);font:600 12px/1 Inter,sans-serif;cursor:pointer">Cadet</button>
+<button onClick="{{ setEngineer }}" style="height:30px;padding:0 12px;border-radius:999px;border:none;background:transparent;color:var(--ink2);font:500 12px/1 Inter,sans-serif;cursor:pointer">Engineer</button>
+</sc-if>
+<sc-if value="{{ isEngineer }}" hint-placeholder-val="{{ false }}">
+<button onClick="{{ setCadet }}" style="height:30px;padding:0 12px;border-radius:999px;border:none;background:transparent;color:var(--ink2);font:500 12px/1 Inter,sans-serif;cursor:pointer">Cadet</button>
+<button onClick="{{ setEngineer }}" style="height:30px;padding:0 12px;border-radius:999px;border:none;background:var(--panel2);box-shadow:inset 0 0 0 1px var(--line2);color:var(--ink);font:600 12px/1 Inter,sans-serif;cursor:pointer">Engineer</button>
+</sc-if>
+</div>
+<span title="Light / dark" style="width:36px;height:36px;border-radius:50%;border:1px solid var(--line2);display:grid;place-items:center"><svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="none" style="stroke:var(--ink2)" stroke-width="1.5"></circle><path d="M8 2a6 6 0 0 1 0 12z" style="fill:var(--ink2)"></path></svg></span>
+</div>
+</header>
+
+<div style="display:grid;grid-template-columns:320px minmax(0,1fr) 384px;min-height:0">
+
+<aside style="border-right:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;min-height:0">
+<div style="padding:18px 16px 12px;display:flex;flex-direction:column;gap:4px">
+<div style="font:600 17px/1.2 'Space Grotesk',sans-serif">Parts catalog</div>
+<div style="font:13px/1.4 Inter,sans-serif;color:var(--ink2)">Drag a part onto a glowing slot.</div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:0 16px 14px">
+<div style="height:52px;border-radius:12px;border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;color:var(--ink2);font:500 12px/1 Inter,sans-serif"><svg width="16" height="16" viewBox="0 0 16 16"><rect x="3" y="3" width="10" height="10" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"></rect></svg>Bus</div>
+<div style="height:52px;border-radius:12px;border:1px solid var(--acc);background:rgba(255,159,87,0.12);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;color:var(--ink);font:600 12px/1 Inter,sans-serif"><svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="3.5" fill="none" style="stroke:var(--acc)" stroke-width="1.5"></circle><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3 3l1.4 1.4M11.6 11.6L13 13M3 13l1.4-1.4M11.6 4.4L13 3" style="stroke:var(--acc)" stroke-width="1.5" stroke-linecap="round"></path></svg>Power</div>
+<div style="height:52px;border-radius:12px;border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;color:var(--ink2);font:500 12px/1 Inter,sans-serif"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M8 2l6 6-6 6-6-6z" fill="none" stroke="currentColor" stroke-width="1.5"></path></svg>Instruments</div>
+<div style="height:52px;border-radius:12px;border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;color:var(--ink2);font:500 12px/1 Inter,sans-serif"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M2 6q6 6 12 0" fill="none" stroke="currentColor" stroke-width="1.5"></path><path d="M8 9v5" stroke="currentColor" stroke-width="1.5"></path></svg>Comms</div>
+<div style="height:52px;border-radius:12px;border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;color:var(--ink2);font:500 12px/1 Inter,sans-serif"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M5 2h6v6l2 6H3l2-6z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path></svg>Propulsion</div>
+<div style="height:52px;border-radius:12px;border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;color:var(--ink2);font:500 12px/1 Inter,sans-serif;text-align:center"><svg width="16" height="16" viewBox="0 0 16 16"><rect x="5.5" y="1.5" width="5" height="13" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.5"></rect></svg>Launcher</div>
+</div>
+<div style="margin:0 16px 12px;padding:12px;border-radius:12px;background:rgba(142,197,255,0.08);border:1px solid var(--line);display:flex;gap:10px;align-items:flex-start">
+<svg width="18" height="18" viewBox="0 0 18 18" style="flex:none;margin-top:1px"><circle cx="9" cy="9" r="4" fill="none" style="stroke:var(--bp)" stroke-width="1.5"></circle><circle cx="9" cy="9" r="7.5" fill="none" style="stroke:var(--bp)" stroke-width="1" stroke-dasharray="2 2"></circle></svg>
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font:13px/1.45 Inter,sans-serif;color:var(--ink)">Mars gets only <b>43%</b> of the sunlight Earth gets. Bring bigger panels, or a nuclear RTG.</div>
+<sc-if value="{{ isEngineer }}" hint-placeholder-val="{{ false }}"><div style="font:500 12px/1.5 'JetBrains Mono',monospace;color:var(--bp)">P = P₀ · (1 AU / r)²  ·  r = 1.524 AU</div></sc-if>
+</div>
+</div>
+<div style="flex:1;min-height:0;overflow:hidden;padding:0 16px 16px;display:flex;flex-direction:column;gap:10px">
+
+<div style="border:1px solid var(--line2);border-radius:14px;padding:12px;display:grid;grid-template-columns:52px minmax(0,1fr);gap:12px;background:var(--panel2)">
+<div style="width:52px;height:52px;border-radius:10px;background:var(--bg);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:8px 8px;display:grid;place-items:center"><svg width="36" height="20" viewBox="0 0 36 20" fill="none" style="stroke:var(--bp)" stroke-width="1.2"><rect x="1" y="3" width="14" height="14"></rect><rect x="21" y="3" width="14" height="14"></rect><path d="M8 3v14M28 3v14M15 10h6"></path></svg></div>
+<div style="display:flex;flex-direction:column;gap:7px;min-width:0">
+<div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start"><div style="font:600 14px/1.25 'Space Grotesk',sans-serif">Solar array · 12 m²</div><span style="display:inline-flex;align-items:center;gap:4px;font:600 10px/1 'JetBrains Mono',monospace;color:var(--ok);white-space:nowrap;padding-top:2px"><svg width="11" height="11" viewBox="0 0 12 12"><path d="M2.5 6.2l2.2 2.2L9.5 3.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>INSTALLED</span></div>
+<div style="display:flex;flex-wrap:wrap;gap:4px 10px;font:500 12px/1 'JetBrains Mono',monospace"><span>92<span style="color:var(--ink3)"> kg</span></span><span>+2,850<span style="color:var(--ink3)"> W@1AU</span></span><span>$14.0<span style="color:var(--ink3)">M</span></span></div>
+</div>
+</div>
+
+<div style="border:1.5px dashed var(--acc);border-radius:14px;padding:12px;display:grid;grid-template-columns:52px minmax(0,1fr);gap:12px;background:rgba(255,159,87,0.08);box-shadow:0 10px 30px rgba(0,0,0,0.35)">
+<div style="width:52px;height:52px;border-radius:10px;background:var(--bg);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:8px 8px;display:grid;place-items:center"><svg width="40" height="24" viewBox="0 0 40 24" fill="none" style="stroke:var(--acc)" stroke-width="1.2"><rect x="1" y="2" width="16" height="20"></rect><rect x="23" y="2" width="16" height="20"></rect><path d="M9 2v20M31 2v20M1 12h16M23 12h16M17 12h6"></path></svg></div>
+<div style="display:flex;flex-direction:column;gap:7px;min-width:0">
+<div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start"><div style="font:600 14px/1.25 'Space Grotesk',sans-serif">Solar array · 18 m²</div><span style="font:600 10px/1 'JetBrains Mono',monospace;color:var(--acc);white-space:nowrap;padding-top:2px">DRAGGING</span></div>
+<div style="display:flex;flex-wrap:wrap;gap:4px 10px;font:500 12px/1 'JetBrains Mono',monospace"><span>138<span style="color:var(--ink3)"> kg</span></span><span>+4,270<span style="color:var(--ink3)"> W@1AU</span></span><span>$21.0<span style="color:var(--ink3)">M</span></span></div>
+<div style="font:12px/1.4 Inter,sans-serif;color:var(--ink2)">+46 kg, +$7M, fixes nothing on cost.</div>
+</div>
+</div>
+
+<div style="border:1px solid var(--line);border-radius:14px;padding:12px;display:grid;grid-template-columns:52px minmax(0,1fr);gap:12px">
+<div style="width:52px;height:52px;border-radius:10px;background:var(--bg);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:8px 8px;display:grid;place-items:center"><svg width="20" height="34" viewBox="0 0 20 34" fill="none" style="stroke:var(--bp)" stroke-width="1.2"><rect x="5" y="4" width="10" height="26" rx="2"></rect><path d="M1 10h18M1 16h18M1 22h18"></path></svg></div>
+<div style="display:flex;flex-direction:column;gap:7px;min-width:0">
+<div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><div style="font:600 14px/1.25 'Space Grotesk',sans-serif">MMRTG (nuclear)</div><button style="height:30px;padding:0 12px;border-radius:999px;border:1px solid var(--acc);background:transparent;color:var(--acc);font:600 12px/1 Inter,sans-serif">Add</button></div>
+<div style="display:flex;flex-wrap:wrap;gap:4px 10px;font:500 12px/1 'JetBrains Mono',monospace"><span>45<span style="color:var(--ink3)"> kg</span></span><span>+110<span style="color:var(--ink3)"> W any r</span></span><span>$75.0<span style="color:var(--ink3)">M</span></span></div>
+<div style="font:12px/1.4 Inter,sans-serif;color:var(--ink2)">Same power at Mars or Jupiter.</div>
+</div>
+</div>
+
+<div style="border:1px solid var(--line2);border-radius:14px;padding:12px;display:grid;grid-template-columns:52px minmax(0,1fr);gap:12px;background:var(--panel2)">
+<div style="width:52px;height:52px;border-radius:10px;background:var(--bg);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:8px 8px;display:grid;place-items:center"><svg width="34" height="20" viewBox="0 0 34 20" fill="none" style="stroke:var(--bp)" stroke-width="1.2"><rect x="1" y="3" width="28" height="14" rx="2"></rect><rect x="29" y="7" width="4" height="6"></rect><path d="M8 3v14M15 3v14M22 3v14"></path></svg></div>
+<div style="display:flex;flex-direction:column;gap:7px;min-width:0">
+<div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start"><div style="font:600 14px/1.25 'Space Grotesk',sans-serif">Li-ion battery · 66 Ah</div><span style="display:inline-flex;align-items:center;gap:4px;font:600 10px/1 'JetBrains Mono',monospace;color:var(--ok);white-space:nowrap;padding-top:2px"><svg width="11" height="11" viewBox="0 0 12 12"><path d="M2.5 6.2l2.2 2.2L9.5 3.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>INSTALLED</span></div>
+<div style="display:flex;flex-wrap:wrap;gap:4px 10px;font:500 12px/1 'JetBrains Mono',monospace"><span>26<span style="color:var(--ink3)"> kg</span></span><span>1,800<span style="color:var(--ink3)"> Wh</span></span><span>$2.1<span style="color:var(--ink3)">M</span></span></div>
+</div>
+</div>
+
+</div>
+</aside>
+
+<main style="position:relative;min-width:0;overflow:hidden;background:var(--bg);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px),linear-gradient(var(--grid2) 1px,transparent 1px),linear-gradient(90deg,var(--grid2) 1px,transparent 1px);background-size:120px 120px,120px 120px,24px 24px,24px 24px;background-position:-1px -1px">
+<svg viewBox="0 0 736 792" width="100%" height="100%" style="position:absolute;inset:0" fill="none">
+<g transform="translate(0 6)" style="stroke:var(--bp)" stroke-width="1.5" stroke-linejoin="round">
+<path d="M42 345V590M694 345V590" stroke-width="1" stroke-dasharray="2 4" opacity="0.35"></path>
+<path d="M42 590H694M42 582V598M694 582V598" stroke-width="1"></path>
+<rect x="334" y="580" width="68" height="20" style="fill:var(--bg)" stroke="none"></rect>
+<text x="368" y="594" text-anchor="middle" stroke="none" style="fill:var(--bp)" font-family="JetBrains Mono, monospace" font-size="12">11.4 m</text>
+<path d="M293 270 Q368 318 443 270"></path>
+<line x1="293" y1="270" x2="443" y2="270" stroke-dasharray="3 4" stroke-width="1"></line>
+<path d="M293 270 L368 232 L443 270" stroke-width="1"></path>
+<circle cx="368" cy="229" r="4"></circle>
+<line x1="368" y1="294" x2="368" y2="330"></line>
+<rect x="318" y="330" width="100" height="120" rx="3" fill="rgba(142,197,255,0.06)"></rect>
+<line x1="318" y1="352" x2="418" y2="352" stroke-width="1" opacity="0.5"></line>
+<circle cx="343" cy="390" r="18" stroke-dasharray="4 3"></circle>
+<circle cx="393" cy="390" r="18" stroke-dasharray="4 3"></circle>
+<path d="M330 450h12l3 16h-18z M352 450h12l3 16h-18z M374 450h12l3 16h-18z M396 450h12l3 16h-18z" stroke-width="1.25"></path>
+<path d="M298 382h20 M418 382h20"></path>
+<rect x="168" y="345" width="130" height="74" fill="rgba(142,197,255,0.08)"></rect>
+<path d="M194 345v74M220 345v74M246 345v74M272 345v74M168 382h130" stroke-width="0.75" opacity="0.55"></path>
+<g transform="rotate(20 166 382)"><rect x="42" y="345" width="124" height="74" fill="rgba(142,197,255,0.08)"></rect><path d="M67 345v74M92 345v74M117 345v74M142 345v74M42 382h124" stroke-width="0.75" opacity="0.55"></path><path d="M42 382h-3"></path><circle cx="34" cy="382" r="5"></circle></g>
+<rect x="438" y="345" width="130" height="74" fill="rgba(142,197,255,0.08)"></rect>
+<path d="M464 345v74M490 345v74M516 345v74M542 345v74M438 382h130" stroke-width="0.75" opacity="0.55"></path>
+<g transform="rotate(-20 570 382)"><rect x="570" y="345" width="124" height="74" fill="rgba(142,197,255,0.08)"></rect><path d="M595 345v74M620 345v74M645 345v74M670 345v74M570 382h124" stroke-width="0.75" opacity="0.55"></path><path d="M694 382h3"></path><circle cx="702" cy="382" r="5"></circle></g>
+<path d="M418 436 L478 496"></path>
+<rect x="470" y="496" width="50" height="30" rx="3" fill="rgba(142,197,255,0.08)"></rect>
+<rect x="481" y="504" width="14" height="14" rx="2" stroke-width="1"></rect>
+<path d="M318 444 L258 500" stroke-dasharray="4 4" opacity="0.7"></path>
+<rect x="200" y="496" width="58" height="36" rx="6" stroke-dasharray="4 4" opacity="0.8"></rect>
+<path d="M229 507v14M222 514h14"></path>
+<text x="229" y="552" text-anchor="middle" stroke="none" style="fill:var(--ink2)" font-family="JetBrains Mono, monospace" font-size="10" letter-spacing="1">SLOT 3 · EMPTY</text>
+<path d="M432 266L464 245M503 332V345M360 421L350 406M376 421L386 406M368 484V468M520 511H534M700 330L708 313M190 514H200" stroke-width="1"></path>
+<g stroke-width="1"><circle cx="472" cy="240" r="10" style="fill:var(--bg)"></circle><circle cx="503" cy="322" r="10" style="fill:var(--bg)"></circle><circle cx="368" cy="428" r="9" style="fill:var(--bg)"></circle><circle cx="368" cy="494" r="10" style="fill:var(--bg)"></circle><circle cx="544" cy="511" r="10" style="fill:var(--bg)"></circle><circle cx="712" cy="304" r="10" style="fill:var(--bg)"></circle><circle cx="180" cy="514" r="10" style="fill:var(--bg)"></circle></g>
+<g stroke="none" style="fill:var(--bp)" font-family="JetBrains Mono, monospace" font-size="11" font-weight="600" text-anchor="middle"><text x="472" y="244">1</text><text x="503" y="326">2</text><text x="368" y="432">3</text><text x="368" y="498">4</text><text x="544" y="515">5</text><text x="712" y="308">6</text><text x="180" y="518">7</text></g>
+<g style="stroke:var(--acc)" stroke-dasharray="6 5" stroke-width="1.5" fill="rgba(255,159,87,0.08)"><rect x="150" y="334" width="150" height="96" rx="2"></rect><rect x="14" y="334" width="136" height="96" rx="2" transform="rotate(20 150 382)"></rect></g>
+<circle cx="308" cy="382" r="10" style="stroke:var(--acc)" stroke-width="1" opacity="0.6"></circle>
+<circle cx="308" cy="382" r="4" style="fill:var(--acc)" stroke="none"></circle>
+<path d="M142 272 L150 296" style="stroke:var(--acc)" stroke-width="1" stroke-dasharray="3 3"></path>
+<rect x="50" y="244" width="184" height="28" rx="14" style="fill:var(--acc)" stroke="none"></rect>
+<text x="142" y="262" text-anchor="middle" stroke="none" style="fill:var(--accInk)" font-family="JetBrains Mono, monospace" font-size="11" font-weight="600" letter-spacing="0.5">SNAP · POWER BAY L</text>
+</g>
+</svg>
+<div style="position:absolute;top:20px;left:24px;display:flex;flex-direction:column;gap:6px">
+<div style="font:500 11px/1 'JetBrains Mono',monospace;color:var(--ink2);letter-spacing:0.08em">DWG-02 · FRONT ELEVATION · 1:60</div>
+<div style="font:600 24px/1.1 'Space Grotesk',sans-serif;letter-spacing:-0.01em">MAVEN-class Mars orbiter</div>
+<div style="font:13px/1.3 Inter,sans-serif;color:var(--ink2)">13 parts installed · 1 slot open</div>
+</div>
+<div style="position:absolute;top:20px;right:20px;display:flex;gap:8px">
+<div style="display:flex;padding:3px;border-radius:999px;border:1px solid var(--line2);background:var(--panel)">
+<span style="height:30px;padding:0 12px;border-radius:999px;display:grid;place-items:center;background:var(--panel2);box-shadow:inset 0 0 0 1px var(--line2);font:600 12px/1 Inter,sans-serif">Front</span>
+<span style="height:30px;padding:0 12px;border-radius:999px;display:grid;place-items:center;color:var(--ink2);font:500 12px/1 Inter,sans-serif">Top</span>
+<span style="height:30px;padding:0 12px;border-radius:999px;display:grid;place-items:center;color:var(--ink2);font:500 12px/1 Inter,sans-serif">Exploded</span>
+</div>
+<div style="display:flex;border-radius:999px;border:1px solid var(--line2);background:var(--panel)"><span style="width:36px;height:36px;display:grid;place-items:center;font:500 16px/1 'JetBrains Mono',monospace;color:var(--ink2)">−</span><span style="width:36px;height:36px;display:grid;place-items:center;font:500 16px/1 'JetBrains Mono',monospace;color:var(--ink2);border-left:1px solid var(--line)">+</span></div>
+</div>
+<div style="position:absolute;left:20px;right:20px;bottom:18px;display:flex;flex-wrap:wrap;gap:6px 16px;padding:12px 14px;border-radius:12px;background:rgba(14,27,59,0.88);border:1px solid var(--line);font:12px/1.2 Inter,sans-serif;color:var(--ink2)">
+<span style="display:flex;align-items:center;gap:6px"><b style="font:600 11px/1 'JetBrains Mono',monospace;color:var(--bp)">1</b>High-gain antenna <span style="font-family:'JetBrains Mono',monospace;color:var(--ink)">26 kg</span></span>
+<span style="display:flex;align-items:center;gap:6px"><b style="font:600 11px/1 'JetBrains Mono',monospace;color:var(--bp)">2</b>Solar wings ×2 <span style="font-family:'JetBrains Mono',monospace;color:var(--ink)">92 kg</span></span>
+<span style="display:flex;align-items:center;gap:6px"><b style="font:600 11px/1 'JetBrains Mono',monospace;color:var(--bp)">3</b>Propellant tanks <span style="font-family:'JetBrains Mono',monospace;color:var(--ink)">1,190 kg</span></span>
+<span style="display:flex;align-items:center;gap:6px"><b style="font:600 11px/1 'JetBrains Mono',monospace;color:var(--bp)">4</b>Engines ×4</span>
+<span style="display:flex;align-items:center;gap:6px"><b style="font:600 11px/1 'JetBrains Mono',monospace;color:var(--bp)">5</b>UV spectrograph <span style="font-family:'JetBrains Mono',monospace;color:var(--ink)">22 kg</span></span>
+<span style="display:flex;align-items:center;gap:6px"><b style="font:600 11px/1 'JetBrains Mono',monospace;color:var(--bp)">6</b>Magnetometers ×2</span>
+<span style="display:flex;align-items:center;gap:6px"><b style="font:600 11px/1 'JetBrains Mono',monospace;color:var(--bp)">7</b>Open slot</span>
+<span style="margin-left:auto;display:flex;align-items:center;gap:12px;color:var(--ink3)"><span style="display:flex;align-items:center;gap:6px"><span style="width:16px;border-top:1.5px solid var(--bp)"></span>installed</span><span style="display:flex;align-items:center;gap:6px"><span style="width:16px;border-top:1.5px dashed var(--bp)"></span>empty</span><span style="display:flex;align-items:center;gap:6px"><span style="width:16px;border-top:1.5px dashed var(--acc)"></span>snap target</span></span>
+</div>
+</main>
+
+<aside style="position:relative;border-left:1px solid var(--line);background:var(--panel);min-height:0;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;flex-direction:column;gap:8px;padding:2px 2px 4px">
+<div style="display:flex;justify-content:space-between;align-items:baseline"><div style="font:600 17px/1.2 'Space Grotesk',sans-serif">Mission Budget</div><div style="font:500 11px/1 'JetBrains Mono',monospace;color:var(--ink3)">LIVE</div></div>
+<div style="display:flex;gap:6px;flex-wrap:wrap;font:600 11px/1 'JetBrains Mono',monospace">
+<span style="display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 8px;border-radius:6px;color:var(--ok);background:rgba(60,211,193,0.12)"><svg width="12" height="12" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M4 7.2l2 2 4-4.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>4 OK</span>
+<span style="display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 8px;border-radius:6px;color:var(--warn);background:rgba(242,199,68,0.12)"><svg width="12" height="12" viewBox="0 0 14 14"><path d="M7 1.5l6 10.5H1z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path><path d="M7 5.5v3M7 10.3v.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>1 WARNING</span>
+<span style="display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 8px;border-radius:6px;color:var(--bad);background:rgba(255,107,138,0.12)"><svg width="12" height="12" viewBox="0 0 14 14"><path d="M4.6 1h4.8L13 4.6v4.8L9.4 13H4.6L1 9.4V4.6z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path><path d="M5 5l4 4M9 5l-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>1 OVER LIMIT</span>
+</div>
+</div>
+
+<div style="padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--panel2);display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:center;gap:6px"><span style="font:600 14px/1 'Space Grotesk',sans-serif">Mass</span><span style="font:12px/1 Inter,sans-serif;color:var(--ink3)">vs launch capacity</span><span style="width:18px;height:18px;border-radius:50%;border:1px solid var(--line2);color:var(--ink2);font:600 10px/1 'JetBrains Mono',monospace;display:inline-grid;place-items:center">i</span><span style="margin-left:auto;display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 7px;border-radius:6px;font:600 10.5px/1 'JetBrains Mono',monospace;letter-spacing:0.04em;color:var(--ok);background:rgba(60,211,193,0.12);border:1px solid rgba(60,211,193,0.35)"><svg width="12" height="12" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M4 7.2l2 2 4-4.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>OK</span></div>
+<div style="display:flex;justify-content:space-between;align-items:baseline;font-family:'JetBrains Mono',monospace"><span style="font-size:18px;font-weight:500">2,454<span style="font-size:12px;color:var(--ink3)"> / 3,000 kg</span></span><span style="font-size:12px;color:var(--ok)">+18.2%</span></div>
+<div style="position:relative;height:10px;border-radius:5px;background:rgba(143,186,255,0.12)"><div style="position:absolute;left:0;top:0;bottom:0;width:65.4%;border-radius:5px;background:var(--ok)"></div><div style="position:absolute;left:80%;top:-4px;bottom:-4px;width:2px;border-radius:1px;background:var(--ink)"></div></div>
+<div style="font:12.5px/1.4 Inter,sans-serif;color:var(--ink2)">Atlas V 401 can lift 546 kg more.</div>
+<sc-if value="{{ isEngineer }}" hint-placeholder-val="{{ false }}"><div style="padding:10px 12px;border:1px dashed var(--line2);border-radius:10px;font:11.5px/1.65 'JetBrains Mono',monospace;color:var(--ink2)"><div style="color:var(--bp)">m₀ = m_dry + m_prop</div><div>= 1,264 + 1,190 = 2,454 kg</div><div>limit: Atlas V 401 @ C3 12.2 km²/s²</div></div></sc-if>
+</div>
+
+<div style="padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--panel2);display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:center;gap:6px"><span style="font:600 14px/1 'Space Grotesk',sans-serif">Power</span><span style="font:12px/1 Inter,sans-serif;color:var(--ink3)">made vs used</span><button onClick="{{ togglePop }}" style="width:18px;height:18px;padding:0;border-radius:50%;border:1px solid var(--acc);background:rgba(255,159,87,0.15);color:var(--acc);font:600 10px/1 'JetBrains Mono',monospace;display:inline-grid;place-items:center;cursor:pointer">i</button><span style="margin-left:auto;display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 7px;border-radius:6px;font:600 10.5px/1 'JetBrains Mono',monospace;letter-spacing:0.04em;color:var(--ok);background:rgba(60,211,193,0.12);border:1px solid rgba(60,211,193,0.35)"><svg width="12" height="12" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M4 7.2l2 2 4-4.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>OK</span></div>
+<div style="display:flex;justify-content:space-between;align-items:baseline;font-family:'JetBrains Mono',monospace"><span style="font-size:18px;font-weight:500">1,040<span style="font-size:12px;color:var(--ink3)"> / 1,227 W</span></span><span style="font-size:12px;color:var(--ok)">+15.2%</span></div>
+<div style="position:relative;height:10px;border-radius:5px;background:rgba(143,186,255,0.12)"><div style="position:absolute;left:0;top:0;bottom:0;width:67.8%;border-radius:5px;background:var(--ok)"></div><div style="position:absolute;left:80%;top:-4px;bottom:-4px;width:2px;border-radius:1px;background:var(--ink)"></div></div>
+<div style="font:12.5px/1.4 Inter,sans-serif;color:var(--ink2)">At Mars your panels make 43% of their Earth power.</div>
+<sc-if value="{{ isEngineer }}" hint-placeholder-val="{{ false }}"><div style="padding:10px 12px;border:1px dashed var(--line2);border-radius:10px;font:11.5px/1.65 'JetBrains Mono',monospace;color:var(--ink2)"><div style="color:var(--bp)">P = P₀ · (1 AU / r)²</div><div>= 2,850 W × (1 / 1.524)² = 1,227 W</div><div>load: 14 parts, peak science mode</div></div></sc-if>
+</div>
+
+<div style="padding:12px 14px;border:1px solid rgba(242,199,68,0.45);border-radius:14px;background:var(--panel2);display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:center;gap:6px"><span style="font:600 14px/1 'Space Grotesk',sans-serif">Δv</span><span style="font:12px/1 Inter,sans-serif;color:var(--ink3)">have vs need</span><span style="width:18px;height:18px;border-radius:50%;border:1px solid var(--line2);color:var(--ink2);font:600 10px/1 'JetBrains Mono',monospace;display:inline-grid;place-items:center">i</span><span style="margin-left:auto;display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 7px;border-radius:6px;font:600 10.5px/1 'JetBrains Mono',monospace;letter-spacing:0.04em;color:var(--warn);background:rgba(242,199,68,0.12);border:1px solid rgba(242,199,68,0.4)"><svg width="12" height="12" viewBox="0 0 14 14"><path d="M7 1.5l6 10.5H1z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path><path d="M7 5.5v3M7 10.3v.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>WARNING</span></div>
+<div style="display:flex;justify-content:space-between;align-items:baseline;font-family:'JetBrains Mono',monospace"><span style="font-size:18px;font-weight:500">1,440<span style="font-size:12px;color:var(--ink3)"> / 1,496 m/s</span></span><span style="font-size:12px;color:var(--warn)">+3.9%</span></div>
+<div style="position:relative;height:10px;border-radius:5px;background:rgba(143,186,255,0.12)"><div style="position:absolute;left:0;top:0;bottom:0;width:77%;border-radius:5px;background:var(--warn)"></div><div style="position:absolute;left:80%;top:-4px;bottom:-4px;width:2px;border-radius:1px;background:var(--ink)"></div></div>
+<div style="font:12.5px/1.4 Inter,sans-serif;color:var(--ink2)">Just enough fuel to brake into Mars orbit.</div>
+<sc-if value="{{ isEngineer }}" hint-placeholder-val="{{ false }}"><div style="padding:10px 12px;border:1px dashed var(--line2);border-radius:10px;font:11.5px/1.65 'JetBrains Mono',monospace;color:var(--ink2)"><div style="color:var(--bp)">Δv = Isp · g₀ · ln(m₀ / m_f)</div><div>= 230 s × 9.807 × ln(2,454 / 1,264)</div><div>= 1,496 m/s · need MOI 1,236 + TCM 204</div></div></sc-if>
+</div>
+
+<div style="padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--panel2);display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:center;gap:6px"><span style="font:600 14px/1 'Space Grotesk',sans-serif">Data</span><span style="font:12px/1 Inter,sans-serif;color:var(--ink3)">550 kbps downlink</span><span style="width:18px;height:18px;border-radius:50%;border:1px solid var(--line2);color:var(--ink2);font:600 10px/1 'JetBrains Mono',monospace;display:inline-grid;place-items:center">i</span><span style="margin-left:auto;display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 7px;border-radius:6px;font:600 10.5px/1 'JetBrains Mono',monospace;letter-spacing:0.04em;color:var(--ok);background:rgba(60,211,193,0.12);border:1px solid rgba(60,211,193,0.35)"><svg width="12" height="12" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M4 7.2l2 2 4-4.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>OK</span></div>
+<div style="display:flex;justify-content:space-between;align-items:baseline;font-family:'JetBrains Mono',monospace"><span style="font-size:18px;font-weight:500">1.40<span style="font-size:12px;color:var(--ink3)"> / 1.98 GB/day</span></span><span style="font-size:12px;color:var(--ok)">+29.3%</span></div>
+<div style="position:relative;height:10px;border-radius:5px;background:rgba(143,186,255,0.12)"><div style="position:absolute;left:0;top:0;bottom:0;width:56.6%;border-radius:5px;background:var(--ok)"></div><div style="position:absolute;left:80%;top:-4px;bottom:-4px;width:2px;border-radius:1px;background:var(--ink)"></div></div>
+<div style="font:12.5px/1.4 Inter,sans-serif;color:var(--ink2)">Every byte of science gets home, with room to spare.</div>
+<sc-if value="{{ isEngineer }}" hint-placeholder-val="{{ false }}"><div style="padding:10px 12px;border:1px dashed var(--line2);border-radius:10px;font:11.5px/1.65 'JetBrains Mono',monospace;color:var(--ink2)"><div style="color:var(--bp)">D = R × t_pass</div><div>= 550 kbps × 8 h/day = 1.98 GB/day</div><div>2.0 m HGA → 34 m DSN dish, X-band</div></div></sc-if>
+</div>
+
+<div style="padding:12px 14px;border:1.5px solid var(--bad);border-radius:14px;background:var(--panel2);display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:center;gap:6px"><span style="font:600 14px/1 'Space Grotesk',sans-serif">Cost</span><span style="font:12px/1 Inter,sans-serif;color:var(--ink3)">vs mission cap</span><span style="width:18px;height:18px;border-radius:50%;border:1px solid var(--line2);color:var(--ink2);font:600 10px/1 'JetBrains Mono',monospace;display:inline-grid;place-items:center">i</span><span style="margin-left:auto;display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 7px;border-radius:6px;font:600 10.5px/1 'JetBrains Mono',monospace;letter-spacing:0.04em;color:var(--bad);background:rgba(255,107,138,0.12);border:1px solid rgba(255,107,138,0.45)"><svg width="12" height="12" viewBox="0 0 14 14"><path d="M4.6 1h4.8L13 4.6v4.8L9.4 13H4.6L1 9.4V4.6z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path><path d="M5 5l4 4M9 5l-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>OVER LIMIT</span></div>
+<div style="display:flex;justify-content:space-between;align-items:baseline;font-family:'JetBrains Mono',monospace"><span style="font-size:18px;font-weight:500">$698<span style="font-size:12px;color:var(--ink3)"> / $671M</span></span><span style="font-size:12px;color:var(--bad)">−4.0%</span></div>
+<div style="position:relative;height:10px;border-radius:5px;background:rgba(143,186,255,0.12)"><div style="position:absolute;left:0;top:0;bottom:0;width:80%;border-radius:5px 0 0 5px;background:var(--bad)"></div><div style="position:absolute;left:80%;top:0;bottom:0;width:5%;border-radius:0 5px 5px 0;background:repeating-linear-gradient(135deg,var(--bad) 0 3px,rgba(255,107,138,0.25) 3px 6px)"></div><div style="position:absolute;left:80%;top:-4px;bottom:-4px;width:2px;border-radius:1px;background:var(--ink)"></div></div>
+<div style="font:12.5px/1.4 Inter,sans-serif;color:var(--ink)">$27M over the cap. Something has to go.</div>
+<sc-if value="{{ isEngineer }}" hint-placeholder-val="{{ false }}"><div style="padding:10px 12px;border:1px dashed var(--line2);border-radius:10px;font:11.5px/1.65 'JetBrains Mono',monospace;color:var(--ink2)"><div style="color:var(--bp)">C = Σ parts + launch + ops</div><div>= 304 + 184 + 210 = $698M</div><div>cap: Mars Scout-class, FY2026 $</div></div></sc-if>
+</div>
+
+<div style="padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--panel2);display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:center;gap:6px"><span style="font:600 14px/1 'Space Grotesk',sans-serif">Reliability</span><span style="font:12px/1 Inter,sans-serif;color:var(--ink3)">target ≥ 85%</span><span style="width:18px;height:18px;border-radius:50%;border:1px solid var(--line2);color:var(--ink2);font:600 10px/1 'JetBrains Mono',monospace;display:inline-grid;place-items:center">i</span><span style="margin-left:auto;display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 7px;border-radius:6px;font:600 10.5px/1 'JetBrains Mono',monospace;letter-spacing:0.04em;color:var(--ok);background:rgba(60,211,193,0.12);border:1px solid rgba(60,211,193,0.35)"><svg width="12" height="12" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M4 7.2l2 2 4-4.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>OK</span></div>
+<div style="display:flex;justify-content:space-between;align-items:baseline;font-family:'JetBrains Mono',monospace"><span style="font-size:18px;font-weight:500">91.3<span style="font-size:12px;color:var(--ink3)"> %</span></span><span style="font-size:12px;color:var(--ok)">+6.3 pts</span></div>
+<div style="position:relative;height:10px;border-radius:5px;background:rgba(143,186,255,0.12)"><div style="position:absolute;left:0;top:0;bottom:0;width:91.3%;border-radius:5px;background:var(--ok)"></div><div style="position:absolute;left:85%;top:-4px;bottom:-4px;width:2px;border-radius:1px;background:var(--ink)"></div></div>
+<div style="font:12.5px/1.4 Inter,sans-serif;color:var(--ink2)">91 in 100 chance every part survives the trip.</div>
+<sc-if value="{{ isEngineer }}" hint-placeholder-val="{{ false }}"><div style="padding:10px 12px;border:1px dashed var(--line2);border-radius:10px;font:11.5px/1.65 'JetBrains Mono',monospace;color:var(--ink2)"><div style="color:var(--bp)">R = Π Rᵢ  (14 subsystems, series)</div><div>= 0.995 × 0.990 × … × 0.982 = 0.913</div></div></sc-if>
+</div>
+
+<sc-if value="{{ popOpen }}" hint-placeholder-val="{{ true }}">
+<div style="position:absolute;top:286px;left:12px;right:12px;z-index:5;padding:16px;border-radius:16px;background:#0B1735;border:1px solid var(--bp);box-shadow:0 20px 50px rgba(0,0,0,0.55);display:flex;flex-direction:column;gap:10px">
+<div style="position:absolute;top:-7px;left:104px;width:12px;height:12px;background:#0B1735;border-left:1px solid var(--bp);border-top:1px solid var(--bp);transform:rotate(45deg)"></div>
+<div style="display:flex;justify-content:space-between;align-items:center"><span style="font:600 10.5px/1 'JetBrains Mono',monospace;letter-spacing:0.1em;color:var(--bp)">SOURCE</span><button onClick="{{ closePop }}" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--line2);background:transparent;color:var(--ink2);font:14px/1 Inter,sans-serif;cursor:pointer">×</button></div>
+<div style="display:flex;align-items:baseline;gap:8px"><span style="font:500 26px/1 'JetBrains Mono',monospace">1,227</span><span style="font:500 14px/1 'JetBrains Mono',monospace;color:var(--ink2)">W</span><span style="font:13px/1 Inter,sans-serif;color:var(--ink2)">solar power at Mars</span></div>
+<div style="font:13.5px/1.5 Inter,sans-serif;color:var(--ink)">Sunlight spreads out as it travels. At 1.524 AU each panel catches only 43% of the light it gets at Earth.</div>
+<div style="display:flex;flex-direction:column;gap:6px;padding-top:10px;border-top:1px solid var(--line)">
+<div style="display:grid;grid-template-columns:78px 1fr;gap:8px;font:12px/1.4 Inter,sans-serif"><span style="font-family:'JetBrains Mono',monospace;color:var(--ink3)">distance</span><span>NASA NSSDCA · Mars Fact Sheet</span></div>
+<div style="display:grid;grid-template-columns:78px 1fr;gap:8px;font:12px/1.4 Inter,sans-serif"><span style="font-family:'JetBrains Mono',monospace;color:var(--ink3)">sunlight</span><span>NASA TSIS-1 · solar constant 1,361 W/m²</span></div>
+<div style="display:grid;grid-template-columns:78px 1fr;gap:8px;font:12px/1.4 Inter,sans-serif"><span style="font-family:'JetBrains Mono',monospace;color:var(--ink3)">model</span><span>Inverse-square, no dust or ageing</span></div>
+</div>
+</div>
+</sc-if>
+</aside>
+</div>
+
+<footer style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:center;padding:0 20px 0 24px;border-top:1px solid var(--line);background:var(--panel)">
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:center;gap:10px"><span style="font:600 15px/1 'Space Grotesk',sans-serif">Launch blocked</span><span style="font:13px/1 Inter,sans-serif;color:var(--ink2)">Fix 1 issue to continue</span></div>
+<div style="display:flex;align-items:center;gap:10px;font:13.5px/1.35 Inter,sans-serif"><span style="flex:none;display:inline-flex;align-items:center;gap:5px;width:112px;font:600 10.5px/1 'JetBrains Mono',monospace;color:var(--bad)"><svg width="13" height="13" viewBox="0 0 14 14"><path d="M4.6 1h4.8L13 4.6v4.8L9.4 13H4.6L1 9.4V4.6z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path><path d="M5 5l4 4M9 5l-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>OVER LIMIT</span><span><b>Over budget by $27M.</b> <span style="color:var(--ink2)">Drop the 18 m² array, or swap the spectrograph for a cheaper one.</span></span></div>
+<div style="display:flex;align-items:center;gap:10px;font:13.5px/1.35 Inter,sans-serif"><span style="flex:none;display:inline-flex;align-items:center;gap:5px;width:112px;font:600 10.5px/1 'JetBrains Mono',monospace;color:var(--warn)"><svg width="13" height="13" viewBox="0 0 14 14"><path d="M7 1.5l6 10.5H1z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path><path d="M7 5.5v3M7 10.3v.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>WARNING</span><span><b>Δv margin is only 3.9%.</b> <span style="color:var(--ink2)">You can fly, but one bad burn could cost you the orbit.</span></span></div>
+</div>
+<button style="height:68px;padding:0 28px;border-radius:20px;border:2px dashed rgba(255,159,87,0.55);background:rgba(255,159,87,0.08);color:var(--ink);display:flex;align-items:center;gap:14px;cursor:not-allowed">
+<svg width="20" height="20" viewBox="0 0 20 20"><rect x="4" y="9" width="12" height="9" rx="2" fill="none" style="stroke:var(--acc)" stroke-width="1.6"></rect><path d="M7 9V6.5a3 3 0 0 1 6 0V9" fill="none" style="stroke:var(--acc)" stroke-width="1.6"></path></svg>
+<span style="display:flex;flex-direction:column;align-items:flex-start;gap:4px"><span style="font:600 18px/1 'Space Grotesk',sans-serif">Go to Launch Window</span><span style="font:12px/1 Inter,sans-serif;color:var(--ink2)">Locked until cost fits the cap</span></span>
+</button>
+</footer>
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="1b"><div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>Mobile 390 · EN · Cadet</div>
+<div class="dv-card" style="width:390px;border:none">
+<div data-screen-label="Build Bay · Mobile EN" style="--bg:#0A1430;--panel:#0E1B3B;--panel2:#13244A;--line:rgba(143,186,255,0.14);--line2:rgba(143,186,255,0.28);--grid:rgba(120,170,255,0.10);--grid2:rgba(120,170,255,0.045);--ink:#EAF0FA;--ink2:#A9B8D6;--ink3:#8193B8;--bp:#8EC5FF;--acc:#FF9F57;--accInk:#1C1006;--ok:#3CD3C1;--warn:#F2C744;--bad:#FF6B8A;width:390px;background:var(--bg);color:var(--ink);font-family:Inter,sans-serif;display:flex;flex-direction:column">
+<header style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--panel);border-bottom:1px solid var(--line)">
+<svg width="28" height="28" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="5" style="fill:var(--bp)"></circle><ellipse cx="16" cy="16" rx="14" ry="7" transform="rotate(-25 16 16)" style="stroke:var(--bp)" stroke-width="1.5"></ellipse><rect x="25" y="6" width="5" height="5" transform="rotate(45 27.5 8.5)" style="fill:var(--acc)"></rect></svg>
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px"><div style="font:600 18px/1 'Space Grotesk',sans-serif">Build Bay</div><div style="font:500 10px/1 'JetBrains Mono',monospace;color:var(--ink2);letter-spacing:0.06em">RED ATMOSPHERE-1 · MARS</div></div>
+<span style="height:44px;padding:0 12px;border-radius:999px;border:1px solid var(--line2);display:grid;place-items:center;font:600 12px/1 Inter,sans-serif">EN</span>
+<span style="height:44px;padding:0 12px;border-radius:999px;border:1px solid var(--line2);display:grid;place-items:center;font:600 12px/1 Inter,sans-serif">Cadet</span>
+</header>
+<div style="padding:12px 16px 10px;display:grid;grid-template-columns:repeat(5,1fr);gap:4px;background:var(--panel)">
+<div style="display:flex;flex-direction:column;gap:6px"><span style="height:4px;border-radius:2px;background:var(--ok)"></span><span style="font:500 11px/1 Inter,sans-serif;color:var(--ink2)">✓ Mission</span></div>
+<div style="display:flex;flex-direction:column;gap:6px"><span style="height:4px;border-radius:2px;background:var(--acc)"></span><span style="font:600 11px/1 Inter,sans-serif">Build</span></div>
+<div style="display:flex;flex-direction:column;gap:6px"><span style="height:4px;border-radius:2px;background:var(--line2)"></span><span style="font:500 11px/1 Inter,sans-serif;color:var(--ink3)">Window</span></div>
+<div style="display:flex;flex-direction:column;gap:6px"><span style="height:4px;border-radius:2px;background:var(--line2)"></span><span style="font:500 11px/1 Inter,sans-serif;color:var(--ink3)">Flight</span></div>
+<div style="display:flex;flex-direction:column;gap:6px"><span style="height:4px;border-radius:2px;background:var(--line2)"></span><span style="font:500 11px/1 Inter,sans-serif;color:var(--ink3)">Debrief</span></div>
+</div>
+<div style="position:relative;height:280px;background:var(--bg);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px),linear-gradient(var(--grid2) 1px,transparent 1px),linear-gradient(90deg,var(--grid2) 1px,transparent 1px);background-size:80px 80px,80px 80px,16px 16px,16px 16px;border-bottom:1px solid var(--line)">
+<div style="position:absolute;top:12px;left:16px;font:500 10px/1 'JetBrains Mono',monospace;color:var(--ink2);letter-spacing:0.08em">DWG-02 · FRONT · 1:120</div>
+<svg viewBox="20 210 700 360" width="100%" height="100%" style="position:absolute;inset:0" fill="none">
+<g style="stroke:var(--bp)" stroke-width="2" stroke-linejoin="round">
+<path d="M293 270 Q368 318 443 270"></path><line x1="293" y1="270" x2="443" y2="270" stroke-dasharray="3 4" stroke-width="1.2"></line><path d="M293 270 L368 232 L443 270" stroke-width="1.2"></path><circle cx="368" cy="229" r="4"></circle><line x1="368" y1="294" x2="368" y2="330"></line>
+<rect x="318" y="330" width="100" height="120" rx="3" fill="rgba(142,197,255,0.06)"></rect><circle cx="343" cy="390" r="18" stroke-dasharray="4 3"></circle><circle cx="393" cy="390" r="18" stroke-dasharray="4 3"></circle>
+<path d="M330 450h12l3 16h-18z M352 450h12l3 16h-18z M374 450h12l3 16h-18z M396 450h12l3 16h-18z" stroke-width="1.5"></path><path d="M298 382h20 M418 382h20"></path>
+<rect x="168" y="345" width="130" height="74" fill="rgba(142,197,255,0.08)"></rect><path d="M194 345v74M220 345v74M246 345v74M272 345v74M168 382h130" stroke-width="1" opacity="0.55"></path>
+<g transform="rotate(20 166 382)"><rect x="42" y="345" width="124" height="74" fill="rgba(142,197,255,0.08)"></rect><path d="M67 345v74M92 345v74M117 345v74M142 345v74M42 382h124" stroke-width="1" opacity="0.55"></path><circle cx="34" cy="382" r="5"></circle></g>
+<rect x="438" y="345" width="130" height="74" fill="rgba(142,197,255,0.08)"></rect><path d="M464 345v74M490 345v74M516 345v74M542 345v74M438 382h130" stroke-width="1" opacity="0.55"></path>
+<g transform="rotate(-20 570 382)"><rect x="570" y="345" width="124" height="74" fill="rgba(142,197,255,0.08)"></rect><path d="M595 345v74M620 345v74M645 345v74M670 345v74M570 382h124" stroke-width="1" opacity="0.55"></path><circle cx="702" cy="382" r="5"></circle></g>
+<path d="M418 436 L478 496"></path><rect x="470" y="496" width="50" height="30" rx="3" fill="rgba(142,197,255,0.08)"></rect>
+<path d="M318 444 L258 500" style="stroke:var(--acc)" stroke-dasharray="5 4"></path>
+<rect x="196" y="492" width="66" height="44" rx="8" style="stroke:var(--acc)" fill="rgba(255,159,87,0.12)" stroke-dasharray="6 4" stroke-width="2.5"></rect>
+<path d="M229 504v20M219 514h20" style="stroke:var(--acc)" stroke-width="2.5" stroke-linecap="round"></path>
+</g>
+</svg>
+<div style="position:absolute;left:16px;bottom:12px;display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:var(--acc);color:var(--accInk);font:600 11px/1 'JetBrains Mono',monospace">TAP SLOT 3 TO ADD AN INSTRUMENT</div>
+</div>
+
+<div style="padding:16px;display:flex;flex-direction:column;gap:12px">
+<div style="padding:12px 14px;border-radius:14px;border:1.5px solid var(--bad);background:rgba(255,107,138,0.08);display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:center;gap:8px;font:600 15px/1.2 'Space Grotesk',sans-serif"><svg width="16" height="16" viewBox="0 0 14 14" style="color:var(--bad)"><path d="M4.6 1h4.8L13 4.6v4.8L9.4 13H4.6L1 9.4V4.6z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path><path d="M5 5l4 4M9 5l-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>Launch blocked</div>
+<div style="font:13.5px/1.45 Inter,sans-serif"><b>Over budget by $27M.</b> <span style="color:var(--ink2)">Drop the 18 m² array, or swap the spectrograph.</span></div>
+<div style="font:13.5px/1.45 Inter,sans-serif;display:flex;gap:6px"><span style="flex:none;color:var(--warn);font:600 10.5px/1.9 'JetBrains Mono',monospace">⚠ WARNING</span><span style="color:var(--ink2)">Δv margin only 3.9%.</span></div>
+</div>
+
+<div style="display:flex;justify-content:space-between;align-items:baseline;padding-top:4px"><div style="font:600 17px/1 'Space Grotesk',sans-serif">Mission Budget</div><div style="font:500 11px/1 'JetBrains Mono',monospace;color:var(--ink3)">TAP A METER FOR DETAIL</div></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+<div style="padding:12px;border-radius:14px;background:var(--panel2);border:1px solid var(--line);display:flex;flex-direction:column;gap:8px"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font:600 14px/1 'Space Grotesk',sans-serif">Mass</span><span style="display:inline-flex;align-items:center;gap:4px;font:600 10px/1 'JetBrains Mono',monospace;color:var(--ok)"><svg width="12" height="12" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M4 7.2l2 2 4-4.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>OK</span></div><div style="font:500 16px/1 'JetBrains Mono',monospace">2,454<span style="font-size:11px;color:var(--ink3)"> /3,000 kg</span></div><div style="position:relative;height:8px;border-radius:4px;background:rgba(143,186,255,0.12)"><div style="position:absolute;left:0;top:0;bottom:0;width:65.4%;border-radius:4px;background:var(--ok)"></div><div style="position:absolute;left:80%;top:-3px;bottom:-3px;width:2px;background:var(--ink)"></div></div><div style="font:500 11px/1 'JetBrains Mono',monospace;color:var(--ok)">margin +18.2%</div></div>
+<div style="padding:12px;border-radius:14px;background:var(--panel2);border:1px solid var(--line);display:flex;flex-direction:column;gap:8px"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font:600 14px/1 'Space Grotesk',sans-serif">Power</span><span style="display:inline-flex;align-items:center;gap:4px;font:600 10px/1 'JetBrains Mono',monospace;color:var(--ok)"><svg width="12" height="12" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M4 7.2l2 2 4-4.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>OK</span></div><div style="font:500 16px/1 'JetBrains Mono',monospace">1,040<span style="font-size:11px;color:var(--ink3)"> /1,227 W</span></div><div style="position:relative;height:8px;border-radius:4px;background:rgba(143,186,255,0.12)"><div style="position:absolute;left:0;top:0;bottom:0;width:67.8%;border-radius:4px;background:var(--ok)"></div><div style="position:absolute;left:80%;top:-3px;bottom:-3px;width:2px;background:var(--ink)"></div></div><div style="font:500 11px/1 'JetBrains Mono',monospace;color:var(--ok)">margin +15.2%</div></div>
+<div style="padding:12px;border-radius:14px;background:var(--panel2);border:1px solid rgba(242,199,68,0.45);display:flex;flex-direction:column;gap:8px"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font:600 14px/1 'Space Grotesk',sans-serif">Δv</span><span style="display:inline-flex;align-items:center;gap:4px;font:600 10px/1 'JetBrains Mono',monospace;color:var(--warn)"><svg width="12" height="12" viewBox="0 0 14 14"><path d="M7 1.5l6 10.5H1z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path><path d="M7 5.5v3M7 10.3v.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>WARNING</span></div><div style="font:500 16px/1 'JetBrains Mono',monospace">1,440<span style="font-size:11px;color:var(--ink3)"> /1,496 m/s</span></div><div style="position:relative;height:8px;border-radius:4px;background:rgba(143,186,255,0.12)"><div style="position:absolute;left:0;top:0;bottom:0;width:77%;border-radius:4px;background:var(--warn)"></div><div style="position:absolute;left:80%;top:-3px;bottom:-3px;width:2px;background:var(--ink)"></div></div><div style="font:500 11px/1 'JetBrains Mono',monospace;color:var(--warn)">margin +3.9%</div></div>
+<div style="padding:12px;border-radius:14px;background:var(--panel2);border:1px solid var(--line);display:flex;flex-direction:column;gap:8px"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font:600 14px/1 'Space Grotesk',sans-serif">Data</span><span style="display:inline-flex;align-items:center;gap:4px;font:600 10px/1 'JetBrains Mono',monospace;color:var(--ok)"><svg width="12" height="12" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M4 7.2l2 2 4-4.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>OK</span></div><div style="font:500 16px/1 'JetBrains Mono',monospace">1.40<span style="font-size:11px;color:var(--ink3)"> /1.98 GB/d</span></div><div style="position:relative;height:8px;border-radius:4px;background:rgba(143,186,255,0.12)"><div style="position:absolute;left:0;top:0;bottom:0;width:56.6%;border-radius:4px;background:var(--ok)"></div><div style="position:absolute;left:80%;top:-3px;bottom:-3px;width:2px;background:var(--ink)"></div></div><div style="font:500 11px/1 'JetBrains Mono',monospace;color:var(--ok)">550 kbps · +29%</div></div>
+<div style="padding:12px;border-radius:14px;background:var(--panel2);border:1.5px solid var(--bad);display:flex;flex-direction:column;gap:8px"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font:600 14px/1 'Space Grotesk',sans-serif">Cost</span><span style="display:inline-flex;align-items:center;gap:4px;font:600 10px/1 'JetBrains Mono',monospace;color:var(--bad)"><svg width="12" height="12" viewBox="0 0 14 14"><path d="M4.6 1h4.8L13 4.6v4.8L9.4 13H4.6L1 9.4V4.6z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path><path d="M5 5l4 4M9 5l-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>OVER</span></div><div style="font:500 16px/1 'JetBrains Mono',monospace">$698<span style="font-size:11px;color:var(--ink3)"> /$671M</span></div><div style="position:relative;height:8px;border-radius:4px;background:rgba(143,186,255,0.12)"><div style="position:absolute;left:0;top:0;bottom:0;width:80%;border-radius:4px 0 0 4px;background:var(--bad)"></div><div style="position:absolute;left:80%;top:0;bottom:0;width:5%;background:repeating-linear-gradient(135deg,var(--bad) 0 3px,rgba(255,107,138,0.25) 3px 6px)"></div><div style="position:absolute;left:80%;top:-3px;bottom:-3px;width:2px;background:var(--ink)"></div></div><div style="font:500 11px/1 'JetBrains Mono',monospace;color:var(--bad)">over by $27M</div></div>
+<div style="padding:12px;border-radius:14px;background:var(--panel2);border:1px solid var(--line);display:flex;flex-direction:column;gap:8px"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font:600 14px/1 'Space Grotesk',sans-serif">Reliability</span><span style="display:inline-flex;align-items:center;gap:4px;font:600 10px/1 'JetBrains Mono',monospace;color:var(--ok)"><svg width="12" height="12" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M4 7.2l2 2 4-4.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>OK</span></div><div style="font:500 16px/1 'JetBrains Mono',monospace">91.3<span style="font-size:11px;color:var(--ink3)"> %</span></div><div style="position:relative;height:8px;border-radius:4px;background:rgba(143,186,255,0.12)"><div style="position:absolute;left:0;top:0;bottom:0;width:91.3%;border-radius:4px;background:var(--ok)"></div><div style="position:absolute;left:85%;top:-3px;bottom:-3px;width:2px;background:var(--ink)"></div></div><div style="font:500 11px/1 'JetBrains Mono',monospace;color:var(--ok)">target ≥ 85%</div></div>
+</div>
+
+<div style="display:flex;justify-content:space-between;align-items:baseline;padding-top:8px"><div style="font:600 17px/1 'Space Grotesk',sans-serif">Parts</div><div style="font:13px/1 Inter,sans-serif;color:var(--ink2)">Instruments · 4</div></div>
+<div style="display:flex;gap:6px;overflow:hidden;margin-right:-16px">
+<span style="flex:none;height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--line);display:grid;place-items:center;font:500 13px/1 Inter,sans-serif;color:var(--ink2)">Bus</span>
+<span style="flex:none;height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--line);display:grid;place-items:center;font:500 13px/1 Inter,sans-serif;color:var(--ink2)">Power</span>
+<span style="flex:none;height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--acc);background:rgba(255,159,87,0.12);display:grid;place-items:center;font:600 13px/1 Inter,sans-serif">Instruments</span>
+<span style="flex:none;height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--line);display:grid;place-items:center;font:500 13px/1 Inter,sans-serif;color:var(--ink2)">Comms</span>
+<span style="flex:none;height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--line);display:grid;place-items:center;font:500 13px/1 Inter,sans-serif;color:var(--ink2)">Propulsion</span>
+</div>
+<div style="border:1px solid var(--line);border-radius:14px;padding:12px;display:grid;grid-template-columns:48px minmax(0,1fr) auto;gap:12px;align-items:center">
+<div style="width:48px;height:48px;border-radius:10px;background:var(--panel2);display:grid;place-items:center"><svg width="22" height="22" viewBox="0 0 16 16"><path d="M8 2l6 6-6 6-6-6z" fill="none" style="stroke:var(--bp)" stroke-width="1.3"></path></svg></div>
+<div style="display:flex;flex-direction:column;gap:6px;min-width:0"><div style="font:600 14px/1.2 'Space Grotesk',sans-serif">Neutral gas mass spec.</div><div style="display:flex;gap:10px;font:500 12px/1 'JetBrains Mono',monospace"><span>15<span style="color:var(--ink3)"> kg</span></span><span>−35<span style="color:var(--ink3)"> W</span></span><span>$18<span style="color:var(--ink3)">M</span></span></div></div>
+<button style="height:44px;padding:0 16px;border-radius:999px;border:none;background:var(--acc);color:var(--accInk);font:600 13px/1 Inter,sans-serif">Add</button>
+</div>
+<div style="border:1px solid var(--line);border-radius:14px;padding:12px;display:grid;grid-template-columns:48px minmax(0,1fr) auto;gap:12px;align-items:center">
+<div style="width:48px;height:48px;border-radius:10px;background:var(--panel2);display:grid;place-items:center"><svg width="22" height="22" viewBox="0 0 16 16"><path d="M8 2l6 6-6 6-6-6z" fill="none" style="stroke:var(--bp)" stroke-width="1.3"></path></svg></div>
+<div style="display:flex;flex-direction:column;gap:6px;min-width:0"><div style="font:600 14px/1.2 'Space Grotesk',sans-serif">Cheap UV camera</div><div style="display:flex;gap:10px;font:500 12px/1 'JetBrains Mono',monospace"><span>9<span style="color:var(--ink3)"> kg</span></span><span>−18<span style="color:var(--ink3)"> W</span></span><span>$6<span style="color:var(--ink3)">M</span></span></div></div>
+<button style="height:44px;padding:0 16px;border-radius:999px;border:1px solid var(--acc);background:transparent;color:var(--acc);font:600 13px/1 Inter,sans-serif">Swap</button>
+</div>
+</div>
+
+<div style="position:sticky;bottom:0;padding:12px 16px 20px;background:linear-gradient(rgba(10,20,48,0),var(--bg) 30%)">
+<button style="width:100%;height:60px;border-radius:18px;border:2px dashed rgba(255,159,87,0.55);background:var(--panel);color:var(--ink);display:flex;align-items:center;justify-content:center;gap:10px">
+<svg width="18" height="18" viewBox="0 0 20 20"><rect x="4" y="9" width="12" height="9" rx="2" fill="none" style="stroke:var(--acc)" stroke-width="1.6"></rect><path d="M7 9V6.5a3 3 0 0 1 6 0V9" fill="none" style="stroke:var(--acc)" stroke-width="1.6"></path></svg>
+<span style="font:600 17px/1 'Space Grotesk',sans-serif">Go to Launch Window</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="1c"><div class="dv-olabel"><a class="dv-oid" href="#1c">1c</a>Mobile 390 · বাংলা · Engineer (longest-text stress test)</div>
+<div class="dv-card" style="width:390px;border:none">
+<div data-screen-label="Build Bay · Mobile BN" lang="bn" style="--bg:#0A1430;--panel:#0E1B3B;--panel2:#13244A;--line:rgba(143,186,255,0.14);--line2:rgba(143,186,255,0.28);--grid:rgba(120,170,255,0.10);--grid2:rgba(120,170,255,0.045);--ink:#EAF0FA;--ink2:#A9B8D6;--ink3:#8193B8;--bp:#8EC5FF;--acc:#FF9F57;--accInk:#1C1006;--ok:#3CD3C1;--warn:#F2C744;--bad:#FF6B8A;width:390px;background:var(--bg);color:var(--ink);font-family:'Hind Siliguri',Inter,sans-serif;display:flex;flex-direction:column">
+<header style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--panel);border-bottom:1px solid var(--line)">
+<svg width="28" height="28" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="5" style="fill:var(--bp)"></circle><ellipse cx="16" cy="16" rx="14" ry="7" transform="rotate(-25 16 16)" style="stroke:var(--bp)" stroke-width="1.5"></ellipse><rect x="25" y="6" width="5" height="5" transform="rotate(45 27.5 8.5)" style="fill:var(--acc)"></rect></svg>
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><div style="font:600 19px/1.2 'Hind Siliguri',sans-serif">নির্মাণ কক্ষ</div><div style="font:500 10px/1 'JetBrains Mono',monospace;color:var(--ink2);letter-spacing:0.06em">RED ATMOSPHERE-1 · MARS</div></div>
+<span style="height:44px;padding:0 12px;border-radius:999px;border:1px solid var(--line2);display:grid;place-items:center;font:600 14px/1 'Hind Siliguri',sans-serif">বাংলা</span>
+<span style="height:44px;padding:0 12px;border-radius:999px;border:1px solid var(--acc);background:rgba(255,159,87,0.12);display:grid;place-items:center;font:600 14px/1 'Hind Siliguri',sans-serif">ইঞ্জিনিয়ার</span>
+</header>
+<div style="padding:12px 16px 10px;display:grid;grid-template-columns:repeat(5,1fr);gap:4px;background:var(--panel)">
+<div style="display:flex;flex-direction:column;gap:6px"><span style="height:4px;border-radius:2px;background:var(--ok)"></span><span style="font:500 12px/1.2 'Hind Siliguri',sans-serif;color:var(--ink2)">✓ মিশন</span></div>
+<div style="display:flex;flex-direction:column;gap:6px"><span style="height:4px;border-radius:2px;background:var(--acc)"></span><span style="font:600 12px/1.2 'Hind Siliguri',sans-serif">নির্মাণ</span></div>
+<div style="display:flex;flex-direction:column;gap:6px"><span style="height:4px;border-radius:2px;background:var(--line2)"></span><span style="font:500 12px/1.2 'Hind Siliguri',sans-serif;color:var(--ink3)">উইন্ডো</span></div>
+<div style="display:flex;flex-direction:column;gap:6px"><span style="height:4px;border-radius:2px;background:var(--line2)"></span><span style="font:500 12px/1.2 'Hind Siliguri',sans-serif;color:var(--ink3)">উড্ডয়ন</span></div>
+<div style="display:flex;flex-direction:column;gap:6px"><span style="height:4px;border-radius:2px;background:var(--line2)"></span><span style="font:500 12px/1.2 'Hind Siliguri',sans-serif;color:var(--ink3)">পর্যালোচনা</span></div>
+</div>
+<div style="position:relative;height:220px;background:var(--bg);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px),linear-gradient(var(--grid2) 1px,transparent 1px),linear-gradient(90deg,var(--grid2) 1px,transparent 1px);background-size:80px 80px,80px 80px,16px 16px,16px 16px;border-bottom:1px solid var(--line)">
+<svg viewBox="20 210 700 340" width="100%" height="100%" style="position:absolute;inset:0" fill="none">
+<g style="stroke:var(--bp)" stroke-width="2" stroke-linejoin="round">
+<path d="M293 270 Q368 318 443 270"></path><path d="M293 270 L368 232 L443 270" stroke-width="1.2"></path><line x1="368" y1="294" x2="368" y2="330"></line>
+<rect x="318" y="330" width="100" height="120" rx="3" fill="rgba(142,197,255,0.06)"></rect><circle cx="343" cy="390" r="18" stroke-dasharray="4 3"></circle><circle cx="393" cy="390" r="18" stroke-dasharray="4 3"></circle>
+<path d="M330 450h12l3 16h-18z M352 450h12l3 16h-18z M374 450h12l3 16h-18z M396 450h12l3 16h-18z" stroke-width="1.5"></path><path d="M298 382h20 M418 382h20"></path>
+<rect x="168" y="345" width="130" height="74" fill="rgba(142,197,255,0.08)"></rect><g transform="rotate(20 166 382)"><rect x="42" y="345" width="124" height="74" fill="rgba(142,197,255,0.08)"></rect></g>
+<rect x="438" y="345" width="130" height="74" fill="rgba(142,197,255,0.08)"></rect><g transform="rotate(-20 570 382)"><rect x="570" y="345" width="124" height="74" fill="rgba(142,197,255,0.08)"></rect></g>
+<path d="M418 436 L478 496"></path><rect x="470" y="496" width="50" height="30" rx="3" fill="rgba(142,197,255,0.08)"></rect>
+<rect x="200" y="496" width="58" height="36" rx="6" stroke-dasharray="4 4" opacity="0.8"></rect>
+</g>
+</svg>
+</div>
+
+<div style="padding:16px;display:flex;flex-direction:column;gap:12px">
+<div style="padding:12px 14px;border-radius:14px;border:1.5px solid var(--bad);background:rgba(255,107,138,0.08);display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;align-items:center;gap:8px;font:600 16px/1.3 'Hind Siliguri',sans-serif"><svg width="16" height="16" viewBox="0 0 14 14" style="color:var(--bad);flex:none"><path d="M4.6 1h4.8L13 4.6v4.8L9.4 13H4.6L1 9.4V4.6z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path><path d="M5 5l4 4M9 5l-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>উৎক্ষেপণ আটকে আছে</div>
+<div style="font:14.5px/1.55 'Hind Siliguri',sans-serif"><b>বাজেট $27M বেশি।</b> <span style="color:var(--ink2)">১৮ m² সোলার অ্যারে বাদ দিন, অথবা স্পেকট্রোগ্রাফটি সস্তা কোনোটির সাথে বদলান।</span></div>
+</div>
+
+<div style="display:flex;justify-content:space-between;align-items:baseline;padding-top:4px"><div style="font:600 18px/1.2 'Hind Siliguri',sans-serif">মিশন বাজেট</div><div style="font:500 13px/1 'Hind Siliguri',sans-serif;color:var(--ink3)">৪ ঠিক · ১ সতর্কতা · ১ অতিরিক্ত</div></div>
+
+<div style="padding:14px;border-radius:14px;background:var(--panel2);border:1px solid var(--line);display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="font:600 16px/1.2 'Hind Siliguri',sans-serif">ভর</span><span style="font:13px/1.2 'Hind Siliguri',sans-serif;color:var(--ink3)">উৎক্ষেপণ সক্ষমতার তুলনায়</span><span style="margin-left:auto;display:inline-flex;align-items:center;gap:5px;height:26px;padding:0 8px;border-radius:6px;font:600 13px/1 'Hind Siliguri',sans-serif;color:var(--ok);background:rgba(60,211,193,0.12);border:1px solid rgba(60,211,193,0.35)"><svg width="12" height="12" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M4 7.2l2 2 4-4.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>ঠিক আছে</span></div>
+<div style="display:flex;justify-content:space-between;align-items:baseline;font-family:'JetBrains Mono',monospace"><span style="font-size:17px;font-weight:500">2,454<span style="font-size:12px;color:var(--ink3)"> / 3,000 kg</span></span><span style="font-size:12px;color:var(--ok)">+18.2%</span></div>
+<div style="position:relative;height:8px;border-radius:4px;background:rgba(143,186,255,0.12)"><div style="position:absolute;left:0;top:0;bottom:0;width:65.4%;border-radius:4px;background:var(--ok)"></div><div style="position:absolute;left:80%;top:-3px;bottom:-3px;width:2px;background:var(--ink)"></div></div>
+<div style="padding:10px 12px;border:1px dashed var(--line2);border-radius:10px;font:11.5px/1.65 'JetBrains Mono',monospace;color:var(--ink2)"><div style="color:var(--bp)">m₀ = m_dry + m_prop</div><div>= 1,264 + 1,190 = 2,454 kg</div></div>
+</div>
+
+<div style="padding:14px;border-radius:14px;background:var(--panel2);border:1px solid var(--line);display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="font:600 16px/1.2 'Hind Siliguri',sans-serif">বিদ্যুৎ</span><span style="font:13px/1.2 'Hind Siliguri',sans-serif;color:var(--ink3)">উৎপাদন বনাম ব্যবহার</span><span style="margin-left:auto;display:inline-flex;align-items:center;gap:5px;height:26px;padding:0 8px;border-radius:6px;font:600 13px/1 'Hind Siliguri',sans-serif;color:var(--ok);background:rgba(60,211,193,0.12);border:1px solid rgba(60,211,193,0.35)"><svg width="12" height="12" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M4 7.2l2 2 4-4.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>ঠিক আছে</span></div>
+<div style="display:flex;justify-content:space-between;align-items:baseline;font-family:'JetBrains Mono',monospace"><span style="font-size:17px;font-weight:500">1,040<span style="font-size:12px;color:var(--ink3)"> / 1,227 W</span></span><span style="font-size:12px;color:var(--ok)">+15.2%</span></div>
+<div style="position:relative;height:8px;border-radius:4px;background:rgba(143,186,255,0.12)"><div style="position:absolute;left:0;top:0;bottom:0;width:67.8%;border-radius:4px;background:var(--ok)"></div><div style="position:absolute;left:80%;top:-3px;bottom:-3px;width:2px;background:var(--ink)"></div></div>
+<div style="font:14px/1.5 'Hind Siliguri',sans-serif;color:var(--ink2)">মঙ্গলে সূর্যের আলো পৃথিবীর মাত্র ৪৩%, তাই প্যানেল কম বিদ্যুৎ দেয়।</div>
+<div style="padding:10px 12px;border:1px dashed var(--line2);border-radius:10px;font:11.5px/1.65 'JetBrains Mono',monospace;color:var(--ink2)"><div style="color:var(--bp)">P = P₀ · (1 AU / r)²</div><div>= 2,850 W × (1 / 1.524)² = 1,227 W</div><div style="font:13px/1.5 'Hind Siliguri',sans-serif;color:var(--ink3)">বিপরীত বর্গ নিয়ম</div></div>
+</div>
+
+<div style="padding:14px;border-radius:14px;background:var(--panel2);border:1px solid rgba(242,199,68,0.45);display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="font:600 16px/1.2 'Hind Siliguri',sans-serif">Δv</span><span style="font:13px/1.2 'Hind Siliguri',sans-serif;color:var(--ink3)">আছে বনাম লাগবে</span><span style="margin-left:auto;display:inline-flex;align-items:center;gap:5px;height:26px;padding:0 8px;border-radius:6px;font:600 13px/1 'Hind Siliguri',sans-serif;color:var(--warn);background:rgba(242,199,68,0.12);border:1px solid rgba(242,199,68,0.4)"><svg width="12" height="12" viewBox="0 0 14 14"><path d="M7 1.5l6 10.5H1z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path><path d="M7 5.5v3M7 10.3v.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>সতর্কতা</span></div>
+<div style="display:flex;justify-content:space-between;align-items:baseline;font-family:'JetBrains Mono',monospace"><span style="font-size:17px;font-weight:500">1,440<span style="font-size:12px;color:var(--ink3)"> / 1,496 m/s</span></span><span style="font-size:12px;color:var(--warn)">+3.9%</span></div>
+<div style="position:relative;height:8px;border-radius:4px;background:rgba(143,186,255,0.12)"><div style="position:absolute;left:0;top:0;bottom:0;width:77%;border-radius:4px;background:var(--warn)"></div><div style="position:absolute;left:80%;top:-3px;bottom:-3px;width:2px;background:var(--ink)"></div></div>
+<div style="font:14px/1.5 'Hind Siliguri',sans-serif;color:var(--ink2)">মঙ্গলের কক্ষপথে ঢুকতে জ্বালানি একদম টায়-টায়।</div>
+<div style="padding:10px 12px;border:1px dashed var(--line2);border-radius:10px;font:11.5px/1.65 'JetBrains Mono',monospace;color:var(--ink2)"><div style="color:var(--bp)">Δv = Isp · g₀ · ln(m₀ / m_f)</div><div>= 230 s × 9.807 × ln(2,454 / 1,264)</div><div style="font:13px/1.5 'Hind Siliguri',sans-serif;color:var(--ink3)">সিওলকোভস্কি রকেট সমীকরণ</div></div>
+</div>
+
+<div style="padding:14px;border-radius:14px;background:var(--panel2);border:1.5px solid var(--bad);display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="font:600 16px/1.2 'Hind Siliguri',sans-serif">খরচ</span><span style="font:13px/1.2 'Hind Siliguri',sans-serif;color:var(--ink3)">মিশন সীমার তুলনায়</span><span style="margin-left:auto;display:inline-flex;align-items:center;gap:5px;height:26px;padding:0 8px;border-radius:6px;font:600 13px/1 'Hind Siliguri',sans-serif;color:var(--bad);background:rgba(255,107,138,0.12);border:1px solid rgba(255,107,138,0.45)"><svg width="12" height="12" viewBox="0 0 14 14"><path d="M4.6 1h4.8L13 4.6v4.8L9.4 13H4.6L1 9.4V4.6z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path><path d="M5 5l4 4M9 5l-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>সীমা ছাড়িয়েছে</span></div>
+<div style="display:flex;justify-content:space-between;align-items:baseline;font-family:'JetBrains Mono',monospace"><span style="font-size:17px;font-weight:500">$698<span style="font-size:12px;color:var(--ink3)"> / $671M</span></span><span style="font-size:12px;color:var(--bad)">−4.0%</span></div>
+<div style="position:relative;height:8px;border-radius:4px;background:rgba(143,186,255,0.12)"><div style="position:absolute;left:0;top:0;bottom:0;width:80%;border-radius:4px 0 0 4px;background:var(--bad)"></div><div style="position:absolute;left:80%;top:0;bottom:0;width:5%;background:repeating-linear-gradient(135deg,var(--bad) 0 3px,rgba(255,107,138,0.25) 3px 6px)"></div><div style="position:absolute;left:80%;top:-3px;bottom:-3px;width:2px;background:var(--ink)"></div></div>
+<div style="padding:10px 12px;border:1px dashed var(--line2);border-radius:10px;font:11.5px/1.65 'JetBrains Mono',monospace;color:var(--ink2)"><div style="color:var(--bp)">C = Σ parts + launch + ops</div><div>= 304 + 184 + 210 = $698M</div></div>
+</div>
+
+<div style="padding:12px 14px;border-radius:14px;border:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;font:14px/1.3 'Hind Siliguri',sans-serif;color:var(--ink2)"><span>ডেটা হার · নির্ভরযোগ্যতা</span><span style="font:500 12px/1 'JetBrains Mono',monospace;color:var(--ok)">✓ 550 kbps · 91.3%</span></div>
+</div>
+
+<div style="position:sticky;bottom:0;padding:12px 16px 20px;background:linear-gradient(rgba(10,20,48,0),var(--bg) 30%)">
+<button style="width:100%;min-height:60px;padding:8px 16px;border-radius:18px;border:2px dashed rgba(255,159,87,0.55);background:var(--panel);color:var(--ink);display:flex;align-items:center;justify-content:center;gap:10px">
+<svg width="18" height="18" viewBox="0 0 20 20" style="flex:none"><rect x="4" y="9" width="12" height="9" rx="2" fill="none" style="stroke:var(--acc)" stroke-width="1.6"></rect><path d="M7 9V6.5a3 3 0 0 1 6 0V9" fill="none" style="stroke:var(--acc)" stroke-width="1.6"></path></svg>
+<span style="display:flex;flex-direction:column;align-items:flex-start;gap:2px"><span style="font:600 17px/1.25 'Hind Siliguri',sans-serif">উৎক্ষেপণ উইন্ডোতে যান</span><span style="font:13px/1.2 'Hind Siliguri',sans-serif;color:var(--ink2)">আগে ১টি সমস্যা ঠিক করুন</span></span>
+</button>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+<p class="dv-next">Next in this file set: Debrief → Mission Select → Launch Window → Flight → Crisis → Sources → design-system sheet.</p>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;defaultMode&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;cadet&quot;,&quot;engineer&quot;],&quot;default&quot;:&quot;cadet&quot;,&quot;tsType&quot;:&quot;'cadet'|'engineer'&quot;},&quot;showPopover&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  state = { mode: this.props.defaultMode ?? 'cadet', pop: this.props.showPopover ?? true };
+  componentDidUpdate(prev) {
+    if (prev.defaultMode !== this.props.defaultMode) this.setState({ mode: this.props.defaultMode ?? 'cadet' });
+    if (prev.showPopover !== this.props.showPopover) this.setState({ pop: this.props.showPopover ?? true });
+  }
+  renderVals() {
+    const eng = this.state.mode === 'engineer';
+    return {
+      isCadet: !eng,
+      isEngineer: eng,
+      setCadet: () => this.setState({ mode: 'cadet' }),
+      setEngineer: () => this.setState({ mode: 'engineer' }),
+      popOpen: this.state.pop,
+      togglePop: () => this.setState(s => ({ pop: !s.pop })),
+      closePop: () => this.setState({ pop: false })
+    };
+  }
+}
+</script>
+</body>
+</html>

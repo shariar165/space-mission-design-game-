@@ -280,6 +280,18 @@ describe('trajectory', () => {
     expect(Math.abs(dv - 553.4)).toBeLessThan(2);
   });
 
+  it('Kepler III: orbit period from apsides, and apoapsis from period + periapsis', () => {
+    // MAVEN science orbit 150 × 6,300 km altitude (NASAfacts): rp 3546.2, ra 9696.2 km, a = 6621.2 km
+    // T = 2π√(a³/μ) = 2π√(2.90276e20 / 4.2828e13) = 16,358 s = 4.54 h  (NASA: 4.5 h)
+    const mu = C.mu(42828);
+    expect(T.orbitPeriod(mu, C.km(3546.2), C.km(9696.2)) / 3600).toBeCloseTo(4.54, 2);
+    // Capture orbit 35 h with periapsis 380 km altitude: a = (μT²/4π²)^(1/3) = 25,825 km
+    // ra = 2a − rp = 51,650 − 3,776.2 = 47,874 km → apoapsis altitude ≈ 44,478 km
+    const ra = T.apoapsisFromPeriod(mu, C.km(3776.2), 35 * 3600);
+    expect(Math.abs(ra / 1000 - 47_874)).toBeLessThan(5);
+    expect(T.orbitPeriod(mu, C.km(3776.2), ra)).toBeCloseTo(35 * 3600, 6);
+  });
+
   it('no orbit change costs nothing', () => {
     const o = { rp: C.km(3546.2), ra: C.km(9596.2) };
     expect(T.orbitChangeDeltaV(C.mu(42828), o, o)).toBeCloseTo(0, 9);
@@ -322,6 +334,13 @@ describe('propulsion', () => {
     expect(P.propellantForDeltaV(dv, 225, 809)).toBeCloseTo(1645, 6);
     // 1 km/s at 300 s on 1000 kg dry: 1000 × (e^(1000/2941.995) − 1) = 1000 × (e^0.339906 − 1) = 404.81 kg
     expect(P.propellantForDeltaV(1000, 300, 1000)).toBeCloseTo(404.81, 1);
+  });
+
+  it('propellant burned from a start mass: m₀(1 − e^(−Δv/(Isp·g₀)))', () => {
+    // 2454 kg, 1142 m/s at 225 s: 1142/2206.496 = 0.517562; 2454 × (1 − e^−0.517562) = 2454 × 0.404013 = 991.4 kg
+    expect(P.propellantBurned(2454, 1142, 225)).toBeCloseTo(991.4, 0);
+    // consistent with the rocket equation: burning all propellant gives the full capability
+    expect(P.propellantBurned(2454, P.deltaVCapability(225, 2454, 809), 225)).toBeCloseTo(1645, 6);
   });
 
   it('tank + feed mass is 12% of propellant (game rule)', () => {
@@ -474,18 +493,45 @@ describe('comms', () => {
   const same = {
     txPower_W: ref.txPower_W.value,
     dishDiameter_m: ref.dishDiameter_m.value,
-    groundDish_m: ref.groundDish_m.value,
+    groundDish_m: ref.groundDish_m.value as 34 | 70,
     distance_m: ref.distance_m.value,
   };
+
+  it('the reference link is MRO (DESCANSO Article 12): ≥500 kbps at 400 million km, 100 W, 3 m HGA', () => {
+    expect(ref.rate_bps.value).toBe(500_000);
+    expect(ref.distance_m.value).toBe(400e9);
+    expect(ref.txPower_W.value).toBe(100);
+    expect(ref.dishDiameter_m.value).toBe(3);
+    for (const k of ['rate_bps', 'distance_m', 'txPower_W', 'dishDiameter_m'] as const) {
+      expect(ref[k].isGameEstimate, k).toBe(false);
+      expect(ref[k].url).toMatch(/descanso\.jpl\.nasa\.gov/);
+    }
+    // The article does not name the station for the 500 kbps figure; 34 m is inferred, so it stays labelled.
+    expect(ref.groundDish_m.value).toBe(34);
+    expect(ref.groundDish_m.isGameEstimate).toBe(true);
+  });
 
   it('reproduces the reference rate with the reference link', () => {
     expect(CM.dataRate(same)).toBeCloseTo(ref.rate_bps.value, 6);
   });
 
-  it('70 m vs 34 m ground dish gives (70/34)² ≈ 4.24× the rate', () => {
+  it('70 m vs 34 m uses the DSN 810-005 X-band gains: 74.55 − 68.24 = 6.31 dB → 4.276×', () => {
+    // 810-005 101 Rev I Table 2: DSS-14 X-only 74.55 dBi (8420 MHz); 104 Rev Q Table 6: DSS-24 X-only 68.24 dBi (8425 MHz)
+    // 10^(6.31/10) = 4.2756 (close to the (70/34)² = 4.24 diameter rule the spec used before)
+    expect(CM.DSN_X_BAND_GAIN_DBI[70].value).toBe(74.55);
+    expect(CM.DSN_X_BAND_GAIN_DBI[34].value).toBe(68.24);
+    expect(CM.DSN_X_BAND_GAIN_DBI[70].isGameEstimate).toBe(false);
     const r34 = CM.dataRate({ ...same, groundDish_m: 34 });
     const r70 = CM.dataRate({ ...same, groundDish_m: 70 });
-    expect(r70 / r34).toBeCloseTo(4.2388, 4);
+    expect(r70 / r34).toBeCloseTo(4.2756, 4);
+  });
+
+  it('a 2 m, 100 W craft at 1 AU to a 34 m dish', () => {
+    // R = 500 kbps × (100/100) × (2/3)² × (400e9 / 1.495978707e11)² = 500e3 × 0.44444 × 7.1494 = 1.5888 Mbps
+    const r = CM.dataRate({ txPower_W: 100, dishDiameter_m: 2, groundDish_m: 34, distance_m: 1.495978707e11 });
+    expect(r).toBeCloseTo(1_588_754, -1);
+    // same to a 70 m dish: × 4.2756 = 6.7929 Mbps
+    expect(CM.dataRate({ txPower_W: 100, dishDiameter_m: 2, groundDish_m: 70, distance_m: 1.495978707e11 })).toBeCloseTo(6_792_922, -1);
   });
 
   it('rate ∝ P_t, ∝ D_sc², ∝ 1/d²', () => {
@@ -506,11 +552,12 @@ describe('comms', () => {
     expect(CM.lightDelay_s(401.4e9) / 60).toBeCloseTo(22.32, 2);
   });
 
-  it('the reference link is a placeholder, so the meter reports uncalibrated', () => {
-    expect(CM.COMMS_CALIBRATED).toBe(false);
-    for (const v of Object.values(ref)) expect(v.isGameEstimate).toBe(true);
+  it('one anchor value is inferred, so the meter is calibrated but still shows that estimate', () => {
+    expect(CM.COMMS_CALIBRATED).toBe(true);
     const m = CM.dataMeter(1000e6, 500e6, {});
-    expect(m.calibrated).toBe(false);
+    expect(m.calibrated).toBe(true);
+    // the meter's limit badge points at the inferred station pairing
+    expect(m.limitSource).toBe(ref.groundDish_m);
     expect(m.margin).toBeCloseTo(-0.5, 12);
     expect(m.status).toBe('over');
   });
@@ -748,6 +795,11 @@ describe('scoring', () => {
     expect(SC.budgetScore(550, 500)).toBeCloseTo(50, 9);
     expect(SC.budgetScore(600, 500)).toBeCloseTo(0, 9);
     expect(SC.budgetScore(700, 500)).toBe(0);
+  });
+
+  it('science goal = Σ instrument data/day × planned science days', () => {
+    // camera 2000 + spectrometer 1000 Mbit/day = 3e9 bit/day × 365 d = 1095 Gbit
+    expect(SC.scienceGoal_Gbit(3e9, 365)).toBeCloseTo(1095, 9);
   });
 
   it('science = downlinked ÷ goal, capped at 100; success = phases completed ÷ phases', () => {

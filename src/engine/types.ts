@@ -66,12 +66,19 @@ export type MeterStatus = 'ok' | 'warning' | 'over';
 export interface Meter {
   used: number;
   limit: number;
+  /** limit − used, in the meter's own units (e.g. kg of launch capacity left). */
+  headroom: number;
   margin: number;
   status: MeterStatus;
   equation: string;
   inputs: Record<string, Sourced<number>>;
   /** False when the model behind the meter has no real anchor yet (Comms). */
   calibrated?: boolean;
+  /**
+   * Where the limit comes from, when it is a single Sourced value or rests on one (cost cap, acceptable
+   * risk, the comms reference link). The UI shows its ⓘ and a "game estimate" badge next to the limit.
+   */
+  limitSource?: Sourced<number>;
 }
 
 export interface Evaluation {

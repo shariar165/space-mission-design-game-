@@ -45,12 +45,6 @@
       "source": "Spec: Destinations table",
       "isGameEstimate": false
     },
-    "scienceGoal_Gbit": {
-      "value": 500,
-      "unit": "Gbit downlinked over the mission",
-      "source": "Game estimate: data the science goal needs (spec: Scoring, science return)",
-      "isGameEstimate": true
-    },
     "notes": []
   },
   "venus": {
@@ -96,12 +90,6 @@
       "value": 1.91,
       "unit": "fraction of 1 AU sunlight",
       "source": "Spec: Destinations table (~191%)",
-      "isGameEstimate": true
-    },
-    "scienceGoal_Gbit": {
-      "value": 400,
-      "unit": "Gbit downlinked over the mission",
-      "source": "Game estimate: data the science goal needs (spec: Scoring, science return)",
       "isGameEstimate": true
     },
     "notes": []
@@ -181,12 +169,6 @@
       "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html",
       "isGameEstimate": false
     },
-    "scienceGoal_Gbit": {
-      "value": 500,
-      "unit": "Gbit downlinked over the mission",
-      "source": "Game estimate: data the science goal needs (spec: Scoring, science return)",
-      "isGameEstimate": true
-    },
     "notes": []
   },
   "bennu": {
@@ -226,12 +208,6 @@
       "value": 0.79,
       "unit": "fraction of 1 AU sunlight",
       "source": "Spec: Destinations table (~79%)",
-      "isGameEstimate": true
-    },
-    "scienceGoal_Gbit": {
-      "value": 150,
-      "unit": "Gbit downlinked over the mission",
-      "source": "Game estimate: data the science goal needs (spec: Scoring, science return)",
       "isGameEstimate": true
     },
     "notes": [
@@ -336,12 +312,6 @@
       "value": 0.037,
       "unit": "fraction of 1 AU sunlight",
       "source": "Spec: Destinations table (~3.7%)",
-      "isGameEstimate": true
-    },
-    "scienceGoal_Gbit": {
-      "value": 200,
-      "unit": "Gbit downlinked over the mission",
-      "source": "Game estimate: data the science goal needs (spec: Scoring, science return)",
       "isGameEstimate": true
     },
     "notes": [

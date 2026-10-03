@@ -5,11 +5,13 @@
 // "info" = reported for the Debrief, not a pass/fail check.
 import { writeFileSync } from 'node:fs';
 import { afterAll, describe, expect, it } from 'vitest';
-import { AU_M, MU_SUN_SI, km, toDays } from '../src/engine/constants';
+import { AU_M, MU_SUN_SI, km, mu, toDays } from '../src/engine/constants';
 import { DESTINATIONS, LAUNCH_VEHICLES, PARTS } from '../src/engine/data';
 import { evaluateDesign, monteCarloMission } from '../src/engine/index';
 import { missionPreset, presetDesign } from '../src/engine/missions';
-import { bestArrival, hohmann } from '../src/engine/trajectory';
+import { dataRate, REFERENCE_LINK } from '../src/engine/comms';
+import { propellantBurned } from '../src/engine/propulsion';
+import { bestArrival, bestLaunchWindow, hohmann, lambertTransfer, orbitPeriod } from '../src/engine/trajectory';
 
 const TOLERANCE = 0.1;
 
@@ -108,6 +110,19 @@ describe('MAVEN (Mars, 2013) — NASA Science', () => {
     expect(Math.abs(err)).toBeLessThanOrEqual(TOLERANCE);
   });
 
+  it('launch-window search lands inside the MAVEN published 20-day launch period (Nov 18 – Dec 7, 2013)', () => {
+    // bestLaunchWindow minimises departure v∞ + arrival v∞ (spec: "Best launch window"). A real launch period is
+    // the set of days the vehicle can deliver the needed C3 to a fixed arrival, so its opening day is not the
+    // optimum; the check is that the optimum lies inside the published period.
+    const lp = missionPreset('maven').launchPeriod!;
+    const w = bestLaunchWindow('mars', '2013-06-01');
+    const inside = w.launchDate >= lp.open.value && w.launchDate <= lp.close.value;
+    flag(M, 'Launch-window search (min v∞,dep + v∞,arr) inside the published launch period', inside, `${w.launchDate} (C3 ${w.c3_km2s2.toFixed(2)} km²/s²)`, `${lp.open.value} – ${lp.close.value}`, 'μ☉ (approx.); JPL approximate ephemeris');
+    const open = lambertTransfer('mars', lp.open.value, lp.plannedOrbitInsertion!.value);
+    info(M, '  ↳ C3 on the opening day to the planned Sept 22, 2014 arrival', `${open.c3_km2s2.toFixed(2)} km²/s²`, '—', 'launch periods open where the vehicle first meets the C3, not at the optimum');
+    expect(inside).toBe(true);
+  });
+
   it('Hohmann minimum-energy transfer time (Cadet explanation, for information only)', () => {
     const h = hohmann(AU_M, km(DESTINATIONS.mars.sunDistance_1e6km.value * 1e6), MU_SUN_SI);
     const days = toDays(h.tFlight_s);
@@ -123,14 +138,45 @@ describe('MAVEN (Mars, 2013) — NASA Science', () => {
     expect(ok).toBe(true);
   });
 
-  it('Δv budget and margin with the science-orbit transfer and lifetime reserve (information)', () => {
+  it('science orbit 150 × 6,300 km gives the published 4.5-hour period (Kepler III), ±10%', () => {
+    const mars = DESTINATIONS.mars;
+    const R = km(mars.radius_km.value);
+    const so = design.scienceOrbit!;
+    const T_h = orbitPeriod(mu(mars.gm_km3s2.value), R + km(so.periapsis_km), R + km(so.apoapsis_km)) / 3600;
+    const err = within('validation', M, 'Science-orbit period from published altitudes', T_h, pub.scienceOrbitPeriod_h!.value, 'h', '');
+    expect(Math.abs(err)).toBeLessThanOrEqual(TOLERANCE);
+  });
+
+  it('the orbit-insertion burn uses more than half of the propellant (NASAfacts)', () => {
     const b = ev.details.deltaVBudget;
-    info(M, 'Capture burn into 380 × 44,600 km', `${b.arrival_ms.toFixed(0)} m/s`, '—', 'capture orbit is a game estimate (to verify)');
-    info(M, 'Capture → science orbit 150 × 6,200 km (vis-viva)', `${b.orbitTransfer_ms.toFixed(0)} m/s`, '—', 'science orbit is a game estimate (to verify)');
-    info(M, 'Trajectory corrections + maintenance (1 yr science)', `${(b.trajectoryCorrections_ms + b.maintenance_ms).toFixed(0)} m/s`, '—', '50 m/s rule; 20 m/s/yr estimate');
-    info(M, 'Lifetime reserve (as-flown 4,094 days at Mars)', `${b.lifetimeReserve_ms.toFixed(0)} m/s`, '—', '20 m/s/yr estimate × extended years');
+    const used = propellantBurned(ev.details.wetMass_kg, b.arrival_ms, ev.details.isp_s);
+    const fraction = used / design.propellant_kg;
+    const ok = flag(
+      M,
+      'Capture burn propellant (Lambert v∞ + capture equation + rocket equation)',
+      fraction > pub.moiPropellantFractionMin!.value,
+      `${used.toFixed(0)} kg = ${(fraction * 100).toFixed(1)}% of ${design.propellant_kg} kg`,
+      '> 50% of the fuel on board',
+      'Isp 225 s (estimate)',
+    );
+    expect(ok).toBe(true);
+  });
+
+  it('Δv budget and margin with the science-orbit transfer; planned prime mission only (information)', () => {
+    const b = ev.details.deltaVBudget;
+    const co = design.captureOrbit;
+    info(M, `Capture burn into 380 × ${co.apoapsis_km.toFixed(0)} km (35-h orbit, apoapsis by Kepler III)`, `${b.arrival_ms.toFixed(0)} m/s`);
+    info(M, 'Capture → science orbit 150 × 6,300 km (vis-viva)', `${b.orbitTransfer_ms.toFixed(0)} m/s`);
+    info(M, 'Trajectory corrections + maintenance (1-yr prime mission)', `${(b.trajectoryCorrections_ms + b.maintenance_ms).toFixed(0)} m/s`, '—', '50 m/s rule; 20 m/s/yr estimate');
+    info(M, 'Lifetime reserve (planned prime mission = science phase)', `${b.lifetimeReserve_ms.toFixed(0)} m/s`, '—', 'no extended mission planned at launch');
+    // Decision 8: planned 1-year prime mission (NASAfacts), not the as-flown 4,094 days.
+    // lifetime 365 d = science 365 d → reserve = 20 m/s/yr × (365 − 365)/365.25 = 0 m/s
+    // maintenance = 20 m/s/yr × 365/365.25 = 19.99 m/s; corrections = 50 m/s (game rules)
+    expect(b.lifetimeReserve_ms).toBe(0);
+    expect(b.maintenance_ms).toBeCloseTo(19.986, 3);
+    expect(b.trajectoryCorrections_ms).toBe(50);
     info(M, 'Δv required (total)', `${b.total_ms.toFixed(0)} m/s`);
-    info(M, 'Δv margin (capability vs required)', fmtPct(ev.meters.deltaV.margin), 'band 10–30%');
+    info(M, 'Δv margin (capability vs required)', fmtPct(ev.meters.deltaV.margin), 'band 10–30%', 'deep-dip campaigns (NASAfacts: five dips to ~125 km) are not modelled');
     info(M, 'Light delay on arrival day', `${(ev.details.lightDelayAtArrival_s / 60).toFixed(1)} min`);
     expect(ev.blockers).toEqual([]);
   });
@@ -144,6 +190,19 @@ describe('MAVEN (Mars, 2013) — NASA Science', () => {
 });
 
 // ---------------------------------------------------------------------------
+describe('Comms reference link — MRO (DESCANSO Article 12)', () => {
+  const C = 'Comms (MRO link)';
+  it('scaled link vs the other MRO rates in the same article (information, not a check)', () => {
+    const mro = { txPower_W: 100, dishDiameter_m: 3, groundDish_m: 34 as const, distance_m: 100e9 };
+    // Anchor: ≥500 kbps at 400 million km. Inverse-square scaling to 100 million km: × (400/100)² = × 16 → 8 Mbps (34 m)
+    const r34 = dataRate(mro);
+    const r70 = dataRate({ ...mro, groundDish_m: 70 });
+    info(C, 'Anchor (by construction)', `${(dataRate({ ...mro, distance_m: REFERENCE_LINK.distance_m.value }) / 1e3).toFixed(0)} kbps at 400 million km`, '≥ 500 kbps at 400 million km', 'station for the anchor inferred (34 m)');
+    info(C, 'Model at 100 million km, 34 m / 70 m', `${(r34 / 1e6).toFixed(1)} / ${(r70 / 1e6).toFixed(1)} Mbps`, '3–4 Mbps "for several months"; "as high as 6 Mbps"', 'published close-range rates are capped by coding and decoder limits (e.g. turbo decoding ≤ 1.6 Mbps), which the game does not model');
+    expect(r34 / 1e6).toBeCloseTo(8, 6);
+  });
+});
+
 describe('OSIRIS-REx (Bennu, 2016) — arXiv 1702.06981', () => {
   const preset = missionPreset('osiris-rex');
   const design = presetDesign('osiris-rex');

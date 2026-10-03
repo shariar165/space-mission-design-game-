@@ -21,7 +21,6 @@ export interface Destination {
   gm_km3s2: Sourced<number>;
   radius_km: Sourced<number>;
   sunlightVsEarth: Sourced<number>;
-  scienceGoal_Gbit: Sourced<number>;
   notes: string[];
   fixedRoutes?: Record<string, FixedRouteData>;
 }

@@ -14,6 +14,11 @@ export function propellantForDeltaV(dv_ms: number, isp_s: number, mDry_kg: numbe
   return mDry_kg * (Math.exp(dv_ms / (isp_s * G0.value)) - 1);
 }
 
+/** Propellant used by a burn of Δv starting from mass m₀: m₀(1 − e^(−Δv/(Isp·g₀)))  [kg] */
+export function propellantBurned(m0_kg: number, dv_ms: number, isp_s: number): number {
+  return m0_kg * (1 - Math.exp(-dv_ms / (isp_s * G0.value)));
+}
+
 /** Tank and feed-system dry mass = 12% of propellant mass (game rule). */
 export function tankMass(mProp_kg: number): number {
   return GAME_RULES.tankFraction.value * mProp_kg;

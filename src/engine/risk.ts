@@ -89,7 +89,9 @@ export function riskMeter(phases: PhaseRisk[]): Meter {
   const limit = ACCEPTABLE_MISSION_RISK.value;
   const inputs: Record<string, Sourced<number>> = { acceptableRisk: ACCEPTABLE_MISSION_RISK };
   for (const p of phases) inputs[`base_${p.phase}`] = p.base;
-  return makeMeter(used, limit, (limit - used) / limit, 'p_fail,phase = p_base·Π f_i(margin_i); p_mission = 1 − Π(1 − p_phase)', inputs);
+  const m = makeMeter(used, limit, (limit - used) / limit, 'p_fail,phase = p_base·Π f_i(margin_i); p_mission = 1 − Π(1 − p_phase)', inputs);
+  m.limitSource = ACCEPTABLE_MISSION_RISK;
+  return m;
 }
 
 /** Seeded uniform random numbers on [0, 1) (mulberry32), so Monte Carlo runs are reproducible. */

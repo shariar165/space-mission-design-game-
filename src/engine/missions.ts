@@ -1,6 +1,9 @@
 // Real-mission presets (MAVEN, OSIRIS-REx, LRO). Each value in missions.json is Sourced; this turns a
 // preset into a plain Design so it runs through exactly the same engine as the player's craft.
 import missionsJson from '../data/missions.json';
+import { km, mu } from './constants';
+import { DESTINATIONS } from './data';
+import { apoapsisFromPeriod } from './trajectory';
 import type { Design, Sourced } from './types';
 
 type S<T> = Sourced<T>;
@@ -16,7 +19,8 @@ interface PresetDesign {
   comms: { dishDiameter_m: S<number>; txPower_W: S<number>; groundDish_m: S<34 | 70> };
   engineId: S<string>;
   propellant_kg: S<number>;
-  captureOrbit: { periapsis_km: S<number>; apoapsis_km: S<number> };
+  /** Either apoapsis or the published period (apoapsis then derived by Kepler's third law). */
+  captureOrbit: { periapsis_km: S<number>; apoapsis_km?: S<number>; period_h?: S<number> };
   asFlownDryMass_kg?: S<number>;
   scienceDays?: S<number>;
   missionClass?: S<NonNullable<Design['missionClass']>>;
@@ -30,6 +34,8 @@ export interface MissionPreset {
   history: string;
   historyUrl?: string;
   design: PresetDesign;
+  /** Published launch period (ISO dates), where known. */
+  launchPeriod?: { open: S<string>; close: S<string>; plannedOrbitInsertion?: S<string> };
   published: Record<string, S<number>>;
 }
 
@@ -39,6 +45,17 @@ const MISSIONS = missionsJson as unknown as Record<MissionId, MissionPreset> & {
 
 export function missionPreset(id: MissionId): MissionPreset {
   return MISSIONS[id];
+}
+
+/** Capture apoapsis altitude: published, or derived from the published period and periapsis (Kepler III). */
+function captureApoapsis_km(d: PresetDesign): number {
+  if (d.captureOrbit.apoapsis_km) return d.captureOrbit.apoapsis_km.value;
+  const period = d.captureOrbit.period_h;
+  if (!period) throw new Error('Capture orbit needs an apoapsis or a period');
+  const body = DESTINATIONS[d.destination.value];
+  const R = km(body.radius_km.value);
+  const ra = apoapsisFromPeriod(mu(body.gm_km3s2.value), R + km(d.captureOrbit.periapsis_km.value), period.value * 3600);
+  return (ra - R) / 1000;
 }
 
 /** The preset as a player Design (Sourced wrappers removed; sources stay in the preset). */
@@ -59,7 +76,7 @@ export function presetDesign(id: MissionId): Design {
     },
     engineId: d.engineId.value,
     propellant_kg: d.propellant_kg.value,
-    captureOrbit: { periapsis_km: d.captureOrbit.periapsis_km.value, apoapsis_km: d.captureOrbit.apoapsis_km.value },
+    captureOrbit: { periapsis_km: d.captureOrbit.periapsis_km.value, apoapsis_km: captureApoapsis_km(d) },
   };
   if (d.power.arrayArea_m2) design.power.arrayArea_m2 = d.power.arrayArea_m2.value;
   if (d.power.rtgCount) design.power.rtgCount = d.power.rtgCount.value;

@@ -4,11 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-This is the simulation engine for **Mission Drafting Table**, a NASA space-mission design game. It is pure TypeScript with no UI yet. The science rules live in `docs/SCIENCE_SPEC.md`, which is the source of truth for every equation, constant and rule. Read the relevant section before changing a module.
+This is **Mission Drafting Table**, a NASA space-mission design game: a pure TypeScript simulation engine (`src/engine`) and a React + Vite UI (`src/ui`). The science rules live in `docs/SCIENCE_SPEC.md`, which is the source of truth for every equation, constant and rule (and, under "UI rules", for what the screens may show). Read the relevant section before changing a module.
 
 ## Toolchain: everything lives in `.venv`
 
-Node 22.16.0 is installed **inside the Python venv** by `nodeenv`. The user wants all tooling installed there, never globally (no `npm -g`). Python-side requirements are pinned in `requirements.txt`. Put `.venv\Scripts` first on PATH before running npm/npx:
+Node 22.16.0 is installed **inside the Python venv** by `nodeenv`. The user wants every extra requirement installed through the venv, never globally (no `npm -g`, no system Node): npm packages go into the project `node_modules` using the venv's npm, Python tools via `.venv\Scripts\python -m pip`, pinned in `requirements.txt`. Put `.venv\Scripts` first on PATH before running npm/npx:
 
 ```powershell
 .\.venv\Scripts\Activate.ps1          # PowerShell; or: $env:PATH = "$PWD\.venv\Scripts;$env:PATH"
@@ -21,6 +21,8 @@ export PATH="$PWD/.venv/Scripts:$PATH"  # Git Bash
 
 | Task | Command |
 | --- | --- |
+| Dev server (the game) | `npm run dev` → http://localhost:5173 |
+| Production build | `npm run build` (typecheck + `vite build` into `dist/`) |
 | All tests | `npm test` (`vitest run`) |
 | One file | `npx vitest run tests/physics.test.ts` |
 | One test by name | `npx vitest run tests/physics.test.ts -t "Lambert"` |
@@ -28,7 +30,7 @@ export PATH="$PWD/.venv/Scripts:$PATH"  # Git Bash
 | Data audit (rewrites `TODO_DATA.md`) | `npm run todo-data` |
 | Typecheck | `npm run typecheck` (`tsc --noEmit`, TypeScript 7, strict, `noUncheckedIndexedAccess`) |
 
-There is no lint step and no build step yet.
+There is no lint step.
 
 **Generated files:** `docs/VALIDATION_RESULTS.md` and `TODO_DATA.md` are written by the tests' `afterAll` hooks. Never edit them by hand; change the data or code and rerun.
 
@@ -40,11 +42,18 @@ There is no lint step and no build step yet.
 - **Tests first:** write `tests/physics.test.ts` cases before the code. Hand calculations go in comments next to each assertion.
 - **One model for everyone:** real missions (`src/data/missions.json`) go through exactly the same `evaluateDesign` as player designs. `src/engine/missions.ts` turns a Sourced preset into a plain `Design`.
 
+## UI rules (spec: "UI rules")
+
+- **The UI never computes a number.** It calls the engine and only formats units (`src/ui/format.ts`). Need a new on-screen number? Add it to the engine (with a test in `tests/engineApi.test.ts`), not the UI. `tests/uiGuards.test.ts` fails on digits in JSX text or "number + unit" in UI strings, and on any React/DOM import in `src/engine`.
+- Engineer mode shows each `Meter.equation` and every `Meter.inputs` entry; ⓘ (`SourceInfo`) shows the `Sourced<T>` record, with a "game estimate" badge when `isGameEstimate`.
+- UI entry points: `evaluateDesign`, `previewCrisis` + `simulateMission` (crisis card → Debrief), `monteCarloMission`, `designDelta` and `compareWithRealMission` (`compare.ts`), `bestLaunchWindow` (starter dates).
+- English only for now; the language toggle is hidden. Design references: `docs/design/`.
+
 ## Architecture
 
-**Data flow.** `src/data/*.json` (Sourced values) → `src/engine/data.ts` (typed casts plus `lookup()`) → physics modules → `src/engine/index.ts`, which the UI will call.
+**Data flow.** `src/data/*.json` (Sourced values) → `src/engine/data.ts` (typed casts plus `lookup()`) → physics modules → `src/engine/index.ts` (and `compare.ts`), which the UI calls.
 
-**`index.ts`** has three entry points:
+**`index.ts`** has four entry points (`previewCrisis` shows the crisis card a seed will draw, before `simulateMission` flies it):
 - `evaluateDesign(design)` runs the whole pipeline:
   1. Trajectory: Lambert between the design's dates, a fixed route, or an Earth-centred transfer for the Moon.
   2. Power at the arrival date and at the end of science, from the ephemeris Sun distance.
@@ -88,6 +97,6 @@ There is no lint step and no build step yet.
 
 These show up as validation caveats:
 - The Atlas V payload-vs-C3 curves in `launchVehicles.json` are **placeholders**. NASA's LSP site can't be scraped, so a person must export the points. Launch-capacity validation rows are therefore not real evidence.
-- The comms reference link is a placeholder, so the Data meter reports `calibrated: false`.
+- The comms link is anchored to MRO's published design point (DESCANSO Article 12), and the DSN gains come from 810-005. But the ground station behind MRO's 500 kbps figure is inferred (34 m), so the Data meter and the Debrief downlink still show a "rests on an estimate" badge.
 
 See `TODO_DATA.md` and the README's "Known model limits".

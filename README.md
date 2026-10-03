@@ -1,6 +1,6 @@
-# Mission Drafting Table — simulation engine
+# Mission Drafting Table
 
-This is the pure TypeScript engine for the Mission Drafting Table game. There is no UI yet. The science rules are in [docs/SCIENCE_SPEC.md](docs/SCIENCE_SPEC.md). Every constant and data value is a `Sourced<T>` that carries its source and an `isGameEstimate` flag.
+A NASA space-mission design game: a pure TypeScript simulation engine (`src/engine`) and a React + Vite UI (`src/ui`) with the Build Bay and Debrief screens. The UI only displays numbers the engine computes. The science rules are in [docs/SCIENCE_SPEC.md](docs/SCIENCE_SPEC.md). Every constant and data value is a `Sourced<T>` that carries its source and an `isGameEstimate` flag.
 
 ## Setup (everything lives in `.venv`)
 
@@ -18,7 +18,9 @@ npm install
 
 | Command | What it does |
 | --- | --- |
-| `npm test` | All tests: physics, validation, data audit |
+| `npm run dev` | Start the game at http://localhost:5173 (Vite dev server) |
+| `npm run build` | Typecheck, then build the static site into `dist/` |
+| `npm test` | All tests: physics, validation, data audit, engine API, UI guards |
 | `npm run test:validation` | Real-mission validation only; writes `docs/VALIDATION_RESULTS.md` |
 | `npm run todo-data` | Data audit; regenerates `TODO_DATA.md` |
 | `npm run typecheck` | `tsc --noEmit` |
@@ -40,12 +42,16 @@ src/engine/
   crisis.ts       crisis cards, mission timeline, draw (day inside its phase), options vs margins
   scoring.ts      weights, margin bands, budget/science/success scores, stars, next-star hint
   missions.ts     MAVEN / OSIRIS-REx presets → Design
-  index.ts        evaluateDesign(), simulateMission(), monteCarloMission()
+  index.ts        evaluateDesign(), simulateMission(), monteCarloMission(), previewCrisis()
+  compare.ts      designDelta() for part cards, compareWithRealMission() for the Debrief
+src/ui/           React UI: App.tsx, screens/ (BuildBay, CrisisScreen, Debrief), components/,
+                  format.ts (unit display only), meters.ts (meter wording), starters.ts (starter design inputs)
 src/data/         destinations, orbitalElements, launchVehicles, parts, missions, crisisCards (all values Sourced)
-tests/            physics.test.ts, validation.test.ts, dataAudit.test.ts
+tests/            physics.test.ts, validation.test.ts, dataAudit.test.ts, engineApi.test.ts, uiGuards.test.ts
+docs/design/      reference copy of the Claude Design mockups
 ```
 
-All modules in the spec's build order are built. Next is the UI.
+All modules in the spec's build order are built. The UI has Build Bay → one crisis card → Debrief; the Mission, Window and Flight screens come next.
 
 ## Additions to the spec interfaces
 
