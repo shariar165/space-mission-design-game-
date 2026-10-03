@@ -41,11 +41,14 @@ interface Props {
   sim: SimulationResult;
   missionName: string;
   engineer: boolean;
+  /** The flight's random seed; ?seed=N replays this exact flight. */
+  seed: number;
+  seedFromUrl: boolean;
   onRetry: () => void;
   onEngineer: () => void;
 }
 
-export function Debrief({ design, ev, sim, missionName, engineer, onRetry, onEngineer }: Props) {
+export function Debrief({ design, ev, sim, missionName, engineer, seed, seedFromUrl, onRetry, onEngineer }: Props) {
   const dest = DESTINATIONS[design.destination];
   const cmp = useMemo(() => compareWithRealMission(design, ev), [design, ev]);
   const orbiter = dest.missionType === 'orbiter';
@@ -105,6 +108,16 @@ export function Debrief({ design, ev, sim, missionName, engineer, onRetry, onEng
               </span>
             </div>
             <h1>{headline}</h1>
+            <div className="mono faint" style={{ fontSize: 12 }}>
+              FLIGHT SEED {seed} ·{' '}
+              {seedFromUrl ? (
+                'fixed by the URL: every flight replays the same luck'
+              ) : (
+                <a href={`?seed=${seed}`} title="Open this link to replay this exact flight">
+                  replay this flight
+                </a>
+              )}
+            </div>
           </div>
           <div className="why-grid">
             <div className="why">

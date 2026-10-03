@@ -11,6 +11,18 @@ import { defaultMissionName, starterDesign, today } from './starters';
 
 const newSeed = () => Math.floor(Math.random() * 2 ** 31);
 
+/** ?seed=N in the URL: every flight uses that seed, so a demo replays identically. */
+function urlSeed(): number | undefined {
+  try {
+    const v = new URLSearchParams(window.location.search).get('seed');
+    if (v === null || !/^\d+$/.test(v.trim())) return undefined;
+    const n = Number.parseInt(v, 10);
+    return Number.isSafeInteger(n) ? n : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 function storedMode(): Mode {
   try {
     return localStorage.getItem('mdt.mode') === 'engineer' ? 'engineer' : 'cadet';
@@ -24,7 +36,8 @@ export function App() {
   const [missionName, setMissionName] = useState(() => defaultMissionName('mars'));
   const [mode, setMode] = useState<Mode>(storedMode);
   const [step, setStep] = useState<Step>('build');
-  const [seed, setSeed] = useState(newSeed);
+  const [fixedSeed] = useState(urlSeed);
+  const [seed, setSeed] = useState(() => fixedSeed ?? newSeed());
   const [sim, setSim] = useState<SimulationResult>();
 
   const ev = useMemo(() => evaluateDesign(design), [design]);
@@ -66,7 +79,7 @@ export function App() {
       {step === 'build' && (
         <BuildBay design={design} ev={ev} engineer={mode === 'engineer'} onChange={setDesign} onLaunch={() => ev.blockers.length === 0 && setStep('crisis')} />
       )}
-      {step === 'crisis' && preview && <CrisisScreen preview={preview} ev={ev} design={design} onChoose={fly} />}
+      {step === 'crisis' && preview && <CrisisScreen preview={preview} ev={ev} design={design} seed={seed} onChoose={fly} />}
       {step === 'crisis' && !preview && (
         <BuildBay design={design} ev={ev} engineer={mode === 'engineer'} onChange={setDesign} onLaunch={() => undefined} />
       )}
@@ -77,8 +90,10 @@ export function App() {
           sim={sim}
           missionName={missionName}
           engineer={mode === 'engineer'}
+          seed={seed}
+          seedFromUrl={fixedSeed !== undefined}
           onRetry={() => {
-            setSeed(newSeed());
+            setSeed(fixedSeed ?? newSeed());
             setSim(undefined);
             setStep('build');
           }}

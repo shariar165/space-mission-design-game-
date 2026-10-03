@@ -266,7 +266,7 @@ fᵢ = 1 at the recommended margin, rising as a margin shrinks (for example, Δv
 
 If sourced part reliabilities are added later, they belong in p_base for each phase, not in a second meter.
 
-**Monte Carlo in Engineer mode.** Run the mission 1,000 times with the same design and show the success rate. This teaches that a good design lowers risk but never removes it. The run is seeded (default seed 2013, shown on screen), so the same design always gives the same result: a live demo is reproducible. Single flights from Build Bay use a fresh random seed each launch.
+**Monte Carlo in Engineer mode.** Run the mission 1,000 times with the same design and show the success rate. This teaches that a good design lowers risk but never removes it. The run is seeded (default seed 2013, shown on screen), so the same design always gives the same result: a live demo is reproducible. Single flights from Build Bay use a fresh random seed each launch, shown on the crisis card and the Debrief. Opening the game with `?seed=N` fixes every flight to seed N (retries included), so one flight also replays identically; the Debrief links to `?seed=` for the flight just flown.
 
 **Crisis cards (first set).** One card per flight, drawn from those that fit the mission phase.
 

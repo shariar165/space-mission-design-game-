@@ -13,7 +13,19 @@ type Preview = NonNullable<ReturnType<typeof previewCrisis>>;
 
 const PHASE: Record<string, string> = { launch: 'launch', cruise: 'cruise', arrival: 'arrival', science: 'science operations', return: 'the trip home' };
 
-export function CrisisScreen({ preview, ev, design, onChoose }: { preview: Preview; ev: FullEvaluation; design: Design; onChoose: (id: string) => void }) {
+export function CrisisScreen({
+  preview,
+  ev,
+  design,
+  seed,
+  onChoose,
+}: {
+  preview: Preview;
+  ev: FullEvaluation;
+  design: Design;
+  seed: number;
+  onChoose: (id: string) => void;
+}) {
   const { card, day, phase, options } = preview;
   const offered = new Set(options.map((o) => o.id));
   const dest = DESTINATIONS[design.destination];
@@ -28,6 +40,9 @@ export function CrisisScreen({ preview, ev, design, onChoose }: { preview: Previ
           <span className="mono faint" style={{ fontSize: 12 }}>
             MISSION DAY {f.num(day)} · {PHASE[phase]?.toUpperCase()}
             {card.decisionBeforeLaunch ? ' · DECIDE BEFORE LAUNCH' : ''}
+          </span>
+          <span className="mono faint" style={{ fontSize: 12, marginLeft: 'auto' }}>
+            FLIGHT SEED {seed}
           </span>
         </div>
         <h1 id="crisis-title">{card.title}</h1>
