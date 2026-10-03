@@ -102,6 +102,14 @@ That is about 518 days to Mars and 399 days to Bennu. Longer flights are blocked
 
 **Best arrival date.** For a given launch date, the engine scans arrival dates within the cap and picks the lowest departure v∞ + arrival v∞. For MAVEN's launch on Nov 18, 2013 this gives 300 days, against 307 days flown.
 
+**Best launch window (decided).** `bestLaunchWindow(dest, fromDate)` scans launch dates over one synodic period after `fromDate`. It uses a 10-day grid, then a 1-day refinement within ±10 days of the best grid point. For each launch date it takes the best arrival (above). It returns the single launch date with the lowest **departure v∞ + arrival v∞**: launch energy plus the arrival burn, with equal weight. This is a standard porkchop figure of merit. The game uses it to set starter dates.
+
+It is **not** how real missions pick their launch day. A real mission plans a *launch period*: every day on which its vehicle can deliver the C3 needed to reach a fixed arrival date. It then launches on the first day, so a slip still fits.
+- **MAVEN's case:** the published launch period was Nov 18 – Dec 7, 2013, with orbit insertion planned for Sept 22, 2014 ([NASA: The 2013 MAVEN Mission To Mars](https://mars.nasa.gov/files/resources/MAVENPresentation2013.pdf)). MAVEN launched on the opening day.
+- **The model's optimum:** from June 2013 the search returns **Dec 6, 2013** (C3 ≈ 9.4 km²/s²), inside the published period, near its close. The opening day to the planned arrival needs C3 ≈ 12.2 km²/s² in the model.
+
+So Nov 18 is where the period opens, not where the energy is lowest. The validation table checks that the optimum lies inside the published period. Launch periods, launch-vehicle C3 limits, the declination of the launch asymptote and arrival-date constraints are not modelled. A future Window screen can show a launch period as the days on which the chosen vehicle meets the needed C3 for the player's wet mass.
+
 **Orbits are altitudes.** Capture and science orbits are given as periapsis and apoapsis **altitudes** above the equatorial radius. When only a period is published, the apoapsis is derived by Kepler's third law: a = (μT²/4π²)^{1/3}.
 
 **Science-orbit transfer.** If the science orbit differs from the capture orbit, the spacecraft pays a two-burn transfer with each burn at an apsis (vis-viva, cheaper of the two burn orders):
@@ -200,6 +208,8 @@ Pₜ = transmitter power, D\_sc = spacecraft dish diameter, D\_gs = ground dish 
 
 **Science return link.** Science data produced per day is capped by data downlinked per day. The Debrief must say when the radio, not the instruments, limited the science.
 
+**Downlink caps science (decided).** The science **goal** is Σ instrument data/day × planned science days. It does not depend on the radio. The data actually **sent home** does: on each science day the engine adds min(data produced, downlink capacity that day), with the capacity taken from the scaled link budget at that day's Earth distance. The Science return score (downlinked ÷ goal) and the "radio-limited" note therefore rest on the comms reference link. That link is a placeholder, so the Debrief marks the downlink figures and the Science return row "game estimate". The Data meter's limit carries the same badge, until a published reference link is chosen.
+
 ## Mass and cost
 
 The budget cap must come from a real NASA mission class, never from one mission's actual cost. This fixes the mockup problem where the cap equalled MAVEN's cost and looked rigged.
@@ -246,8 +256,17 @@ fᵢ = 1 at the recommended margin, rising as a margin shrinks (for example, Δv
 - **Which margins feed which phase:** cruise ← power; arrival (capture or rendezvous) ← Δv; science ← power; sample return ← Δv.
 - **Base rates:** cruise 2%, arrival 4%, science 2% per year, sample return 3%.
 - **Risk meter:** shows 1 − Π(1 − p_phase) against an acceptable mission risk of 20%.
+  - The 20% limit is a **game estimate**. No NASA source giving a single numeric acceptable-loss probability for robotic science missions was found; NASA's payload risk classes are qualitative.
+  - The meter shows a "game estimate" badge next to its limit, and ⓘ opens the record.
 
-**Monte Carlo in Engineer mode.** Run the mission 1,000 times with the same design and show the success rate. This teaches that a good design lowers risk but never removes it.
+**Why there is no Reliability meter (decided).** The Build Bay mockup showed "Reliability ≥ 85%" as R = Π Rᵢ over 14 subsystems. The game uses the Risk meter in that slot instead, for three reasons:
+1. **No sourced data.** A series-reliability product needs a sourced reliability Rᵢ for every part. The catalogue has none, so the 85% target and every Rᵢ would be invented numbers.
+2. **One model.** The Risk meter is the same phase-risk model that `simulateMission` and the Monte Carlo fly. A separate reliability number would disagree with what then happens in flight.
+3. **It teaches the trade.** Risk responds to the player's margins (f(margin) above), so cutting Δv or power margin visibly raises the risk.
+
+If sourced part reliabilities are added later, they belong in p_base for each phase, not in a second meter.
+
+**Monte Carlo in Engineer mode.** Run the mission 1,000 times with the same design and show the success rate. This teaches that a good design lowers risk but never removes it. The run is seeded (default seed 2013, shown on screen), so the same design always gives the same result: a live demo is reproducible. Single flights from Build Bay use a fresh random seed each launch.
 
 **Crisis cards (first set).** One card per flight, drawn from those that fit the mission phase.
 
@@ -419,7 +438,7 @@ The UI (`src/ui/`, React + Vite) follows the Claude Design mockups for Build Bay
 1. **The engine computes every number on screen.** The UI only converts units for display (the display rules in "Constants and units"). Part-card effects come from `designDelta`, the real-mission comparison from `compareWithRealMission`, the crisis card from `previewCrisis`, and starter launch dates from `bestLaunchWindow`.
 2. **Engineer mode** shows each meter's `equation` and every entry in `inputs`. **ⓘ** opens the `Sourced<T>` record: source, unit, link, and a "game estimate" badge when `isGameEstimate` is true.
 3. **Status** is always shown with an icon, a colour and a label. Over-limit bars are also hatched.
-4. **Mission Budget meters:** mass, power, Δv, data, cost and risk. The mockup's "Reliability ≥ 85% (Π Rᵢ)" meter is replaced by the engine's Risk meter (mission failure probability against 20%, game estimate). No series-reliability model exists.
+4. **Mission Budget meters:** mass, power, Δv, data, cost and risk. The mockup's "Reliability ≥ 85% (Π Rᵢ)" meter is replaced by the engine's Risk meter (mission failure probability against 20%, game estimate). See "Why there is no Reliability meter" in the risk section. When a meter's limit rests on a game estimate (risk limit, comms reference link), the badge shows on the meter itself, not only in ⓘ.
 5. **Debrief comparison** with a real mission uses mass, power and Δv only (see "MAVEN cost"), with the biggest gap flagged. Mars is compared with MAVEN and Bennu with OSIRIS-REx. Other destinations have no comparison until a sourced preset exists.
 6. **Score** is shown as 0–100. Category grades are STRONG ≥ 70, FAIR 40–69, WEAK < 40 (game rule). The row the next-star hint is about is highlighted.
 7. **English only for now.** The language toggle is hidden until engine messages are returned as codes with values.
@@ -442,3 +461,7 @@ The UI (`src/ui/`, React + Vite) follows the Claude Design mockups for Build Bay
 | 11 | Oct 3, 2026 | **The engine computes every displayed number,** including part-card deltas, the real-mission comparison, the crisis preview and launch windows. The UI only formats units. |
 | 12 | Oct 3, 2026 | **No Reliability meter:** the mockup's Π Rᵢ reliability meter becomes the engine's Risk meter. The Debrief compares mass, power and Δv only (no cost or downlink rows). |
 | 13 | Oct 3, 2026 | **Score display** 0–100, with STRONG / FAIR / WEAK grades at 70 / 40 (game rule). **Flight bridge:** Build → Launch → one crisis card → Debrief until the Window and Flight screens exist. |
+| 14 | Oct 3, 2026 | **Launch window criterion:** minimum departure v∞ + arrival v∞. It finds the energy optimum, not a launch period's opening day. Validated: the 2013 optimum (Dec 6) lies inside MAVEN's published period (Nov 18 – Dec 7). |
+| 15 | Oct 3, 2026 | **Downlink caps daily science** through the uncalibrated link budget, so the science return figures carry a "game estimate" badge. |
+| 16 | Oct 3, 2026 | **Risk limit 20%** stays a labelled game estimate (no numeric NASA source found), shown on the meter. **Reliability → Risk** swap recorded with its reasons. |
+| 17 | Oct 3, 2026 | **Monte Carlo is seeded** (default 2013, shown on screen) for reproducible demos. |
