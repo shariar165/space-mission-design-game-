@@ -66,6 +66,8 @@ export type MeterStatus = 'ok' | 'warning' | 'over';
 export interface Meter {
   used: number;
   limit: number;
+  /** limit − used, in the meter's own units (e.g. kg of launch capacity left). */
+  headroom: number;
   margin: number;
   status: MeterStatus;
   equation: string;

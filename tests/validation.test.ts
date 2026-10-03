@@ -5,11 +5,12 @@
 // "info" = reported for the Debrief, not a pass/fail check.
 import { writeFileSync } from 'node:fs';
 import { afterAll, describe, expect, it } from 'vitest';
-import { AU_M, MU_SUN_SI, km, toDays } from '../src/engine/constants';
+import { AU_M, MU_SUN_SI, km, mu, toDays } from '../src/engine/constants';
 import { DESTINATIONS, LAUNCH_VEHICLES, PARTS } from '../src/engine/data';
 import { evaluateDesign, monteCarloMission } from '../src/engine/index';
 import { missionPreset, presetDesign } from '../src/engine/missions';
-import { bestArrival, hohmann } from '../src/engine/trajectory';
+import { propellantBurned } from '../src/engine/propulsion';
+import { bestArrival, hohmann, orbitPeriod } from '../src/engine/trajectory';
 
 const TOLERANCE = 0.1;
 
@@ -123,14 +124,39 @@ describe('MAVEN (Mars, 2013) — NASA Science', () => {
     expect(ok).toBe(true);
   });
 
-  it('Δv budget and margin with the science-orbit transfer and lifetime reserve (information)', () => {
+  it('science orbit 150 × 6,300 km gives the published 4.5-hour period (Kepler III), ±10%', () => {
+    const mars = DESTINATIONS.mars;
+    const R = km(mars.radius_km.value);
+    const so = design.scienceOrbit!;
+    const T_h = orbitPeriod(mu(mars.gm_km3s2.value), R + km(so.periapsis_km), R + km(so.apoapsis_km)) / 3600;
+    const err = within('validation', M, 'Science-orbit period from published altitudes', T_h, pub.scienceOrbitPeriod_h!.value, 'h', '');
+    expect(Math.abs(err)).toBeLessThanOrEqual(TOLERANCE);
+  });
+
+  it('the orbit-insertion burn uses more than half of the propellant (NASAfacts)', () => {
     const b = ev.details.deltaVBudget;
-    info(M, 'Capture burn into 380 × 44,600 km', `${b.arrival_ms.toFixed(0)} m/s`, '—', 'capture orbit is a game estimate (to verify)');
-    info(M, 'Capture → science orbit 150 × 6,200 km (vis-viva)', `${b.orbitTransfer_ms.toFixed(0)} m/s`, '—', 'science orbit is a game estimate (to verify)');
-    info(M, 'Trajectory corrections + maintenance (1 yr science)', `${(b.trajectoryCorrections_ms + b.maintenance_ms).toFixed(0)} m/s`, '—', '50 m/s rule; 20 m/s/yr estimate');
-    info(M, 'Lifetime reserve (as-flown 4,094 days at Mars)', `${b.lifetimeReserve_ms.toFixed(0)} m/s`, '—', '20 m/s/yr estimate × extended years');
+    const used = propellantBurned(ev.details.wetMass_kg, b.arrival_ms, ev.details.isp_s);
+    const fraction = used / design.propellant_kg;
+    const ok = flag(
+      M,
+      'Capture burn propellant (Lambert v∞ + capture equation + rocket equation)',
+      fraction > pub.moiPropellantFractionMin!.value,
+      `${used.toFixed(0)} kg = ${(fraction * 100).toFixed(1)}% of ${design.propellant_kg} kg`,
+      '> 50% of the fuel on board',
+      'Isp 225 s (estimate)',
+    );
+    expect(ok).toBe(true);
+  });
+
+  it('Δv budget and margin with the science-orbit transfer; planned prime mission only (information)', () => {
+    const b = ev.details.deltaVBudget;
+    const co = design.captureOrbit;
+    info(M, `Capture burn into 380 × ${co.apoapsis_km.toFixed(0)} km (35-h orbit, apoapsis by Kepler III)`, `${b.arrival_ms.toFixed(0)} m/s`);
+    info(M, 'Capture → science orbit 150 × 6,300 km (vis-viva)', `${b.orbitTransfer_ms.toFixed(0)} m/s`);
+    info(M, 'Trajectory corrections + maintenance (1-yr prime mission)', `${(b.trajectoryCorrections_ms + b.maintenance_ms).toFixed(0)} m/s`, '—', '50 m/s rule; 20 m/s/yr estimate');
+    info(M, 'Lifetime reserve (planned prime mission = science phase)', `${b.lifetimeReserve_ms.toFixed(0)} m/s`, '—', 'no extended mission planned at launch');
     info(M, 'Δv required (total)', `${b.total_ms.toFixed(0)} m/s`);
-    info(M, 'Δv margin (capability vs required)', fmtPct(ev.meters.deltaV.margin), 'band 10–30%');
+    info(M, 'Δv margin (capability vs required)', fmtPct(ev.meters.deltaV.margin), 'band 10–30%', 'deep-dip campaigns (NASAfacts: five dips to ~125 km) are not modelled');
     info(M, 'Light delay on arrival day', `${(ev.details.lightDelayAtArrival_s / 60).toFixed(1)} min`);
     expect(ev.blockers).toEqual([]);
   });

@@ -13,7 +13,7 @@ import { CONSTANTS } from '../src/engine/constants';
 import { COST_CAPS } from '../src/engine/massCost';
 import { ETA_SYS } from '../src/engine/power';
 import { ACCEPTABLE_MISSION_RISK, BASE_RISK, MARGIN_RISK_FACTOR_AT_ZERO } from '../src/engine/risk';
-import { BUDGET_ZERO_AT_OVERRUN, MARGIN_BAND, WEIGHTS } from '../src/engine/scoring';
+import { BUDGET_ZERO_AT_OVERRUN, MARGIN_BAND, SCORE_GRADES, WEIGHTS } from '../src/engine/scoring';
 import type { Sourced } from '../src/engine/types';
 
 interface Entry {
@@ -67,7 +67,7 @@ const ENGINE_VALUES: Record<string, Record<string, Sourced<unknown>>> = {
   'power.ts': { ETA_SYS },
   'risk.ts': { ...BASE_RISK, MARGIN_RISK_FACTOR_AT_ZERO, ACCEPTABLE_MISSION_RISK },
   'scoring.ts WEIGHTS': WEIGHTS,
-  'scoring.ts': { ...MARGIN_BAND, BUDGET_ZERO_AT_OVERRUN },
+  'scoring.ts': { ...MARGIN_BAND, BUDGET_ZERO_AT_OVERRUN, ...SCORE_GRADES },
 };
 
 const all: Entry[] = [];
@@ -102,7 +102,6 @@ const OPEN_ITEMS = [
   'MMRTG power decay over the mission is not modelled yet (fact sheet gives launch power only).',
   'Crisis cards: check the real-history text on each card against NASA LLIS or the official failure report and put that link on the card.',
   'OSIRIS-REx: solar array area (to use the published 1,226–2,500 W as an independent η_sys check), dry mass, DSM-1 size, flyby day and arrival date.',
-  'Spec scoring formula reads Score = 100 Σ wᵢ sᵢ with sᵢ ∈ [0, 100] (max 10,000); engine uses Σ wᵢ sᵢ (0–100). Confirm.',
   'Part costs: candidate sources are NASA\'s Cost Estimating Handbook and NASA instrument cost models.',
 ];
 

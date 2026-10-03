@@ -1,16 +1,16 @@
 // The UI calls evaluateDesign() (design screen) and simulateMission() (flight + Debrief) and renders
 // what comes back. Every number is computed here; nothing is hand-typed into the UI.
-import { G0, GAME_RULES, km, mu as muSI } from './constants';
+import { G0, GAME_RULES, km, mu as muSI, S0 } from './constants';
 import { COMMS_CALIBRATED, dataMeter, dataPerDay_bits, dataRate, lightDelay_s, REFERENCE_LINK } from './comms';
-import { availableOptions, crisisScore, drawCrisis, safestOption, timeline, type CrisisCard, type CrisisOption } from './crisis';
+import { availableOptions, crisisScore, drawCrisis, safestOption, timeline, type CrisisCard, type CrisisOption, type PhaseWindow } from './crisis';
 import { DESTINATIONS, LAUNCH_VEHICLES, lookup, PARTS } from './data';
 import { earthDistance, julianDate, sunDistance } from './ephemeris';
 import { launchMassCheck, launchSuccessProbability, payloadAtC3 } from './launch';
-import { componentMasses, costEvaluation, massRollup, wetMass } from './massCost';
+import { componentMasses, costBreakdown, costEvaluation, massRollup, wetMass, type CostBreakdown } from './massCost';
 import { batteryMass, ETA_SYS, heaterPower, longestEclipse_s, powerMeter, rtgPower, solarPower, sunlightFraction } from './power';
-import { deltaVBudget, deltaVCapability, deltaVMeter, engineBlockers, type DeltaVBudget } from './propulsion';
+import { deltaVBudget, deltaVCapability, deltaVMeter, engineBlockers, propellantBurned, type DeltaVBudget } from './propulsion';
 import { makeRng, phaseRisks, riskMeter, type Phase, type PhaseRisk } from './risk';
-import { budgetScore, marginBandScore, missionSuccessScore, nextStarHint, scienceScore, stars, totalScore, type Category } from './scoring';
+import { budgetScore, marginBandScore, missionSuccessScore, nextStar, scienceGoal_Gbit, scienceScore, stars, totalScore, type Category } from './scoring';
 import { arrivalDeltaV, maxFlightDays, orbitChangeDeltaV, sunDistanceExtremes, transferForDesign } from './trajectory';
 import { sourced, type Design, type Evaluation, type Meter } from './types';
 
@@ -28,8 +28,26 @@ export interface FullEvaluation extends Evaluation {
     power: { available_W: number; required_W: number; atEndOfScience: { available_W: number; required_W: number } };
     data: { producedPerDay_bits: number; downlinkedPerDayAtArrival_bits: number };
     cost: { development_M: number; launch_M: number; operations_M: number; cap_M: number };
+    /** Development cost of each part group ($M). */
+    costBreakdown: CostBreakdown;
+    /**
+     * Concept mass roll-up (kg): m_dry = (1 + k_margin) × subtotal. Real missions (asFlown) use the
+     * published dry mass instead, so for them the roll-up is for reference only.
+     */
+    massBreakdown: {
+      bus: number;
+      instruments: { id: string; kg: number }[];
+      powerGeneration: number;
+      battery: number;
+      comms: number;
+      tanks: number;
+      subtotal: number;
+      growthMargin: number;
+    };
     isp_s: number;
     propellant_kg: number;
+    /** Planned science days actually used (design value, or the 365-day default). */
+    scienceDays: number;
     asFlown: boolean;
     sampleReturn: boolean;
   };
@@ -95,7 +113,7 @@ export function evaluateDesign(design: Design): FullEvaluation {
   const atArrival = powerAt(design, jdArrival, (jdArrival - jdLaunch) / 365.25, baseRequired_W, bus.heaterBase_W.value);
   const atEnd = powerAt(design, jdEndScience, (jdEndScience - jdLaunch) / 365.25, baseRequired_W, bus.heaterBase_W.value);
   const power = powerMeter(atArrival.available_W, atArrival.required_W, {
-    S0: sourced(1361, 'W/m²', 'NASA Mars/Earth Fact Sheet'),
+    S0,
     sunDistance: derived(atArrival.rSun, 'm', 'JPL approximate ephemeris on arrival day'),
     arrayArea: sourced(design.power.arrayArea_m2 ?? 0, 'm²', 'Player design'),
     etaSys: ETA_SYS,
@@ -134,7 +152,9 @@ export function evaluateDesign(design: Design): FullEvaluation {
   }
 
   // --- Mass ---
-  const dry_kg = design.asFlownDryMass_kg?.value ?? massRollup(componentMasses(design, battery_kg)).dry_kg;
+  const components = componentMasses(design, battery_kg);
+  const rollup = massRollup(components);
+  const dry_kg = design.asFlownDryMass_kg?.value ?? rollup.dry_kg;
   const wet_kg = wetMass(dry_kg, design.propellant_kg);
 
   // --- Δv ---
@@ -232,8 +252,20 @@ export function evaluateDesign(design: Design): FullEvaluation {
       },
       data: { producedPerDay_bits: produced, downlinkedPerDayAtArrival_bits: downlinked },
       cost: { development_M: cost.development_M, launch_M: cost.launch_M, operations_M: cost.operations_M, cap_M: cost.meter.limit },
+      costBreakdown: costBreakdown(design),
+      massBreakdown: {
+        bus: components.bus,
+        instruments: design.instrumentIds.map((id, i) => ({ id, kg: components.instruments[i] ?? 0 })),
+        powerGeneration: components.power - battery_kg,
+        battery: battery_kg,
+        comms: components.comms,
+        tanks: components.tanks,
+        subtotal: rollup.subtotal_kg,
+        growthMargin: rollup.growthMargin_kg,
+      },
       isp_s: engine.isp_s.value,
       propellant_kg: design.propellant_kg,
+      scienceDays,
       asFlown: design.asFlownDryMass_kg !== undefined,
       sampleReturn,
     },
@@ -252,8 +284,32 @@ export interface SimulationResult {
   totalPhases: number;
   failedPhase?: Phase;
   failureDay?: number;
-  crisis?: { cardId: string; title: string; day: number; phase: Phase; optionId: string; choseSafest: boolean; reached: boolean; badOutcome: boolean };
+  crisis?: {
+    cardId: string;
+    title: string;
+    day: number;
+    phase: Phase;
+    optionId: string;
+    optionLabel: string;
+    choseSafest: boolean;
+    reached: boolean;
+    badOutcome: boolean;
+    /** Δv paid for the chosen option (0 if the crisis was never reached). */
+    deltaVSpent_ms: number;
+    /** Propellant for deltaVSpent_ms, from the rocket equation at the craft's mass in that phase. */
+    propellantSpent_kg: number;
+    scienceDaysLost: number;
+    /** Budget paid; a test bought before launch is always paid. */
+    budgetSpent_M: number;
+  };
+  /** Mission day the flight ended: the failure day, the last planned day, or 0 if it never launched. */
+  endDay: number;
+  /** Earth–craft distance on endDay (m), from the ephemeris. */
+  earthDistanceAtEnd_m: number;
   scienceDaysAchieved: number;
+  plannedScienceDays: number;
+  /** Science goal = Σ instrument data/day × planned science days. */
+  goal_Gbit: number;
   downlinked_Gbit: number;
   radioLimited: boolean;
   endMargins: { deltaV: number; power: number; mass: number };
@@ -262,6 +318,8 @@ export interface SimulationResult {
   breakdown: ReturnType<typeof totalScore>['breakdown'];
   stars: number;
   hint: string;
+  /** The score category the hint is about (the Debrief highlights that row). */
+  hintCategory?: Category;
 }
 
 interface Prepared {
@@ -291,7 +349,7 @@ function prepare(design: Design): Prepared {
     returnDays: ev.details.sampleReturn ? Math.round(ev.trajectory.flightDays) : undefined,
     dailyCapacity_bits,
     producedPerDay_bits: ev.details.data.producedPerDay_bits,
-    goal_Gbit: DESTINATIONS[design.destination].scienceGoal_Gbit.value,
+    goal_Gbit: scienceGoal_Gbit(ev.details.data.producedPerDay_bits, scienceDays),
   };
 }
 
@@ -304,15 +362,43 @@ function pickOption(policy: CrisisPolicy, card: CrisisCard, options: CrisisOptio
   return chosen;
 }
 
+/** Draw the flight's crisis card and the options the spare margins can pay for. Shared by run() and previewCrisis(). */
+function setUpCrisis(p: Prepared, rng: () => number): { tl: PhaseWindow[]; drawn: ReturnType<typeof drawCrisis>; options: CrisisOption[] } {
+  const d = p.ev.details;
+  const tl = timeline({ flightDays: p.ev.trajectory.flightDays, scienceDays: p.scienceDays, returnDays: p.returnDays });
+  const drawn = drawCrisis(tl, DESTINATIONS[p.design.destination].missionType, d.sampleReturn, rng);
+  const options = availableOptions(drawn.card, {
+    deltaV_ms: d.deltaVCapability_ms - d.deltaVRequired_ms,
+    budget_M: d.cost.cap_M - d.cost.development_M,
+    powerMargin: p.ev.meters.power.margin,
+  });
+  return { tl, drawn, options };
+}
+
+/**
+ * Craft mass during a phase (kg): the wet mass until arrival. After arrival, the wet mass minus the propellant
+ * burned for the arrival burn, the capture → science orbit change and the trajectory corrections (rocket equation).
+ */
+function massInPhase(p: Prepared, phase: Phase): number {
+  const d = p.ev.details;
+  if (phase === 'launch' || phase === 'cruise') return d.wetMass_kg;
+  const b = d.deltaVBudget;
+  return d.wetMass_kg - propellantBurned(d.wetMass_kg, b.arrival_ms + b.orbitTransfer_ms + b.trajectoryCorrections_ms, d.isp_s);
+}
+
 function run(p: Prepared, rng: () => number, policy: CrisisPolicy): SimulationResult {
   const { ev, design } = p;
   const d = ev.details;
-  const dvSpare_ms = d.deltaVCapability_ms - d.deltaVRequired_ms;
   let devCost_M = d.cost.development_M;
   const massMargin = ev.meters.mass.margin;
   const endPowerMargin = (d.power.atEndOfScience.available_W - d.power.atEndOfScience.required_W) / d.power.atEndOfScience.required_W;
+  const jdLaunch = julianDate(d.launchDate);
 
-  const finish = (r: Omit<SimulationResult, 'scores' | 'score' | 'breakdown' | 'stars' | 'hint' | 'endMargins'> & { dvMargin: number; crisisScoreValue: number }): SimulationResult => {
+  type FinishInput = Omit<
+    SimulationResult,
+    'scores' | 'score' | 'breakdown' | 'stars' | 'hint' | 'hintCategory' | 'endMargins' | 'goal_Gbit' | 'plannedScienceDays' | 'earthDistanceAtEnd_m'
+  > & { dvMargin: number; crisisScoreValue: number };
+  const finish = (r: FinishInput): SimulationResult => {
     const endMargins = { deltaV: r.dvMargin, power: endPowerMargin, mass: massMargin };
     const sci = scienceScore(r.downlinked_Gbit, p.goal_Gbit);
     const scores: Record<Category, number> = {
@@ -328,44 +414,43 @@ function run(p: Prepared, rng: () => number, policy: CrisisPolicy): SimulationRe
     const reachedScience = r.launched && r.phasesCompleted >= 3;
     const s = stars({ reachedScience, scienceScore: sci, margins: endMargins });
     const { dvMargin: _dv, crisisScoreValue: _cs, ...rest } = r;
+    const next = nextStar({
+      stars: s,
+      failedPhase: r.failedPhase,
+      blockers: ev.blockers,
+      radioLimited: r.radioLimited,
+      scienceScore: sci,
+      margins: endMargins,
+      deltaV: { required_ms: d.deltaVRequired_ms, capability_ms: d.deltaVCapability_ms, isp_s: d.isp_s, dry_kg: d.dryMass_kg, propellant_kg: d.propellant_kg, asFlown: d.asFlown },
+      launch: { capacity_kg: d.launchCapacity_kg, wet_kg: d.wetMass_kg },
+      power: { available_W: d.power.atEndOfScience.available_W, required_W: d.power.atEndOfScience.required_W, type: design.power.type, arrayArea_m2: design.power.arrayArea_m2 },
+    });
     return {
       ...rest,
+      goal_Gbit: p.goal_Gbit,
+      plannedScienceDays: p.scienceDays,
+      earthDistanceAtEnd_m: earthDistance(design.destination, jdLaunch + r.endDay),
       endMargins,
       scores,
       score: t.total,
       breakdown: t.breakdown,
       stars: s,
-      hint: nextStarHint({
-        stars: s,
-        failedPhase: r.failedPhase,
-        blockers: ev.blockers,
-        radioLimited: r.radioLimited,
-        scienceScore: sci,
-        margins: endMargins,
-        deltaV: { required_ms: d.deltaVRequired_ms, capability_ms: d.deltaVCapability_ms, isp_s: d.isp_s, dry_kg: d.dryMass_kg, propellant_kg: d.propellant_kg, asFlown: d.asFlown },
-        launch: { capacity_kg: d.launchCapacity_kg, wet_kg: d.wetMass_kg },
-        power: { available_W: d.power.atEndOfScience.available_W, required_W: d.power.atEndOfScience.required_W, type: design.power.type, arrayArea_m2: design.power.arrayArea_m2 },
-      }),
+      hint: next.hint,
+      ...(next.category ? { hintCategory: next.category } : {}),
     };
   };
 
   const phases = d.phaseRisks;
   if (ev.blockers.length) {
     return finish({
-      launched: false, completed: false, phasesCompleted: 0, totalPhases: phases.length, scienceDaysAchieved: 0,
+      launched: false, completed: false, phasesCompleted: 0, totalPhases: phases.length, endDay: 0, scienceDaysAchieved: 0,
       downlinked_Gbit: 0, radioLimited: false, dvMargin: ev.meters.deltaV.margin, crisisScoreValue: 0,
     });
   }
 
   // Crisis: one card per flight, its day inside its phase. Decide with the spare margins at that point.
-  const tl = timeline({ flightDays: ev.trajectory.flightDays, scienceDays: p.scienceDays, returnDays: p.returnDays });
+  const { tl, drawn, options } = setUpCrisis(p, rng);
   const missionType = DESTINATIONS[design.destination].missionType;
-  const drawn = drawCrisis(tl, missionType, d.sampleReturn, rng);
-  const options = availableOptions(drawn.card, {
-    deltaV_ms: dvSpare_ms,
-    budget_M: d.cost.cap_M - d.cost.development_M,
-    powerMargin: ev.meters.power.margin,
-  });
   const chosen = pickOption(policy, drawn.card, options);
   const choseSafest = chosen.id === safestOption(drawn.card.options).id;
   if (drawn.card.decisionBeforeLaunch) devCost_M += chosen.cost.budget_M?.value ?? 0;
@@ -425,21 +510,28 @@ function run(p: Prepared, rng: () => number, policy: CrisisPolicy): SimulationRe
     downlinked_bits += Math.min(cap, p.producedPerDay_bits);
   }
 
+  const deltaVSpent_ms = crisisReached ? dvSpent : 0;
   return finish({
     launched: true,
     completed: completed === phases.length,
     phasesCompleted: completed,
     totalPhases: phases.length,
     ...(failedPhase ? { failedPhase, failureDay } : {}),
+    endDay: failureDay ?? tl[tl.length - 1]!.endDay,
     crisis: {
       cardId: drawn.card.id,
       title: drawn.card.title,
       day: drawn.day,
       phase: drawn.phase,
       optionId: chosen.id,
+      optionLabel: chosen.label,
       choseSafest,
       reached: crisisReached,
       badOutcome,
+      deltaVSpent_ms,
+      propellantSpent_kg: propellantBurned(massInPhase(p, drawn.phase), deltaVSpent_ms, d.isp_s),
+      scienceDaysLost: crisisReached ? scienceDaysLost : 0,
+      budgetSpent_M: crisisReached || drawn.card.decisionBeforeLaunch ? (chosen.cost.budget_M?.value ?? 0) : 0,
     },
     scienceDaysAchieved,
     downlinked_Gbit: downlinked_bits / 1e9,
@@ -447,6 +539,21 @@ function run(p: Prepared, rng: () => number, policy: CrisisPolicy): SimulationRe
     dvMargin: crisisReached ? dvMarginAfter : ev.meters.deltaV.margin,
     crisisScoreValue: crisisReached ? crisisScore(choseSafest, badOutcome) : 100,
   });
+}
+
+/**
+ * The crisis this flight will meet for a given seed, and the options the margins can pay for. The player
+ * chooses, then simulateMission(design, { seed, crisisPolicy: () => optionId }) flies the same draw.
+ * Undefined when the design is blocked (it never launches).
+ */
+export function previewCrisis(
+  design: Design,
+  seed: number,
+): { card: CrisisCard; day: number; phase: Phase; options: CrisisOption[]; safestOptionId: string } | undefined {
+  const p = prepare(design);
+  if (p.ev.blockers.length) return undefined;
+  const { drawn, options } = setUpCrisis(p, makeRng(seed));
+  return { card: drawn.card, day: drawn.day, phase: drawn.phase, options, safestOptionId: safestOption(drawn.card.options).id };
 }
 
 /** Fly one mission. Reproducible for a given seed. */
@@ -477,3 +584,6 @@ export function monteCarloMission(
 }
 
 export type { Design, Evaluation, Meter, Sourced } from './types';
+export type { CrisisCard, CrisisOption } from './crisis';
+export type { Phase } from './risk';
+export type { Category, Grade } from './scoring';

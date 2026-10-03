@@ -102,14 +102,16 @@
         "periapsis_km": {
           "value": 380,
           "unit": "km altitude",
-          "source": "Game estimate of MAVEN's capture orbit periapsis; to verify",
-          "isGameEstimate": true
+          "source": "NASAfacts: MAVEN Orbit Insertion: entering orbit 236 miles (380 kilometers) above the northern pole",
+          "url": "https://science.nasa.gov/wp-content/uploads/2024/03/44740_MAVEN-Fact-Sheet.pdf",
+          "isGameEstimate": false
         },
-        "apoapsis_km": {
-          "value": 44600,
-          "unit": "km altitude",
-          "source": "Game estimate of MAVEN's ~35-hour capture orbit apoapsis; to verify",
-          "isGameEstimate": true
+        "period_h": {
+          "value": 35,
+          "unit": "h",
+          "source": "NASAfacts: MAVEN Orbit Insertion: the capture orbit has a period of 35 hours (apoapsis derived by Kepler's third law)",
+          "url": "https://science.nasa.gov/wp-content/uploads/2024/03/44740_MAVEN-Fact-Sheet.pdf",
+          "isGameEstimate": false
         }
       },
       "asFlownDryMass_kg": {
@@ -122,8 +124,9 @@
       "scienceDays": {
         "value": 365,
         "unit": "days",
-        "source": "Game estimate: one Earth year of prime science (to verify)",
-        "isGameEstimate": true
+        "source": "NASAfacts: MAVEN Orbit Insertion: 1-Earth-year primary mission (NASA Science: MAVEN, 'one-year mission')",
+        "url": "https://science.nasa.gov/wp-content/uploads/2024/03/44740_MAVEN-Fact-Sheet.pdf",
+        "isGameEstimate": false
       },
       "missionClass": {
         "value": "discovery",
@@ -135,23 +138,23 @@
         "periapsis_km": {
           "value": 150,
           "unit": "km altitude",
-          "source": "MAVEN science orbit periapsis ~150 km; to verify against NASA Science: MAVEN",
-          "url": "https://science.nasa.gov/mission/maven/",
-          "isGameEstimate": true
+          "source": "NASAfacts: MAVEN Orbit Insertion: closest point about 90 miles (approximately 150 kilometers)",
+          "url": "https://science.nasa.gov/wp-content/uploads/2024/03/44740_MAVEN-Fact-Sheet.pdf",
+          "isGameEstimate": false
         },
         "apoapsis_km": {
-          "value": 6200,
+          "value": 6300,
           "unit": "km altitude",
-          "source": "MAVEN science orbit apoapsis ~6,200 km; to verify against NASA Science: MAVEN",
-          "url": "https://science.nasa.gov/mission/maven/",
-          "isGameEstimate": true
+          "source": "NASAfacts: MAVEN Orbit Insertion: farthest point about 3,900 miles (roughly 6,300 kilometers)",
+          "url": "https://science.nasa.gov/wp-content/uploads/2024/03/44740_MAVEN-Fact-Sheet.pdf",
+          "isGameEstimate": false
         }
       },
       "lifetimeDays": {
-        "value": 4094,
+        "value": 365,
         "unit": "days",
-        "source": "As flown: Mars orbit insertion Sept. 21, 2014 to loss of contact Dec. 6, 2025 (NASA Science: MAVEN)",
-        "url": "https://science.nasa.gov/mission/maven/",
+        "source": "Planned prime mission only (1 Earth year, NASAfacts); no extended-mission reserve is planned at launch",
+        "url": "https://science.nasa.gov/wp-content/uploads/2024/03/44740_MAVEN-Fact-Sheet.pdf",
         "isGameEstimate": false
       }
     },
@@ -195,6 +198,20 @@
         "unit": "days",
         "source": "NASA Science: MAVEN, launch Nov. 18, 2013 to Mars orbit insertion Sept. 21, 2014 (~10 months)",
         "url": "https://science.nasa.gov/mission/maven/",
+        "isGameEstimate": false
+      },
+      "scienceOrbitPeriod_h": {
+        "value": 4.5,
+        "unit": "h",
+        "source": "NASAfacts: MAVEN Orbit Insertion: 4-1/2-hour science orbit",
+        "url": "https://science.nasa.gov/wp-content/uploads/2024/03/44740_MAVEN-Fact-Sheet.pdf",
+        "isGameEstimate": false
+      },
+      "moiPropellantFractionMin": {
+        "value": 0.5,
+        "unit": "fraction of propellant",
+        "source": "NASAfacts: MAVEN Orbit Insertion: the 33-minute orbit-insertion burn will consume more than half of the fuel on board",
+        "url": "https://science.nasa.gov/wp-content/uploads/2024/03/44740_MAVEN-Fact-Sheet.pdf",
         "isGameEstimate": false
       }
     }

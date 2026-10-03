@@ -280,6 +280,18 @@ describe('trajectory', () => {
     expect(Math.abs(dv - 553.4)).toBeLessThan(2);
   });
 
+  it('Kepler III: orbit period from apsides, and apoapsis from period + periapsis', () => {
+    // MAVEN science orbit 150 × 6,300 km altitude (NASAfacts): rp 3546.2, ra 9696.2 km, a = 6621.2 km
+    // T = 2π√(a³/μ) = 2π√(2.90276e20 / 4.2828e13) = 16,358 s = 4.54 h  (NASA: 4.5 h)
+    const mu = C.mu(42828);
+    expect(T.orbitPeriod(mu, C.km(3546.2), C.km(9696.2)) / 3600).toBeCloseTo(4.54, 2);
+    // Capture orbit 35 h with periapsis 380 km altitude: a = (μT²/4π²)^(1/3) = 25,825 km
+    // ra = 2a − rp = 51,650 − 3,776.2 = 47,874 km → apoapsis altitude ≈ 44,478 km
+    const ra = T.apoapsisFromPeriod(mu, C.km(3776.2), 35 * 3600);
+    expect(Math.abs(ra / 1000 - 47_874)).toBeLessThan(5);
+    expect(T.orbitPeriod(mu, C.km(3776.2), ra)).toBeCloseTo(35 * 3600, 6);
+  });
+
   it('no orbit change costs nothing', () => {
     const o = { rp: C.km(3546.2), ra: C.km(9596.2) };
     expect(T.orbitChangeDeltaV(C.mu(42828), o, o)).toBeCloseTo(0, 9);
@@ -322,6 +334,13 @@ describe('propulsion', () => {
     expect(P.propellantForDeltaV(dv, 225, 809)).toBeCloseTo(1645, 6);
     // 1 km/s at 300 s on 1000 kg dry: 1000 × (e^(1000/2941.995) − 1) = 1000 × (e^0.339906 − 1) = 404.81 kg
     expect(P.propellantForDeltaV(1000, 300, 1000)).toBeCloseTo(404.81, 1);
+  });
+
+  it('propellant burned from a start mass: m₀(1 − e^(−Δv/(Isp·g₀)))', () => {
+    // 2454 kg, 1142 m/s at 225 s: 1142/2206.496 = 0.517562; 2454 × (1 − e^−0.517562) = 2454 × 0.404013 = 991.4 kg
+    expect(P.propellantBurned(2454, 1142, 225)).toBeCloseTo(991.4, 0);
+    // consistent with the rocket equation: burning all propellant gives the full capability
+    expect(P.propellantBurned(2454, P.deltaVCapability(225, 2454, 809), 225)).toBeCloseTo(1645, 6);
   });
 
   it('tank + feed mass is 12% of propellant (game rule)', () => {
@@ -748,6 +767,11 @@ describe('scoring', () => {
     expect(SC.budgetScore(550, 500)).toBeCloseTo(50, 9);
     expect(SC.budgetScore(600, 500)).toBeCloseTo(0, 9);
     expect(SC.budgetScore(700, 500)).toBe(0);
+  });
+
+  it('science goal = Σ instrument data/day × planned science days', () => {
+    // camera 2000 + spectrometer 1000 Mbit/day = 3e9 bit/day × 365 d = 1095 Gbit
+    expect(SC.scienceGoal_Gbit(3e9, 365)).toBeCloseTo(1095, 9);
   });
 
   it('science = downlinked ÷ goal, capped at 100; success = phases completed ÷ phases', () => {

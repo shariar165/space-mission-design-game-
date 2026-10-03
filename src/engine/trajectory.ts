@@ -2,7 +2,7 @@
 // All inputs and outputs in SI (m, s, m/s); C3 is reported in km²/s² as the launch industry quotes it.
 import { AU_M, days, GAME_RULES, km, mu as muSI, MU_EARTH_SI, MU_SUN_SI, R_EARTH_M, toDays } from './constants';
 import { DESTINATIONS } from './data';
-import { elementsAt, heliocentricPosition, heliocentricVelocity, julianDate, stateFromElements, type Elements } from './ephemeris';
+import { elementsAt, heliocentricPosition, heliocentricVelocity, julianDate, stateFromElements, synodicPeriodDays, type Elements } from './ephemeris';
 import type { Design, DestinationId, Sourced, Vec3 } from './types';
 import { cross, dot, norm, scale, sub } from './vec';
 
@@ -35,6 +35,16 @@ export function phaseAngleDeg(tFlight_s: number, targetPeriod_s: number): number
 /** Capture burn: Δv = √(v∞² + 2μ/rp) − √(μ(2/rp − 2/(rp+ra))). Radii from the body centre. */
 export function captureDeltaV(vInf_ms: number, mu: number, rp: number, ra: number): number {
   return Math.sqrt(vInf_ms ** 2 + (2 * mu) / rp) - Math.sqrt(mu * (2 / rp - 2 / (rp + ra)));
+}
+
+/** Kepler's third law: T = 2π√(a³/μ) with a = (rp + ra)/2. */
+export function orbitPeriod(mu: number, rp: number, ra: number): number {
+  return 2 * Math.PI * Math.sqrt(((rp + ra) / 2) ** 3 / mu);
+}
+
+/** Apoapsis radius of the orbit with periapsis radius rp and period T: ra = 2(μT²/4π²)^(1/3) − rp. */
+export function apoapsisFromPeriod(mu: number, rp: number, period_s: number): number {
+  return 2 * Math.cbrt((mu * period_s ** 2) / (4 * Math.PI ** 2)) - rp;
 }
 
 /** Speed on an orbit with apsides rp, ra at radius r (vis-viva): v = √(μ(2/r − 2/(rp + ra))). */
@@ -300,6 +310,46 @@ export function bestArrival(
     if (!best || t.vInfDep_ms + t.vInfArr_ms < best.vInfDep_ms + best.vInfArr_ms) best = { ...t, arrivalDate };
   }
   if (!best) throw new Error(`No Lambert solution found for ${dest} from ${launchDate}`);
+  return best;
+}
+
+const addDays = (iso: string, d: number) => new Date(Date.parse(`${iso.slice(0, 10)}T00:00:00Z`) + d * 86_400_000).toISOString().slice(0, 10);
+
+/**
+ * The best launch window on or after fromDate: scan launch dates through one synodic period (by default)
+ * and, for each, the best arrival (bestArrival). Same figure of merit: departure v∞ + arrival v∞.
+ * Coarse grid first, then a 1-day refinement around the best coarse launch date.
+ */
+export function bestLaunchWindow(
+  dest: Exclude<DestinationId, 'moon'>,
+  fromDate: string,
+  opts: { spanDays?: number; coarseStepDays?: number } = {},
+): TransferResult & { launchDate: string; arrivalDate: string } {
+  const span = Math.ceil(opts.spanDays ?? synodicPeriodDays(dest));
+  const step = opts.coarseStepDays ?? 10;
+  const score = (t: TransferResult) => t.vInfDep_ms + t.vInfArr_ms;
+  type Best = TransferResult & { launchDate: string; arrivalDate: string };
+  const tryLaunch = (launchDate: string, stepDays: number, around?: number): Best | undefined => {
+    try {
+      const o = around === undefined ? { stepDays } : { stepDays, minDays: Math.max(1, around - 3 * step), maxDays: around + 3 * step };
+      return { ...bestArrival(dest, launchDate, o), launchDate };
+    } catch {
+      return undefined;
+    }
+  };
+  let best: Best | undefined;
+  for (let d = 0; d <= span; d += step) {
+    const t = tryLaunch(addDays(fromDate, d), step);
+    if (t && (!best || score(t) < score(best))) best = t;
+  }
+  if (!best) throw new Error(`No launch window found for ${dest} after ${fromDate}`);
+  const coarse = best;
+  for (let d = -step; d <= step; d++) {
+    const launchDate = addDays(coarse.launchDate, d);
+    if (launchDate < fromDate.slice(0, 10)) continue;
+    const t = tryLaunch(launchDate, 1, Math.round(coarse.flightDays));
+    if (t && score(t) < score(best)) best = t;
+  }
   return best;
 }
 

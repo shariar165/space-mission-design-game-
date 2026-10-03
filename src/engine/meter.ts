@@ -16,7 +16,7 @@ export function makeMeter(
   inputs: Record<string, Sourced<number>>,
   calibrated?: boolean,
 ): Meter {
-  const m: Meter = { used, limit, margin, status: marginStatus(margin), equation, inputs };
+  const m: Meter = { used, limit, headroom: limit - used, margin, status: marginStatus(margin), equation, inputs };
   if (calibrated !== undefined) m.calibrated = calibrated;
   return m;
 }
