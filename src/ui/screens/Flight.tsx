@@ -83,7 +83,7 @@ export function Flight({ design, ev, sim, crisis, missionName, onDone, ghost }: 
           <dl className="hud-stats">
             <div>
               <dt>From Earth</dt>
-              <dd className="mono">{f.millionKm(frame.earthDistance_m)}</dd>
+              <dd className="mono">{f.distance(frame.earthDistance_m)}</dd>
             </div>
             <div>
               <dt>Signal delay</dt>

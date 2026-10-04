@@ -605,6 +605,25 @@ describe('Signal delay on the crisis day', () => {
     expect(signalDelay(m, Math.round(em.trajectory.flightDays) + 10, em).oneWay_s).toBeCloseTo(384_000_000 / 299_792_458, 6);
   });
 
+  it('Moon cruise follows the transfer in time (Kepler), not in angle: half-way in time is already far out', () => {
+    const m = cadet.buildCadetDesign(cadetBase('moon'), cadet.defaultChoices(cadetBase('moon')));
+    const em = evaluateDesign(m);
+    // Half-ellipse from r1 = R_E + 185 km = 6,563.1 km to r2 = 384,000 km: a = (r1 + r2)/2, e = (r2 − r1)/(r2 + r1) ≈ 0.966.
+    // Half the flight time → M = π/2; E − e sin E = π/2 → E ≈ 2.316 rad; r = a(1 − e cos E) ≈ 330,000 km.
+    const r1 = 6_563_100;
+    const r2 = 384_000_000;
+    const a = (r1 + r2) / 2;
+    const e = (r2 - r1) / (r2 + r1);
+    let E = Math.PI / 2;
+    for (let k = 0; k < 50; k++) E -= (E - e * Math.sin(E) - Math.PI / 2) / (1 - e * Math.cos(E));
+    const p = craftPosition(m, em.trajectory.flightDays / 2, em);
+    expect(Math.hypot(p[0], p[1])).toBeCloseTo(a * (1 - e * Math.cos(E)), -3);
+    expect(Math.hypot(p[0], p[1])).toBeGreaterThan(300_000_000);
+    // and it starts at the parking orbit and ends at the Moon's distance
+    expect(Math.hypot(...craftPosition(m, 0.001, em))).toBeCloseTo(r1, -5); // 86 s after injection: a few tens of km higher
+    expect(Math.hypot(...craftPosition(m, em.trajectory.flightDays * 0.9999, em))).toBeCloseTo(r2, -5);
+  });
+
   it('countdown: 760 s one way, a quarter of the way there → 570 s left; never below zero', () => {
     expect(countdown(760, 0.25)).toBe(570);
     expect(countdown(760, 1.5)).toBe(0);

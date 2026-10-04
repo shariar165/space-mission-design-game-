@@ -1,0 +1,12 @@
+{
+  "jupiter": {
+    "title": "Borrow speed from a planet",
+    "lesson": {
+      "value": "No rocket of its day could throw Juno straight to Jupiter. Juno launched on an Atlas V on Aug. 5, 2011, flew back past Earth 26 months later to pick up speed from Earth's gravity (a gravity assist), and reached Jupiter on July 4, 2016.",
+      "unit": "",
+      "source": "NASA Science: Juno (launch Aug. 5, 2011 on an Atlas V; returned past Earth 26 months later and sped away with greater energy; reached Jupiter July 4, 2016)",
+      "url": "https://science.nasa.gov/mission/juno/",
+      "isGameEstimate": false
+    }
+  }
+}

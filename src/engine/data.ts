@@ -1,6 +1,7 @@
 // Typed access to src/data/*.json. Every numeric data value in those files is a Sourced object.
 import destinationsJson from '../data/destinations.json';
 import launchVehiclesJson from '../data/launchVehicles.json';
+import lessonsJson from '../data/lessons.json';
 import orbitalElementsJson from '../data/orbitalElements.json';
 import partsJson from '../data/parts.json';
 import type { DestinationId, Sourced } from './types';
@@ -122,3 +123,10 @@ export function lookup<T>(table: Record<string, T>, id: string, what: string): T
   if (!v) throw new Error(`Unknown ${what}: ${id}`);
   return v;
 }
+
+/** Lesson cards for Cadet levels (each fact Sourced), e.g. why Jupiter needs a gravity assist. */
+export interface Lesson {
+  title: string;
+  lesson: Sourced<string>;
+}
+export const LESSONS = lessonsJson as unknown as Partial<Record<DestinationId, Lesson>>;

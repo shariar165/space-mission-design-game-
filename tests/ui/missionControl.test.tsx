@@ -12,7 +12,7 @@ import { OrdersPanel } from '../../src/ui/components/OrdersPanel';
 import { Flight, FLIGHT_MS } from '../../src/ui/screens/Flight';
 import * as f from '../../src/ui/format';
 import { starterDesign, today } from '../../src/ui/starters';
-import './setup';
+import { openMarsLevel } from './setup';
 
 const base = starterDesign('mars', today());
 const design = buildCadetDesign(base, defaultChoices(base));
@@ -50,7 +50,7 @@ describe('Standing orders panel', () => {
   });
 
   it('in the game, Orders sits between Rocket and Launch', () => {
-    render(<App />);
+    openMarsLevel(() => render(<App />), fireEvent.click, screen.getByRole);
     const names = within(screen.getByRole('navigation', { name: 'Build steps' }))
       .getAllByRole('button')
       .map((b) => b.textContent!.replace(/[^A-Za-z]/g, ''));

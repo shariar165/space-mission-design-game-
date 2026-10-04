@@ -8,11 +8,11 @@ import { App } from '../../src/ui/App';
 import { TestFlight, TEST_FLIGHT_MS } from '../../src/ui/components/TestFlight';
 import * as f from '../../src/ui/format';
 import { starterDesign, today } from '../../src/ui/starters';
-import './setup';
+import { openMarsLevel } from './setup';
 
 describe('Cadet guided build', () => {
   it('starts on step 1 of 5 with 2–3 cards and moves one decision at a time', () => {
-    render(<App />);
+    openMarsLevel(() => render(<App />), fireEvent.click, screen.getByRole);
     expect(screen.getByText(/Step 1 of 5 — Science/)).toBeTruthy();
     expect(screen.getAllByRole('button', { pressed: true }).length).toBeGreaterThan(0);
     const cards = within(screen.getByRole('group', { name: 'Science choices' })).getAllByRole('button');
@@ -24,7 +24,7 @@ describe('Cadet guided build', () => {
   });
 
   it('a card shows the engine chips; choosing the heavy RTG card tips the scale red', () => {
-    render(<App />);
+    openMarsLevel(() => render(<App />), fireEvent.click, screen.getByRole);
     fireEvent.click(screen.getByRole('button', { name: /Next/ }));
     const base = starterDesign('mars', today());
     const rtg = cadetOptions(base, defaultChoices(base), 'power').find((o) => o.id === 'rtg')!;
@@ -37,7 +37,7 @@ describe('Cadet guided build', () => {
   });
 
   it('tapping a gauge reveals the real number and its ⓘ sources', () => {
-    render(<App />);
+    openMarsLevel(() => render(<App />), fireEvent.click, screen.getByRole);
     const base = starterDesign('mars', today());
     const ev = evaluateDesign(buildCadetDesign(base, defaultChoices(base)));
     fireEvent.click(screen.getByRole('button', { name: /Weight/ }));
@@ -47,7 +47,7 @@ describe('Cadet guided build', () => {
   });
 
   it('the review screen locks Launch while the craft is too heavy', () => {
-    render(<App />);
+    openMarsLevel(() => render(<App />), fireEvent.click, screen.getByRole);
     fireEvent.click(screen.getByRole('button', { name: /Next/ }));
     fireEvent.click(screen.getByRole('button', { name: /Nuclear RTGs/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Launch' }));

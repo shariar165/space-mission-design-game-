@@ -1,10 +1,11 @@
 // Enforces spec rule 2 ("every constant and catalogue value carries a source") and regenerates
 // TODO_DATA.md, the list of every value flagged isGameEstimate. Run: npm run todo-data
-import { writeFileSync } from 'node:fs';
+import { readdirSync, writeFileSync } from 'node:fs';
 import { afterAll, describe, expect, it } from 'vitest';
 import crisisCards from '../src/data/crisisCards.json';
 import destinations from '../src/data/destinations.json';
 import launchVehicles from '../src/data/launchVehicles.json';
+import lessons from '../src/data/lessons.json';
 import missions from '../src/data/missions.json';
 import orbitalElements from '../src/data/orbitalElements.json';
 import parts from '../src/data/parts.json';
@@ -56,6 +57,7 @@ const DATA_FILES: Record<string, unknown> = {
   'crisisCards.json': crisisCards,
   'destinations.json': destinations,
   'launchVehicles.json': launchVehicles,
+  'lessons.json': lessons,
   'missions.json': missions,
   'orbitalElements.json': orbitalElements,
   'parts.json': parts,
@@ -78,6 +80,11 @@ const ENGINE_VALUES: Record<string, Record<string, Sourced<unknown>>> = {
 const all: Entry[] = [];
 
 describe('data audit', () => {
+  it('every JSON file in src/data is audited (a new file cannot slip past)', () => {
+    const onDisk = readdirSync(new URL('../src/data', import.meta.url)).filter((f) => f.endsWith('.json'));
+    expect(onDisk.sort()).toEqual(Object.keys(DATA_FILES).sort());
+  });
+
   for (const [file, json] of Object.entries(DATA_FILES)) {
     it(`${file}: every number is inside a Sourced object`, () => {
       const bare: string[] = [];

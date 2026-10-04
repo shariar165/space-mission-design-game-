@@ -67,13 +67,13 @@ export function MissionControl({ card, day, phase, destName, signal, order, othe
         </h2>
         <p className="mc-prompt">{card.prompt}</p>
 
-        <div className="mc-link" aria-label={`Earth to craft: ${f.millionKm(signal.distance_m)}`}>
+        <div className="mc-link" aria-label={`Earth to craft: ${f.distance(signal.distance_m)}`}>
           <span className="mc-end">
             <span className="mc-earth" aria-hidden="true" />
             Earth
           </span>
           <span className="mc-line">
-            <span className="mc-dist">{f.millionKm(signal.distance_m)}</span>
+            <span className="mc-dist">{f.distance(signal.distance_m)}</span>
             {moving && <span className={`mc-pulse ${stage}`} style={{ left: `${pulseAt * 100}%` }} aria-hidden="true" />}
           </span>
           <span className="mc-end">

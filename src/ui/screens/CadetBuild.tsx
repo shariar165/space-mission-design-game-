@@ -2,7 +2,7 @@
 // hero and the metaphor gauges under it; a last Review screen holds Test Flight and Launch.
 // Every number comes from the engine: cadetOptions (cards), cadetGauges (gauges), testFlight.
 import { useMemo, useState, type ReactNode } from 'react';
-import { cadetGauges, cadetOptions, testFlight, type CadetChoices, type CadetStep } from '../../engine/cadet';
+import { cadetGauges, cadetOptions, testFlight, type CadetChoices, type CadetStep, type TestFlightResult } from '../../engine/cadet';
 import { DESTINATIONS } from '../../engine/data';
 import type { CrisisOrder, FullEvaluation } from '../../engine/index';
 import type { Design } from '../../engine/types';
@@ -33,7 +33,7 @@ interface Props {
   /** Optional level goal shown on the Review screen. */
   goal?: ReactNode;
   /** Called after a Test Flight finishes (levels can award a lesson star). */
-  onTestFlight?: (failed: boolean) => void;
+  onTestFlight?: (result: TestFlightResult) => void;
 }
 
 export function CadetBuild({ base, choices, design, ev, steps, stepIdx, onChoose, onStep, onLaunch, goal, onTestFlight, orders }: Props) {
@@ -163,7 +163,7 @@ export function CadetBuild({ base, choices, design, ev, steps, stepIdx, onChoose
           result={flight}
           destName={dest.name}
           onClose={() => {
-            onTestFlight?.(flight.firstFail !== undefined);
+            onTestFlight?.(flight);
             setFlight(undefined);
           }}
         />

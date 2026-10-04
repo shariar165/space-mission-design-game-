@@ -22,6 +22,9 @@ export function speed(ms: number): string {
 /** Distances in million km. */
 export const millionKm = (m: number) => `${num(m / 1e9, 1)} million km`;
 
+/** A distance for Cadet screens: km below a million km (the Moon), million km beyond. */
+export const distance = (m: number) => (Math.abs(m) < 1e9 ? `${num(m / 1000)} km` : millionKm(m));
+
 /** Light delay in minutes. */
 export const minutes = (s: number) => `${num(s / 60, 1)} min`;
 

@@ -209,10 +209,75 @@
 .hud-result.good { color: var(--ok); }
 .hud-result.bad { color: var(--bad); }
 
+
+/* ---------- Level map ---------- */
+.levelmap { gap: 8px; }
+.lm-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; flex-wrap: wrap; }
+.lm-head .ctitle { font-size: 38px; }
+.lm-total { display: inline-flex; align-items: center; gap: 10px; padding: 10px 18px; border-radius: 999px; background: rgba(255, 159, 87, 0.12); border: 1.5px solid rgba(255, 159, 87, 0.4); font: 700 22px/1 var(--display); }
+.lm-total .faint { font-size: 16px; }
+.trail { list-style: none; margin: 0; padding: 24px 0 8px; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 12px; }
+.node { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
+.node:nth-child(even) { margin-top: 120px; }
+.node:not(:last-child)::after { content: ''; position: absolute; top: 52px; left: calc(50% + 50px); width: calc(100% - 88px); border-top: 3px dashed rgba(255, 255, 255, 0.22); transform-origin: 0 0; z-index: 0; }
+.node:nth-child(odd):not(:last-child)::after { transform: rotate(38deg); }
+.node:nth-child(even):not(:last-child)::after { transform: rotate(-38deg); }
+.node-btn { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 0; border: none; background: none; color: var(--ink); cursor: pointer; }
+.node-btn:disabled { cursor: not-allowed; }
+.node-btn:focus-visible { outline: 3px solid var(--acc); outline-offset: 6px; border-radius: 20px; }
+.planet { position: relative; width: 104px; height: 104px; border-radius: 50%; display: grid; place-items: center; box-shadow: inset -14px -14px 26px rgba(0, 0, 0, 0.45), 0 8px 30px rgba(0, 0, 0, 0.4); transition: transform 0.2s cubic-bezier(.3, 1.5, .5, 1); }
+.node-btn:hover:not(:disabled) .planet { transform: scale(1.08) rotate(-4deg); }
+.p-moon { background: radial-gradient(circle at 35% 30%, #f4f6fa, #aab2c2 60%, #6c7487); }
+.p-mars { background: radial-gradient(circle at 35% 30%, #ffb08a, #d9592f 60%, #8e2f17); }
+.p-venus { background: radial-gradient(circle at 35% 30%, #fff0c2, #e9b955 60%, #a87120); }
+.p-bennu { background: radial-gradient(circle at 35% 30%, #c2b7a8, #7d7064 60%, #463d36); border-radius: 46% 54% 50% 50% / 52% 46% 54% 48%; }
+.p-jupiter { background: repeating-linear-gradient(170deg, #f1d3a5 0 10px, #d29a5e 10px 18px, #eccaa0 18px 26px, #b9783d 26px 31px); }
+.node.next .planet { box-shadow: inset -14px -14px 26px rgba(0, 0, 0, 0.45), 0 0 0 6px rgba(255, 159, 87, 0.35), 0 0 40px rgba(255, 159, 87, 0.45); animation: beckon 1.6s ease-in-out infinite; }
+.node.locked .planet { filter: grayscale(0.85) brightness(0.55); }
+.node.locked .node-text { opacity: 0.55; }
+.lock { font-size: 28px; filter: none; }
+.you-are-here { position: absolute; left: -26px; color: var(--acc); font-size: 20px; animation: nudge 0.9s ease-in-out infinite alternate; }
+.node-text { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.node-dest { font: 700 12px/1 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink3); }
+.node-title { font: 700 18px/1.15 var(--display); }
+.node-concept { font: 600 12.5px/1.3 var(--body); color: var(--acc); }
+.node-stars { display: inline-flex; gap: 2px; }
+.node-blurb { margin: 0; font: 13px/1.4 var(--body); color: var(--ink2); max-width: 170px; }
+.rescue-entry { margin-top: 16px; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 16px; padding: 18px 22px; border-radius: 22px; border: 2px solid rgba(94, 234, 212, 0.4); background: linear-gradient(135deg, rgba(45, 212, 191, 0.14), rgba(255, 255, 255, 0.03)); color: var(--ink); text-align: left; cursor: pointer; font-size: 22px; }
+.rescue-entry > span:nth-child(2) { display: flex; flex-direction: column; gap: 4px; }
+.rescue-entry:hover { border-color: #5eead4; }
+.rescue-icon { font-size: 34px; }
+@keyframes beckon { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+@keyframes nudge { from { transform: translateX(0); } to { transform: translateX(6px); } }
+
+/* ---------- Level goal, lesson and result ---------- */
+.goal { border-radius: 18px; padding: 14px 16px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.1); display: flex; flex-direction: column; gap: 10px; }
+.goal-head { font: 700 16px/1.2 var(--display); }
+.goal-line { margin: 0; font: 15px/1.45 var(--body); color: var(--ink2); }
+.goal-stars { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font: 14.5px/1.35 var(--body); color: var(--ink2); }
+.goal-stars li { display: flex; gap: 8px; align-items: center; }
+.lesson { display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 14px; background: rgba(255, 159, 87, 0.1); border: 1.5px solid rgba(255, 159, 87, 0.5); animation: pop 0.35s cubic-bezier(.3, 1.6, .5, 1); }
+.lesson-head { display: flex; align-items: center; gap: 8px; font: 700 17px/1.2 var(--display); }
+.lesson p { margin: 0; font: 15px/1.5 var(--body); }
+.lesson .btn-big { align-self: flex-start; }
+.level-banner { max-width: 1440px; margin: 16px auto 0; width: calc(100% - 40px); display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap; padding: 18px 22px; border-radius: 22px; background: linear-gradient(135deg, rgba(255, 107, 138, 0.14), rgba(255, 255, 255, 0.03)); border: 1.5px solid rgba(255, 107, 138, 0.4); }
+.level-banner.passed { background: linear-gradient(135deg, rgba(255, 159, 87, 0.18), rgba(255, 255, 255, 0.03)); border-color: rgba(255, 159, 87, 0.5); }
+.lb-title { font: 800 28px/1.1 var(--display); margin-top: 4px; }
+.lb-stars { display: flex; gap: 6px; }
+.lb-stars svg { animation: pop 0.4s cubic-bezier(.3, 1.6, .5, 1) both; }
+.lb-stars svg:nth-child(2) { animation-delay: 0.15s; }
+.lb-stars svg:nth-child(3) { animation-delay: 0.3s; }
+.lb-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.step-btn { background: none; cursor: pointer; }
+.step-btn:hover { border-color: var(--line2); color: var(--ink); }
+
 /* ---------- Desktop ≤ 1180 ---------- */
 @media (max-width: 1180px) {
   .cadet-grid { grid-template-columns: minmax(0, 1fr) minmax(340px, 1fr); }
   .ctitle { font-size: 28px; }
+  .trail { grid-template-columns: repeat(4, minmax(0, 1fr)); row-gap: 40px; }
+  .node:nth-child(even) { margin-top: 0; }
+  .node::after { display: none; }
 }
 
 /* ---------- Phone ---------- */
@@ -251,6 +316,22 @@
   .cnav .btn-big { flex: 1; }
   .tf { padding: 16px; gap: 14px; }
   .order-opts { grid-template-columns: 1fr; }
+  .lm-head .ctitle { font-size: 26px; }
+  .lm-total { font-size: 18px; padding: 8px 14px; }
+  .trail { display: flex; flex-direction: column; gap: 14px; padding-top: 8px; position: relative; }
+  .trail::before { content: ''; position: absolute; left: 50%; top: 0; bottom: 0; border-left: 3px dashed rgba(255, 255, 255, 0.16); }
+  .node { flex-direction: row; align-items: center; text-align: left; width: 86%; padding: 10px 12px; border-radius: 20px; background: rgba(10, 18, 51, 0.92); border: 1px solid rgba(255, 255, 255, 0.1); }
+  .node:nth-child(even) { margin-top: 0; align-self: flex-end; }
+  .node-btn { flex-direction: row; gap: 14px; text-align: left; }
+  .node-text { align-items: flex-start; }
+  .planet { width: 64px; height: 64px; flex: none; }
+  .lock { font-size: 20px; }
+  .you-are-here { display: none; }
+  .node-blurb { display: none; }
+  .rescue-entry { font-size: 18px; padding: 14px 16px; gap: 12px; }
+  .level-banner { width: calc(100% - 32px); padding: 14px 16px; }
+  .lb-title { font-size: 22px; }
+  .lb-actions .btn-big { flex: 1 1 auto; }
   .mc { padding: 16px; gap: 10px; }
   .mc-title { font-size: 24px; }
   .mc-prompt, .mc-status { font-size: 15px; }
@@ -264,6 +345,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .cadet-craft .snap, .cadet-craft .rocket-body, .cadet-craft .flame, .cadet-craft .rtg-glow, .on-board, .gauge-reveal, .tf, .tf-craft.boom, .mc, .mc-siren, .fm-craft-glow { animation: none !important; }
+  .cadet-craft .snap, .cadet-craft .rocket-body, .cadet-craft .flame, .cadet-craft .rtg-glow, .on-board, .gauge-reveal, .tf, .tf-craft.boom, .mc, .mc-siren, .fm-craft-glow, .node.next .planet, .you-are-here, .lesson, .lb-stars svg { animation: none !important; }
   .tf-craft, .fill-anim, .choice, .gauge, .btn-big { transition: none !important; }
 }

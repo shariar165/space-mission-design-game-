@@ -12,3 +12,10 @@ afterEach(() => {
   cleanup();
   vi.useRealTimers();
 });
+
+/** Unlock the map up to Mars and open the Mars level (all five steps plus standing orders). */
+export function openMarsLevel(render: () => void, click: (el: Element) => void, getByRole: (role: string, opts: { name: RegExp }) => Element) {
+  localStorage.setItem('mdt.progress', JSON.stringify({ 'moon-1': 1, 'moon-2': 1, 'moon-3': 1 }));
+  render();
+  click(getByRole('button', { name: /^Red Planet/ }));
+}

@@ -1,15 +1,16 @@
 // Where the craft is during the flight, for the Flight map and Mission Control (Cadet). Positions are
 // ecliptic x, y in metres: heliocentric, or Earth-centred for the Moon (spec: Ephemeris).
 // - Cruise: along the transfer path, which trajectory.ts samples evenly in time (Lambert), so a time
-//   fraction maps to a path fraction. The Moon path and the fixed Bennu route are sampled differently;
-//   there the position is approximate (drawing and light delay only, never physics).
+//   fraction maps to a path fraction. The Moon transfer is a half ellipse sampled evenly in angle, so there
+//   the position comes from Kepler's equation in time. The fixed Bennu route is sampled piecewise; there
+//   the position is approximate (drawing and light delay only, never physics).
 // - At the destination: the destination's ephemeris position.
 // - Trip home (sample return): a straight line from the destination back to Earth (approximate; the
 //   return transfer is not modelled, spec: Assumptions).
 import { lightDelay_s } from './comms';
 import { phaseOnDay, timeline, type PhaseWindow } from './crisis';
 import { DESTINATIONS } from './data';
-import { earthDistance, heliocentricPosition, julianDate } from './ephemeris';
+import { earthDistance, heliocentricPosition, julianDate, solveKepler } from './ephemeris';
 import { evaluateDesign, type FullEvaluation } from './index';
 import type { Phase } from './risk';
 import { EARTH_ORBIT_PERIOD } from './constants';
@@ -67,6 +68,21 @@ function bodies(design: Design, ev: FullEvaluation) {
   };
 }
 
+/**
+ * Position on a periapsis → apoapsis half ellipse a time fraction of the way along: M = π·fraction,
+ * M = E − e sin E, r = a(1 − e cos E), ν from E. The ellipse is read off the path's end points.
+ */
+function onHalfEllipse(path: XY[], fraction: number): XY {
+  const r1 = Math.hypot(...(path[0] ?? [0, 0]));
+  const r2 = Math.hypot(...(path[path.length - 1] ?? [0, 0]));
+  const a = (r1 + r2) / 2;
+  const e = (r2 - r1) / (r2 + r1);
+  const E = solveKepler(Math.PI * clamp01(fraction), e);
+  const r = a * (1 - e * Math.cos(E));
+  const nu = 2 * Math.atan2(Math.sqrt(1 + e) * Math.sin(E / 2), Math.sqrt(1 - e) * Math.cos(E / 2));
+  return [r * Math.cos(nu), r * Math.sin(nu)];
+}
+
 /** Craft position on a mission day (may be fractional). */
 export function craftPosition(design: Design, day: number, ev: FullEvaluation = evaluateDesign(design)): XY {
   const b = bodies(design, ev);
@@ -75,7 +91,7 @@ export function craftPosition(design: Design, day: number, ev: FullEvaluation = 
   const science = tl.find((w) => w.phase === 'science')!;
   const ret = tl.find((w) => w.phase === 'return');
   if (day <= 0) return b.frame === 'earth' ? ev.trajectory.path[0] ?? [0, 0] : b.earth(0);
-  if (day < flight) return positionAt(ev.trajectory.path, day / flight);
+  if (day < flight) return b.frame === 'earth' ? onHalfEllipse(ev.trajectory.path, day / flight) : positionAt(ev.trajectory.path, day / flight);
   if (!ret || day <= science.endDay) return b.dest(day);
   return lerp(b.dest(science.endDay), b.earth(ret.endDay), clamp01((day - science.endDay) / (ret.endDay - science.endDay)));
 }
