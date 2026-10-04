@@ -388,6 +388,8 @@
   .flight-map { max-height: none; }
   .hud { position: static; }
   .hud .ctitle { font-size: 32px; }
+  .hud-stats dd { font-size: 15.5px; white-space: nowrap; }
+  .hud-stats div { padding: 10px 12px; }
   .tf-track { gap: 4px; padding-top: 36px; }
   .tf-name { font-size: 10.5px; }
   .tf-icon { font-size: 18px; }
