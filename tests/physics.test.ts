@@ -954,3 +954,22 @@ describe('cadet sizing: smallest value on an input grid (bisection)', () => {
     expect(smallestOnGrid((x) => x, -1, 0, 10, 1)).toBe(0);
   });
 });
+
+describe('units: pound-force to newtons (Mars Climate Orbiter)', () => {
+  it('1 lbf = 0.45359237 kg × 9.80665 m/s² = 4.4482216152605 N (exact by definition)', async () => {
+    const { LBF_TO_N } = await import('../src/engine/rescue');
+    expect(LBF_TO_N.value).toBeCloseTo(0.45359237 * 9.80665, 12);
+    expect(LBF_TO_N.value).toBeCloseTo(4.4482216152605, 12);
+  });
+  it('an impulse logged as 1 lbf·s but read as 1 N·s is under-counted by the factor the board found (4.45)', async () => {
+    const { LBF_TO_N, impulseReadAsNewtonSeconds } = await import('../src/engine/rescue');
+    // true impulse 1 lbf·s = 4.448 N·s; navigation reads the bare number "1" as 1 N·s → low by 4.448×
+    expect(impulseReadAsNewtonSeconds(1)).toBe(1);
+    expect(LBF_TO_N.value / impulseReadAsNewtonSeconds(1)).toBeCloseTo(4.45, 2);
+  });
+  it('light time at MCO arrival: 196.2 million km / c = 654.45 s ≈ the press kit 10 min 56 s (656 s; distance rounded)', () => {
+    const t = CM.lightDelay_s(196.2e9);
+    expect(t).toBeCloseTo(654.45, 2);
+    expect(Math.abs(t - 656) / 656).toBeLessThan(0.005);
+  });
+});

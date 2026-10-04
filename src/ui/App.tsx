@@ -16,6 +16,8 @@ import { CrisisScreen } from './screens/CrisisScreen';
 import { Debrief } from './screens/Debrief';
 import { Flight } from './screens/Flight';
 import { LevelMap } from './screens/LevelMap';
+import { RescueCaseView, RescueSelect } from './screens/Rescue';
+import type { RescueCaseId } from '../engine/rescue';
 import { defaultMissionName, starterDesign, today } from './starters';
 
 const newSeed = () => Math.floor(Math.random() * 2 ** 31);
@@ -64,6 +66,7 @@ export function App() {
   const [orders, setOrders] = useState<Record<string, string>>({});
   const [flightCrisis, setFlightCrisis] = useState<{ card: CrisisCard; options: CrisisOption[] }>();
   const [progress, setProgress] = useState<Progress>(loadProgress);
+  const [rescueId, setRescueId] = useState<RescueCaseId>();
 
   const cadetMode = mode === 'cadet';
   const level = levelById(cadet.levelId);
@@ -154,7 +157,27 @@ export function App() {
         onDestination={changeDestination}
         onMap={() => setStep('map')}
       />
-      {cadetMode && step === 'map' && <LevelMap progress={progress} onPlay={playLevel} />}
+      {cadetMode && step === 'map' && (
+        <LevelMap
+          progress={progress}
+          onPlay={playLevel}
+          onRescue={() => {
+            setRescueId(undefined);
+            setStep('rescue');
+          }}
+        />
+      )}
+      {cadetMode && step === 'rescue' && !rescueId && (
+        <RescueSelect stars={{ mco: progress['rescue-mco'] ?? 0 }} onOpen={setRescueId} onMap={() => setStep('map')} />
+      )}
+      {cadetMode && step === 'rescue' && rescueId && (
+        <RescueCaseView
+          key={rescueId}
+          id={rescueId}
+          onSolved={(stars) => setProgress((p) => withStars(p, `rescue-${rescueId}`, stars))}
+          onBack={() => setRescueId(undefined)}
+        />
+      )}
       {step === 'build' && cadetMode && (
         <CadetBuild
           base={cadet.base}

@@ -14,6 +14,7 @@ import * as cadet from '../src/engine/cadet';
 import { COST_CAPS } from '../src/engine/massCost';
 import { LAUNCH_VEHICLES as LVS } from '../src/engine/data';
 import { starterDesign } from '../src/ui/starters';
+import { inspectClue, rescueCase, rescueConsequence, rescueStars } from '../src/engine/rescue';
 
 const maven = presetDesign('maven');
 const ev = evaluateDesign(maven);
@@ -677,5 +678,36 @@ describe('Flight map geometry', () => {
     const b = cadetBase('mars');
     const d = cadet.buildCadetDesign(b, cadet.defaultChoices(b));
     for (const x of flightFrames(d, { endDay: 400, frames: 10 })) expect(x.oneWay_s).toBeCloseTo(x.earthDistance_m / 299_792_458, 9);
+  });
+});
+
+describe('Rescue History: Mars Climate Orbiter (rescue.ts)', () => {
+  it('the design sheet is the published MCO: 629 kg = 338 kg dry + 291 kg fuel, Delta II 7425, Dec. 11, 1998', () => {
+    const c = rescueCase('mco');
+    expect(c.facts.launchMass_kg.value).toBe(629);
+    expect(c.facts.dryMass_kg.value + c.facts.propellant_kg.value).toBe(c.facts.launchMass_kg.value);
+    expect(c.facts.launchDate.value).toBe('1998-12-11');
+    expect(c.facts.launchVehicle.value).toBe('Delta II 7425');
+    for (const f of Object.values(c.facts)) expect(f.isGameEstimate).toBe(false);
+  });
+  it('four clues, all from the board report; exactly one is the bug (thruster file units)', () => {
+    const c = rescueCase('mco');
+    expect(c.clues).toHaveLength(4);
+    expect(c.clues.filter((x) => x.isBug).map((x) => x.id)).toEqual(['amd-units']);
+    for (const x of c.clues) expect(x.evidence.url).toBeTruthy();
+  });
+  it('inspectClue judges a clue', () => {
+    expect(inspectClue('mco', 'amd-units').isBug).toBe(true);
+    expect(inspectClue('mco', 'tcm-5').isBug).toBe(false);
+    expect(() => inspectClue('mco', 'nope')).toThrow();
+  });
+  it('consequence: planned 226 km − estimated 57 km = 169 km too low (report: ~170 km); 23 km under the 80 km limit', () => {
+    const k = rescueConsequence('mco');
+    expect(k.missedBy_km).toBe(226 - 57);
+    expect(k.belowSurvivable_km).toBe(80 - 57);
+    expect(k.factor.value).toBeCloseTo(4.4482216152605, 12);
+  });
+  it('stars: three on the first try, one fewer per wrong guess, never fewer than one', () => {
+    expect([1, 2, 3, 4, 9].map(rescueStars)).toEqual([3, 2, 1, 1, 1]);
   });
 });

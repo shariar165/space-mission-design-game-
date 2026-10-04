@@ -9,9 +9,11 @@ import lessons from '../src/data/lessons.json';
 import missions from '../src/data/missions.json';
 import orbitalElements from '../src/data/orbitalElements.json';
 import parts from '../src/data/parts.json';
+import rescueCases from '../src/data/rescueCases.json';
 import { CADET_TIERS, COIN_FRACTION, DISH_SIZES, PHOTO_FRAME_Mbit } from '../src/engine/cadet';
 import { DSN_X_BAND_GAIN_DBI, REFERENCE_LINK } from '../src/engine/comms';
 import { CONSTANTS } from '../src/engine/constants';
+import { LBF_TO_N, RESCUE_MAX_STARS } from '../src/engine/rescue';
 import { COST_CAPS } from '../src/engine/massCost';
 import { ETA_SYS } from '../src/engine/power';
 import { ACCEPTABLE_MISSION_RISK, BASE_RISK, MARGIN_RISK_FACTOR_AT_ZERO } from '../src/engine/risk';
@@ -61,6 +63,7 @@ const DATA_FILES: Record<string, unknown> = {
   'missions.json': missions,
   'orbitalElements.json': orbitalElements,
   'parts.json': parts,
+  'rescueCases.json': rescueCases,
 };
 
 const ENGINE_VALUES: Record<string, Record<string, Sourced<unknown>>> = {
@@ -75,6 +78,7 @@ const ENGINE_VALUES: Record<string, Record<string, Sourced<unknown>>> = {
   'cadet.ts CADET_TIERS': CADET_TIERS,
   'cadet.ts DISH_SIZES': DISH_SIZES,
   'cadet.ts': { PHOTO_FRAME_Mbit, COIN_FRACTION },
+  'rescue.ts': { LBF_TO_N, RESCUE_MAX_STARS },
 };
 
 const all: Entry[] = [];
