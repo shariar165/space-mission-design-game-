@@ -7,11 +7,13 @@
 // - At the destination: the destination's ephemeris position.
 // - Trip home (sample return): a straight line from the destination back to Earth (approximate; the
 //   return transfer is not modelled, spec: Assumptions).
+import { REAL_MISSION_FOR } from './compare';
 import { lightDelay_s } from './comms';
 import { phaseOnDay, timeline, type PhaseWindow } from './crisis';
 import { DESTINATIONS } from './data';
 import { earthDistance, heliocentricPosition, julianDate, solveKepler } from './ephemeris';
 import { evaluateDesign, type FullEvaluation } from './index';
+import { missionPreset, presetDesign, type MissionId } from './missions';
 import type { Phase } from './risk';
 import { EARTH_ORBIT_PERIOD } from './constants';
 import type { Design } from './types';
@@ -182,4 +184,47 @@ export function flightMap(design: Design, ev: FullEvaluation = evaluateDesign(de
   const path = ev.trajectory.path;
   const extent_m = 1.08 * Math.max(...[...earthOrbit, ...destOrbit, ...path].map((p) => Math.max(Math.abs(p[0]), Math.abs(p[1]))));
   return { frame: b.frame, earthOrbit, destOrbit, path, extent_m };
+}
+
+export interface Ghost {
+  missionId: MissionId;
+  /** The real mission's label, e.g. "MAVEN (2013–2025)". */
+  label: string;
+  launchDate: string;
+  /** The real mission's flight time (days), from the same engine. */
+  flightDays: number;
+  /** How far the real path is turned about the Sun to start beside the player (rad). */
+  rotation_rad: number;
+  path: XY[];
+  /** The ghost craft on a mission day: by real flight time, waiting at the destination after arrival. */
+  at: (day: number) => XY;
+}
+
+/**
+ * The real NASA mission's path for the flight map (Mars: MAVEN, Bennu: OSIRIS-REx; spec UI rule 5),
+ * from its sourced preset through the same evaluateDesign. It flew in another year, when the planets
+ * stood elsewhere, so the path is turned about the Sun to start where the player starts. A rotation keeps
+ * its shape and every Sun distance. No ghost where there is no sourced preset.
+ */
+export function ghostFor(design: Design, ev: FullEvaluation = evaluateDesign(design)): Ghost | undefined {
+  const id = REAL_MISSION_FOR[design.destination];
+  if (!id) return undefined;
+  const real = evaluateDesign(presetDesign(id));
+  const rp = real.trajectory.path;
+  const pp = ev.trajectory.path;
+  if (!rp[0] || !pp[0]) return undefined;
+  const rotation_rad = Math.atan2(pp[0][1], pp[0][0]) - Math.atan2(rp[0][1], rp[0][0]);
+  const c = Math.cos(rotation_rad);
+  const s = Math.sin(rotation_rad);
+  const path = rp.map(([x, y]): XY => [x * c - y * s, x * s + y * c]);
+  const flightDays = real.trajectory.flightDays;
+  return {
+    missionId: id,
+    label: missionPreset(id).label,
+    launchDate: real.details.launchDate,
+    flightDays,
+    rotation_rad,
+    path,
+    at: (day) => positionAt(path, day / flightDays),
+  };
 }

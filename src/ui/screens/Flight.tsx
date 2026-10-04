@@ -3,7 +3,7 @@
 // orders, because the craft acts on its own before Earth can answer.
 import { useEffect, useMemo, useState } from 'react';
 import { DESTINATIONS } from '../../engine/data';
-import { flightFrames, flightMap, signalDelay } from '../../engine/flightMap';
+import { flightFrames, flightMap, ghostFor, signalDelay } from '../../engine/flightMap';
 import type { FullEvaluation, SimulationResult } from '../../engine/index';
 import type { Design } from '../../engine/types';
 import { PHASE_NAME } from '../cadetWords';
@@ -24,10 +24,9 @@ interface Props {
   crisis?: { card: CrisisCard; options: CrisisOption[] };
   missionName: string;
   onDone: () => void;
-  ghost?: (day: number) => { path: [number, number][]; at?: [number, number]; label: string } | undefined;
 }
 
-export function Flight({ design, ev, sim, crisis, missionName, onDone, ghost }: Props) {
+export function Flight({ design, ev, sim, crisis, missionName, onDone }: Props) {
   const dest = DESTINATIONS[design.destination];
   const map = useMemo(() => flightMap(design, ev), [design, ev]);
   const crisisDay = sim.crisis?.reached ? sim.crisis.day : undefined;
@@ -48,7 +47,8 @@ export function Flight({ design, ev, sim, crisis, missionName, onDone, ghost }: 
   const trail = useMemo(() => frames.slice(0, i + 1).map((x) => x.craft), [frames, i]);
   const failed = done && sim.failedPhase !== undefined;
   const order = crisis?.card.options.find((o) => o.id === sim.crisis?.optionId);
-  const g = ghost?.(frame.day);
+  const ghost = useMemo(() => ghostFor(design, ev), [design, ev]);
+  const g = ghost && { path: ghost.path, at: ghost.at(frame.day), label: ghost.label };
 
   return (
     <div className="cadet flight">
@@ -57,7 +57,7 @@ export function Flight({ design, ev, sim, crisis, missionName, onDone, ghost }: 
           <FlightMapView map={map} frame={frame} trail={trail} destination={design.destination} destName={dest.name} failed={failed} ghost={g} />
           {g && (
             <div className="ghost-legend">
-              <span className="ghost-swatch" aria-hidden="true" /> {g.label}
+              <span className="ghost-swatch" aria-hidden="true" /> {g.label}: real path, turned to start beside you
             </div>
           )}
         </section>
@@ -90,6 +90,16 @@ export function Flight({ design, ev, sim, crisis, missionName, onDone, ghost }: 
               <dd className="mono">{f.clock(frame.oneWay_s)}</dd>
             </div>
           </dl>
+          {ghost && (
+            <div className="ghost-race" aria-label="Race against the real mission">
+              <span>
+                <span className="ghost-dot you" aria-hidden="true" /> You: <b className="mono">{f.days(ev.trajectory.flightDays)}</b> to {dest.name}
+              </span>
+              <span>
+                <span className="ghost-dot" aria-hidden="true" /> {ghost.label}: <b className="mono">{f.days(ghost.flightDays)}</b>
+              </span>
+            </div>
+          )}
           {done ? (
             <div className={`hud-result ${failed ? 'bad' : 'good'}`} aria-live="polite">
               {failed ? `Lost during ${PHASE_NAME[sim.failedPhase!].toLowerCase()}.` : sim.completed ? 'Mission complete!' : 'Flight over.'}

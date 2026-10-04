@@ -5,7 +5,7 @@ import { compareWithRealMission, designDelta, METER_KEYS, REAL_MISSION_FOR } fro
 import { crisisOrders, evaluateDesign, MONTE_CARLO_SEED, monteCarloMission, previewCrisis, simulateMission, standingOrderPolicy } from '../src/engine/index';
 import { applicableCards, availableOptions, safestOption } from '../src/engine/crisis';
 import { earthDistance, julianDate } from '../src/engine/ephemeris';
-import { countdown, craftPosition, flightFrames, flightMap, signalDelay } from '../src/engine/flightMap';
+import { countdown, craftPosition, flightFrames, flightMap, ghostFor, signalDelay } from '../src/engine/flightMap';
 import { presetDesign } from '../src/engine/missions';
 import { MAX_SCORE, nextStar, nextStarHint, SCORE_GRADES, scoreGrade } from '../src/engine/scoring';
 import { bestLaunchWindow, lambertTransfer } from '../src/engine/trajectory';
@@ -709,5 +709,38 @@ describe('Rescue History: Mars Climate Orbiter (rescue.ts)', () => {
   });
   it('stars: three on the first try, one fewer per wrong guess, never fewer than one', () => {
     expect([1, 2, 3, 4, 9].map(rescueStars)).toEqual([3, 2, 1, 1, 1]);
+  });
+});
+
+describe('Ghost of the real mission on the flight map', () => {
+  const mars = cadet.buildCadetDesign(cadetBase('mars'), cadet.defaultChoices(cadetBase('mars')));
+  const e = evaluateDesign(mars);
+  const real = evaluateDesign(presetDesign('maven'));
+
+  it('only where a sourced real mission exists: Mars (MAVEN) and Bennu (OSIRIS-REx)', () => {
+    expect(ghostFor(mars, e)?.missionId).toBe('maven');
+    const bennu = cadet.buildCadetDesign(cadetBase('bennu'), cadet.defaultChoices(cadetBase('bennu')));
+    expect(ghostFor(bennu)?.missionId).toBe('osiris-rex');
+    for (const d of ['moon', 'venus', 'jupiter'] as const) expect(ghostFor(cadet.buildCadetDesign(cadetBase(d), cadet.defaultChoices(cadetBase(d))))).toBeUndefined();
+  });
+
+  it("MAVEN's real path, turned about the Sun so it starts beside the player: same shape, same Sun distances", () => {
+    const g = ghostFor(mars, e)!;
+    expect(g.path).toHaveLength(real.trajectory.path.length);
+    for (let i = 0; i < g.path.length; i++) {
+      expect(Math.hypot(...g.path[i]!)).toBeCloseTo(Math.hypot(...real.trajectory.path[i]!), -2);
+    }
+    const ang = (p: [number, number]) => Math.atan2(p[1], p[0]);
+    expect(ang(g.path[0]!)).toBeCloseTo(ang(e.trajectory.path[0]!), 9);
+    expect(g.label).toBe('MAVEN (2013–2025)');
+    expect(g.flightDays).toBeCloseTo(real.trajectory.flightDays, 9);
+  });
+
+  it('the ghost craft moves by the real flight time and waits at the destination after arrival', () => {
+    const g = ghostFor(mars, e)!;
+    const half = g.at(g.flightDays / 2);
+    expect(half[0]).toBeCloseTo(g.path[32]![0], -3);
+    expect(g.at(g.flightDays + 100)).toEqual(g.path[g.path.length - 1]);
+    expect(g.at(0)).toEqual(g.path[0]);
   });
 });
