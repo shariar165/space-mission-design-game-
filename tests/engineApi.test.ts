@@ -977,6 +977,266 @@ describe('Mission operations: extension and Debrief', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Operations Console view model (ops/console.ts): every number the console shows, from the state alone.
+
+describe('Operations console view', () => {
+  const maven = presetDesign('maven');
+
+  it('is a pure function of the state, and the clock reads the environment', async () => {
+    const ops = await import('../src/engine/ops/index');
+    const { consoleView } = await import('../src/engine/ops/console');
+    const s = ops.advanceOperations(ops.startOperations(maven, { rng: () => 0.999999 }), { until: 100.5 });
+    const copy = JSON.stringify({ ...s, env: undefined });
+    const v = consoleView(s);
+    expect(JSON.stringify({ ...s, env: undefined })).toBe(copy);
+    expect(v.clock.day).toBe(100);
+    expect(v.clock.phase).toBe('cruise');
+    expect(v.clock.date).toBe(s.env.days[100]!.date);
+    // light time is linear between whole days: halfway between day 100 and day 101
+    const half = (s.env.days[100]!.oneWay_s + s.env.days[101]!.oneWay_s) / 2;
+    expect(v.clock.oneWay_s).toBeCloseTo(half, 6);
+    expect(v.clock.chip).toBe('nominal');
+    // in cruise the next milestone is the arrival
+    expect(v.clock.next).toEqual({ kind: 'arrival', day: s.env.arrivalDay, inDays: s.env.arrivalDay - 100 });
+    // the map frame is the flight map's own frame on that day
+    expect(v.map.frame.craft).toEqual(craftPosition(maven, s.t, s.env.ev));
+  });
+
+  it('gauges are the state’s own margins: power today, Δv left vs still needed, recorder, budget reserve', async () => {
+    const ops = await import('../src/engine/ops/index');
+    const tl = await import('../src/engine/ops/timeline');
+    const { consoleView } = await import('../src/engine/ops/console');
+    const s0 = ops.startOperations(maven, { rng: () => 0.999999 });
+    const s = ops.advanceOperations(s0, { until: s0.env.arrivalDay + 20.25 });
+    const g = consoleView(s).gauges;
+    expect(g.power.margin).toBeCloseTo(tl.powerMarginNow(s), 12);
+    expect(g.power.limit).toBeCloseTo(s.env.days[Math.floor(s.t)]!.available_W, 9);
+    // margin = (available − demand) / demand, so demand = available / (1 + margin)
+    expect(g.power.used).toBeCloseTo(g.power.limit / (1 + g.power.margin), 6);
+    expect(g.fuel.limit).toBeCloseTo(tl.deltaVLeft_ms(s), 9);
+    expect(g.fuel.used).toBeCloseTo(tl.deltaVStillNeeded_ms(s), 9);
+    expect(g.fuel.margin).toBeCloseTo((g.fuel.limit - g.fuel.used) / g.fuel.used, 12);
+    // MRO-like recorder: 160 Gbit
+    expect(g.recorder.limit).toBe(160e9);
+    expect(g.recorder.used).toBe(s.recorder_bits);
+    expect(g.recorder.fill).toBeCloseTo(s.recorder_bits / 160e9, 12);
+    // spare budget = (cap − development) − extras: the crisis-card reserve convention
+    expect(g.budget.spare_M).toBeCloseTo(tl.spareNow(s).budget_M, 12);
+    for (const k of ['power', 'fuel', 'recorder', 'budget'] as const) {
+      expect(g[k].fill).toBeGreaterThanOrEqual(0);
+      expect(g[k].fill).toBeLessThanOrEqual(1);
+      expect(g[k].equation.length).toBeGreaterThan(0);
+      expect(Object.keys(g[k].inputs).length).toBeGreaterThan(0);
+    }
+  });
+
+  it('a command in flight: progress = (t − sent)/(arrives − sent), time left = (arrives − t) × 86 400 s', async () => {
+    const ops = await import('../src/engine/ops/index');
+    const { consoleView } = await import('../src/engine/ops/console');
+    let s = ops.startOperations(maven, { rng: () => 0.999999 });
+    s = ops.advanceOperations(s, { until: s.env.arrivalDay + 20.25 });
+    const r = ops.sendCommand(s, { kind: 'power-plan', plan: { ...s.plan, radio: false } });
+    const sent = consoleView(r.state).commands[0]!;
+    expect(sent.progress).toBe(0);
+    expect(sent.timeLeft_s).toBeCloseTo((r.receipt.arrivesAt! - r.receipt.sentAt) * 86_400, 6);
+    const mid = ops.advanceOperations(r.state, { until: (r.receipt.sentAt + r.receipt.arrivesAt!) / 2 });
+    const half = consoleView(mid).commands[0]!;
+    expect(half.progress).toBeCloseTo(0.5, 6);
+    expect(half.timeLeft_s).toBeCloseTo(sent.timeLeft_s / 2, 3);
+    expect(half.status).toBe('in-flight');
+    // the map signal points up the uplink while a command is on its way
+    expect(consoleView(mid).map.signal).toBe('uplink');
+    const done = consoleView(ops.advanceOperations(mid, { until: r.receipt.arrivesAt! + 0.01 })).commands[0]!;
+    expect(done.status).toBe('executed');
+    expect(done.progress).toBe(1);
+  });
+
+  it('a conjunction: warned ahead, then blacked out, with the retry day the moratorium gives', async () => {
+    const ops = await import('../src/engine/ops/index');
+    const { consoleView, CONSOLE_RULES } = await import('../src/engine/ops/console');
+    const { moratoriumEndDay } = await import('../src/engine/ops/commands');
+    const env = ops.prepareOps(maven);
+    const w = env.conjunctions[0]!;
+    let s = ops.startOperations(maven, { rng: () => 0.999999, env });
+    s = ops.advanceOperations(s, { until: w.startDay - 6 });
+    const before = consoleView(s);
+    expect(before.blackout.active).toBe(false);
+    expect(before.blackout.upcoming!.inDays).toBe(6);
+    // the last day a command can still leave is the day before the window
+    expect(before.blackout.upcoming!.lastSendDay).toBe(w.startDay - 1);
+    expect(6).toBeLessThanOrEqual(CONSOLE_RULES.conjunctionWarning_days.value);
+    expect(before.clock.chip).toBe('conjunction-soon');
+    s = ops.advanceOperations(s, { until: w.startDay + 3.5 });
+    const during = consoleView(s);
+    expect(during.blackout.active).toBe(true);
+    expect(during.clock.chip).toBe('blackout');
+    expect(during.blackout.dayOf).toBe(4); // day startDay+3 is the 4th day of the window
+    expect(during.blackout.total).toBe(w.endDay - w.startDay + 1);
+    expect(during.blackout.retryAfterDay).toBe(moratoriumEndDay(env, s.t));
+    expect(during.blackout.retryAfterDay).toBe(w.endDay + 1);
+    expect(during.map.signal).toBe('blocked');
+  });
+
+  it('the hazard alert lists every option, with the blockers that keep the unaffordable ones out', async () => {
+    const ops = await import('../src/engine/ops/index');
+    const { consoleView, CONSOLE_RULES } = await import('../src/engine/ops/console');
+    const { commandArrival } = await import('../src/engine/ops/commands');
+    const { HAZARDS } = await import('../src/engine/data');
+    const s = ops.advanceOperations(ops.startOperations(maven, { seed: 2013 }));
+    const v = consoleView(s);
+    const a = v.alert!;
+    expect(v.clock.chip).toBe('hazard');
+    const dec = s.decisions.find((d) => d.id === s.newDecisions[0])!;
+    expect(a.decisionId).toBe(dec.id);
+    expect(a.options.map((o) => o.id)).toEqual(HAZARDS[a.type]!.options.map((o) => o.id));
+    for (const o of a.options) {
+      expect(o.affordable).toBe(dec.hazardOptions!.some((x) => x.id === o.id));
+      expect(o.blockedBy.length === 0).toBe(o.affordable);
+      expect(o.riskLevel).toBeGreaterThanOrEqual(1);
+      expect(o.riskLevel).toBeLessThanOrEqual(5);
+    }
+    expect(a.options.find((o) => o.isSafest)!.id).toBe(dec.safestOptionId);
+    // a response leaves once the team has reacted, and pays one light time
+    expect(a.sendAt).toBeCloseTo(Math.max(s.t, dec.earliestSend), 12);
+    expect(a.arrivesIfSent).toBeCloseTo(commandArrival(s.env, a.sendAt), 12);
+    expect(a.realHistory.isGameEstimate).toBe(true); // "to verify against NASA source"
+    // risk bars: a higher failure chance never gets a lower bar
+    const bounds = CONSOLE_RULES.riskLevelBounds.value;
+    expect(bounds.length).toBe(4);
+    const sorted = [...a.options].sort((x, y) => x.failureChance.value - y.failureChance.value);
+    for (let i = 1; i < sorted.length; i++) expect(sorted[i]!.riskLevel).toBeGreaterThanOrEqual(sorted[i - 1]!.riskLevel);
+  });
+
+  it('optionBlockers names what each unaffordable response lacks (and affordableResponses agrees)', async () => {
+    const { affordableResponses, optionBlockers } = await import('../src/engine/ops/responses');
+    const { HAZARDS } = await import('../src/engine/data');
+    const spare = { deltaV_ms: 5, budget_M: -10, powerMargin: -0.2, scienceDays: 10 };
+    const dust = HAZARDS['mars-dust-storm']!.options;
+    // raise-periapsis needs 10 m/s (> 5); wait-it-out needs 30 science days (> 10); carry-on is free
+    expect(dust.map((o) => optionBlockers(o, spare))).toEqual([['deltaV'], ['scienceDays'], []]);
+    const mem = HAZARDS['memory-corruption']!.options;
+    const rich = { deltaV_ms: 100, budget_M: 10, powerMargin: 0.3, scienceDays: 100 };
+    expect(optionBlockers(mem.find((o) => o.id === 'backup-computer')!, rich, ['backup-computer'])).toEqual(['one-time']);
+    // patch costs $0.5M; hybrid needs a 5% power margin
+    expect(optionBlockers(mem.find((o) => o.id === 'patch')!, { ...rich, budget_M: 0.4 })).toEqual(['budget']);
+    const wheel = HAZARDS['reaction-wheel']!.options.find((o) => o.id === 'hybrid')!;
+    expect(optionBlockers(wheel, { ...rich, powerMargin: 0.01 })).toEqual(['power']);
+    for (const opts of [dust, mem]) {
+      expect(affordableResponses(opts, spare).map((o) => o.id)).toEqual(opts.filter((o) => optionBlockers(o, spare).length === 0).map((o) => o.id));
+    }
+  });
+
+  it('powerPlanPreview: the current plan reproduces today, less science gives more margin, eclipse depth of discharge', async () => {
+    const ops = await import('../src/engine/ops/index');
+    const tl = await import('../src/engine/ops/timeline');
+    const { powerPlanPreview } = await import('../src/engine/ops/console');
+    const { PARTS } = await import('../src/engine/data');
+    const env = ops.prepareOps(maven);
+    const season = env.eclipseSeasons.find((e) => e.startDay > env.arrivalDay)!;
+    let s = ops.startOperations(maven, { rng: () => 0.999999, env });
+    s = ops.advanceOperations(s, { until: season.startDay - 3 });
+    const now = powerPlanPreview(s, s.plan);
+    expect(now.today.margin).toBeCloseTo(tl.powerMarginNow(s), 12);
+    const quiet = powerPlanPreview(s, { ...s.plan, instruments: Object.fromEntries(Object.keys(s.plan.instruments).map((k) => [k, 0])) });
+    expect(quiet.today.margin).toBeGreaterThan(now.today.margin);
+    expect(quiet.science_bitsPerDay).toBe(0);
+    // DoD = load × t_ecl / E_batt over the coming season; the battery is sized so the default plan stays within the limit
+    const e = now.eclipse!;
+    expect(e.season.startDay).toBe(season.startDay);
+    expect(e.depthOfDischarge).toBeCloseTo((e.load_W * season.longestEclipse_s) / (env.battery_Wh * 3600), 12);
+    expect(e.limit).toBe(PARTS.power.batteryMaxDepthOfDischarge.value);
+    expect(e.depthOfDischarge).toBeLessThanOrEqual(e.limit + 1e-9);
+    expect(e.lowestCharge).toBeCloseTo(1 - e.depthOfDischarge, 12);
+    expect(now.cold).toBe(false);
+    expect(powerPlanPreview(s, { ...s.plan, heaters: 0.5 }).cold).toBe(true);
+    // radio off: no downlink today
+    expect(powerPlanPreview(s, { ...s.plan, radio: false }).downlink_bitsPerDay).toBe(0);
+  });
+
+  it('dsnOptions: a 70 m pass costs the aperture-fee difference, inside the lead time it gives the retry day', async () => {
+    const ops = await import('../src/engine/ops/index');
+    const { dsnOptions } = await import('../src/engine/ops/console');
+    const { dsnExtraCost_M } = await import('../src/engine/ops/resources');
+    let s = ops.startOperations(maven, { rng: () => 0.999999 });
+    s = ops.advanceOperations(s, { until: s.env.arrivalDay + 10 });
+    const day = Math.floor(s.t);
+    const o = dsnOptions(s);
+    expect(o.earliestDay).toBe(day + 7); // 7-day booking lead
+    expect(o.day).toBe(day + 7);
+    const big = o.options.find((x) => x.dish === 70)!;
+    const small = o.options.find((x) => x.dish === 34)!;
+    expect(big.extraCost_M).toBeCloseTo(dsnExtraCost_M({ dish: 70, hours: 8 }, ops.defaultBooking(maven)), 12);
+    expect(big.extraCost_M).toBeCloseTo(0.0456624, 6); // as the bookDsn test
+    expect(small.extraCost_M).toBe(0);
+    expect(big.data_bits).toBeCloseTo(s.env.days[day + 7]!.rate70_bps * 8 * 3600, 3);
+    expect(big.data_bits).toBeGreaterThan(small.data_bits);
+    const early = dsnOptions(s, day + 2);
+    expect(early.refused).toEqual({ reason: 'lead-time', retryAfterDay: day + 7 });
+  });
+
+  it('the extension cards are the extension decision itself', async () => {
+    const ops = await import('../src/engine/ops/index');
+    const { consoleView } = await import('../src/engine/ops/console');
+    let s = ops.startOperations(maven, { rng: () => 0.999999 });
+    s = ops.advanceOperations(s, { until: s.env.primeEndDay + 2 });
+    expect(s.status).toBe('awaiting-extension');
+    const v = consoleView(s);
+    expect(v.clock.chip).toBe('decision');
+    expect(v.extension!.options).toEqual(s.decisions.find((d) => d.id === 'extension')!.extensionOptions);
+  });
+
+  it('the timeline window: bands and events inside [0, 1], no daily upkeep burns, the next milestone beyond it', async () => {
+    const ops = await import('../src/engine/ops/index');
+    const { consoleView, CONSOLE_RULES } = await import('../src/engine/ops/console');
+    const env = ops.prepareOps(maven);
+    const s0 = ops.startOperations(maven, { rng: () => 0.999999, env });
+    const t0 = consoleView(s0).timeline;
+    expect(t0.to - t0.from).toBe(CONSOLE_RULES.timelineWindow_days.value);
+    expect(t0.ahead).toEqual({ kind: 'arrival', day: env.arrivalDay, inDays: env.arrivalDay });
+    const w = env.conjunctions[0]!;
+    const s = ops.advanceOperations(s0, { until: w.startDay - 10 });
+    const tl = consoleView(s).timeline;
+    const conj = tl.bands.find((b) => b.kind === 'conjunction')!;
+    // window starts today: left = (start − from)/span
+    expect(conj.left).toBeCloseTo((w.startDay - tl.from) / (tl.to - tl.from), 12);
+    for (const b of tl.bands) {
+      expect(b.left).toBeGreaterThanOrEqual(0);
+      expect(b.left + b.width).toBeLessThanOrEqual(1 + 1e-12);
+    }
+    for (const e of tl.events) {
+      expect(e.left).toBeGreaterThanOrEqual(0);
+      expect(e.left).toBeLessThanOrEqual(1);
+      expect(e.kind === 'burn' && e.burnKind === 'maintenance').toBe(false);
+    }
+    // the last pass before the blackout is marked
+    expect(tl.events.find((e) => e.kind === 'dsn' && e.lastBeforeBlackout)!.day).toBe(w.startDay - 1);
+  });
+
+  it('nextEventT jumps to the next thing worth stopping for, never to an unseen hazard', async () => {
+    const ops = await import('../src/engine/ops/index');
+    const { nextEventT } = await import('../src/engine/ops/console');
+    const s = ops.startOperations(maven, { rng: () => 0.999999 });
+    // launch is day 0, so the first stop is cruise starting on day 1; then the first trajectory correction
+    const cruise = s.env.timeline.find((w) => w.phase === 'cruise')!.startDay;
+    expect(cruise).toBe(1);
+    expect(nextEventT(s)).toBe(cruise);
+    const at = ops.advanceOperations(s, { until: nextEventT(s) });
+    expect(nextEventT(at)).toBe(s.env.burns[0]!.day);
+    // the jump never passes a hazard Earth has not seen: the seeded mission still stops on its first decision
+    let h = ops.startOperations(maven, { seed: 2013 });
+    while (h.newDecisions.length === 0 && h.status === 'flying') h = ops.advanceOperations(h, { until: nextEventT(h) });
+    expect(h.newDecisions.length).toBe(1);
+    expect(h.t).toBeCloseTo(ops.advanceOperations(ops.startOperations(maven, { seed: 2013 })).t, 9);
+  });
+
+  it('opsAvailable: a design that can launch can be operated; a blocked one cannot', async () => {
+    const { opsAvailable } = await import('../src/engine/ops/console');
+    expect(opsAvailable(maven)).toBe(true);
+    expect(opsAvailable({ ...presetDesign('osiris-rex'), trajectoryOption: 'direct' })).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // The Risk meter: the Mission operations Monte Carlo (ops/riskEstimate.ts), run in a Web Worker by the UI.
 
 describe('Risk meter from the Mission operations Monte Carlo', () => {

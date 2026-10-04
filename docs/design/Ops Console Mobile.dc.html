@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0;background:#0A1430;font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}a{color:#FF9F57}a:hover{color:#FFB880}</style>
+</helmet>
+<div data-screen-label="Ops Console · Mobile" lang="{{ lang }}" style="--bg:#0A1430;--panel:#0E1B3B;--panel2:#13244A;--line:rgba(143,186,255,0.14);--line2:rgba(143,186,255,0.28);--grid:rgba(120,170,255,0.10);--grid2:rgba(120,170,255,0.045);--ink:#EAF0FA;--ink2:#A9B8D6;--ink3:#8193B8;--bp:#8EC5FF;--acc:#FF9F57;--accInk:#1C1006;--ok:#3CD3C1;--warn:#F2C744;--bad:#FF6B8A;--mars:#D9714E;width:390px;background:var(--bg);color:var(--ink);font-family:{{ fb }};display:flex;flex-direction:column">
+
+<header style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--panel);border-bottom:1px solid var(--line)">
+<svg width="28" height="28" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="5" style="fill:var(--bp)"></circle><ellipse cx="16" cy="16" rx="14" ry="7" transform="rotate(-25 16 16)" style="stroke:var(--bp)" stroke-width="1.5"></ellipse><rect x="25" y="6" width="5" height="5" transform="rotate(45 27.5 8.5)" style="fill:var(--acc)"></rect></svg>
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px"><div style="font:600 18px/1.2 {{ fh }}">{{ s.title }}</div><div style="font:500 10px/1 'JetBrains Mono',monospace;color:var(--ink2);letter-spacing:0.06em">RED ATMOSPHERE-1 · MARS</div></div>
+<span style="height:44px;padding:0 12px;border-radius:999px;border:1px solid var(--line2);display:grid;place-items:center;font:600 13px/1 {{ fb }}">{{ s.langL }}</span>
+<span style="height:44px;padding:0 12px;border-radius:999px;border:1px solid {{ modeBd }};background:{{ modeBg }};display:grid;place-items:center;font:600 13px/1 {{ fb }}">{{ s.modeL }}</span>
+</header>
+
+<div style="padding:12px 16px;display:flex;flex-direction:column;gap:10px;background:var(--panel);border-bottom:1px solid var(--line)">
+<div style="display:flex;align-items:center;gap:10px">
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">
+<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span style="font:600 22px/1.1 {{ fh }}">{{ s.day }} {{ v.day }}</span><span style="font:500 14px/1.2 {{ fh }};color:var(--ink2)">· {{ v.phase }}</span></div>
+<div style="font:500 12px/1.3 {{ fb }};color:{{ chipC }}">{{ v.sub }}</div>
+</div>
+<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><span style="font:500 10px/1 'JetBrains Mono',monospace;color:var(--ink3);letter-spacing:0.06em">{{ s.owltL }}</span><span style="font:500 16px/1 'JetBrains Mono',monospace;color:{{ owltC }}">{{ v.owlt }}</span></div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:3px;border-radius:14px;border:1px solid var(--line2);opacity:{{ speedOp }}">
+<sc-for list="{{ speeds }}" as="sp" hint-placeholder-count="4">
+<button onClick="{{ sp.set }}" style="height:44px;border:none;border-radius:11px;background:{{ sp.bg }};color:{{ sp.c }};font:600 13px/1 'JetBrains Mono',monospace;display:grid;place-items:center;cursor:pointer">
+<sc-if value="{{ sp.isPause }}" hint-placeholder-val="{{ false }}"><svg width="12" height="12" viewBox="0 0 12 12"><rect x="2" y="1.5" width="3" height="9" rx="1" fill="currentColor"></rect><rect x="7" y="1.5" width="3" height="9" rx="1" fill="currentColor"></rect></svg></sc-if>
+<sc-if value="{{ sp.isRate }}" hint-placeholder-val="{{ true }}"><span>{{ sp.l }}</span></sc-if>
+</button>
+</sc-for>
+</div>
+<sc-if value="{{ locked }}" hint-placeholder-val="{{ false }}"><div style="font:500 12px/1.3 {{ fb }};color:var(--warn)">{{ s.paused }}</div></sc-if>
+</div>
+
+<div style="position:relative;height:300px;overflow:hidden;background:var(--bg);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px),linear-gradient(var(--grid2) 1px,transparent 1px),linear-gradient(90deg,var(--grid2) 1px,transparent 1px);background-size:80px 80px,80px 80px,16px 16px,16px 16px;border-bottom:1px solid var(--line)">
+<div style="position:absolute;inset:0;opacity:{{ mapOp }}">
+<svg viewBox="250 55 540 430" width="100%" height="100%" style="position:absolute;inset:0" fill="none">
+<circle cx="520" cy="330" r="259" style="stroke:var(--mars)" stroke-width="1.4" opacity="0.55"></circle>
+<circle cx="520" cy="330" r="170" style="stroke:var(--bp)" stroke-width="1.4" opacity="0.45"></circle>
+<circle cx="520" cy="330" r="28" style="fill:var(--warn)" opacity="0.12"></circle>
+<circle cx="520" cy="330" r="14" style="fill:var(--warn)"></circle>
+<sc-if value="{{ mapCruise }}" hint-placeholder-val="{{ true }}"><g>
+<path d="M367.2 404.5 A214.5 209.9 -26 0 0 752.8 216.5" style="stroke:var(--bp)" stroke-width="2" stroke-dasharray="2 6" stroke-linecap="round" opacity="0.6"></path>
+<path d="M372.8 415 A214.5 209.9 -30 0 0 763.1 364.2" style="stroke:var(--acc)" stroke-width="3"></path>
+<path d="M763.1 364.2 A214.5 209.9 -30 0 0 744.4 200.5" style="stroke:var(--acc)" stroke-width="2" stroke-dasharray="7 7" opacity="0.6"></path>
+<line x1="602.6" y1="181.4" x2="763.1" y2="364.2" style="stroke:var(--ink2)" stroke-width="1.4" stroke-dasharray="4 5" opacity="0.6"></line>
+<circle cx="602.6" cy="181.4" r="10" style="fill:var(--bp)"></circle>
+<circle cx="765.3" cy="413" r="12" style="fill:var(--mars)"></circle>
+<rect x="753.1" y="374" width="14" height="14" transform="rotate(45 760.1 381)" style="fill:var(--bg);stroke:var(--bp)" stroke-width="2"></rect>
+<g transform="translate(763.1 364.2)"><circle r="22" style="stroke:{{ craftC }}" stroke-width="1.5" opacity="0.6"></circle><path d="M0 -9L9 0L0 9L-9 0Z" style="fill:{{ craftC }}"></path></g>
+<text x="622" y="176" style="fill:var(--ink)" font-family="{{ fhSvg }}" font-size="20" font-weight="600">{{ s.earth }}</text>
+<text x="700" y="456" style="fill:var(--ink)" font-family="{{ fhSvg }}" font-size="20" font-weight="600">{{ s.mars }}</text>
+<text x="640" y="340" text-anchor="end" style="fill:{{ craftC }}" font-family="{{ fhSvg }}" font-size="20" font-weight="600">{{ s.you }}</text>
+</g></sc-if>
+<sc-if value="{{ mapConj }}" hint-placeholder-val="{{ false }}"><g>
+<path d="M372.8 415 A214.5 209.9 -30 0 0 744.4 200.5" style="stroke:var(--acc)" stroke-width="2" opacity="0.35"></path>
+<line x1="{{ cj.ex }}" y1="{{ cj.ey }}" x2="{{ cj.mx }}" y2="{{ cj.my }}" style="stroke:{{ cj.lc }}" stroke-width="1.6" stroke-dasharray="4 6"></line>
+<circle cx="{{ cj.ex }}" cy="{{ cj.ey }}" r="10" style="fill:var(--bp)"></circle>
+<circle cx="{{ cj.mx }}" cy="{{ cj.my }}" r="12" style="fill:var(--mars)"></circle>
+<circle cx="{{ cj.mx }}" cy="{{ cj.my }}" r="21" style="stroke:var(--acc)" stroke-width="1.5" stroke-dasharray="3 3"></circle>
+<text x="{{ cj.etx }}" y="{{ cj.ety }}" style="fill:var(--ink)" font-family="{{ fhSvg }}" font-size="20" font-weight="600">{{ s.earth }}</text>
+<text x="{{ cj.mtx }}" y="{{ cj.mty }}" style="fill:var(--ink)" font-family="{{ fhSvg }}" font-size="20" font-weight="600">{{ s.mars }} · {{ s.you }}</text>
+</g></sc-if>
+<sc-if value="{{ mapExt }}" hint-placeholder-val="{{ false }}"><g>
+<path d="M372.8 415 A214.5 209.9 -30 0 0 744.4 200.5" style="stroke:var(--acc)" stroke-width="2" opacity="0.35"></path>
+<line x1="369.5" y1="251" x2="325.4" y2="400" style="stroke:var(--ink2)" stroke-width="1.4" stroke-dasharray="4 5" opacity="0.6"></line>
+<circle cx="369.5" cy="251" r="10" style="fill:var(--bp)"></circle>
+<text x="388" y="246" style="fill:var(--ink)" font-family="{{ fhSvg }}" font-size="20" font-weight="600">{{ s.earth }}</text>
+<text x="300" y="470" style="fill:var(--ink)" font-family="{{ fhSvg }}" font-size="20" font-weight="600">{{ s.mars }} ↓</text>
+</g></sc-if>
+</svg>
+{{ pulseSvg }}
+</div>
+<sc-if value="{{ showMapPill }}" hint-placeholder-val="{{ true }}"><div style="position:absolute;left:12px;bottom:12px;display:flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:999px;background:var(--panel);border:1px solid var(--line2);font:500 12px/1 {{ fb }}"><span style="width:6px;height:6px;border-radius:50%;background:var(--bp)"></span>{{ v.pill }}</div></sc-if>
+<sc-if value="{{ isBlackout }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;left:12px;right:12px;bottom:12px;padding:12px 14px;border-radius:14px;background:var(--panel);border:1.5px solid var(--bad);display:flex;gap:10px;align-items:flex-start">
+<svg width="22" height="22" viewBox="0 0 20 20" fill="none" style="flex:none;color:var(--bad)"><circle cx="10" cy="11" r="1.8" fill="currentColor"></circle><path d="M6.5 7.5a5 5 0 0 0 0 7M13.5 7.5a5 5 0 0 1 0 7M4 5a8.5 8.5 0 0 0 0 12M16 5a8.5 8.5 0 0 1 0 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.5"></path><path d="M3 3l14 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg>
+<div style="display:flex;flex-direction:column;gap:4px"><div style="font:600 15px/1.3 {{ fh }}">{{ s.boTitle }}</div><div style="font:13px/1.4 {{ fb }};color:var(--ink2)">{{ s.boSub }}</div></div>
+</div>
+</sc-if>
+</div>
+
+<div style="padding:16px;display:flex;flex-direction:column;gap:12px">
+
+<sc-if value="{{ isHazard }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top:-36px;position:relative;border-radius:20px;background:var(--panel);border:1.5px solid var(--bad);box-shadow:0 -10px 40px rgba(0,0,0,0.5);overflow:hidden">
+<div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:rgba(255,107,138,0.12);border-bottom:1px solid rgba(255,107,138,0.35);color:var(--bad);font:600 11px/1.2 {{ fmTag }};letter-spacing:{{ tagLs }}"><svg width="13" height="13" viewBox="0 0 14 14" style="flex:none"><path d="M4.6 1h4.8L13 4.6v4.8L9.4 13H4.6L1 9.4V4.6z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path><path d="M7 4v3.6M7 9.8v.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>{{ s.hzTag }}</div>
+<div style="padding:14px;display:flex;flex-direction:column;gap:12px">
+<div style="font:600 21px/1.25 {{ fh }}">{{ s.hzTitle }}</div>
+<div style="font:14px/1.5 {{ fb }};color:var(--ink2)">{{ s.hzSit }}</div>
+<sc-if value="{{ eng }}" hint-placeholder-val="{{ false }}"><div style="font:500 11px/1.55 'JetBrains Mono',monospace;color:var(--bp)">S3 · ≥10 MeV ≥ 1,000 pfu · ETA T+18 h · ⓘ NOAA SWPC</div></sc-if>
+<div style="padding:10px 12px;border-radius:12px;border:1px dashed var(--line2);background:rgba(142,197,255,0.06);display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;align-items:center;gap:8px"><span style="font:600 11px/1 {{ fmTag }};letter-spacing:{{ tagLs }};color:var(--bp)">{{ s.histTag }}</span><span style="height:18px;padding:0 6px;border-radius:4px;display:inline-grid;place-items:center;font:600 10px/1 {{ fmTag }};color:var(--warn);border:1px dashed var(--warn)">{{ s.verify }}</span></div>
+<div style="font:13.5px/1.5 {{ fb }}">{{ s.hist }}</div>
+</div>
+<sc-for list="{{ resp }}" as="r" hint-placeholder-count="3">
+<button onClick="{{ r.pick }}" style="text-align:left;padding:12px;border-radius:14px;border:{{ r.bd }};background:{{ r.bg }};opacity:{{ r.op }};color:var(--ink);display:flex;flex-direction:column;gap:8px;cursor:pointer;font-family:inherit">
+<div style="display:flex;align-items:center;gap:8px"><span style="flex:none;width:18px;height:18px;border-radius:50%;border:1.5px solid {{ r.dot }};display:grid;place-items:center"><span style="width:8px;height:8px;border-radius:50%;background:{{ r.dotFill }}"></span></span><span style="flex:1;font:600 15px/1.3 {{ fh }}">{{ r.title }}</span><span style="display:flex;gap:2px"><sc-for list="{{ r.seg }}" as="sg" hint-placeholder-count="5"><span style="width:7px;height:12px;border-radius:2px;background:{{ sg.bg }}"></span></sc-for></span></div>
+<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+<sc-for list="{{ r.chips }}" as="c" hint-placeholder-count="2">
+<span style="display:inline-flex;align-items:center;gap:5px;min-height:26px;padding:0 8px;border-radius:6px;background:var(--bg);border:1px solid var(--line2);font:500 12.5px/1.2 {{ fb }}">
+<sc-if value="{{ c.isCam }}" hint-placeholder-val="{{ false }}"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" style="color:var(--bp)"><rect x="1.5" y="4.5" width="13" height="9" rx="2" stroke="currentColor" stroke-width="1.5"></rect><circle cx="8" cy="9" r="2.4" stroke="currentColor" stroke-width="1.5"></circle></svg></sc-if>
+<sc-if value="{{ c.isCoin }}" hint-placeholder-val="{{ false }}"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" style="color:var(--warn)"><circle cx="8" cy="8" r="6.2" stroke="currentColor" stroke-width="1.5"></circle><circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.5"></circle></svg></sc-if>
+<sc-if value="{{ c.isFuel }}" hint-placeholder-val="{{ false }}"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" style="color:var(--acc)"><path d="M8 1.8S3.5 7.2 3.5 10a4.5 4.5 0 0 0 9 0C12.5 7.2 8 1.8 8 1.8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path></svg></sc-if>
+{{ c.t }}</span>
+</sc-for>
+<span style="margin-left:auto;font:600 12px/1 {{ fb }};color:{{ r.riskC }}">{{ s.risk }}: {{ r.riskL }}</span>
+</div>
+<sc-if value="{{ r.disabled }}" hint-placeholder-val="{{ false }}"><div style="font:600 13px/1.4 {{ fb }};color:var(--bad)">{{ r.why }}</div></sc-if>
+<sc-if value="{{ eng }}" hint-placeholder-val="{{ false }}"><div style="font:500 11px/1.5 'JetBrains Mono',monospace;color:var(--bp)">{{ r.eng }}</div></sc-if>
+</button>
+</sc-for>
+<button style="min-height:56px;padding:8px 16px;border-radius:16px;border:none;background:var(--acc);color:var(--accInk);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;box-shadow:0 4px 0 #C4682A"><span style="font:600 17px/1.2 {{ fh }}">{{ s.send }}</span><span style="font:500 12px/1.2 {{ fb }};opacity:0.8">{{ s.sendSub }}</span></button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isQueue }}" hint-placeholder-val="{{ false }}">
+<div style="padding:12px 14px;border-radius:14px;border:1.5px solid var(--warn);background:rgba(242,199,68,0.08);display:flex;flex-direction:column;gap:4px"><div style="font:600 15px/1.35 {{ fb }}">{{ s.qWarn }}</div><div style="font:13px/1.45 {{ fb }};color:var(--ink2)">{{ s.qWarnSub }}</div></div>
+<div style="display:flex;justify-content:space-between;align-items:baseline"><div style="font:600 17px/1.2 {{ fh }}">{{ s.queue }}</div><div style="font:500 12px/1 {{ fb }};color:var(--ink3)">{{ s.qCount }}</div></div>
+<div style="padding:12px 14px;border-radius:14px;border:1.5px solid var(--acc);background:rgba(255,159,87,0.08);display:flex;flex-direction:column;gap:8px">
+<div style="font:600 11px/1 {{ fmTag }};letter-spacing:{{ tagLs }};color:var(--acc)">{{ s.onWay }}</div>
+<div style="font:600 15px/1.3 {{ fh }}">{{ s.q0 }}</div>
+<div style="display:flex;align-items:baseline;justify-content:space-between"><span style="font:13px/1.2 {{ fb }};color:var(--ink2)">{{ s.arrives }}</span><span style="font:500 24px/1 'JetBrains Mono',monospace;color:var(--acc)">{{ q.left }}</span></div>
+<div style="height:5px;border-radius:3px;background:rgba(143,186,255,0.15)"><div style="width:{{ q.pct }};height:100%;border-radius:3px;background:var(--acc)"></div></div>
+</div>
+<sc-for list="{{ qItems }}" as="it" hint-placeholder-count="3">
+<div style="padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:var(--panel2);display:flex;flex-direction:column;gap:4px"><div style="font:600 14.5px/1.3 {{ fh }}">{{ it.t }}</div><div style="font:13px/1.35 {{ fb }};color:var(--ink2)">{{ it.s }}</div></div>
+</sc-for>
+<button style="min-height:56px;border-radius:16px;border:none;background:var(--acc);color:var(--accInk);font:600 16px/1.2 {{ fh }};cursor:pointer;box-shadow:0 4px 0 #C4682A">{{ s.sendAll }}</button>
+</sc-if>
+
+<sc-if value="{{ isSafe }}" hint-placeholder-val="{{ false }}">
+<div style="padding:14px;border-radius:16px;border:1.5px solid var(--warn);background:var(--panel);display:flex;flex-direction:column;gap:8px">
+<span style="align-self:flex-start;height:24px;padding:0 9px;border-radius:6px;display:inline-flex;align-items:center;font:600 11px/1 {{ fmTag }};letter-spacing:{{ tagLs }};color:var(--warn);background:rgba(242,199,68,0.12);border:1px solid rgba(242,199,68,0.4)">{{ s.safeTag }}</span>
+<div style="font:600 20px/1.25 {{ fh }}">{{ s.safeTitle }}</div>
+<div style="font:14px/1.5 {{ fb }};color:var(--ink2)">{{ s.safeSub }}</div>
+<sc-if value="{{ eng }}" hint-placeholder-val="{{ false }}"><div style="font:500 11px/1.6 'JetBrains Mono',monospace;color:var(--ink2)">SEU · C&amp;DH A → B · sun-point · beacon 10 bps</div></sc-if>
+</div>
+<button style="min-height:72px;padding:10px 16px;border-radius:18px;border:none;background:var(--acc);color:var(--accInk);display:flex;align-items:center;justify-content:center;gap:12px;cursor:pointer;box-shadow:0 5px 0 #C4682A"><svg width="22" height="22" viewBox="0 0 20 20" style="flex:none"><path d="M4 10a6 6 0 1 0 2-4.5M4 3v3h3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg><span style="display:flex;flex-direction:column;align-items:flex-start;gap:4px"><span style="font:600 19px/1.1 {{ fh }}">{{ s.recover }}</span><span style="font:500 12.5px/1.2 {{ fb }};opacity:0.8">{{ s.recoverSub }}</span></span></button>
+</sc-if>
+
+<sc-if value="{{ isExt }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:6px"><div style="font:600 11px/1 {{ fmTag }};letter-spacing:{{ tagLs }};color:var(--acc)">{{ s.extTag }}</div><div style="font:600 23px/1.2 {{ fh }}">{{ s.extTitle }}</div></div>
+<div style="padding:16px;border-radius:18px;background:var(--panel);border:1.5px solid var(--line2);display:flex;flex-direction:column;gap:10px">
+<div style="font:600 19px/1.25 {{ fh }}">{{ s.retire }}</div>
+<div style="font:14px/1.5 {{ fb }};color:var(--ink2)">{{ s.retireSub }}</div>
+<div style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 12px;align-items:center;font:13px/1.2 {{ fb }}"><span style="color:var(--ink2)">{{ s.science }}</span><div style="height:10px;border-radius:5px;background:rgba(143,186,255,0.12)"><div style="width:58%;height:100%;border-radius:5px;background:var(--bp)"></div></div><span style="color:var(--ink2)">{{ s.riskW }}</span><span style="font:500 12px/1 {{ fb }};color:var(--ok)">{{ s.none }}</span></div>
+<sc-if value="{{ eng }}" hint-placeholder-val="{{ false }}"><div style="font:500 11px/1.6 'JetBrains Mono',monospace;color:var(--ink2)">1.27 TB downlinked · score 7,840</div></sc-if>
+<button style="min-height:52px;border-radius:14px;border:1.5px solid var(--line2);background:var(--panel2);color:var(--ink);font:600 15px/1.2 {{ fh }};cursor:pointer">{{ s.retireBtn }}</button>
+</div>
+<div style="padding:16px;border-radius:18px;background:var(--panel);border:1.5px solid var(--acc);display:flex;flex-direction:column;gap:10px">
+<div style="font:600 19px/1.25 {{ fh }}">{{ s.extend }}</div>
+<div style="font:14px/1.5 {{ fb }};color:var(--ink2)">{{ s.extendSub }}</div>
+<div style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 12px;align-items:center;font:13px/1.2 {{ fb }}"><span style="color:var(--ink2)">{{ s.science }}</span><div style="height:10px;border-radius:5px;background:rgba(143,186,255,0.12);display:flex;overflow:hidden"><div style="width:58%;background:var(--bp)"></div><div style="width:37%;background:repeating-linear-gradient(135deg,var(--bp) 0 3px,rgba(142,197,255,0.35) 3px 6px)"></div></div><span style="color:var(--ink2)">{{ s.riskW }}</span><div style="position:relative;height:10px;border-radius:5px;background:linear-gradient(90deg,var(--ok),var(--warn) 50%,var(--bad))"><span style="position:absolute;left:23%;top:-4px;bottom:-4px;width:2px;background:var(--ink)"></span></div></div>
+<div style="font:13px/1.45 {{ fb }};color:var(--warn)">⚠ {{ s.fuelWarn }}</div>
+<sc-if value="{{ eng }}" hint-placeholder-val="{{ false }}"><div style="font:500 11px/1.6 'JetBrains Mono',monospace;color:var(--ink2)"><div style="color:var(--bp)">P_fail = 1 − e^(−0.13 × 2) = 23%</div><div>+803 GB · 26 kg ÷ 18 kg/yr = 1.44 yr</div></div></sc-if>
+<button style="min-height:52px;border-radius:14px;border:none;background:var(--acc);color:var(--accInk);font:600 15px/1.2 {{ fh }};cursor:pointer;box-shadow:0 4px 0 #C4682A">{{ s.extendBtn }}</button>
+</div>
+<div style="padding:12px 14px;border-radius:14px;border:1px dashed var(--line2);display:flex;flex-direction:column;gap:6px"><div style="display:flex;align-items:center;gap:8px"><span style="font:600 11px/1 {{ fmTag }};letter-spacing:{{ tagLs }};color:var(--bp)">{{ s.histTag }}</span><span style="height:18px;padding:0 6px;border-radius:4px;display:inline-grid;place-items:center;font:600 10px/1 {{ fmTag }};color:var(--warn);border:1px dashed var(--warn)">{{ s.verify }}</span></div><div style="font:13.5px/1.5 {{ fb }}">{{ s.mavenFact }}</div></div>
+</sc-if>
+
+<sc-if value="{{ showRes }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;justify-content:space-between;align-items:baseline"><div style="font:600 17px/1.2 {{ fh }}">{{ s.res }}</div></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+<sc-for list="{{ gauges }}" as="g" hint-placeholder-count="4">
+<div style="padding:12px;border-radius:14px;background:var(--panel2);border:1px solid {{ g.bd }};display:flex;flex-direction:column;gap:7px">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:6px"><span style="font:600 14px/1.2 {{ fh }}">{{ g.name }}</span><span style="width:8px;height:8px;flex:none;border-radius:{{ g.shape }};background:{{ g.c }}"></span></div>
+<div style="font:500 18px/1 'JetBrains Mono',monospace">{{ g.big }}</div>
+<div style="height:8px;border-radius:4px;background:rgba(143,186,255,0.12)"><div style="width:{{ g.fill }};height:100%;border-radius:4px;background:{{ g.c }}"></div></div>
+<div style="font:600 11px/1.2 {{ fb }};color:{{ g.c }}">{{ g.statusL }}</div>
+<sc-if value="{{ cadet }}" hint-placeholder-val="{{ true }}"><div style="font:12.5px/1.4 {{ fb }};color:var(--ink2)">{{ g.line }}</div></sc-if>
+<sc-if value="{{ eng }}" hint-placeholder-val="{{ false }}"><div style="font:500 10.5px/1.45 'JetBrains Mono',monospace;color:var(--bp)">{{ g.eq }}</div></sc-if>
+</div>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ showActions }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;gap:8px">
+<sc-for list="{{ actions }}" as="a" hint-placeholder-count="3">
+<button style="min-height:64px;padding:8px 14px;border-radius:16px;border:1px solid var(--line2);background:var(--panel2);color:var(--ink);opacity:{{ a.op }};display:flex;align-items:center;gap:12px;text-align:left;cursor:pointer">
+<span style="flex:none;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:rgba(255,159,87,0.14);color:var(--acc);font:600 15px/1 'JetBrains Mono',monospace">{{ a.n }}</span>
+<span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px"><span style="font:600 15.5px/1.2 {{ fh }}">{{ a.t }}</span><span style="font:13px/1.3 {{ fb }};color:var(--ink2)">{{ a.s }}</span></span>
+<span style="color:var(--ink3);font:18px/1 Inter,sans-serif">›</span>
+</button>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ showTl }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;justify-content:space-between;align-items:baseline;padding-top:4px"><div style="font:600 17px/1.2 {{ fh }}">{{ s.upcoming }}</div><div style="font:500 11px/1 'JetBrains Mono',monospace;color:var(--ink3)">60 d</div></div>
+<div style="display:flex;gap:8px;overflow:hidden;margin-right:-16px">
+<sc-for list="{{ tl }}" as="e" hint-placeholder-count="4">
+<div style="flex:none;width:132px;padding:10px 12px;border-radius:14px;border:{{ e.bd }};background:{{ e.bg }};display:flex;flex-direction:column;gap:6px">
+<span style="font:500 11px/1 'JetBrains Mono',monospace;color:var(--ink3)">{{ e.when }}</span>
+<span style="font:600 13.5px/1.3 {{ fh }};color:{{ e.c }}">{{ e.l }}</span>
+<sc-if value="{{ eng }}" hint-placeholder-val="{{ false }}"><span style="font:500 10px/1.3 'JetBrains Mono',monospace;color:var(--ink3)">{{ e.e }}</span></sc-if>
+</div>
+</sc-for>
+</div>
+</sc-if>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:390,&quot;height&quot;:1400},&quot;state&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;normal&quot;,&quot;hazard&quot;,&quot;queue&quot;,&quot;blackout&quot;,&quot;safe&quot;,&quot;extension&quot;],&quot;default&quot;:&quot;normal&quot;,&quot;tsType&quot;:&quot;'normal'|'hazard'|'queue'|'blackout'|'safe'|'extension'&quot;},&quot;lang&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;en&quot;,&quot;bn&quot;],&quot;default&quot;:&quot;en&quot;,&quot;tsType&quot;:&quot;'en'|'bn'&quot;},&quot;mode&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;cadet&quot;,&quot;engineer&quot;],&quot;default&quot;:&quot;cadet&quot;,&quot;tsType&quot;:&quot;'cadet'|'engineer'&quot;}}">
+const EN = {
+  title: 'Mission Control', langL: 'EN', day: 'Day', owltL: 'SIGNAL DELAY', paused: 'Auto-paused — time stops while you decide.',
+  earth: 'Earth', mars: 'Mars', you: 'You', res: 'Resources', upcoming: 'Upcoming', risk: 'Risk',
+  batt: 'Battery', fuel: 'Fuel tank', data: 'Photos waiting', coin: 'Ops budget', OK: 'OK', WARN: 'WARNING', BAD: 'OVER LIMIT',
+  power: 'Power plan', powerS: 'Science · Heaters · Radio', call: 'Book a call home', callS: 'Next: tomorrow · small dish', queue: 'Command queue', queueS: '2 waiting for the next call',
+  callOff: 'No contact until Day 438', queueOff: 'Locked until contact returns',
+  hzTag: 'HAZARD · AUTO-PAUSED', hzTitle: 'Solar storm! Electronics may reset.', hzSit: 'A burst of fast particles from the Sun reaches your craft in about 18 hours.',
+  histTag: 'REAL HISTORY', verify: 'TO VERIFY', hist: 'In October 2003 a huge solar storm reached Mars. NASA\u2019s Mars Odyssey went into safe mode, and its radiation instrument never worked again.',
+  rA: 'Go to safe mode now', rB: 'Keep the science running', rC: 'Hide behind the fuel tanks', cA: '2 days of photos', cB: 'none, if it works', cC: 'a big gulp of fuel', why: 'Not enough fuel — your margin is used up.', LOW: 'LOW', HIGH: 'HIGH',
+  send: 'Send command', sendSub: 'Reaches the craft in 11 m 54 s',
+  qWarn: 'Solar conjunction in 6 days — queue your commands now.', qWarnSub: 'Then the Sun blocks the radio for 14 days.', qCount: '1 on its way · 3 waiting', onWay: 'ON ITS WAY', q0: 'Point the camera at the dawn side', arrives: 'Arrives at the craft in',
+  q1: 'Run the 14-day autopilot plan', q1s: 'Sends at next call · Day 419', q2: 'Slow the science while the radio is out', q2s: 'Keeps the memory from filling up', q3: 'Save photos, send after the blackout', q3s: 'Sends Day 419', sendAll: 'Send all at next call · Day 419',
+  boTitle: 'Sun between Earth and craft — no contact for 14 days', boSub: 'Day 8 of 14. Contact returns on Day 438.',
+  safeTag: 'SAFE MODE', safeTitle: 'Your craft protected itself.', safeSub: 'Its computer reset in the storm. It\u2019s facing the Sun with instruments off, waiting for you.', recover: 'Recover', recoverSub: 'Wake-up commands arrive in 11 m 56 s',
+  extTag: 'MISSION DECISION · DAY 672', extTitle: 'Your prime mission is complete. What now?', retire: 'Retire with honour', retireSub: 'Bank everything you\u2019ve learned. Nothing can go wrong now.', extend: 'Extend 2 more years', extendSub: 'Much more science — but parts are ageing and fuel is low.',
+  science: 'Science', riskW: 'Failure risk', none: 'none', fuelWarn: 'Fuel lasts about 1½ years of trims — not the full 2.', retireBtn: 'Retire the craft', extendBtn: 'Extend the mission',
+  mavenFact: 'MAVEN was planned as a 1-year science mission. It kept working for about 11 years.',
+  phase: { cruise: 'Cruise', orbit: 'Science orbit', end: 'End of prime mission' },
+  sub: { normal: '93 days until you reach Mars', hazard: 'Decision needed', safe: 'Craft is in safe mode', queue: 'Solar conjunction in 6 days', blackout: 'Blackout · day 8 of 14', extension: 'One year of science complete' },
+  pill: { cruise: 'Signal · about 12 min', queue: 'Signal · about 21 min', extension: 'Signal · about 12 min' },
+  ev: { small: 'Small dish', big: 'Big dish', burn: 'Course fix', trim: 'Orbit trim', conj: 'Solar conjunction', ecl: 'Eclipse season', moi: 'Orbit insertion', last: 'Last call', in: 'in', days: 'd', tom: 'Tomorrow' },
+  gl: {
+    batt: { cruise: 'Full sunshine. No eclipses on the way.', safe: 'Charging back up.', orbit: 'Healthy. Recharges after each shadow.' },
+    fuel: { cruise: 'Enough to reach orbit — a thin cushion.', orbit: 'Enough for 2 years of trims.', end: 'About 1½ years of trims left.' },
+    data: { normal: 'About 960 photos waiting.', safe: 'No new photos for now.', queue: 'Send what you can before the blackout.', blackout: 'Full in about 4 days. Turn science down.', extension: 'Almost everything is home.' },
+    coin: { cruise: 'Daily ops + ~14 small-dish calls.', orbit: 'Daily ops + ~12 small-dish calls.', end: 'Nearly spent. Extending brings funding.' }
+  }
+};
+const BN = {
+  title: 'মিশন কন্ট্রোল', langL: 'বাংলা', day: 'দিন', owltL: 'সংকেতের দেরি', paused: 'স্বয়ংক্রিয় বিরতি — আপনি সিদ্ধান্ত না নেওয়া পর্যন্ত সময় থেমে থাকবে।',
+  earth: 'পৃথিবী', mars: 'মঙ্গল', you: 'আপনি', res: 'সম্পদ', upcoming: 'আসন্ন ঘটনা', risk: 'ঝুঁকি',
+  batt: 'ব্যাটারি', fuel: 'জ্বালানি ট্যাংক', data: 'অপেক্ষমাণ ছবি', coin: 'পরিচালন বাজেট', OK: 'ঠিক আছে', WARN: 'সতর্কতা', BAD: 'সীমা ছাড়িয়েছে',
+  power: 'বিদ্যুৎ পরিকল্পনা', powerS: 'বিজ্ঞান · হিটার · রেডিও', call: 'পৃথিবীতে কল বুক করুন', callS: 'পরেরটি: আগামীকাল · ছোট ডিশ', queue: 'কমান্ড সারি', queueS: 'পরের কলের জন্য ২টি অপেক্ষায়',
+  callOff: 'দিন 438 পর্যন্ত যোগাযোগ নেই', queueOff: 'যোগাযোগ ফেরা পর্যন্ত বন্ধ',
+  hzTag: 'বিপদ · স্বয়ংক্রিয় বিরতি', hzTitle: 'সৌরঝড়! ইলেকট্রনিক্স রিসেট হতে পারে।', hzSit: 'সূর্য থেকে আসা দ্রুতগতির কণার ঝাপটা প্রায় ১৮ ঘণ্টার মধ্যে আপনার যানে পৌঁছাবে।',
+  histTag: 'আসল ইতিহাস', verify: 'যাচাই বাকি', hist: '২০০৩ সালের অক্টোবরে এক বিশাল সৌরঝড় মঙ্গলে পৌঁছায়। NASA-র Mars Odyssey নিরাপদ মোডে চলে যায়, আর এর বিকিরণ মাপার যন্ত্রটি আর কখনো কাজ করেনি।',
+  rA: 'এখনই নিরাপদ মোডে যান', rB: 'বিজ্ঞানের কাজ চালু রাখুন', rC: 'জ্বালানি ট্যাংকের আড়ালে লুকান', cA: '২ দিনের ছবি', cB: 'কিছু না, যদি ঠিক থাকে', cC: 'অনেকখানি জ্বালানি', why: 'যথেষ্ট জ্বালানি নেই — আপনার বাড়তি জ্বালানি শেষ।', LOW: 'কম', HIGH: 'বেশি',
+  send: 'কমান্ড পাঠান', sendSub: 'যানে পৌঁছাবে 11 m 54 s পরে',
+  qWarn: '৬ দিন পর সৌর সংযোগ — এখনই কমান্ড সারিতে দিন।', qWarnSub: 'তারপর ১৪ দিন সূর্য রেডিও সংকেত আটকে রাখবে।', qCount: '১টি পথে · ৩টি অপেক্ষায়', onWay: 'পথে আছে', q0: 'ক্যামেরা ভোরের দিকে ঘোরান', arrives: 'যানে পৌঁছাবে',
+  q1: '১৪ দিনের অটোপাইলট পরিকল্পনা চালান', q1s: 'পরের কলে যাবে · দিন 419', q2: 'রেডিও বন্ধ থাকাকালে বিজ্ঞানের কাজ কমান', q2s: 'মেমরি ভরে যাওয়া ঠেকায়', q3: 'ছবি জমিয়ে রাখুন, পরে পাঠান', q3s: 'যাবে দিন 419', sendAll: 'পরের কলে সব পাঠান · দিন 419',
+  boTitle: 'পৃথিবী আর যানের মাঝে সূর্য — ১৪ দিন কোনো যোগাযোগ নেই', boSub: '১৪ দিনের মধ্যে ৮ম দিন। দিন 438-এ যোগাযোগ ফিরবে।',
+  safeTag: 'নিরাপদ মোড', safeTitle: 'আপনার যান নিজেকে রক্ষা করেছে।', safeSub: 'ঝড়ে এর কম্পিউটার রিসেট হয়েছে। যন্ত্র বন্ধ রেখে সূর্যের দিকে মুখ করে আপনার নির্দেশের অপেক্ষায় আছে।', recover: 'পুনরুদ্ধার করুন', recoverSub: 'জাগানোর কমান্ড পৌঁছাবে 11 m 56 s পরে',
+  extTag: 'মিশনের সিদ্ধান্ত · দিন 672', extTitle: 'মূল মিশন শেষ। এখন কী করবেন?', retire: 'সম্মানের সাথে অবসর', retireSub: 'যা শিখেছেন সব জমা রাখুন। এখন আর কিছু খারাপ হতে পারবে না।', extend: 'আরও ২ বছর বাড়ান', extendSub: 'আরও অনেক বিজ্ঞান — তবে যন্ত্রাংশ পুরোনো হচ্ছে, জ্বালানিও কম।',
+  science: 'বিজ্ঞান', riskW: 'বিকল হওয়ার ঝুঁকি', none: 'নেই', fuelWarn: 'জ্বালানিতে প্রায় দেড় বছর চলবে — পুরো ২ বছর নয়।', retireBtn: 'যানটিকে অবসর দিন', extendBtn: 'মিশন বাড়ান',
+  mavenFact: 'MAVEN-এর বিজ্ঞান মিশন ১ বছরের জন্য পরিকল্পিত ছিল। এটি প্রায় ১১ বছর কাজ করেছে।',
+  phase: { cruise: 'যাত্রাপথে', orbit: 'বিজ্ঞান কক্ষপথ', end: 'মূল মিশনের শেষ' },
+  sub: { normal: 'মঙ্গলে পৌঁছাতে আর ৯৩ দিন', hazard: 'সিদ্ধান্ত দরকার', safe: 'যান নিরাপদ মোডে আছে', queue: '৬ দিন পর সৌর সংযোগ', blackout: 'যোগাযোগহীন · ১৪ দিনের ৮ম দিন', extension: 'এক বছরের বিজ্ঞান সম্পন্ন' },
+  pill: { cruise: 'সংকেত · প্রায় ১২ মিনিট', queue: 'সংকেত · প্রায় ২১ মিনিট', extension: 'সংকেত · প্রায় ১২ মিনিট' },
+  ev: { small: 'ছোট ডিশ', big: 'বড় ডিশ', burn: 'পথ সংশোধন', trim: 'কক্ষপথ সমন্বয়', conj: 'সৌর সংযোগ', ecl: 'গ্রহণের মৌসুম', moi: 'কক্ষপথে প্রবেশ', last: 'শেষ কল', in: '', days: 'দিন পর', tom: 'আগামীকাল' },
+  gl: {
+    batt: { cruise: 'পুরো রোদ। পথে কোনো গ্রহণ নেই।', safe: 'আবার চার্জ হচ্ছে।', orbit: 'ভালো আছে। ছায়ার পর আবার চার্জ হয়।' },
+    fuel: { cruise: 'কক্ষপথে পৌঁছানো যাবে — বাড়তি সামান্য।', orbit: '২ বছরের সমন্বয়ের জন্য যথেষ্ট।', end: 'প্রায় দেড় বছরের সমন্বয় বাকি।' },
+    data: { normal: 'প্রায় ৯৬০টি ছবি অপেক্ষায়।', safe: 'এখন নতুন ছবি নেই।', queue: 'যোগাযোগ বন্ধের আগে যত পারেন পাঠান।', blackout: 'প্রায় ৪ দিনে ভরে যাবে। বিজ্ঞান কমান।', extension: 'প্রায় সব ছবি পৃথিবীতে পৌঁছেছে।' },
+    coin: { cruise: 'দৈনিক খরচ + প্রায় ১৪টি ছোট ডিশ কল।', orbit: 'দৈনিক খরচ + প্রায় ১২টি ছোট ডিশ কল।', end: 'প্রায় শেষ। মিশন বাড়ালে নতুন বাজেট।' }
+  }
+};
+
+const V = {
+  normal: { day: '214', ph: 'cruise', owlt: '11 m 54 s', speed: '10' },
+  hazard: { day: '214', ph: 'cruise', owlt: '11 m 54 s', speed: 'pause' },
+  safe: { day: '215', ph: 'cruise', owlt: '11 m 56 s', speed: 'pause' },
+  queue: { day: '418', ph: 'orbit', owlt: '20 m 58 s', speed: '1' },
+  blackout: { day: '431', ph: 'orbit', owlt: '—', speed: '100' },
+  extension: { day: '672', ph: 'end', owlt: '12 m 25 s', speed: 'pause' }
+};
+const TC = { ok: 'var(--ok)', warn: 'var(--warn)', bad: 'var(--bad)' };
+const fmt = (s) => String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(Math.floor(s % 60)).padStart(2, '0');
+
+class Component extends DCLogic {
+  state = { speed: null, sel: 'a', qLeft: 760 };
+  componentDidMount() { this.iv = setInterval(() => { if ((this.props.state ?? 'normal') === 'queue') this.setState(s => ({ qLeft: s.qLeft <= 1 ? 760 : s.qLeft - 1 })); }, 1000); }
+  componentWillUnmount() { clearInterval(this.iv); }
+  pulse(d, color, dur) {
+    const h = React.createElement;
+    return h('svg', { viewBox: '250 55 540 430', width: '100%', height: '100%', style: { position: 'absolute', inset: 0, pointerEvents: 'none' } },
+      [0, 1].map(i => h('circle', { key: i, r: i ? 4.5 : 7, fill: color, opacity: i ? 0.45 : 1 },
+        h('animateMotion', { dur: dur + 's', begin: i ? '-' + (dur - 0.16).toFixed(2) + 's' : '0s', repeatCount: 'indefinite', path: d }))));
+  }
+  renderVals() {
+    const st = this.props.state ?? 'normal';
+    const bn = (this.props.lang ?? 'en') === 'bn';
+    const eng = (this.props.mode ?? 'cadet') === 'engineer';
+    const S = bn ? BN : EN;
+    const v = V[st] || V.normal;
+    const cruise = v.ph === 'cruise';
+    const locked = st === 'hazard' || st === 'safe' || st === 'extension';
+    const sp = locked ? 'pause' : (this.state.speed ?? v.speed);
+    const speeds = [['pause', ''], ['1', '1×'], ['10', '10×'], ['100', '100×']].map(([k, l]) => ({
+      l, isPause: k === 'pause', isRate: k !== 'pause',
+      bg: sp === k ? (locked ? 'rgba(242,199,68,0.18)' : 'var(--acc)') : 'transparent', c: sp === k ? (locked ? 'var(--warn)' : 'var(--accInk)') : 'var(--ink2)',
+      set: () => { if (!locked) this.setState({ speed: k }); }
+    }));
+    const tone = { normal: 'ok', hazard: 'bad', safe: 'warn', queue: 'warn', blackout: 'bad', extension: 'warn' }[st];
+    const G = (key, tone, big, fill, line, eq) => ({ name: S[key], tone, big, fill, line, eq, c: TC[tone], statusL: S[tone === 'ok' ? 'OK' : tone === 'warn' ? 'WARN' : 'BAD'], bd: tone === 'ok' ? 'var(--line)' : tone === 'warn' ? 'rgba(242,199,68,0.45)' : 'var(--bad)', shape: tone === 'ok' ? '50%' : '1px' });
+    const gl = S.gl;
+    const gauges = [
+      st === 'safe' ? G('batt', 'ok', '81%', '81%', gl.batt.safe, 'P = 2,850 × (1/1.447)² W') : cruise ? G('batt', 'ok', '96%', '96%', gl.batt.cruise, 'P = 2,850 × (1/1.444)² = 1,367 W') : G('batt', 'ok', st === 'blackout' ? '88%' : '91%', '90%', gl.batt.orbit, 'P = 2,850 × (1/1.524)² = 1,227 W'),
+      cruise ? G('fuel', 'warn', '88%', '87.6%', gl.fuel.cruise, 'Δv 1,356 / 1,300 m/s · +4.3%') : st === 'extension' ? G('fuel', 'warn', '26 kg', '2.2%', gl.fuel.end, '26 ÷ 18 kg/yr = 1.44 yr') : G('fuel', 'ok', '38 kg', '3.3%', gl.fuel.orbit, '38 ÷ 18 kg/yr = 2.1 yr'),
+      G('data', st === 'blackout' ? 'warn' : 'ok', { normal: '60%', hazard: '60%', safe: '61%', queue: '46%', blackout: '87%', extension: '19%' }[st], { normal: '60%', hazard: '60%', safe: '61%', queue: '46%', blackout: '87%', extension: '19%' }[st], gl.data[st] || gl.data.normal, st === 'blackout' ? '(16 − 13.9) ÷ 0.5 GB/d = 4.2 d' : '9.6 / 16 GB · 621 kbps @34 m'),
+      G('coin', st === 'extension' ? 'warn' : 'ok', { normal: '2,400', hazard: '2,400', safe: '2,396', queue: '1,520', blackout: '1,468', extension: '380' }[st], { normal: '67%', hazard: '67%', safe: '67%', queue: '42%', blackout: '41%', extension: '11%' }[st], cruise ? gl.coin.cruise : st === 'extension' ? gl.coin.end : gl.coin.orbit, 'spare = budget − 4/day × days left')
+    ];
+    const nm = bn ? ['১', '২', '৩'] : ['1', '2', '3'];
+    const actions = [
+      { n: nm[0], t: S.power, s: S.powerS, op: 1 },
+      { n: nm[1], t: S.call, s: st === 'blackout' ? S.callOff : S.callS, op: st === 'blackout' ? 0.45 : 1 },
+      { n: nm[2], t: S.queue, s: st === 'blackout' ? S.queueOff : S.queueS, op: st === 'blackout' ? 0.45 : 1 }
+    ];
+    const E = S.ev;
+    const when = (n) => n === 1 ? E.tom : (bn ? n + ' ' + E.days : E.in + ' ' + n + ' ' + E.days);
+    const ev = (n, l, e, k) => ({ when: when(n), l, e, bd: k === 'conj' ? '1.5px solid var(--warn)' : '1px solid var(--line)', bg: k === 'conj' ? 'rgba(242,199,68,0.08)' : k === 'burn' ? 'rgba(255,159,87,0.08)' : 'var(--panel2)', c: k === 'conj' ? 'var(--warn)' : k === 'burn' ? 'var(--acc)' : 'var(--ink)' });
+    const tl = cruise
+      ? [ev(1, E.small, 'DSS-35 · 34 m'), ev(4, E.big, 'DSS-14 · 70 m'), ev(18, E.burn, 'TCM-4', 'burn'), ev(93, E.moi, 'MOI · Day 307', 'burn')]
+      : st === 'blackout'
+      ? [ev(7, E.small, 'DSS-35 · first call back'), ev(10, E.big, 'DSS-14 · 70 m'), ev(15, E.ecl, '≤ 51 min / orbit'), ev(21, E.trim, 'OTM-7', 'burn')]
+      : [ev(1, E.small, 'DSS-34 · 34 m'), ev(5, E.last, 'DSS-26 · Day 423'), ev(6, E.conj, 'SEP < 2° · 14 d', 'conj'), ev(28, E.ecl, '≤ 51 min / orbit')];
+    const RS = [
+      { id: 'a', title: S.rA, chips: [['cam', S.cA], ['coin', '60']], risk: 1, riskL: S.LOW, eng: 'P(reset) ≈ 3% · 48 h' },
+      { id: 'b', title: S.rB, chips: [['cam', S.cB]], risk: 4, riskL: S.HIGH, eng: 'P(reset) ≈ 35% · ~4 d if reset' },
+      { id: 'c', title: S.rC, chips: [['fuel', eng ? '−38 kg' : S.cC]], risk: 1, riskL: S.LOW, disabled: true, why: S.why, eng: 'needs 38 kg · spare 32 kg' }
+    ].map(r => {
+      const sel = this.state.sel === r.id && !r.disabled, lv = r.risk >= 4 ? 'var(--bad)' : 'var(--ok)';
+      return { ...r, chips: r.chips.map(([k, t]) => ({ t, isCam: k === 'cam', isCoin: k === 'coin', isFuel: k === 'fuel' })),
+        bd: sel ? '1.5px solid var(--acc)' : '1px solid var(--line2)', bg: sel ? 'rgba(255,159,87,0.09)' : r.disabled ? 'transparent' : 'var(--panel2)', op: r.disabled ? 0.55 : 1,
+        dot: sel ? 'var(--acc)' : 'var(--ink3)', dotFill: sel ? 'var(--acc)' : 'transparent', riskC: lv,
+        seg: [1, 2, 3, 4, 5].map(i => ({ bg: i <= r.risk ? lv : 'rgba(143,186,255,0.15)' })), pick: () => { if (!r.disabled) this.setState({ sel: r.id }); } };
+    });
+    const cj = st === 'queue'
+      ? { ex: 496.3, ey: 470, mx: 528, my: 92, lc: 'var(--warn)', etx: 380, ety: 470, mtx: 560, mty: 90 }
+      : { ex: 534.2, ey: 470, mx: 497.4, my: 92, lc: 'var(--bad)', etx: 556, ety: 470, mtx: 528, mty: 90 };
+    let pulseSvg = null;
+    if (st === 'normal') pulseSvg = this.pulse('M763.1 364.2L602.6 181.4', '#8EC5FF', 3);
+    if (st === 'safe') pulseSvg = this.pulse('M763.1 364.2L602.6 181.4', '#8193B8', 5);
+    if (st === 'queue') pulseSvg = this.pulse('M496.3 470L528 92', '#FF9F57', 4);
+    if (st === 'extension') pulseSvg = this.pulse('M325.4 400L369.5 251', '#8EC5FF', 3);
+    const fh = bn ? "'Hind Siliguri',sans-serif" : "'Space Grotesk',sans-serif";
+    const fb = bn ? "'Hind Siliguri',sans-serif" : 'Inter,sans-serif';
+    return {
+      s: { ...S, modeL: eng ? (bn ? 'ইঞ্জিনিয়ার' : 'Engineer') : (bn ? 'ক্যাডেট' : 'Cadet') }, lang: bn ? 'bn' : 'en', fh, fb, fhSvg: bn ? 'Hind Siliguri, sans-serif' : 'Space Grotesk, sans-serif',
+      fmTag: bn ? "'Hind Siliguri',sans-serif" : "'JetBrains Mono',monospace", tagLs: bn ? '0' : '0.08em',
+      eng, cadet: !eng, modeBd: eng ? 'var(--acc)' : 'var(--line2)', modeBg: eng ? 'rgba(255,159,87,0.12)' : 'transparent',
+      v: { day: v.day, phase: S.phase[v.ph], sub: S.sub[st], owlt: v.owlt, pill: S.pill[cruise ? 'cruise' : st] },
+      chipC: TC[tone], owltC: st === 'blackout' ? 'var(--bad)' : 'var(--ink)',
+      speeds, speedOp: locked ? 0.6 : 1, locked,
+      mapOp: st === 'blackout' ? 0.45 : st === 'hazard' ? 0.7 : 1,
+      mapCruise: cruise, mapConj: st === 'queue' || st === 'blackout', mapExt: st === 'extension', cj,
+      craftC: st === 'safe' ? 'var(--ink3)' : 'var(--acc)', pulseSvg,
+      showMapPill: st === 'normal' || st === 'queue' || st === 'extension',
+      isHazard: st === 'hazard', isQueue: st === 'queue', isBlackout: st === 'blackout', isSafe: st === 'safe', isExt: st === 'extension',
+      resp: RS, q: { left: fmt(this.state.qLeft), pct: ((1 - this.state.qLeft / 1258) * 100).toFixed(1) + '%' },
+      qItems: [{ t: S.q1, s: S.q1s }, { t: S.q2, s: S.q2s }, { t: S.q3, s: S.q3s }],
+      showRes: st === 'normal' || st === 'blackout' || st === 'safe', gauges,
+      showActions: st === 'normal' || st === 'blackout', actions,
+      showTl: st === 'normal' || st === 'blackout' || st === 'queue', tl
+    };
+  }
+}
+</script>
+</body>
+</html>

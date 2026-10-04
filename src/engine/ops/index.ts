@@ -351,4 +351,6 @@ export function operationsDebrief(s: OpsState): OpsDebrief {
 }
 
 export { defaultBooking, defaultPowerPlan, prepareOps, primeScienceFraction };
+export { consoleView, dsnOptions, nextEventT, opsAvailable, powerPlanPreview, CONSOLE_RULES } from './console';
+export type * from './console';
 export type * from './types';

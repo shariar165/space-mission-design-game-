@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0;background:#E4E2DC;font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}a{color:#FF9F57}a:hover{color:#FFB880}.dv-turn{padding:40px 44px 32px;border-bottom:1px solid rgba(0,0,0,.08);scroll-margin-top:16px}.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 20px}.dv-tid{font:600 10px ui-monospace,Menlo,monospace;padding:3px 7px;background:#1a1a1a;color:#fff;border-radius:4px;text-decoration:none}.dv-tname{font:600 13px/1.2 system-ui,sans-serif;color:#1a1a1a}.dv-opts{display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start}.dv-opt{flex:none;display:flex;flex-direction:column;gap:9px;scroll-margin-top:16px}.dv-oid{font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:5px;text-decoration:none}.dv-olabel{display:flex;align-items:baseline;gap:8px;font:400 11px/1.3 system-ui,sans-serif;color:rgba(0,0,0,.55)}.dv-card{max-width:100%;background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.06);overflow:hidden}.dv-opt:target .dv-oid{background:#2a78d6;color:#fff}.dv-next{margin:22px 0 0;font:12px/1.5 system-ui,sans-serif;color:rgba(0,0,0,.5)}.dv-grp{margin:44px 0 16px;display:flex;align-items:baseline;gap:12px;font:600 15px/1.2 system-ui,sans-serif;color:#1a1a1a}.dv-grp span{font:400 12px/1.4 system-ui,sans-serif;color:rgba(0,0,0,.55)}</style>
+</helmet>
+<section class="dv-turn" id="t1">
+<div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">Operations Console — the "manage" phase</span></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:8px 32px;max-width:1440px;margin:0 0 8px;font:12.5px/1.5 Inter,system-ui,sans-serif;color:rgba(0,0,0,.62)">
+<div><b style="color:#1a1a1a">Modes.</b> Every desktop frame has a working Cadet / Engineer toggle in its header. Cadet: plain sentences, metaphors, max 3 actions. Engineer: the same panels plus numbers, equations and ⓘ sources.</div>
+<div><b style="color:#1a1a1a">Timeline of the story.</b> Day 214 cruise → storm (hazard) → Day 215 safe mode → Day 307 orbit insertion → Day 418 queue before conjunction → Day 431 blackout → Day 672 extension decision.</div>
+<div><b style="color:#1a1a1a">Physics check.</b> A solar conjunction can't happen during an Earth→Mars cruise (Earth and craft stay on the same side of the Sun), so the blackout is placed in the science orbit, when Earth and Mars are on opposite sides. Positions on the map are worked out from orbits, not placed by eye.</div>
+<div><b style="color:#1a1a1a">Numbers.</b> Placeholders that agree with each other (light delay = distance ÷ c, power ∝ 1/r², Δv from Tsiolkovsky). Real-history boxes are tagged TO VERIFY. Icons are drawn as line icons to match the Build Bay, not emoji.</div>
+<div><b style="color:#1a1a1a">Live bits.</b> Light-delay pulses move along the Earth–craft line. In <a class="dv-oid" href="#1f">1f</a> pick a response and Send: the countdown runs at 30× and then shows the result. Speed buttons work. Drag the handles on the Power dial in <a class="dv-oid" href="#1e">1e</a>.</div>
+</div>
+
+<div class="dv-grp">A · Console <span>Day 214 · cruise · normal state</span></div>
+<div class="dv-opts">
+<div class="dv-opt" id="1a"><div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>Desktop 1440 · Cadet (toggle to Engineer)</div>
+<div class="dv-card" style="width:1440px;border:none"><dc-import name="Ops Console Desktop" state="normal" mode="cadet" hint-size="1440px,960px"></dc-import></div></div>
+<div class="dv-opt" id="1b"><div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>Mobile 390 · EN · Cadet</div>
+<div class="dv-card" style="width:390px;border:none"><dc-import name="Ops Console Mobile" state="normal" lang="en" mode="cadet" hint-size="390px,1500px"></dc-import></div></div>
+<div class="dv-opt" id="1c"><div class="dv-olabel"><a class="dv-oid" href="#1c">1c</a>Mobile 390 · বাংলা · Engineer (longest text)</div>
+<div class="dv-card" style="width:390px;border:none"><dc-import name="Ops Console Mobile" state="normal" lang="bn" mode="engineer" hint-size="390px,1600px"></dc-import></div></div>
+</div>
+
+<div class="dv-grp">B · Close-ups <span>Upcoming timeline with a booking, and the Power dial</span></div>
+<div class="dv-opts">
+<div class="dv-opt" id="1d"><div class="dv-olabel"><a class="dv-oid" href="#1d">1d</a>Upcoming timeline · Day 418 · Cadet (top) vs Engineer (bottom) · booking a call home</div>
+<div class="dv-card" style="width:1280px;border:none">
+<div style="--bg:#0A1430;--panel:#0E1B3B;--panel2:#13244A;--line:rgba(143,186,255,0.14);--line2:rgba(143,186,255,0.28);--ink:#EAF0FA;--ink2:#A9B8D6;--ink3:#8193B8;--bp:#8EC5FF;--acc:#FF9F57;--accInk:#1C1006;--ok:#3CD3C1;--warn:#F2C744;--bad:#FF6B8A;width:1280px;background:var(--bg);color:var(--ink);font-family:Inter,sans-serif;padding:28px;box-sizing:border-box;display:flex;flex-direction:column;gap:20px">
+<sc-for list="{{ tlRows }}" as="row" hint-placeholder-count="2">
+<div style="padding:16px 20px 12px;border-radius:18px;background:var(--panel);border:1px solid var(--line);display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:12px"><span style="height:22px;padding:0 8px;border-radius:6px;display:inline-grid;place-items:center;font:600 10.5px/1 'JetBrains Mono',monospace;letter-spacing:0.08em;color:var(--acc);border:1px solid rgba(255,159,87,0.45)">{{ row.tag }}</span><span style="font:600 16px/1 'Space Grotesk',sans-serif">Upcoming</span><span style="font:500 11px/1 'JetBrains Mono',monospace;color:var(--ink3)">DAY 418 → 478</span></div>
+<div style="position:relative;height:{{ row.h }}">
+<div style="position:absolute;left:0;right:0;bottom:22px;height:1px;background:var(--line2)"></div>
+<sc-for list="{{ row.bands }}" as="b" hint-placeholder-count="2">
+<div style="position:absolute;left:{{ b.left }};width:{{ b.w }};top:0;bottom:22px;border-radius:8px 8px 0 0;background:{{ b.bg }};border-top:2px solid {{ b.c }};padding:5px 10px;box-sizing:border-box;display:flex;align-items:baseline;gap:10px;white-space:nowrap;overflow:hidden">
+<span style="display:flex;align-items:center;gap:6px;font:600 13px/1.1 Inter,sans-serif;color:{{ b.c }};white-space:nowrap">
+<sc-if value="{{ b.isConj }}" hint-placeholder-val="{{ true }}"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.5"></circle><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3 3l1.4 1.4M11.6 11.6L13 13M3 13l1.4-1.4M11.6 4.4L13 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></svg></sc-if>
+<sc-if value="{{ b.isEcl }}" hint-placeholder-val="{{ false }}"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5"></circle><path d="M8 2a6 6 0 0 0 0 12z" fill="currentColor"></path></svg></sc-if>
+{{ b.l }}</span>
+<span style="font:{{ row.subFont }};color:var(--ink2);overflow:hidden;text-overflow:ellipsis">{{ b.s }}</span>
+</div>
+</sc-for>
+<sc-for list="{{ row.ticks }}" as="t" hint-placeholder-count="12"><span style="position:absolute;left:{{ t.left }};bottom:0;transform:translateX(-50%);font:500 11px/1 'JetBrains Mono',monospace;color:var(--ink3)">{{ t.l }}</span></sc-for>
+<sc-for list="{{ row.events }}" as="e" hint-placeholder-count="8">
+<div title="{{ e.l }}" style="position:absolute;left:{{ e.left }};top:{{ e.top }};transform:translateX(-14px);display:flex;gap:7px;align-items:flex-start">
+<div style="display:flex;flex-direction:column;align-items:center"><span style="width:28px;height:28px;box-sizing:border-box;border-radius:50%;display:grid;place-items:center;background:{{ e.bg }};border:{{ e.bd }};color:{{ e.c }};box-shadow:{{ e.sh }}">
+<sc-if value="{{ e.isDsn }}" hint-placeholder-val="{{ true }}"><svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M2 6q6 7 12 0z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path><path d="M8 9.5V14M5 14h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg></sc-if>
+<sc-if value="{{ e.isBurn }}" hint-placeholder-val="{{ false }}"><svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M5.5 1.5h5v5l1.5 3h-8l1.5-3z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path><path d="M6.5 11.5L8 15l1.5-3.5" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path></svg></sc-if>
+<sc-if value="{{ e.isOpen }}" hint-placeholder-val="{{ false }}"><span style="font:500 16px/1 Inter,sans-serif">+</span></sc-if>
+</span><span style="width:1px;height:{{ e.stem }};background:{{ e.stemC }}"></span></div>
+<sc-if value="{{ e.showL }}" hint-placeholder-val="{{ true }}"><div style="display:flex;flex-direction:column;gap:3px;padding-top:1px"><span style="font:600 13px/1.1 Inter,sans-serif;color:{{ e.lc }};white-space:nowrap">{{ e.l }}</span><span style="font:{{ row.subFont }};color:var(--ink3);white-space:nowrap">{{ e.s }}</span></div></sc-if>
+</div>
+</sc-for>
+<div style="position:absolute;left:0;top:0;bottom:16px;width:2px;background:var(--acc)"></div>
+</div>
+</div>
+</sc-for>
+<div style="display:grid;grid-template-columns:minmax(0,1fr) 440px;gap:20px;align-items:start">
+<div style="display:flex;flex-direction:column;gap:10px;font:13.5px/1.55 Inter,sans-serif;color:var(--ink2);padding:6px 4px">
+<div style="font:600 16px/1.2 'Space Grotesk',sans-serif;color:var(--ink)">How the strip reads</div>
+<div>Point events sit on two staggered lanes so labels never collide. Long events (blackout, eclipse season) are bands behind them. The orange line is now; the strip scrolls as days pass.</div>
+<div>Booked calls are solid; a big-dish call is a filled circle. Open slots are dashed circles — tap one to book.</div>
+<div style="color:var(--warn)">Day 423 is the last call before the blackout, so it is labelled differently.</div>
+</div>
+<div style="padding:18px;border-radius:18px;background:var(--panel);border:1px solid var(--bp);box-shadow:0 20px 50px rgba(0,0,0,0.5);display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:baseline;justify-content:space-between"><div style="font:600 17px/1.2 'Space Grotesk',sans-serif">Book a call home</div><div style="font:500 11px/1 'JetBrains Mono',monospace;color:var(--ink3)">DAY 420 · 4 h</div></div>
+<sc-for list="{{ dishes }}" as="ds" hint-placeholder-count="2">
+<button onClick="{{ ds.pick }}" style="text-align:left;padding:12px 14px;border-radius:14px;border:{{ ds.bd }};background:{{ ds.bg }};color:var(--ink);display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;align-items:center;cursor:pointer;font-family:Inter,sans-serif">
+<span style="font:600 15px/1.2 'Space Grotesk',sans-serif">{{ ds.t }}</span>
+<span style="display:inline-flex;align-items:center;gap:5px;font:500 13px/1 'JetBrains Mono',monospace;color:var(--warn)"><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.2" stroke="currentColor" stroke-width="1.5"></circle><circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.5"></circle></svg>{{ ds.cost }}</span>
+<span style="display:flex;align-items:center;gap:8px"><span style="display:flex;gap:2px"><sc-for list="{{ ds.pics }}" as="p" hint-placeholder-count="10"><span style="width:9px;height:11px;border-radius:2px;background:{{ p.bg }}"></span></sc-for></span><span style="font:13px/1 Inter,sans-serif;color:var(--ink2)">{{ ds.photos }}</span></span>
+<span style="font:500 11px/1 'JetBrains Mono',monospace;color:var(--bp);text-align:right">{{ ds.eng }}</span>
+</button>
+</sc-for>
+<button style="height:50px;border-radius:14px;border:none;background:var(--acc);color:var(--accInk);font:600 15px/1 'Space Grotesk',sans-serif;cursor:pointer;box-shadow:0 3px 0 #C4682A">{{ bookLabel }}</button>
+</div>
+</div>
+</div>
+</div></div>
+
+<div class="dv-opt" id="1e"><div class="dv-olabel"><a class="dv-oid" href="#1e">1e</a>Power dial · Day 452, eclipse season · drag the white handles · Cadet and Engineer share one state</div>
+<div class="dv-card" style="width:1000px;border:none">
+<div style="--bg:#0A1430;--panel:#0E1B3B;--panel2:#13244A;--line:rgba(143,186,255,0.14);--line2:rgba(143,186,255,0.28);--ink:#EAF0FA;--ink2:#A9B8D6;--ink3:#8193B8;--bp:#8EC5FF;--acc:#FF9F57;--accInk:#1C1006;--ok:#3CD3C1;--warn:#F2C744;--bad:#FF6B8A;width:1000px;background:var(--bg);color:var(--ink);font-family:Inter,sans-serif;padding:24px;box-sizing:border-box;display:grid;grid-template-columns:1fr 1fr;gap:20px">
+<sc-for list="{{ dials }}" as="dl" hint-placeholder-count="2">
+<div style="padding:20px;border-radius:20px;background:var(--panel);border:1px solid var(--line2);display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:10px"><span style="font:600 19px/1.2 'Space Grotesk',sans-serif">Power plan</span><span style="height:22px;padding:0 8px;border-radius:6px;display:inline-grid;place-items:center;font:600 10.5px/1 'JetBrains Mono',monospace;letter-spacing:0.08em;color:var(--acc);border:1px solid rgba(255,159,87,0.45)">{{ dl.tag }}</span><span style="margin-left:auto;font:500 11px/1 'JetBrains Mono',monospace;color:var(--ink3)">{{ dl.pool }}</span></div>
+<div style="display:grid;grid-template-columns:240px minmax(0,1fr);gap:18px;align-items:center">
+<svg viewBox="0 0 300 300" width="240" height="240" style="touch-action:none;cursor:grab" onPointerDown="{{ dial.down }}" onPointerMove="{{ dial.move }}" onPointerUp="{{ dial.up }}" onPointerLeave="{{ dial.up }}">
+<path d="{{ dial.aSci }}" fill="#FF9F57"></path>
+<path d="{{ dial.aHeat }}" fill="#F2C744" opacity="0.9"></path>
+<path d="{{ dial.aRadio }}" fill="#8EC5FF"></path>
+<circle cx="150" cy="150" r="64" fill="#0E1B3B"></circle>
+<text x="150" y="140" text-anchor="middle" fill="#A9B8D6" font-family="Inter, sans-serif" font-size="13">{{ dl.centerTop }}</text>
+<text x="150" y="168" text-anchor="middle" fill="#EAF0FA" font-family="JetBrains Mono, monospace" font-size="24" font-weight="500">{{ dl.center }}</text>
+<circle cx="{{ dial.h1x }}" cy="{{ dial.h1y }}" r="11" fill="#EAF0FA" stroke="#0A1430" stroke-width="3"></circle>
+<circle cx="{{ dial.h2x }}" cy="{{ dial.h2y }}" r="11" fill="#EAF0FA" stroke="#0A1430" stroke-width="3"></circle>
+<circle cx="150" cy="18" r="5" fill="#0A1430"></circle>
+</svg>
+<div style="display:flex;flex-direction:column;gap:10px">
+<sc-for list="{{ dl.slices }}" as="sl" hint-placeholder-count="3">
+<div style="display:flex;flex-direction:column;gap:5px">
+<div style="display:flex;align-items:center;gap:8px"><span style="width:12px;height:12px;border-radius:3px;background:{{ sl.c }}"></span><span style="font:600 14.5px/1 'Space Grotesk',sans-serif">{{ sl.n }}</span><span style="margin-left:auto;font:500 14px/1 'JetBrains Mono',monospace">{{ sl.v }}</span></div>
+<div style="font:12.5px/1.35 Inter,sans-serif;color:var(--ink2)">{{ sl.d }}</div>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="padding:12px 14px;border-radius:12px;border:1.5px solid {{ dial.tone.bd }};background:{{ dial.tone.bg }};display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:center;gap:8px;font:600 10.5px/1 'JetBrains Mono',monospace;letter-spacing:0.06em;color:{{ dial.tone.c }}"><span style="width:7px;height:7px;border-radius:{{ dial.tone.shape }};background:{{ dial.tone.c }}"></span>{{ dial.tone.l }}</div>
+<div style="font:600 15px/1.4 Inter,sans-serif">{{ dial.msg }}</div>
+<div style="display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;font:12.5px/1 Inter,sans-serif;color:var(--ink2)"><span>Battery at its lowest</span><div style="position:relative;height:10px;border-radius:5px;background:rgba(143,186,255,0.12)"><div style="width:{{ dial.lowPct }};height:100%;border-radius:5px;background:{{ dial.tone.c }}"></div><span style="position:absolute;left:50%;top:-4px;bottom:-4px;width:2px;background:var(--ink)"></span></div><span style="font-family:'JetBrains Mono',monospace;color:var(--ink)">{{ dial.low }}</span></div>
+<sc-if value="{{ dl.isEng }}" hint-placeholder-val="{{ false }}"><div style="padding:9px 11px;border:1px dashed var(--line2);border-radius:9px;font:500 11.5px/1.65 'JetBrains Mono',monospace;color:var(--ink2)"><div style="color:var(--bp)">DoD = (P_base + P_sci + P_heat) · t_ecl / E_batt</div><div>{{ dial.eq }}</div><div>limit 50% · margin {{ dial.margin }} · t_ecl 0.85 h · E 1,800 Wh</div></div></sc-if>
+</div>
+<button onClick="{{ dial.reset }}" style="align-self:flex-start;height:40px;padding:0 14px;border-radius:12px;border:1px solid var(--line2);background:transparent;color:var(--ink2);font:600 13px/1 Inter,sans-serif;cursor:pointer">Reset to usual plan</button>
+</div>
+</sc-for>
+</div>
+</div></div>
+</div>
+
+<div class="dv-grp">C · Hazard alert <span>Solar storm · Day 214 · game auto-pauses</span></div>
+<div class="dv-opts">
+<div class="dv-opt" id="1f"><div class="dv-olabel"><a class="dv-oid" href="#1f">1f</a>Desktop · Cadet · choose a response (interactive: Send → countdown → result)</div>
+<div class="dv-card" style="width:1440px;border:none"><dc-import name="Ops Console Desktop" state="hazard" mode="cadet" hazard-stage="choose" hint-size="1440px,960px"></dc-import></div></div>
+<div class="dv-opt" id="1g"><div class="dv-olabel"><a class="dv-oid" href="#1g">1g</a>Desktop · Engineer · command travelling (light-delay countdown, live)</div>
+<div class="dv-card" style="width:1440px;border:none"><dc-import name="Ops Console Desktop" state="hazard" mode="engineer" hazard-stage="transit" hint-size="1440px,960px"></dc-import></div></div>
+<div class="dv-opt" id="1h"><div class="dv-olabel"><a class="dv-oid" href="#1h">1h</a>Mobile · EN · Cadet</div>
+<div class="dv-card" style="width:390px;border:none"><dc-import name="Ops Console Mobile" state="hazard" lang="en" mode="cadet" hint-size="390px,1500px"></dc-import></div></div>
+<div class="dv-opt" id="1i"><div class="dv-olabel"><a class="dv-oid" href="#1i">1i</a>Mobile · বাংলা · Engineer</div>
+<div class="dv-card" style="width:390px;border:none"><dc-import name="Ops Console Mobile" state="hazard" lang="bn" mode="engineer" hint-size="390px,1600px"></dc-import></div></div>
+</div>
+
+<div class="dv-grp">D · Command queue <span>Day 418 · conjunction in 6 days · countdown is live</span></div>
+<div class="dv-opts">
+<div class="dv-opt" id="1j"><div class="dv-olabel"><a class="dv-oid" href="#1j">1j</a>Desktop · Engineer</div>
+<div class="dv-card" style="width:1440px;border:none"><dc-import name="Ops Console Desktop" state="queue" mode="engineer" hint-size="1440px,960px"></dc-import></div></div>
+<div class="dv-opt" id="1k"><div class="dv-olabel"><a class="dv-oid" href="#1k">1k</a>Mobile · EN · Cadet</div>
+<div class="dv-card" style="width:390px;border:none"><dc-import name="Ops Console Mobile" state="queue" lang="en" mode="cadet" hint-size="390px,1300px"></dc-import></div></div>
+</div>
+
+<div class="dv-grp">E · Blackout and Safe mode</div>
+<div class="dv-opts">
+<div class="dv-opt" id="1l"><div class="dv-olabel"><a class="dv-oid" href="#1l">1l</a>Desktop · Blackout · Day 431 · Cadet</div>
+<div class="dv-card" style="width:1440px;border:none"><dc-import name="Ops Console Desktop" state="blackout" mode="cadet" hint-size="1440px,960px"></dc-import></div></div>
+<div class="dv-opt" id="1m"><div class="dv-olabel"><a class="dv-oid" href="#1m">1m</a>Desktop · Safe mode · Day 215 · Engineer</div>
+<div class="dv-card" style="width:1440px;border:none"><dc-import name="Ops Console Desktop" state="safe" mode="engineer" hint-size="1440px,960px"></dc-import></div></div>
+<div class="dv-opt" id="1n"><div class="dv-olabel"><a class="dv-oid" href="#1n">1n</a>Mobile · Blackout · EN · Cadet</div>
+<div class="dv-card" style="width:390px;border:none"><dc-import name="Ops Console Mobile" state="blackout" lang="en" mode="cadet" hint-size="390px,1500px"></dc-import></div></div>
+<div class="dv-opt" id="1o"><div class="dv-olabel"><a class="dv-oid" href="#1o">1o</a>Mobile · Safe mode · বাংলা · Cadet</div>
+<div class="dv-card" style="width:390px;border:none"><dc-import name="Ops Console Mobile" state="safe" lang="bn" mode="cadet" hint-size="390px,1300px"></dc-import></div></div>
+</div>
+
+<div class="dv-grp">F · Mission extension <span>Day 672 · end of prime mission</span></div>
+<div class="dv-opts">
+<div class="dv-opt" id="1p"><div class="dv-olabel"><a class="dv-oid" href="#1p">1p</a>Desktop · Cadet (toggle to Engineer)</div>
+<div class="dv-card" style="width:1440px;border:none"><dc-import name="Ops Console Desktop" state="extension" mode="cadet" hint-size="1440px,960px"></dc-import></div></div>
+<div class="dv-opt" id="1q"><div class="dv-olabel"><a class="dv-oid" href="#1q">1q</a>Mobile · EN · Cadet</div>
+<div class="dv-card" style="width:390px;border:none"><dc-import name="Ops Console Mobile" state="extension" lang="en" mode="cadet" hint-size="390px,1500px"></dc-import></div></div>
+<div class="dv-opt" id="1r"><div class="dv-olabel"><a class="dv-oid" href="#1r">1r</a>Mobile · বাংলা · Engineer</div>
+<div class="dv-card" style="width:390px;border:none"><dc-import name="Ops Console Mobile" state="extension" lang="bn" mode="engineer" hint-size="390px,1600px"></dc-import></div></div>
+</div>
+
+<p class="dv-next">Open issue: Debrief says "Mission day 412" and "412 GB downlinked". With these ops dates the prime mission ends on Day 672 with about 1.27 TB, so the Debrief numbers should be updated to match.</p>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const C = 150, R = 132, r = 74, GAP = 1.2;
+const pt = (deg, rad) => { const a = (deg - 90) * Math.PI / 180; return [C + rad * Math.cos(a), C + rad * Math.sin(a)]; };
+function arc(p0, p1) {
+  const a0 = p0 * 3.6 + GAP / 2, a1 = p1 * 3.6 - GAP / 2, large = a1 - a0 > 180 ? 1 : 0;
+  const [x0, y0] = pt(a0, R), [x1, y1] = pt(a1, R), [x2, y2] = pt(a1, r), [x3, y3] = pt(a0, r);
+  return `M${x0.toFixed(1)} ${y0.toFixed(1)}A${R} ${R} 0 ${large} 1 ${x1.toFixed(1)} ${y1.toFixed(1)}L${x2.toFixed(1)} ${y2.toFixed(1)}A${r} ${r} 0 ${large} 0 ${x3.toFixed(1)} ${y3.toFixed(1)}Z`;
+}
+const TONES = {
+  ok: { c: 'var(--ok)', bd: 'rgba(60,211,193,0.45)', bg: 'rgba(60,211,193,0.07)', l: 'OK', shape: '50%' },
+  warn: { c: 'var(--warn)', bd: 'var(--warn)', bg: 'rgba(242,199,68,0.08)', l: 'WARNING', shape: '1px' },
+  bad: { c: 'var(--bad)', bd: 'var(--bad)', bg: 'rgba(255,107,138,0.08)', l: 'OVER LIMIT', shape: '1px' }
+};
+
+const D0 = 418, SPAN = 60;
+const pos = (d) => ((d - D0) / SPAN * 100).toFixed(2) + '%';
+const EVENTS = [
+  ['dsn', 419, 'Small dish', 'DSS-34 · 34 m Canberra'], ['open', 420, 'Open slot', 'tap to book'], ['dsn70', 421, 'Big dish', 'DSS-63 · 70 m Madrid'], ['last', 423, 'Last call', 'DSS-26 · 34 m · before SEP < 2°'],
+  ['dsn', 439, 'First call back', 'DSS-35 · 34 m'], ['dsn70', 441, 'Big dish', 'DSS-14 · 70 m Goldstone'], ['burn', 452, 'Orbit trim', 'OTM-7 · Δv 0.6 m/s · 0.9 kg'], ['dsn', 458, 'Small dish', 'DSS-55 · 34 m'], ['dsn70', 466, 'Big dish', 'DSS-43 · 70 m']
+];
+const CADET_SUB = { 419: 'tomorrow', 420: 'in 2 days', 421: 'in 3 days', 423: 'before the blackout', 439: 'Sun moves away', 441: '', 452: 'small nudge', 458: '', 466: '' };
+
+class Component extends DCLogic {
+  state = { s: [62, 22, 16], drag: null, dish: 70 };
+  setFromAngle(e) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width * 300 - C, y = (e.clientY - rect.top) / rect.height * 300 - C;
+    let deg = Math.atan2(y, x) * 180 / Math.PI + 90; if (deg < 0) deg += 360;
+    let p = Math.round(deg / 3.6);
+    const [a, b] = this.state.s, b1 = a, b2 = a + b;
+    let drag = this.state.drag;
+    if (drag == null) drag = Math.abs(p - b1) <= Math.abs(p - b2) ? 1 : 2;
+    let n1 = b1, n2 = b2;
+    if (drag === 1) n1 = Math.min(Math.max(p, 5), b2 - 5); else n2 = Math.min(Math.max(p, b1 + 5), 95);
+    this.setState({ drag, s: [n1, n2 - n1, 100 - n2] });
+  }
+  renderVals() {
+    const [sci, heat, radio] = this.state.s;
+    const W = (p) => Math.round(p * 8);
+    const ws = W(sci), wh = W(heat), wr = W(radio);
+    const dod = (300 + ws + wh) * 0.85 / 1800, low = 1 - dod, margin = (0.5 - dod) / 0.5;
+    const toneK = margin < 0 ? 'bad' : margin < 0.1 ? 'warn' : (heat < 20 || radio < 15) ? 'warn' : 'ok';
+    let msg = 'A balanced day. Batteries stay healthy through every eclipse.';
+    if (margin < 0) msg = 'Too much! The batteries would run flat in Mars\u2019 shadow.';
+    else if (sci >= 55 && margin < 0.1) msg = 'More science today, but the batteries run low in eclipse.';
+    else if (heat < 20) msg = 'Heaters are low — the fuel lines may get too cold.';
+    else if (radio < 15) msg = 'Radio is weak — fewer photos make it home.';
+    else if (sci >= 55) msg = 'More science today, and the batteries can still cope.';
+    const photos = Math.round(50 * sci / 45), homeRel = (radio / 25 * 100).toFixed(0);
+    const [h1x, h1y] = pt(sci * 3.6, (R + r) / 2), [h2x, h2y] = pt((sci + heat) * 3.6, (R + r) / 2);
+    const dial = {
+      aSci: arc(0, sci), aHeat: arc(sci, sci + heat), aRadio: arc(sci + heat, 100),
+      h1x: h1x.toFixed(1), h1y: h1y.toFixed(1), h2x: h2x.toFixed(1), h2y: h2y.toFixed(1),
+      tone: TONES[toneK], msg, low: Math.round(low * 100) + '%', lowPct: (low * 100).toFixed(1) + '%',
+      eq: `= (300 + ${ws} + ${wh}) × 0.85 / 1,800 = ${(dod * 100).toFixed(1)}%`, margin: (margin * 100).toFixed(1) + '%',
+      down: (e) => { e.currentTarget.setPointerCapture?.(e.pointerId); this.setFromAngle(e); },
+      move: (e) => { if (this.state.drag != null) this.setFromAngle(e); },
+      up: () => { if (this.state.drag != null) this.setState({ drag: null }); },
+      reset: () => this.setState({ s: [45, 30, 25] })
+    };
+    const dials = [
+      { tag: 'CADET', isEng: false, pool: 'TODAY\u2019S SHARE', centerTop: 'Science', center: sci + '%',
+        slices: [
+          { c: '#FF9F57', n: 'Science', v: sci + '%', d: `About ${photos} photos today` },
+          { c: '#F2C744', n: 'Heaters', v: heat + '%', d: heat < 20 ? 'Fuel lines getting chilly' : 'Keeps fuel and parts warm' },
+          { c: '#8EC5FF', n: 'Radio', v: radio + '%', d: `Sends ${homeRel}% of the usual photos home` }
+        ] },
+      { tag: 'ENGINEER', isEng: true, pool: 'POOL 800 W · BASE 300 W · ARRAY 1,227 W', centerTop: 'P_sci', center: ws + ' W',
+        slices: [
+          { c: '#FF9F57', n: 'Science', v: ws + ' W', d: `${(0.5 * sci / 45).toFixed(2)} GB/day · instruments + recorder` },
+          { c: '#F2C744', n: 'Heaters', v: wh + ' W', d: `prop lines ${heat < 20 ? '−4' : '+12'} °C vs. 0 °C limit` },
+          { c: '#8EC5FF', n: 'Radio', v: wr + ' W', d: `R ∝ P_rf → ${(radio / 25).toFixed(2)} × nominal downlink` }
+        ] }
+    ];
+    const mkRow = (eng) => {
+      const ribPx = 1184, ends = [-1e9, -1e9, -1e9], tops = [26, 62, 98];
+      const events = EVENTS.map(([k, d, l, e]) => {
+        const lab = k === 'open' ? 'Open slot · booking' : l, sub = eng ? e : (CADET_SUB[d] || '');
+        const x = (d - D0) / SPAN * ribPx - 14;
+        const w = 36 + Math.max(lab.length * 7.2, sub.length * (eng ? 6.4 : 6.2));
+        let ln = ends.findIndex(end => end + 10 <= x), showL = true;
+        if (ln < 0) { showL = false; ln = ends.indexOf(Math.min(...ends)); }
+        ends[ln] = x + (showL ? w : 30);
+        const top = tops[ln];
+        const open = k === 'open', burn = k === 'burn', big = k === 'dsn70', last = k === 'last', booked = open && this.state.dish;
+        return { left: pos(d), top: top + 'px', stem: (164 - 22 - top - 28) + 'px', l: open ? 'Open slot · booking' : l, s: eng ? e : CADET_SUB[d], showL,
+          isDsn: !open && !burn, isBurn: burn, isOpen: open,
+          bg: open ? 'rgba(255,159,87,0.12)' : burn ? 'rgba(255,159,87,0.16)' : big ? 'var(--bp)' : last ? 'rgba(242,199,68,0.16)' : 'rgba(142,197,255,0.16)',
+          bd: open ? '1.5px dashed var(--acc)' : 'none', c: open ? 'var(--acc)' : burn ? 'var(--acc)' : big ? 'var(--bg)' : last ? 'var(--warn)' : 'var(--bp)',
+          sh: open ? '0 0 0 5px rgba(255,159,87,0.15)' : 'none', lc: last ? 'var(--warn)' : open ? 'var(--acc)' : 'var(--ink)',
+          stemC: burn || open ? 'rgba(255,159,87,0.5)' : 'rgba(142,197,255,0.4)' };
+      });
+      const ticks = []; for (let d = 420; d <= 475; d += 5) ticks.push({ left: pos(d), l: 'Day ' + d });
+      const bands = [
+        { isConj: true, isEcl: false, left: pos(424), w: ((438 - 424) / SPAN * 100).toFixed(2) + '%', l: 'Solar conjunction', s: eng ? 'SEP < 2° · Day 424–438 · no uplink/downlink' : 'No radio for 14 days', c: 'var(--warn)', bg: 'repeating-linear-gradient(135deg,rgba(242,199,68,0.22) 0 6px,rgba(242,199,68,0.06) 6px 12px)' },
+        { isConj: false, isEcl: true, left: pos(446), w: ((478 - 446) / SPAN * 100).toFixed(2) + '%', l: 'Eclipse season', s: eng ? 'β < 37° · shadow ≤ 51 min / 4.5 h orbit' : 'Mars\u2019 shadow every orbit', c: 'var(--bp)', bg: 'rgba(142,197,255,0.10)' }
+      ];
+      return { tag: eng ? 'ENGINEER' : 'CADET', h: '164px', subFont: eng ? "500 10.5px/1.2 'JetBrains Mono',monospace" : '12px/1.2 Inter,sans-serif', events, ticks, bands };
+    };
+    const pics = (n) => Array.from({ length: 10 }, (_, i) => ({ bg: i < n ? 'var(--bp)' : 'rgba(143,186,255,0.15)' }));
+    const dishes = [
+      { id: 34, t: 'Small dish · 34 m', cost: '40', photos: 'about 36 photos home', eng: '200 kbps · 0.36 GB', n: 2 },
+      { id: 70, t: 'Big dish · 70 m', cost: '160', photos: 'about 153 photos home', eng: '848 kbps · 1.53 GB', n: 9 }
+    ].map(x => { const on = this.state.dish === x.id; return { ...x, pics: pics(x.n), bd: on ? '1.5px solid var(--acc)' : '1px solid var(--line2)', bg: on ? 'rgba(255,159,87,0.09)' : 'var(--panel2)', pick: () => this.setState({ dish: x.id }) }; });
+    return {
+      dial, dials, tlRows: [mkRow(false), mkRow(true)], dishes,
+      bookLabel: this.state.dish === 70 ? 'Book big dish · 160 coins' : 'Book small dish · 40 coins'
+    };
+  }
+}
+</script>
+</body>
+</html>
