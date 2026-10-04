@@ -1,8 +1,8 @@
-# Mission Drafting Table — Science Spec v0.4
+# Mission Drafting Table — Science Spec v0.5
 
 Oct 3, 2026 · @Shariar
 
-v0.2 (Oct 3, 2026) added the decisions taken while building the engine. v0.3 (Oct 3, 2026) adds the UI rules. v0.4 (Oct 4, 2026) adds Mission operations (engine only). All decisions are applied in the sections below and listed in the **Decision log** at the end.
+v0.2 (Oct 3, 2026) added the decisions taken while building the engine. v0.3 (Oct 3, 2026) adds the UI rules. v0.4 (Oct 4, 2026) adds Mission operations (engine only). v0.5 (Oct 4, 2026) makes the Risk and Power meters come from the Mission operations model (Monte Carlo; worst day with eclipses), sizes batteries by depth of discharge, adds the Moon rideshare and copies the fact-sheet values. All decisions are applied in the sections below and listed in the **Decision log** at the end.
 
 ## Purpose and model philosophy
 
@@ -740,3 +740,9 @@ The UI (`src/ui/`, React + Vite) follows the Claude Design mockups for Build Bay
 | 31 | Oct 4, 2026 | **Mars Ls** is computed from the NASA fact-sheet pole and the ephemeris. It is checked against Mars24's perihelion Ls = 251° and drives the dust-storm season. |
 | 32 | Oct 4, 2026 | **DSN fees** use the published aperture-fee formula (R_B = $1,057/h FY09, A_W 1 for 34 m and 4 for 70 m, 1 h set-up per pass). The default daily pass is inside the operations cost; only extras are charged. |
 | 33 | Oct 4, 2026 | **Space weather rate** from NOAA's S3 + S4 counts (13 per 11-year cycle), shaped by the published cycle 24 and 25 minima and maxima. Mars global dust storms average one per 3 Mars years (NASA). |
+| 34 | Oct 4, 2026 | **Risk meter = the Mission operations Monte Carlo** (500 runs, seed 2013, safest responses, prime mission only), shown with its run count, seed and standard error and flown in a Web Worker. No separate formula: `phaseRisks` stay only as the single-card flight's own model. Hazard rates are not tuned to match: MAVEN 4.0% ± 0.9 (Ops) vs 12.1% (old phase formula), as an info row. |
+| 35 | Oct 4, 2026 | **Power meter = the worst day of the prime mission**, eclipses included, from the same day-by-day profile Mission operations reads (`powerProfile.ts`). The arrival-day sunlit figure stays as `details.power.available_W` for the real-mission comparison. The Cadet battery gauge warns when the worst day is in an eclipse season. |
+| 36 | Oct 4, 2026 | **Battery sized by depth of discharge:** E_batt = t_ecl,max · P_load / DoD_max, at the heaviest science-day load, DoD_max = 30%. This is a game estimate from JPL D-101146 (Li-ion: more than 30,000 cycles at 30% DoD). Without this reserve the battery term would cap every eclipse day at about 0% margin. |
+| 37 | Oct 4, 2026 | **Stars and the Ops debrief score power on the worst day** (the Power meter), not on the last science day, so the band is judged on the margin the player sizes and sees. |
+| 38 | Oct 4, 2026 | **Moon rideshare:** LCROSS's secondary slot on LRO's Atlas V 401 (June 18, 2009). 1000 kg fuelled (NTRS 20100028203); LRO 1,850 kg (NASA Science). The limit is min(slot, m_LV(C3) − m_primary), and the price is a mass-proportional share (game rule). The user first chose "capacity − LRO", then switched to the sourced slot once the measured margins showed it alone puts Moon crafts in the band (16–41% vs 71–80%). No smaller rocket is invented. |
+| 39 | Oct 4, 2026 | **Fact sheets:** Venus, Jupiter and Moon values are copied from Internet Archive copies (Sept. 28 – Oct. 3, 2026) of the NSSDC fact sheets, because the live site refused connections; each source says so. The Moon pole stays flagged (not on the Moon fact sheet). |

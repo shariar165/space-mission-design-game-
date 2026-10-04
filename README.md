@@ -92,6 +92,8 @@ All modules in the spec's build order are built.
   - cruise positions for the Sun–Earth–probe angle lie in the ecliptic plane;
   - the Moon has no conjunctions (there is no lunar ephemeris);
   - DSN fees are FY09 dollars against FY2019 caps.
-  - The Ops model counts eclipses in available power and the Power meter does not, so in a long eclipse season fault protection may shed instrument power on a design the meter calls fine (MAVEN: about 90 days at aphelion).
+  - The Power meter and Ops read the same day-by-day power (eclipses included), so a design the meter calls fine has enough power on every planned day. Ops can still shed loads after hazards or a player's power plan.
   - Most hazard rates, response costs and failure chances are game estimates (`TODO_DATA.md`).
-- At the Moon the Atlas V 401 can lift about 4,600 kg, so a Cadet craft's mass margin stays above the 30% band and the third star is out of reach. A smaller launcher with a sourced payload curve would fix this.
+- At the Moon a whole Atlas V 401 lifts about 4,600 kg (placeholder curve), so a Cadet craft's mass margin is 82–87%. The sourced LRO/LCROSS rideshare (1000 kg secondary slot) brings it to 16–41%, so the third star is reachable on a shared ride (radar kit, safe fuel). Moon-1 and Moon-2 do not open both the science and the rocket step, so their third star stays out of reach.
+- The Risk meter is a 500-run seeded Monte Carlo of Mission operations. Its standard error (about ±1 point for MAVEN) is shown. The Cadet Flight and the Engineer crisis card still fly the single-card phase-risk model.
+- Batteries are sized for the analytic worst-case eclipse within a 30% depth of discharge (game estimate). The default Jupiter orbit's 34-hour worst-case eclipse needs a very heavy battery, even though the inertially fixed orbit never actually enters an eclipse season.
