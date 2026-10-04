@@ -5,8 +5,8 @@
 import type { MeterKey } from './compare';
 import { REFERENCE_LINK } from './comms';
 import { timeline } from './crisis';
-import { DESTINATIONS, LAUNCH_VEHICLES, lookup, PARTS } from './data';
-import { withArrayArea, withDish, withLauncher, withPowerType, withPropellant, withRtgCount } from './designEdits';
+import { DESTINATIONS, LAUNCH_VEHICLES, lookup, PARTS, RIDESHARES } from './data';
+import { withArrayArea, withDish, withLauncher, withPowerType, withPropellant, withRideshare, withRtgCount } from './designEdits';
 import { evaluateDesign, MONTE_CARLO_SEED, monteCarloMission, type FullEvaluation } from './index';
 import { engineBlockers, propellantForDeltaV } from './propulsion';
 import type { Phase } from './risk';
@@ -132,7 +132,8 @@ export function stepOptionIds(destination: DestinationId, step: CadetStep): stri
     case 'fuel':
       return FUEL_OPTIONS;
     case 'rocket':
-      return Object.keys(LAUNCH_VEHICLES);
+      // Every rocket, plus any real shared launch to this destination (the Moon: LRO's 2009 ride).
+      return [...Object.keys(LAUNCH_VEHICLES), ...Object.keys(RIDESHARES).filter((id) => RIDESHARES[id]!.destination === destination)];
   }
 }
 
@@ -150,7 +151,7 @@ export function defaultChoices(base: Design): CadetChoices {
     power: base.power.type === 'rtg' ? 'rtg' : 'solar-balanced',
     radio: nearestDish[0],
     fuel: 'balanced',
-    rocket: base.launchVehicleId,
+    rocket: base.rideshareId ?? base.launchVehicleId,
   };
 }
 
@@ -167,6 +168,7 @@ export function buildCadetDesign(base: Design, choices: CadetChoices): Design {
   if (choices.power === 'rtg') d = sizeKnob(d, 'rtgCount', CADET_TIERS.balanced.value);
   else d = sizeKnob(d, 'arrayArea', CADET_TIERS[choices.power === 'solar-lean' ? 'lean' : 'balanced'].value);
   if (LAUNCH_VEHICLES[choices.rocket]) d = withLauncher(d, choices.rocket);
+  else if (RIDESHARES[choices.rocket]) d = withRideshare(d, choices.rocket, RIDESHARES[choices.rocket]!.vehicleId);
   const tier = CADET_TIERS[choices.fuel as Tier] ?? CADET_TIERS.balanced;
   return sizeKnob(d, 'propellant', tier.value);
 }
@@ -189,6 +191,10 @@ export interface CadetChips {
   photosSent?: number;
   spareFuel_kg?: number;
   lift_kg?: number;
+  /** Launch price ($M): the whole rocket, or the secondary's share on a shared ride. Paid outside the cost cap. */
+  launchPrice_M?: number;
+  /** A shared ride: lift_kg is the secondary slot. */
+  shared?: boolean;
   flights?: number;
   successes?: number;
 }
@@ -230,7 +236,14 @@ function chipsFor(step: CadetStep, design: Design, ev: FullEvaluation): CadetChi
       };
     case 'rocket': {
       const lv = lookup(LAUNCH_VEHICLES, design.launchVehicleId, 'launch vehicle');
-      return { mass_kg: d.wetMass_kg, lift_kg: d.launchCapacity_kg, flights: lv.flights.value, successes: lv.successes.value };
+      return {
+        mass_kg: d.wetMass_kg,
+        lift_kg: d.launchCapacity_kg,
+        flights: lv.flights.value,
+        successes: lv.successes.value,
+        launchPrice_M: d.cost.launch_M,
+        ...(design.rideshareId ? { shared: true } : {}),
+      };
     }
   }
 }

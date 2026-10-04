@@ -55,6 +55,7 @@
 .tier-lean { color: #fde68a; background: rgba(251, 191, 36, 0.14); }
 .tier-balanced { color: #99f6e4; background: rgba(45, 212, 191, 0.14); }
 .tier-roomy { color: #c4b5fd; background: rgba(167, 139, 250, 0.16); }
+.tier-shared { color: #a5f3fc; background: rgba(60, 211, 193, 0.16); }
 .chips-row { display: flex; flex-wrap: wrap; gap: 8px; }
 .cchip { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 10px; background: rgba(5, 10, 30, 0.5); border: 1px solid rgba(255, 255, 255, 0.1); font: 600 15px/1 var(--mono); color: var(--ink); white-space: nowrap; }
 .cchip.red { color: var(--bad); background: rgba(255, 107, 138, 0.12); border-color: rgba(255, 107, 138, 0.45); font-family: var(--body); }

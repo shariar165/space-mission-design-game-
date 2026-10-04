@@ -391,8 +391,23 @@
   },
   "lro": {
     "label": "LRO (2009)",
-    "history": "To verify: open the NASA LRO mission page and fill wet mass, dry mass, power and data rate.",
+    "history": "Launched June 18, 2009 on Atlas V 401 AV-020 from Cape Canaveral SLC-41, sharing the rocket with LCROSS, its secondary payload (the game's Moon rideshare, rideshares.json). Still to verify: dry mass, power and data rate.",
+    "historyUrl": "https://science.nasa.gov/mission/lro/about/",
     "toVerify": true,
+    "launchDate": {
+      "value": "2009-06-18",
+      "unit": "date (UTC)",
+      "source": "NASA Science: LRO mission details (June 18, 2009 / 21:32:00 UT, Cape Canaveral SLC-41, Atlas V 401 AV-020)",
+      "url": "https://science.nasa.gov/mission/lro/about/",
+      "isGameEstimate": false
+    },
+    "sharedLaunchWith": {
+      "value": "LCROSS (secondary payload)",
+      "unit": "",
+      "source": "NASA Science: LCROSS (launched with LRO as a co-manifested payload); NTRS 20100028203 (secondary payload, 1000 kg fuelled)",
+      "url": "https://science.nasa.gov/mission/lcross/",
+      "isGameEstimate": false
+    },
     "launchVehicleId": {
       "value": "atlas-v-401",
       "unit": "",
@@ -400,10 +415,11 @@
       "isGameEstimate": false
     },
     "wetMass_kg": {
-      "value": null,
+      "value": 1850,
       "unit": "kg",
-      "source": "To verify: NASA LRO mission page",
-      "isGameEstimate": true
+      "source": "NASA Science: LRO mission details (spacecraft mass 4,000 pounds, 1,850 kilograms). NSSDC lists about 1,846 kg",
+      "url": "https://science.nasa.gov/mission/lro/about/",
+      "isGameEstimate": false
     },
     "dryMass_kg": {
       "value": null,

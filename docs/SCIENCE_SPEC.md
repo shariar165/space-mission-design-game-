@@ -172,6 +172,13 @@ p_{success} = \frac{successes + 1}{flights + 2}
 
 Still to collect: launch price per vehicle, from NASA Announcement of Opportunity documents rather than news articles.
 
+**Rideshare (v0.5).** A craft can fly as the secondary payload of a real shared launch (`rideshares.json`). No smaller rocket is invented: the ride is the real rocket, with a real primary payload on board.
+- **Moon: LRO, 2009.** LCROSS flew as the secondary payload on LRO's Atlas V 401 (AV-020), launched June 18, 2009 ([NASA Science: LCROSS](https://science.nasa.gov/mission/lcross/)). NASA's call for that secondary mission said it "could weigh no more than 1000 kg (fuelled)" ([D. Andrews, LCROSS project manager, NTRS 20100028203](https://ntrs.nasa.gov/citations/20100028203)). LRO's mass is 1,850 kg ([NASA Science: LRO](https://science.nasa.gov/mission/lro/about/)).
+- **Mass limit:** m_max = min(secondary slot, m_LV(C3) − m_primary). The mass margin is measured against the slot.
+- **Price (game rule, labelled):** the secondary pays a mass-proportional share of the rocket, price × m_wet / (m_wet + m_primary). Launch is paid outside the cost cap, as before, so a shared ride lowers the total mission cost, not the development cost.
+- The ride only goes where its primary went. On any other destination it is a blocker.
+- **Why it matters:** a small Moon craft on a whole Atlas V uses under 20% of its lift, so its mass margin (82–87%) can never be in the 10–30% band, and the Moon's third star was out of reach. In the 1000 kg slot the Cadet crafts sit at 16–41%, and four of the nine science × fuel cards are in the band (validation info row).
+
 ## Power
 
 Solar power falls with the square of distance from the Sun. With one calibrated efficiency number, this single equation reproduces MAVEN's published power range to within 2%.
@@ -476,7 +483,7 @@ The prime mission is scored with the Scoring section's weights and band rules:
 - **mission success:** phases completed;
 - **budget:** development plus any operations overspend;
 - **Δv margin:** after response burns;
-- **power margin:** on the last prime day, eclipse included;
+- **power margin:** the worst day of the prime mission, eclipse included (the Power meter, v0.5);
 - **mass margin:** as at launch;
 - **crisis handling:** the mean `crisisScore` over the hazards answered (100 when none came).
 
@@ -544,7 +551,7 @@ Score = \sum_i w_i \, s_i, \qquad s_i \in [0, 100], \quad \sum_i w_i = 1 \qquad 
 2. Science return ≥ 70%.
 3. Every margin inside its band at the end of the mission.
 
-Stars are earned in order. The end-of-mission Δv margin includes crisis spending, and the power margin is computed at the end of the science phase.
+Stars are earned in order. The end-of-mission Δv margin includes crisis spending. The power margin is the Power meter's: the worst day of the prime mission, eclipses included (v0.5; before, it was the last science day). This is the margin the player sizes and sees, so the band is judged on the same number. Mission operations scores it the same way.
 
 The Debrief's "For the next star" hint is computed by the engine (for example, extra propellant from the rocket equation, checked against unused launch capacity).
 

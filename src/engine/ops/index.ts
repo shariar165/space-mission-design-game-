@@ -268,12 +268,10 @@ export function operationsDebrief(s: OpsState): OpsDebrief {
   const primeDone = phasesCompleted === tl.length;
   const downlinked_Gbit = s.downlinkedPrime_bits / 1e9;
 
-  // End-of-prime margins: Δv after response burns; power on the last prime day (eclipse included); mass at launch.
+  // End-of-prime margins: Δv after response burns; power on the worst day of the prime mission, eclipses included
+  // (the Power meter, which reads these same days); mass at launch.
   const dvMargin = (d.deltaVCapability_ms - s.dvResponses_ms - d.deltaVRequired_ms) / d.deltaVRequired_ms;
-  const eEnd = env.days[env.primeEndDay]!;
-  const need = demand(env, eEnd, defaultPowerPlan(env), { scienceOn: true });
-  const required_W = need.bus + need.heaters + need.instruments + need.radio;
-  const endMargins = { deltaV: dvMargin, power: (eEnd.available_W - required_W) / required_W, mass: ev.meters.mass.margin };
+  const endMargins = { deltaV: dvMargin, power: ev.meters.power.margin, mass: ev.meters.mass.margin };
 
   // Prime mission only: hazards that struck after the prime mission belong to the extension's report.
   const answered = s.hazards.filter((h) => h.choice && h.offered && HAZARDS[h.type]!.options.length > 0 && h.onset < env.primeEndDay + 1);
@@ -304,7 +302,7 @@ export function operationsDebrief(s: OpsState): OpsDebrief {
     margins: endMargins,
     deltaV: { required_ms: d.deltaVRequired_ms, capability_ms: d.deltaVCapability_ms, isp_s: d.isp_s, dry_kg: d.dryMass_kg, propellant_kg: d.propellant_kg, asFlown: d.asFlown },
     launch: { capacity_kg: d.launchCapacity_kg, wet_kg: d.wetMass_kg },
-    power: { available_W: eEnd.available_W, required_W, type: env.design.power.type, arrayArea_m2: env.design.power.arrayArea_m2 },
+    power: { available_W: d.power.worstDay.available_W, required_W: d.power.worstDay.required_W, type: env.design.power.type, arrayArea_m2: env.design.power.arrayArea_m2 },
   });
 
   let extension: ExtensionReport;

@@ -64,6 +64,8 @@ export const OPTION_TAG: Record<string, string> = {
   lean: 'Lean',
   balanced: 'Balanced',
   roomy: 'Roomy',
+  // a real shared launch (rideshares.json)
+  'lro-lcross-2009': 'Shared',
 };
 
 export const GAUGE_LABEL: Record<GaugeKey, string> = {

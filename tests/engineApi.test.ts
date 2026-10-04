@@ -12,7 +12,8 @@ import { bestLaunchWindow, lambertTransfer } from '../src/engine/trajectory';
 import type { Design } from '../src/engine/types';
 import * as cadet from '../src/engine/cadet';
 import { COST_CAPS } from '../src/engine/massCost';
-import { LAUNCH_VEHICLES as LVS } from '../src/engine/data';
+import { LAUNCH_VEHICLES as LVS, RIDESHARES } from '../src/engine/data';
+import { withLauncher } from '../src/engine/designEdits';
 import { starterDesign } from '../src/ui/starters';
 import { inspectClue, rescueCase, rescueConsequence, rescueStars } from '../src/engine/rescue';
 import { mergeTallies, opsRiskEstimate, riskBatch, riskEnvironment, riskEstimateFromTally, RISK_RUNS, RISK_SEED, runSeed } from '../src/engine/ops/riskEstimate';
@@ -1017,4 +1018,63 @@ describe('Risk meter from the Mission operations Monte Carlo', () => {
     expect(e.meter.status).toBe('over');
     expect(e.complete).toBe(true);
   }, 60_000);
+});
+
+// ---------------------------------------------------------------------------
+// Rideshare: the Moon's shared launch with LRO (rideshares.json), the LCROSS precedent.
+
+describe('Rideshare (Moon: LRO 2009, the LCROSS secondary slot)', () => {
+  const moon = cadetBase('moon');
+  const ride = RIDESHARES['lro-lcross-2009']!;
+
+  it('is sourced: the NASA-allotted 1000 kg fuelled secondary slot and LRO’s 1,850 kg', () => {
+    expect(ride.secondarySlot_kg.value).toBe(1000);
+    expect(ride.secondarySlot_kg.isGameEstimate).toBe(false);
+    expect(ride.primaryMass_kg.value).toBe(1850);
+    expect(ride.vehicleId).toBe('atlas-v-401');
+  });
+
+  it('the Moon rocket step offers the shared ride; Mars does not', () => {
+    expect(cadet.stepOptionIds('moon', 'rocket')).toContain('lro-lcross-2009');
+    expect(cadet.stepOptionIds('mars', 'rocket')).not.toContain('lro-lcross-2009');
+  });
+
+  it('a shared ride: the slot is the mass limit, the price is the mass share, and the rocket is the shared one', () => {
+    const choices = { ...cadet.defaultChoices(moon), rocket: 'lro-lcross-2009' };
+    const d = cadet.buildCadetDesign(moon, choices);
+    expect(d.rideshareId).toBe('lro-lcross-2009');
+    expect(d.launchVehicleId).toBe('atlas-v-401');
+    const e = evaluateDesign(d);
+    const wet = e.details.wetMass_kg;
+    expect(e.meters.mass.limit).toBe(1000);
+    expect(e.meters.mass.margin).toBeCloseTo((1000 - wet) / 1000, 12);
+    expect(e.details.cost.launch_M).toBeCloseTo((LVS['atlas-v-401']!.price_M.value * wet) / (wet + 1850), 9);
+    expect(e.meters.mass.inputs.secondarySlot).toBe(ride.secondarySlot_kg);
+    const card = cadet.cadetOptions(moon, choices, 'rocket').find((o) => o.id === 'lro-lcross-2009')!;
+    expect(card.chosen).toBe(true);
+    expect(card.chips.lift_kg).toBe(1000);
+    expect(card.chips.shared).toBe(true);
+    expect(card.chips.launchPrice_M).toBeCloseTo(e.details.cost.launch_M, 9);
+  });
+
+  it('choosing a whole rocket again leaves the shared ride', () => {
+    const d = cadet.buildCadetDesign(moon, { ...cadet.defaultChoices(moon), rocket: 'lro-lcross-2009' });
+    expect(withLauncher(d, 'atlas-v-411').rideshareId).toBeUndefined();
+  });
+
+  it('the Moon’s third star: reachable on the shared ride (radar kit, safe fuel), not on a whole Atlas V', () => {
+    const choices = { ...cadet.defaultChoices(moon), science: 'radar', fuel: 'balanced', rocket: 'lro-lcross-2009' };
+    const shared = cadet.buildCadetDesign(moon, choices);
+    const whole = cadet.buildCadetDesign(moon, { ...choices, rocket: 'atlas-v-401' });
+    const noLuck = { seed: 1, rng: () => 0.999999 };
+    expect(simulateMission(shared, noLuck).stars).toBe(3);
+    // on its own rocket the same craft uses a small share of the lift: the mass margin is far above the 30% band
+    expect(evaluateDesign(whole).meters.mass.margin).toBeGreaterThan(0.3);
+    expect(simulateMission(whole, noLuck).stars).toBe(2);
+  });
+
+  it('the ride goes to the Moon only: on a Mars design it is a blocker', () => {
+    const mars = { ...cadetBase('mars'), rideshareId: 'lro-lcross-2009' };
+    expect(evaluateDesign(mars).blockers.some((b) => b.includes('goes to the Moon'))).toBe(true);
+  });
 });

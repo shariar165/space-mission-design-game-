@@ -6,7 +6,12 @@ const clampMin = (x: number, min: number) => (Number.isFinite(x) ? Math.max(min,
 
 export const withBus = (d: Design, busId: string): Design => ({ ...d, busId });
 export const withEngine = (d: Design, engineId: string): Design => ({ ...d, engineId });
-export const withLauncher = (d: Design, launchVehicleId: string): Design => ({ ...d, launchVehicleId });
+export const withLauncher = (d: Design, launchVehicleId: string): Design => {
+  const { rideshareId: _ride, ...rest } = d;
+  return { ...rest, launchVehicleId };
+};
+/** Ride as the secondary payload of a shared launch: the rocket is the shared one. */
+export const withRideshare = (d: Design, rideshareId: string, vehicleId: string): Design => ({ ...d, rideshareId, launchVehicleId: vehicleId });
 export const addInstrument = (d: Design, id: string): Design =>
   d.instrumentIds.includes(id) ? d : { ...d, instrumentIds: [...d.instrumentIds, id] };
 export const removeInstrument = (d: Design, id: string): Design => ({ ...d, instrumentIds: d.instrumentIds.filter((x) => x !== id) });

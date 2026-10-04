@@ -19,6 +19,8 @@ import { bodyConjunctions, perihelionJd, solarLongitude } from '../src/engine/op
 import { prepareOps } from '../src/engine/ops/timeline';
 import { opsRiskEstimate } from '../src/engine/ops/riskEstimate';
 import { riskMeter } from '../src/engine/risk';
+import { buildCadetDesign, defaultChoices, stepOptionIds } from '../src/engine/cadet';
+import { starterDesign } from '../src/ui/starters';
 
 const TOLERANCE = 0.1;
 
@@ -304,6 +306,23 @@ describe('Mission operations — Mars conjunctions, Ls, loss rate', () => {
       `${(100 * e.meter.used).toFixed(1)}% ± ${(100 * e.stdErr).toFixed(1)}`, `${(100 * formula).toFixed(1)}% (phase formula)`, 'hazard rates and response failure chances');
     expect(e.tally.lost).toBeLessThan(e.tally.runs);
   }, 120_000);
+});
+
+describe('Moon rideshare (LRO 2009, the LCROSS secondary slot)', () => {
+  it('info: Moon Cadet crafts in the 1000 kg secondary slot vs a whole Atlas V 401', () => {
+    const base = starterDesign('moon', '2026-10-04');
+    const margins = (rocket: string) =>
+      stepOptionIds('moon', 'science').flatMap((science) =>
+        ['lean', 'balanced', 'roomy'].map((fuel) => evaluateDesign(buildCadetDesign(base, { ...defaultChoices(base), science, fuel, rocket })).meters.mass.margin),
+      );
+    const fmt = (m: number[]) => `${(100 * Math.min(...m)).toFixed(0)}–${(100 * Math.max(...m)).toFixed(0)}%`;
+    const inBand = (m: number[]) => m.filter((x) => x >= 0.1 && x <= 0.3).length;
+    const ride = margins('lro-lcross-2009');
+    const whole = margins('atlas-v-401');
+    info('Moon (Cadet)', `Mass margin of the 9 science × fuel cards: shared ride (1000 kg slot, NTRS 20100028203) vs whole Atlas V 401`,
+      `${fmt(ride)} (${inBand(ride)} of 9 in the 10–30% band)`, `${fmt(whole)} (${inBand(whole)} of 9 in band)`, 'Atlas V curve (placeholder), part masses');
+    expect(inBand(ride)).toBeGreaterThan(0);
+  });
 });
 
 // ---------------------------------------------------------------------------

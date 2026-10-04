@@ -11,7 +11,7 @@ export type PartPayload =
 
 export type SlotKind = PartPayload['kind'];
 
-export { withBus, withEngine, withLauncher, addInstrument, removeInstrument, withPowerType, withArrayArea, withRtgCount, withPropellant, withDish, withTxPower, withGroundDish, withCaptureOrbit, withScienceOrbit, withScienceDays, withDates, withMissionClass } from '../engine/designEdits';
+export { withBus, withEngine, withLauncher, addInstrument, removeInstrument, withPowerType, withArrayArea, withRtgCount, withPropellant, withDish, withTxPower, withGroundDish, withCaptureOrbit, withScienceOrbit, withScienceDays, withDates, withMissionClass, withRideshare } from '../engine/designEdits';
 import { addInstrument, withBus, withEngine, withLauncher, withPowerType } from '../engine/designEdits';
 
 export function applyPart(d: Design, p: PartPayload): Design {

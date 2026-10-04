@@ -3,7 +3,7 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import { designDelta, METER_KEYS, type DesignDelta, type MeterKey } from '../../engine/compare';
 import { AU_M } from '../../engine/constants';
-import { DESTINATIONS, LAUNCH_VEHICLES, PARTS } from '../../engine/data';
+import { DESTINATIONS, LAUNCH_VEHICLES, PARTS, RIDESHARES } from '../../engine/data';
 import type { FullEvaluation } from '../../engine/index';
 import { ETA_SYS } from '../../engine/power';
 import { bestArrival } from '../../engine/trajectory';
@@ -514,7 +514,7 @@ function LauncherTab({ design, ev, onChange, onDragKind }: TabProps) {
   return (
     <>
       {Object.entries(LAUNCH_VEHICLES).map(([id, lv]) => {
-        const installed = design.launchVehicleId === id;
+        const installed = design.launchVehicleId === id && !design.rideshareId;
         const candidate = ops.withLauncher(design, id);
         return (
           <PartCard
@@ -549,6 +549,50 @@ function LauncherTab({ design, ev, onChange, onDragKind }: TabProps) {
           </PartCard>
         );
       })}
+      {Object.entries(RIDESHARES)
+        .filter(([, r]) => r.destination === design.destination)
+        .map(([id, r]) => {
+          const installed = design.rideshareId === id;
+          const lv = LAUNCH_VEHICLES[r.vehicleId];
+          const candidate = ops.withRideshare(design, id, r.vehicleId);
+          return (
+            <PartCard
+              key={id}
+              kind="launcher"
+              title={r.name}
+              installed={installed}
+              stats={
+                <>
+                  <Stat s={r.secondarySlot_kg} text={`${f.kg(r.secondarySlot_kg.value)} secondary slot`} title="Secondary payload slot" />
+                  <Stat s={r.primaryMass_kg} text={`beside ${f.kg(r.primaryMass_kg.value)} LRO`} title="Primary payload" />
+                  {lv && <Stat s={lv.successes} text={`${lv.name}: ${f.num(lv.successes.value)} / ${f.num(lv.flights.value)} flights`} title={`${lv.name} record`} />}
+                </>
+              }
+            >
+              <div className="effect faint">
+                Real precedent:{' '}
+                <a href={r.precedentUrl} target="_blank" rel="noreferrer">
+                  {r.precedent}
+                </a>
+                . You pay a share of the rocket in proportion to your mass.
+              </div>
+              {installed ? (
+                <div className="effect">
+                  Slot {f.kg(ev.details.launchCapacity_kg)} · your share of the rocket {f.money(ev.details.cost.launch_M, 1)} · launch success {f.pct(ev.details.launchSuccess)}
+                </div>
+              ) : (
+                <>
+                  <DeltaFor design={design} ev={ev} candidate={candidate} show={['mass']} />
+                  <div className="part-actions">
+                    <button className="btn-sm" onClick={() => onChange(candidate)}>
+                      Share the ride
+                    </button>
+                  </div>
+                </>
+              )}
+            </PartCard>
+          );
+        })}
     </>
   );
 }

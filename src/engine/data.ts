@@ -3,6 +3,7 @@ import destinationsJson from '../data/destinations.json';
 import hazardsJson from '../data/hazards.json';
 import operationsJson from '../data/operations.json';
 import launchVehiclesJson from '../data/launchVehicles.json';
+import ridesharesJson from '../data/rideshares.json';
 import lessonsJson from '../data/lessons.json';
 import orbitalElementsJson from '../data/orbitalElements.json';
 import partsJson from '../data/parts.json';
@@ -97,6 +98,21 @@ export interface LaunchVehicle {
 }
 
 export const LAUNCH_VEHICLES = launchVehiclesJson as unknown as Record<string, LaunchVehicle>;
+
+/** A real shared launch the player's craft can ride as the secondary payload (spec: Launch vehicles › Rideshare). */
+export interface Rideshare {
+  name: string;
+  vehicleId: string;
+  destination: DestinationId;
+  primary: string;
+  precedent: string;
+  precedentUrl: string;
+  /** Mass budget allotted to the secondary payload, fuelled. */
+  secondarySlot_kg: S;
+  /** The primary payload's launch mass. */
+  primaryMass_kg: S;
+}
+export const RIDESHARES = ridesharesJson as unknown as Record<string, Rideshare>;
 
 type S = Sourced<number>;
 

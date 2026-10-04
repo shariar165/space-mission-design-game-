@@ -58,6 +58,8 @@ export interface Design {
   scienceOrbit?: { periapsis_km: number; apoapsis_km: number; inclination_deg?: number; raan_deg?: number; argPeriapsis_deg?: number };
   /** 'direct' (default) uses Lambert between the dates; a fixed route uses a published real-mission route. */
   trajectoryOption?: 'direct' | 'nasa-earth-flyby';
+  /** Ride as the secondary payload of a real shared launch (rideshares.json); launchVehicleId is that rocket. */
+  rideshareId?: string;
   /**
    * Real-mission presets only: published, as-built dry mass. The 30% concept growth
    * margin is for concept designs and is not added on top of a flown mass.

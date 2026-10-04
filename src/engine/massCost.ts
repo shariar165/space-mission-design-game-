@@ -1,6 +1,7 @@
 // Spec section: "Mass and cost". Mass roll-up with concept growth margin; development cost vs class cap.
 import { GAME_RULES } from './constants';
-import { LAUNCH_VEHICLES, lookup, PARTS } from './data';
+import { LAUNCH_VEHICLES, lookup, PARTS, RIDESHARES } from './data';
+import { rideshareLaunchPrice } from './launch';
 import { makeMeter } from './meter';
 import { tankMass } from './propulsion';
 import { gameEstimate, sourced, type Design, type Meter, type MissionClass, type Sourced } from './types';
@@ -102,7 +103,11 @@ export function costMeter(development_M: number, cap_M: number, inputs: Record<s
   );
 }
 
-export function costEvaluation(design: Design): {
+/**
+ * Development, launch and operations cost. On a rideshare the launch price is the secondary's share, which
+ * needs the craft's wet mass (evaluateDesign passes it).
+ */
+export function costEvaluation(design: Design, opts: { wet_kg?: number } = {}): {
   meter: Meter;
   development_M: number;
   launch_M: number;
@@ -112,10 +117,16 @@ export function costEvaluation(design: Design): {
   const cap = COST_CAPS[design.missionClass ?? 'discovery'];
   const development_M = developmentCost(design);
   const lv = lookup(LAUNCH_VEHICLES, design.launchVehicleId, 'launch vehicle');
-  const launch_M = lv.price_M.value;
+  const ride = design.rideshareId ? RIDESHARES[design.rideshareId] : undefined;
+  const launch_M =
+    ride && opts.wet_kg !== undefined ? rideshareLaunchPrice(lv.price_M.value, opts.wet_kg, ride.primaryMass_kg.value) : lv.price_M.value;
+  const launchPrice: Sourced<number> =
+    launch_M === lv.price_M.value
+      ? lv.price_M
+      : gameEstimate(launch_M, '$M', `Game rule: the secondary pays a mass-proportional share of the ${lv.name} price, price × m_wet / (m_wet + m_primary)`);
   const operations_M = PARTS.operations.opsCost_M_per_year.value * ((design.scienceDays ?? 365) / 365.25);
   return {
-    meter: { ...costMeter(development_M, cap.value, { cap, launchPrice: lv.price_M, opsPerYear: PARTS.operations.opsCost_M_per_year }), limitSource: cap },
+    meter: { ...costMeter(development_M, cap.value, { cap, launchPrice, opsPerYear: PARTS.operations.opsCost_M_per_year }), limitSource: cap },
     development_M,
     launch_M,
     operations_M,

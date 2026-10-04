@@ -6,6 +6,7 @@ import crisisCards from '../src/data/crisisCards.json';
 import destinations from '../src/data/destinations.json';
 import hazards from '../src/data/hazards.json';
 import launchVehicles from '../src/data/launchVehicles.json';
+import rideshares from '../src/data/rideshares.json';
 import lessons from '../src/data/lessons.json';
 import missions from '../src/data/missions.json';
 import operations from '../src/data/operations.json';
@@ -69,6 +70,7 @@ const DATA_FILES: Record<string, unknown> = {
   'orbitalElements.json': orbitalElements,
   'parts.json': parts,
   'rescueCases.json': rescueCases,
+  'rideshares.json': rideshares,
 };
 
 const ENGINE_VALUES: Record<string, Record<string, Sourced<unknown>>> = {

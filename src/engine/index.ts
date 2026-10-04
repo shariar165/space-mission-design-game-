@@ -3,9 +3,9 @@
 import { G0, GAME_RULES, km, mu as muSI, S0 } from './constants';
 import { COMMS_CALIBRATED, dataMeter, dataPerDay_bits, dataRate, lightDelay_s, REFERENCE_LINK } from './comms';
 import { applicableCards, availableOptions, crisisScore, drawCrisis, safestOption, timeline, type CrisisCard, type CrisisOption, type PhaseWindow } from './crisis';
-import { DESTINATIONS, LAUNCH_VEHICLES, lookup, PARTS } from './data';
+import { DESTINATIONS, LAUNCH_VEHICLES, lookup, PARTS, RIDESHARES } from './data';
 import { earthDistance, julianDate } from './ephemeris';
-import { launchMassCheck, launchSuccessProbability, payloadAtC3 } from './launch';
+import { launchMassCheck, launchSuccessProbability, payloadAtC3, rideshareMassCheck } from './launch';
 import { componentMasses, costBreakdown, costEvaluation, massRollup, wetMass, type CostBreakdown } from './massCost';
 import { ETA_SYS, longestEclipse_s, powerMeter, powerOnDay, solarPower } from './power';
 import { designLoads, eclipseSeasons, powerProfile, worstPowerDay, type EclipseSeasonSummary, type PowerDay, type PowerProfile } from './powerProfile';
@@ -206,11 +206,23 @@ export function evaluateDesign(design: Design): FullEvaluation {
   }
 
   // --- Launch ---
-  const launch = launchMassCheck(lv.payloadCurve.value, transfer.c3_km2s2, wet_kg, {
-    c3: derived(transfer.c3_km2s2, 'km²/s²', 'v∞,dep²'),
-    wetMass: derived(wet_kg, 'kg', 'm_dry + m_prop'),
-  });
+  const ride = design.rideshareId ? lookup(RIDESHARES, design.rideshareId, 'rideshare') : undefined;
+  const launchInputs = { c3: derived(transfer.c3_km2s2, 'km²/s²', 'v∞,dep²'), wetMass: derived(wet_kg, 'kg', 'm_dry + m_prop') };
+  const launch = ride
+    ? rideshareMassCheck(lv.payloadCurve.value, transfer.c3_km2s2, wet_kg, ride.secondarySlot_kg.value, ride.primaryMass_kg.value, {
+        ...launchInputs,
+        secondarySlot: ride.secondarySlot_kg,
+        primaryMass: ride.primaryMass_kg,
+      })
+    : launchMassCheck(lv.payloadCurve.value, transfer.c3_km2s2, wet_kg, launchInputs);
   if (launch.blocker) blockers.push(launch.blocker);
+  if (ride && ride.destination !== design.destination) {
+    blockers.push(`The ${ride.name} goes to the ${DESTINATIONS[ride.destination].name}, not to ${dest.name}.`);
+  }
+  if (ride && ride.vehicleId !== design.launchVehicleId) {
+    blockers.push(`The ${ride.name} flies on the ${lookup(LAUNCH_VEHICLES, ride.vehicleId, 'launch vehicle').name}.`);
+  }
+  if (ride) notes.push(`Shared launch: you fly as the secondary payload beside the ${ride.primary}, as ${ride.precedent}.`);
   if (!payloadAtC3(lv.payloadCurve.value, transfer.c3_km2s2).inRange) {
     notes.push(`C3 = ${transfer.c3_km2s2.toFixed(1)} km²/s² is outside the ${lv.name} performance data; capacity is not interpolated.`);
   }
@@ -230,7 +242,7 @@ export function evaluateDesign(design: Design): FullEvaluation {
   if (produced > downlinked) notes.push('The radio, not the instruments, limits the science return.');
 
   // --- Cost ---
-  const cost = costEvaluation(design);
+  const cost = costEvaluation(design, { wet_kg });
 
   // --- Risk ---
   const risks = phaseRisks({
@@ -425,7 +437,8 @@ function run(p: Prepared, rng: () => number, policy: CrisisPolicy): SimulationRe
   const d = ev.details;
   let devCost_M = d.cost.development_M;
   const massMargin = ev.meters.mass.margin;
-  const endPowerMargin = (d.power.atEndOfScience.available_W - d.power.atEndOfScience.required_W) / d.power.atEndOfScience.required_W;
+  // Power is scored on the worst day of the mission, eclipses included: the Power meter (spec: Scoring, v0.5).
+  const endPowerMargin = ev.meters.power.margin;
   const jdLaunch = julianDate(d.launchDate);
 
   type FinishInput = Omit<
@@ -457,7 +470,7 @@ function run(p: Prepared, rng: () => number, policy: CrisisPolicy): SimulationRe
       margins: endMargins,
       deltaV: { required_ms: d.deltaVRequired_ms, capability_ms: d.deltaVCapability_ms, isp_s: d.isp_s, dry_kg: d.dryMass_kg, propellant_kg: d.propellant_kg, asFlown: d.asFlown },
       launch: { capacity_kg: d.launchCapacity_kg, wet_kg: d.wetMass_kg },
-      power: { available_W: d.power.atEndOfScience.available_W, required_W: d.power.atEndOfScience.required_W, type: design.power.type, arrayArea_m2: design.power.arrayArea_m2 },
+      power: { available_W: d.power.worstDay.available_W, required_W: d.power.worstDay.required_W, type: design.power.type, arrayArea_m2: design.power.arrayArea_m2 },
     });
     return {
       ...rest,

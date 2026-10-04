@@ -2,13 +2,13 @@
 // design (cadetOptions → chips): what the part weighs, makes and costs. A red tag names any gauge the
 // card would push over its limit.
 import type { CadetOption } from '../../engine/cadet';
-import { LAUNCH_VEHICLES } from '../../engine/data';
+import { LAUNCH_VEHICLES, RIDESHARES } from '../../engine/data';
 import { GAUGE_ICON, OPTION_NAME, OPTION_TAG, RED_TAG } from '../cadetWords';
 import * as f from '../format';
 import { Check } from './icons';
 
 export function ChoiceCard({ o, onChoose }: { o: CadetOption; onChoose: () => void }) {
-  const name = o.step === 'rocket' ? (LAUNCH_VEHICLES[o.id]?.name ?? o.id) : (OPTION_NAME[o.id] ?? o.id);
+  const name = o.step === 'rocket' ? (LAUNCH_VEHICLES[o.id]?.name ?? RIDESHARES[o.id]?.name ?? o.id) : (OPTION_NAME[o.id] ?? o.id);
   const tag = OPTION_TAG[o.id];
   return (
     <button type="button" className={`choice step-${o.step}${o.chosen ? ' chosen' : ''}`} aria-pressed={o.chosen} onClick={onChoose}>
@@ -81,8 +81,9 @@ function Chips({ o }: { o: CadetOption }) {
     case 'rocket':
       return (
         <>
-          {chip('lift', '🏋', f.kg(c.lift_kg ?? 0), 'How much it can send on this trip')}
+          {chip('lift', '🏋', f.kg(c.lift_kg ?? 0), c.shared ? 'Your seat: the mass allowed for the second craft on board' : 'How much it can send on this trip')}
           {chip('record', '✓', `${f.num(c.successes ?? 0)}/${f.num(c.flights ?? 0)}`, 'Successful flights')}
+          {c.launchPrice_M !== undefined && chip('price', '🎟', f.money(c.launchPrice_M), c.shared ? 'Your share of the rocket price (paid outside the cost cap)' : 'Rocket price (paid outside the cost cap)')}
         </>
       );
   }
@@ -149,6 +150,14 @@ function CardArt({ step, id }: { step: CadetOption['step']; id: string }) {
           <path d="M28 20 Q36 4 44 20 Z" fill="#f4f6fb" />
           <rect x="28" y="20" width="16" height="40" rx="2" fill="#f0a35e" />
           {id.endsWith('411') && <rect x="20" y="40" width="7" height="22" rx="3" fill="#eef1f7" />}
+          {RIDESHARES[id] && (
+            <g>
+              <rect x="30" y="24" width="12" height="9" rx="2" fill="#8ec5ff" />
+              <rect x="30" y="35" width="12" height="7" rx="2" fill="#3cd3c1" />
+              <circle cx="55" cy="18" r="9" fill="#13244a" stroke="#3cd3c1" strokeWidth="2" />
+              <path d="M51 18 h8 M55 14 v8" stroke="#3cd3c1" strokeWidth="2" strokeLinecap="round" />
+            </g>
+          )}
           <path d="M30 60 Q36 72 42 60 Z" fill="#ffb347" />
         </svg>
       );

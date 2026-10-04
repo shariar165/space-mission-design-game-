@@ -425,6 +425,30 @@ describe('launch', () => {
 });
 
 // ---------------------------------------------------------------------------
+describe('launch: rideshare (secondary payload on a real shared launch)', () => {
+  it('capacity = min(secondary slot, m_LV(C3) − m_primary)', () => {
+    const curve: [number, number][] = [[-2, 4580], [0, 4360]];
+    // C3 = −1: 4580 + (4360 − 4580)(1/2) = 4470 kg; − 1850 primary = 2620 kg; the 1000 kg slot is smaller
+    expect(L.rideshareCapacity(curve, -1, 1000, 1850)).toBe(1000);
+    // with a 4000 kg primary only 470 kg is left, less than the slot
+    expect(L.rideshareCapacity(curve, -1, 1000, 4000)).toBeCloseTo(470, 9);
+    expect(L.rideshareCapacity(curve, -1, 1000, 5000)).toBe(0);
+  });
+
+  it('mass meter on the slot: 646 kg wet in a 1000 kg slot → margin (1000 − 646)/1000 = 35.4%', () => {
+    const r = L.rideshareMassCheck([[-2, 4580], [0, 4360]], -2, 646, 1000, 1850);
+    expect(r.meter.limit).toBe(1000);
+    expect(r.meter.margin).toBeCloseTo(0.354, 12);
+    expect(r.blocker).toBeUndefined();
+    const heavy = L.rideshareMassCheck([[-2, 4580], [0, 4360]], -2, 1100, 1000, 1850);
+    expect(heavy.blocker).toBe("Too heavy by 100 kg for the shared ride's 1000 kg secondary slot");
+  });
+
+  it('price share (game rule): 110 $M × 646 / (646 + 1850) = 28.47 $M', () => {
+    expect(L.rideshareLaunchPrice(110, 646, 1850)).toBeCloseTo(28.4696, 4);
+  });
+});
+
 describe('power', () => {
   const peri = 206.65e9; // Mars perihelion, m (Mars Fact Sheet)
   const aph = 249.26e9; // Mars aphelion, m
