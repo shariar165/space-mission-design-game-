@@ -916,3 +916,18 @@ describe('simulateMission', () => {
     expect(ev.details.phaseRisks.map((ph) => ph.phase)).toEqual(['launch', 'cruise', 'arrival', 'science']);
   });
 });
+
+describe('cadet sizing: smallest value on an input grid (bisection)', () => {
+  it('x² ≥ 2 on a 0.01 grid from 0 → 1.42 (√2 = 1.41421…, rounded up to the grid)', async () => {
+    const { smallestOnGrid } = await import('../src/engine/cadet');
+    expect(smallestOnGrid((x) => x * x, 2, 0, 10, 0.01)).toBeCloseTo(1.42, 10);
+  });
+  it('ln(1 + x) ≥ 10 is out of reach on [0, 100] → undefined', async () => {
+    const { smallestOnGrid } = await import('../src/engine/cadet');
+    expect(smallestOnGrid((x) => Math.log(1 + x), 10, 0, 100, 1)).toBeUndefined();
+  });
+  it('already met at lo → lo', async () => {
+    const { smallestOnGrid } = await import('../src/engine/cadet');
+    expect(smallestOnGrid((x) => x, -1, 0, 10, 1)).toBe(0);
+  });
+});

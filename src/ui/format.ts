@@ -86,3 +86,18 @@ export function label(key: string): string {
 
 export const isoDate = (iso: string) =>
   new Date(`${iso.slice(0, 10)}T00:00:00Z`).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' });
+
+/** Coins for a cost (Cadet): one 💰 per coin, ×n after a few. The coin count comes from the engine. */
+export const coins = (n: number) => (n <= 0 ? '—' : n <= 4 ? '💰'.repeat(n) : `💰×${num(n)}`);
+
+/** A countdown in m:ss (or h:mm:ss for long light delays). */
+export function clock(s: number): string {
+  const t = Math.max(0, Math.ceil(s));
+  const h = Math.floor(t / 3600);
+  const m = Math.floor((t % 3600) / 60);
+  const sec = String(t % 60).padStart(2, '0');
+  return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${sec}` : `${m}:${sec}`;
+}
+
+/** Photos per day, rounded down to whole photos. */
+export const photos = (n: number) => num(Math.floor(n));

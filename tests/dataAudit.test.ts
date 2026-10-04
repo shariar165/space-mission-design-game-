@@ -8,6 +8,7 @@ import launchVehicles from '../src/data/launchVehicles.json';
 import missions from '../src/data/missions.json';
 import orbitalElements from '../src/data/orbitalElements.json';
 import parts from '../src/data/parts.json';
+import { CADET_TIERS, COIN_FRACTION, DISH_SIZES, PHOTO_FRAME_Mbit } from '../src/engine/cadet';
 import { DSN_X_BAND_GAIN_DBI, REFERENCE_LINK } from '../src/engine/comms';
 import { CONSTANTS } from '../src/engine/constants';
 import { COST_CAPS } from '../src/engine/massCost';
@@ -69,6 +70,9 @@ const ENGINE_VALUES: Record<string, Record<string, Sourced<unknown>>> = {
   'risk.ts': { ...BASE_RISK, MARGIN_RISK_FACTOR_AT_ZERO, ACCEPTABLE_MISSION_RISK },
   'scoring.ts WEIGHTS': WEIGHTS,
   'scoring.ts': { ...MARGIN_BAND, BUDGET_ZERO_AT_OVERRUN, ...SCORE_GRADES },
+  'cadet.ts CADET_TIERS': CADET_TIERS,
+  'cadet.ts DISH_SIZES': DISH_SIZES,
+  'cadet.ts': { PHOTO_FRAME_Mbit, COIN_FRACTION },
 };
 
 const all: Entry[] = [];

@@ -122,3 +122,19 @@ export function barGeometry(m: Meter): { fill: number; limitAt: number } {
 export function warningText(key: MeterKey, m: Meter): string {
   return `${METER_TITLES[key]} margin is only ${f.signedPct(m.margin)}. You can fly, but you are below the ${f.pct(GAME_RULES.marginWarning.value, 0)} safety margin.`;
 }
+
+/**
+ * Cadet gauge drawing (layout only). A supply gauge (battery, fuel tank) fills to supply ÷ need; a demand
+ * gauge (coin jar) fills to cost ÷ cap. Both span 0 … 1.6 × the line, so the line sits at 1 / 1.6.
+ */
+export function gaugeGeometry(ratio: number, kind: 'supply' | 'demand'): { level: number; line: number } {
+  const span = 1.6;
+  const x = kind === 'supply' ? (ratio > 0 ? 1 / ratio : Infinity) : ratio;
+  return { level: Math.max(0, Math.min(1, (Number.isFinite(x) ? x : span) / span)), line: 1 / span };
+}
+
+/** Balance-beam tilt in degrees (layout only): level when the craft is light, tipping to the limit, past it when over. */
+export function scaleTilt(ratio: number): number {
+  const r = Number.isFinite(ratio) ? ratio : 2;
+  return Math.max(-14, Math.min(14, (r - 0.7) * 28));
+}

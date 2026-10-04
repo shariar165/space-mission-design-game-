@@ -7,6 +7,10 @@ import { presetDesign } from '../src/engine/missions';
 import { MAX_SCORE, nextStar, nextStarHint, SCORE_GRADES, scoreGrade } from '../src/engine/scoring';
 import { bestLaunchWindow, lambertTransfer } from '../src/engine/trajectory';
 import type { Design } from '../src/engine/types';
+import * as cadet from '../src/engine/cadet';
+import { COST_CAPS } from '../src/engine/massCost';
+import { LAUNCH_VEHICLES as LVS } from '../src/engine/data';
+import { starterDesign } from '../src/ui/starters';
 
 const maven = presetDesign('maven');
 const ev = evaluateDesign(maven);
@@ -288,5 +292,226 @@ describe('Monte Carlo is reproducible', () => {
     const b = monteCarloMission(maven, { runs: 200 });
     expect(a).toEqual(b);
     expect(a.seed).toBe(MONTE_CARLO_SEED);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Cadet mode: guided build choices, metaphor gauges and the Test Flight (cadet.ts).
+
+const FROM = '2026-10-04';
+const cadetBase = (d: Design['destination']) => starterDesign(d, FROM);
+
+describe('Cadet sizing: sizeKnob', () => {
+  const mars = cadetBase('mars');
+  it('worst power margin = the lower of arrival day and end of science (panels age, the Sun moves away)', () => {
+    const e = evaluateDesign(mars);
+    const end = e.details.power.atEndOfScience;
+    expect(cadet.worstPowerMargin(e)).toBe(Math.min(e.meters.power.margin, (end.available_W - end.required_W) / end.required_W));
+  });
+  it('the smallest array that reaches a 25% power margin (one input step smaller misses it)', () => {
+    const d = cadet.sizeKnob(mars, 'arrayArea', 0.25);
+    const area = d.power.arrayArea_m2!;
+    expect(cadet.worstPowerMargin(evaluateDesign(d))).toBeGreaterThanOrEqual(0.25);
+    const smaller = { ...d, power: { ...d.power, arrayArea_m2: area - cadet.KNOB_STEP.arrayArea } };
+    expect(cadet.worstPowerMargin(evaluateDesign(smaller))).toBeLessThan(0.25);
+  });
+  it('the least propellant that reaches a 10% Δv margin', () => {
+    const d = cadet.sizeKnob(mars, 'propellant', 0.1);
+    expect(evaluateDesign(d).meters.deltaV.margin).toBeGreaterThanOrEqual(0.1);
+    const less = { ...d, propellant_kg: d.propellant_kg - cadet.KNOB_STEP.propellant };
+    expect(evaluateDesign(less).meters.deltaV.margin).toBeLessThan(0.1);
+  });
+  it('RTGs come in whole units: the fewest that reach the margin', () => {
+    const d = cadet.sizeKnob({ ...mars, power: { type: 'rtg', rtgCount: 1 } }, 'rtgCount', 0.25);
+    expect(Number.isInteger(d.power.rtgCount)).toBe(true);
+    expect(cadet.worstPowerMargin(evaluateDesign(d))).toBeGreaterThanOrEqual(0.25);
+    expect(cadet.worstPowerMargin(evaluateDesign({ ...d, power: { type: 'rtg', rtgCount: d.power.rtgCount! - 1 } }))).toBeLessThan(0.25);
+  });
+});
+
+describe('Cadet guided build: options per step', () => {
+  const base = cadetBase('mars');
+  const choices = cadet.defaultChoices(base);
+
+  it('five steps, in the order the player sees them', () => {
+    expect(cadet.CADET_STEPS).toEqual(['science', 'power', 'radio', 'fuel', 'rocket']);
+  });
+
+  it('every step offers 2–3 cards and exactly one is chosen', () => {
+    for (const step of cadet.CADET_STEPS) {
+      const opts = cadet.cadetOptions(base, choices, step);
+      expect(opts.length).toBeGreaterThanOrEqual(2);
+      expect(opts.length).toBeLessThanOrEqual(3);
+      expect(opts.filter((o) => o.chosen)).toHaveLength(1);
+    }
+  });
+
+  it('power cards: lean solar ≈ 10% margin, balanced solar ≈ 25%, RTG reaches 25%', () => {
+    const opts = cadet.cadetOptions(base, choices, 'power');
+    const m = (id: string) => cadet.worstPowerMargin(evaluateDesign(opts.find((o) => o.id === id)!.design));
+    expect(m('solar-lean')).toBeGreaterThanOrEqual(cadet.CADET_TIERS.lean.value);
+    expect(m('solar-lean')).toBeLessThan(cadet.CADET_TIERS.balanced.value);
+    expect(m('solar-balanced')).toBeGreaterThanOrEqual(cadet.CADET_TIERS.balanced.value);
+    expect(m('rtg')).toBeGreaterThanOrEqual(cadet.CADET_TIERS.balanced.value);
+  });
+
+  it('fuel cards set the Δv margin to the lean / balanced / roomy tiers', () => {
+    const opts = cadet.cadetOptions(base, choices, 'fuel');
+    for (const tier of ['lean', 'balanced', 'roomy'] as const) {
+      const margin = evaluateDesign(opts.find((o) => o.id === tier)!.design).meters.deltaV.margin;
+      expect(margin).toBeGreaterThanOrEqual(cadet.CADET_TIERS[tier].value);
+      expect(margin).toBeLessThan(cadet.CADET_TIERS[tier].value + 0.02); // within a few kg of propellant
+    }
+  });
+
+  it('radio cards are the 1 m, 2 m (MAVEN) and 3 m (MRO) dishes; a bigger dish sends more photos', () => {
+    const opts = cadet.cadetOptions(base, choices, 'radio');
+    expect(opts.map((o) => o.design.comms.dishDiameter_m)).toEqual([1, 2, 3]);
+    const sent = opts.map((o) => o.chips.photosSent);
+    expect(sent[0]!).toBeLessThanOrEqual(sent[1]!);
+    expect(sent[1]!).toBeLessThanOrEqual(sent[2]!);
+  });
+
+  it('rocket cards are every launch vehicle in the catalogue', () => {
+    expect(cadet.cadetOptions(base, choices, 'rocket').map((o) => o.id)).toEqual(Object.keys(LVS));
+  });
+
+  it('changing power re-sizes the fuel for the new mass, so the Δv tier still holds', () => {
+    const rtg = cadet.buildCadetDesign(base, { ...choices, power: 'rtg' });
+    const solar = cadet.buildCadetDesign(base, choices);
+    expect(rtg.propellant_kg).not.toBe(solar.propellant_kg);
+    expect(evaluateDesign(rtg).meters.deltaV.margin).toBeGreaterThanOrEqual(cadet.CADET_TIERS.balanced.value);
+  });
+
+  it('the default cadet build flies to the Moon, Venus, Mars and Bennu; Jupiter cannot leave Earth', () => {
+    for (const d of ['moon', 'venus', 'mars', 'bennu'] as const) {
+      const b = cadetBase(d);
+      expect(evaluateDesign(cadet.buildCadetDesign(b, cadet.defaultChoices(b))).blockers, d).toEqual([]);
+    }
+    const j = cadetBase('jupiter');
+    const ev = evaluateDesign(cadet.buildCadetDesign(j, cadet.defaultChoices(j)));
+    expect(ev.meters.mass.status).toBe('over');
+    expect(ev.blockers.some((b) => /cannot reach C3/.test(b))).toBe(true);
+  });
+});
+
+describe('Cadet chips (absolute: what the part on this card weighs, makes and costs)', () => {
+  const base = cadetBase('mars');
+  const choices = cadet.defaultChoices(base);
+  const coin = cadet.COIN_FRACTION.value * COST_CAPS.discovery.value; // 0.05 × $500M = $25M per coin
+
+  it('power card: generation + battery mass, power made, coins = ceil(cost / $25M)', () => {
+    const o = cadet.cadetOptions(base, choices, 'power').find((x) => x.id === 'solar-balanced')!;
+    const e = evaluateDesign(o.design);
+    expect(o.chips.mass_kg).toBeCloseTo(e.details.massBreakdown.powerGeneration + e.details.massBreakdown.battery, 9);
+    expect(o.chips.powerMade_W).toBeCloseTo(e.details.power.available_W, 9);
+    expect(o.chips.cost_M).toBeCloseTo(e.details.costBreakdown.power, 9);
+    expect(o.chips.coins).toBe(Math.ceil(e.details.costBreakdown.power / coin));
+  });
+
+  it('coins: $0 → 0, $1M → 1, $25M → 1, $26M → 2 (Discovery cap)', () => {
+    expect(cadet.coins(0, COST_CAPS.discovery.value)).toBe(0);
+    expect(cadet.coins(1, COST_CAPS.discovery.value)).toBe(1);
+    expect(cadet.coins(25, COST_CAPS.discovery.value)).toBe(1);
+    expect(cadet.coins(26, COST_CAPS.discovery.value)).toBe(2);
+  });
+
+  it('science card: instrument mass, power used and photos taken per day', () => {
+    const o = cadet.cadetOptions(base, choices, 'science').find((x) => x.id === 'snapshot')!;
+    // camera only: 15 kg, 20 W, 2,000 Mbit/day ÷ 8.388608 Mbit per photo = 238.4 photos/day
+    expect(o.chips.mass_kg).toBe(15);
+    expect(o.chips.powerUsed_W).toBe(20);
+    expect(o.chips.photosTaken).toBeCloseTo(2000 / 8.388608, 6);
+  });
+
+  it('fuel card: propellant + tanks mass, and spare propellant beyond what the trip needs', () => {
+    const o = cadet.cadetOptions(base, choices, 'fuel').find((x) => x.id === 'roomy')!;
+    const e = evaluateDesign(o.design);
+    expect(o.chips.mass_kg).toBeCloseTo(e.details.propellant_kg + e.details.massBreakdown.tanks, 9);
+    // spare = m_prop − m_dry(e^(Δv_req/(Isp g₀)) − 1)
+    const need = e.details.dryMass_kg * (Math.exp(e.details.deltaVRequired_ms / (e.details.isp_s * 9.80665)) - 1);
+    expect(o.chips.spareFuel_kg).toBeCloseTo(e.details.propellant_kg - need, 6);
+    expect(o.chips.spareFuel_kg).toBeGreaterThan(0);
+  });
+
+  it('rocket card: how much it lifts on this trip, and its flight record', () => {
+    const o = cadet.cadetOptions(base, choices, 'rocket').find((x) => x.id === 'atlas-v-401')!;
+    expect(o.chips.lift_kg).toBeCloseTo(evaluateDesign(o.design).details.launchCapacity_kg, 9);
+    expect(o.chips.flights).toBe(LVS['atlas-v-401']!.flights.value);
+    expect(o.chips.successes).toBe(LVS['atlas-v-401']!.successes.value);
+  });
+
+  it('a card that would turn a gauge red says which one', () => {
+    for (const o of cadet.cadetOptions(base, choices, 'rocket')) {
+      const e = evaluateDesign(o.design);
+      expect(o.redGauges.includes('weight')).toBe(e.meters.mass.status === 'over');
+    }
+  });
+});
+
+describe('Cadet gauges (metaphors over the meters)', () => {
+  it('each gauge carries its meter status and demand ÷ supply', () => {
+    const e = evaluateDesign(maven);
+    const g = cadet.cadetGauges(e);
+    const pairs = { weight: 'mass', power: 'power', fuel: 'deltaV', photos: 'data', budget: 'cost' } as const;
+    for (const [gk, mk] of Object.entries(pairs)) {
+      const gauge = g[gk as keyof typeof pairs];
+      expect(gauge.status).toBe(e.meters[mk].status);
+      expect(gauge.meter).toBe(mk);
+      expect(gauge.ratio).toBeCloseTo(e.meters[mk].used / e.meters[mk].limit, 12);
+    }
+  });
+  it('photos: taken = produced ÷ frame, sent = min(produced, downlinked) ÷ frame', () => {
+    const e = evaluateDesign(maven);
+    const g = cadet.cadetGauges(e);
+    const frame = cadet.PHOTO_FRAME_Mbit.value * 1e6;
+    expect(g.photos.taken).toBeCloseTo(e.details.data.producedPerDay_bits / frame, 9);
+    expect(g.photos.sent).toBeCloseTo(Math.min(e.details.data.producedPerDay_bits, e.details.data.downlinkedPerDayAtArrival_bits) / frame, 9);
+  });
+});
+
+describe('Test Flight (where the mission would fail, before launch)', () => {
+  const base = cadetBase('mars');
+  const good = cadet.buildCadetDesign(base, cadet.defaultChoices(base));
+
+  it('a balanced design passes every checkpoint; checkpoints follow the mission timeline', () => {
+    const t = cadet.testFlight(good);
+    expect(t.checkpoints.map((c) => c.phase)).toEqual(['launch', 'cruise', 'arrival', 'science']);
+    expect(t.firstFail).toBeUndefined();
+    expect(t.checkpoints.every((c) => c.status === 'pass')).toBe(true);
+    expect(t.checkpoints[2]!.startDay).toBe(Math.round(evaluateDesign(good).trajectory.flightDays));
+  });
+  it('too heavy for the rocket → fails at launch', () => {
+    const t = cadet.testFlight({ ...good, propellant_kg: 20000 });
+    expect(t.firstFail).toBe('launch');
+    expect(t.checkpoints[0]!.reasons).toContain('too-heavy');
+  });
+  it('too little power → fails in cruise', () => {
+    const t = cadet.testFlight({ ...good, power: { type: 'solar', arrayArea_m2: 1 } });
+    expect(t.firstFail).toBe('cruise');
+    expect(t.checkpoints[1]!.reasons).toContain('no-power');
+  });
+  it('too little fuel → fails at arrival', () => {
+    const t = cadet.testFlight({ ...good, propellant_kg: 100 });
+    expect(t.firstFail).toBe('arrival');
+    expect(t.checkpoints[2]!.reasons).toContain('no-fuel');
+  });
+  it('an ion engine cannot brake into orbit → fails at arrival', () => {
+    const t = cadet.testFlight({ ...good, engineId: 'ion-xenon' });
+    expect(t.checkpoints[2]!.reasons).toContain('engine-cannot-capture');
+  });
+  it('a thin Δv margin is shaky at arrival (risk factor > 1)', () => {
+    const t = cadet.testFlight(cadet.sizeKnob(good, 'propellant', 0.03));
+    expect(t.checkpoints[2]!.status).toBe('shaky');
+    expect(t.checkpoints[2]!.reasons).toContain('low-fuel');
+  });
+  it('a sample-return mission has a return checkpoint; loss chances come from the seeded Monte Carlo', () => {
+    const b = cadetBase('bennu');
+    const d = cadet.buildCadetDesign(b, cadet.defaultChoices(b));
+    const t = cadet.testFlight(d, { runs: 200 });
+    expect(t.checkpoints.map((c) => c.phase)).toContain('return');
+    const mc = monteCarloMission(d, { runs: 200, seed: MONTE_CARLO_SEED });
+    for (const c of t.checkpoints) expect(c.lossChance).toBeCloseTo((mc.failuresByPhase[c.phase] ?? 0) / 200, 12);
+    expect(t.successRate).toBe(mc.successRate);
   });
 });
