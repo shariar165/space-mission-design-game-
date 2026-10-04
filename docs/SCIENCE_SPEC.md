@@ -390,10 +390,16 @@ src/engine/
   missions.ts         // real-mission presets → Design
   index.ts            // evaluateDesign(), simulateMission(), monteCarloMission(), previewCrisis()
   compare.ts          // designDelta() for part cards, compareWithRealMission() for the Debrief
+  designEdits.ts      // pure edits to a Design, shared by the UI and cadet.ts
+  cadet.ts            // Cadet guided build: sizing, cards, chips, gauges, testFlight()
+  flightMap.ts        // craft position, signalDelay(), countdown(), flight frames, map, ghostFor()
+  rescue.ts           // Rescue History cases, clues, consequence, stars
 src/data/
   destinations.json   launchVehicles.json   parts.json
   missions.json       // MAVEN, OSIRIS-REx, LRO presets
   crisisCards.json
+  lessons.json        // Cadet lesson cards (Jupiter: Juno's gravity assist)
+  rescueCases.json    // Rescue History: Mars Climate Orbiter
 tests/
   physics.test.ts     // each equation vs hand calculation
   validation.test.ts  // real missions within ±10%
@@ -432,7 +438,7 @@ interface Evaluation {
 }
 ```
 
-Entry points: `evaluateDesign`, `simulateMission`, `monteCarloMission` and `previewCrisis` (`index.ts`); `designDelta` and `compareWithRealMission` (`compare.ts`); `bestLaunchWindow` (`trajectory.ts`).
+Entry points: `evaluateDesign`, `simulateMission`, `monteCarloMission`, `previewCrisis`, `crisisOrders` and `standingOrderPolicy` (`index.ts`); `designDelta` and `compareWithRealMission` (`compare.ts`); `bestLaunchWindow` (`trajectory.ts`); `cadetOptions`, `buildCadetDesign`, `cadetGauges` and `testFlight` (`cadet.ts`); `flightFrames`, `flightMap`, `signalDelay`, `countdown` and `ghostFor` (`flightMap.ts`); `rescueCase`, `inspectClue` and `rescueConsequence` (`rescue.ts`).
 
 Build order: constants → ephemeris → trajectory → propulsion → launch → power → comms → massCost → validation tests → risk, crisis, scoring. Don't build UI on a module until its tests pass.
 
@@ -447,7 +453,31 @@ The UI (`src/ui/`, React + Vite) follows the Claude Design mockups for Build Bay
 5. **Debrief comparison** with a real mission uses mass, power and Δv only (see "MAVEN cost"), with the biggest gap flagged. Mars is compared with MAVEN and Bennu with OSIRIS-REx. Other destinations have no comparison until a sourced preset exists.
 6. **Score** is shown as 0–100. Category grades are STRONG ≥ 70, FAIR 40–69, WEAK < 40 (game rule). The row the next-star hint is about is highlighted.
 7. **English only for now.** The language toggle is hidden until engine messages are returned as codes with values.
-8. **Until the Window and Flight screens exist:** Build Bay → Launch → one crisis card (only the options the margins can pay for) → Debrief.
+8. **Engineer flow, until the Window screen exists:** Build Bay → Launch → one crisis card (only the options the margins can pay for) → Debrief. Cadet flies through the Flight screen (rule 12).
+
+**Cadet mode (the default).** Engineer mode keeps rules 1–8 exactly. Cadet follows rule 1 too: every number comes from the engine.
+
+9. **One decision per screen.** The guided build asks Science, Power, Radio, Fuel, Rocket in turn ("Step 2 of 5 — Power"), with 2–3 big cards and at most one short helper line.
+   - Each card is a whole design from `cadetOptions`.
+   - Sized cards come from the model itself: `sizeKnob` finds the smallest array, RTG count or propellant load that reaches a target margin, by bisection over `evaluateDesign`. Power is sized on the worse of arrival day and end of science.
+   - Targets are labelled game estimates: lean 10%, balanced 25%, roomy 50%. Fuel is re-sized last, so an earlier change never leaves a stale load.
+   - Chips show what the part on the card weighs, makes and costs: ⚖ kg, 🔋 W, 📷/📡 photos per day, ⛽ spare kg, coins (one coin = 5% of the cost cap, game estimate). A red tag names any gauge the card would push over its limit.
+10. **Metaphor gauges** replace the meters: weight → a balance scale (with the rocket straining when over), power → a battery, Δv → "Fuel to reach …", data → photos sent home per day (one photo = an 8.39 Mbit frame, game estimate), cost → a coin jar against the cap.
+    - Each gauge carries its meter's status, shown with icon, colour and label.
+    - Tapping a gauge shows the meter's real numbers with the ⓘ of every input. Equations stay in Engineer mode.
+11. **Test Flight** (`testFlight`) places each blocker in the phase where it bites (too heavy → launch, power → cruise, Δv or no-capture engine → arrival) and marks thin margins (below 10%) as shaky. It shows the seeded Monte Carlo loss per phase, and the preview stops at the first failure.
+12. **Standing orders and light-delay Mission Control.** From Mars on, the player queues an order for each crisis card the mission can meet (`crisisOrders`).
+    - The craft acts on its order when the crisis comes (`standingOrderPolicy`). The odds are the same as for any other choice.
+    - The Flight screen pauses on the crisis day. A pulse carries the news to Earth with a countdown of the real one-way light time (`signalDelay`, `countdown`).
+    - A new command arrives one round trip after the crisis began, too late. No new risk rule is added.
+13. **Level map.** Moon (3 parts) → Mars → Venus → Bennu → Jupiter. Each level opens only the steps it teaches; the others keep balanced cards, so every level starts flyable. One star opens the next level.
+    - Jupiter is the "impossible" lesson: no Atlas V in the catalogue reaches the direct C3. A Test Flight that fails at launch earns its star and shows Juno's real gravity-assist route (sourced).
+14. **Rescue History.** A real lost mission's published file and the clues from its failure report. Mars Climate Orbiter is the first case: the board's root cause and three contributing causes.
+    - The player picks the bug. Stars drop by one per wrong guess (game rule).
+    - The consequence is computed from the published altitudes.
+15. **Ghost on the flight map.** Mars and Bennu show the real mission's path (MAVEN, OSIRIS-REx) from its preset through `evaluateDesign`.
+    - It is turned about the Sun to start beside the player, which keeps its shape and Sun distances, and is labelled so.
+    - Other destinations have no ghost until a sourced preset exists (rule 5).
 
 ## Decision log
 
@@ -471,3 +501,10 @@ The UI (`src/ui/`, React + Vite) follows the Claude Design mockups for Build Bay
 | 16 | Oct 3, 2026 | **Risk limit 20%** stays a labelled game estimate (no numeric NASA source found), shown on the meter. **Reliability → Risk** swap recorded with its reasons. |
 | 17 | Oct 3, 2026 | **Monte Carlo is seeded** (default 2013, shown on screen) for reproducible demos. |
 | 18 | Oct 4, 2026 | **Comms anchored to MRO** (DESCANSO Article 12: ≥500 kbps at 400 million km, 100 W, 3 m HGA). The ground term uses DSN 810-005 X-band gains (70 m 74.55 dBi, 34 m 68.24 dBi). The 34 m pairing is inferred and stays labelled. Close-range rates are optimistic (no coding or decoder caps). |
+| 19 | Oct 4, 2026 | **Cadet mode is a guided game** (UI rules 9–15); Engineer mode is unchanged. Cadet sizing targets are game estimates: lean 10%, balanced 25%, roomy 50% margin. Power is sized on the worse of arrival and end of science. One coin = 5% of the cost cap; one photo = an uncompressed 1024 × 1024, 8-bit frame (8.39 Mbit). |
+| 20 | Oct 4, 2026 | **Standing orders, not a new delay rule.** The craft follows the order queued before launch; light delay is shown with the real one-way and round-trip times but does not change any odds. |
+| 21 | Oct 4, 2026 | **Jupiter is the "impossible" lesson** with the two Atlas V curves: its star is for finding the launch failure in a Test Flight. The lesson card uses NASA Science: Juno (Earth flyby 26 months after the Aug. 5, 2011 launch; Jupiter on July 4, 2016). |
+| 22 | Oct 4, 2026 | **Rescue History: Mars Climate Orbiter.** Facts from the NASA/JPL MCO Arrival press kit (Sept. 1999) and the MCO Mishap Investigation Board Phase I Report (Nov. 10, 1999). Root cause: SM_FORCES / AMD file in lbf·s instead of N·s (factor 4.45). Planned periapsis 226 km, 80 km survivable, 57 km estimated. |
+| 23 | Oct 4, 2026 | **Ghost path is rotated** about the Sun to start beside the player (the real mission flew in another year), and is labelled so. |
+| 24 | Oct 4, 2026 | **Fix: free crisis options are always offered.** `availableOptions` dropped the free option when a spare margin was negative, so an over-budget craft (which may launch) crashed the flight on its crisis. Zero-cost options are now always payable. |
+| 25 | Oct 4, 2026 | **Moon transfer timing.** The Moon transfer path is sampled evenly in angle, so craft positions in cruise come from Kepler's equation in time. The fixed Bennu route and the trip home stay approximate (drawing and light delay only). |

@@ -1,6 +1,6 @@
 # Mission Drafting Table
 
-A NASA space-mission design game: a pure TypeScript simulation engine (`src/engine`) and a React + Vite UI (`src/ui`) with the Build Bay and Debrief screens. The UI only displays numbers the engine computes. The science rules are in [docs/SCIENCE_SPEC.md](docs/SCIENCE_SPEC.md). Every constant and data value is a `Sourced<T>` that carries its source and an `isGameEstimate` flag.
+A NASA space-mission design game: a pure TypeScript simulation engine (`src/engine`) and a React + Vite UI (`src/ui`). **Cadet mode** (the default) is a guided game: a level map, one decision per screen, metaphor gauges, a Test Flight, light-delay Mission Control, Rescue History and a ghost of the real NASA path. **Engineer mode** keeps the full Build Bay, crisis card and Debrief with every equation and source. The UI only displays numbers the engine computes. The science rules are in [docs/SCIENCE_SPEC.md](docs/SCIENCE_SPEC.md). Every constant and data value is a `Sourced<T>` that carries its source and an `isGameEstimate` flag.
 
 ## Setup (everything lives in `.venv`)
 
@@ -20,7 +20,8 @@ npm install
 | --- | --- |
 | `npm run dev` | Start the game at http://localhost:5173 (Vite dev server) |
 | `npm run build` | Typecheck, then build the static site into `dist/` |
-| `npm test` | All tests: physics, validation, data audit, engine API, UI guards |
+| `npm test` | All tests: physics, validation, data audit, engine API, UI guards, and the component tests in `tests/ui/` (jsdom + Testing Library) |
+| `npx vitest run tests/ui` | Component tests only |
 | `npm run test:validation` | Real-mission validation only; writes `docs/VALIDATION_RESULTS.md` |
 | `npm run todo-data` | Data audit; regenerates `TODO_DATA.md` |
 | `npm run typecheck` | `tsc --noEmit` |
@@ -44,14 +45,25 @@ src/engine/
   missions.ts     MAVEN / OSIRIS-REx presets → Design
   index.ts        evaluateDesign(), simulateMission(), monteCarloMission(), previewCrisis()
   compare.ts      designDelta() for part cards, compareWithRealMission() for the Debrief
-src/ui/           React UI: App.tsx, screens/ (BuildBay, CrisisScreen, Debrief), components/,
-                  format.ts (unit display only), meters.ts (meter wording), starters.ts (starter design inputs)
-src/data/         destinations, orbitalElements, launchVehicles, parts, missions, crisisCards (all values Sourced)
-tests/            physics.test.ts, validation.test.ts, dataAudit.test.ts, engineApi.test.ts, uiGuards.test.ts
+  designEdits.ts  pure edits to a Design (withArrayArea, withPropellant, …), shared by the UI and cadet.ts
+  cadet.ts        Cadet guided build: sizing by bisection, 2–3 cards per step, chips, gauges, testFlight()
+  flightMap.ts    craft position, signal delay and countdown, flight frames, map geometry, ghostFor()
+  rescue.ts       Rescue History cases (Mars Climate Orbiter), clues, consequence, stars
+src/ui/           React UI: App.tsx, screens/ (Engineer: BuildBay, CrisisScreen, Debrief; Cadet: LevelMap,
+                  CadetBuild, Flight, Rescue), components/, levels.ts (Cadet levels and saved stars),
+                  cadetWords.ts (Cadet wording), format.ts (unit display only), meters.ts, starters.ts
+                  styles/app.css (shared + Engineer), styles/cadet.css (Cadet, 1440 and 390 layouts)
+src/data/         destinations, orbitalElements, launchVehicles, parts, missions, crisisCards, lessons,
+                  rescueCases (all values Sourced)
+tests/            physics.test.ts, validation.test.ts, dataAudit.test.ts, engineApi.test.ts, uiGuards.test.ts,
+                  ui/*.test.tsx (component tests)
 docs/design/      reference copy of the Claude Design mockups
 ```
 
-All modules in the spec's build order are built. The UI has Build Bay → one crisis card → Debrief; the Mission, Window and Flight screens come next.
+All modules in the spec's build order are built.
+
+- **Cadet:** Level map → guided build (Science, Power, Radio, Fuel, Rocket, then standing orders from Mars on) → Test Flight → Launch → Flight map with Mission Control on the crisis day → Debrief with the level result. Rescue History opens from the map.
+- **Engineer:** Build Bay → one crisis card → Debrief. The Mission and Window screens come next.
 
 ## Additions to the spec interfaces
 
@@ -72,3 +84,6 @@ All modules in the spec's build order are built. The UI has Build Bay → one cr
 - In the simulation, a crisis option's bad outcome ends the phase that option affects. Crisis costs (Δv, science days, budget) are applied only if the crisis is reached; a test bought before launch is always paid.
 - Bennu is propagated two-body from its 2011 osculating elements, with no planetary perturbations.
 - The Earth position is the Earth–Moon barycentre (JPL table), and UTC is used for TDB (about 69 s off).
+- Flight map and light delay: in cruise the craft is placed along the time-sampled Lambert path (Moon: Kepler's equation on the transfer half-ellipse). The fixed Bennu route and the trip home are approximate (drawing and light delay only; the return transfer is not modelled).
+- The ghost of a real mission is its preset path turned about the Sun to start beside the player (it flew in another year). The rotation keeps its shape and Sun distances.
+- At the Moon the Atlas V 401 can lift about 4,600 kg, so a Cadet craft's mass margin stays above the 30% band and the third star is out of reach. A smaller launcher with a sourced payload curve would fix this.

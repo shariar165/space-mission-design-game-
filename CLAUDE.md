@@ -23,7 +23,8 @@ export PATH="$PWD/.venv/Scripts:$PATH"  # Git Bash
 | --- | --- |
 | Dev server (the game) | `npm run dev` → http://localhost:5173 |
 | Production build | `npm run build` (typecheck + `vite build` into `dist/`) |
-| All tests | `npm test` (`vitest run`) |
+| All tests | `npm test` (`vitest run`; includes the jsdom component tests in `tests/ui/`) |
+| Component tests only | `npx vitest run tests/ui` |
 | One file | `npx vitest run tests/physics.test.ts` |
 | One test by name | `npx vitest run tests/physics.test.ts -t "Lambert"` |
 | Validation only (rewrites `docs/VALIDATION_RESULTS.md`) | `npm run test:validation` |
@@ -47,13 +48,18 @@ There is no lint step.
 - **The UI never computes a number.** It calls the engine and only formats units (`src/ui/format.ts`). Need a new on-screen number? Add it to the engine (with a test in `tests/engineApi.test.ts`), not the UI. `tests/uiGuards.test.ts` fails on digits in JSX text or "number + unit" in UI strings, and on any React/DOM import in `src/engine`.
 - Engineer mode shows each `Meter.equation` and every `Meter.inputs` entry; ⓘ (`SourceInfo`) shows the `Sourced<T>` record, with a "game estimate" badge when `isGameEstimate`.
 - UI entry points: `evaluateDesign`, `previewCrisis` + `simulateMission` (crisis card → Debrief), `monteCarloMission`, `designDelta` and `compareWithRealMission` (`compare.ts`), `bestLaunchWindow` (starter dates).
+- **Two modes.** Engineer mode (Build Bay → crisis card → Debrief) must stay as it is. Cadet mode (the default) is the guided game in spec UI rules 9–15:
+  - Level map → `CadetBuild` (one decision per screen) → Flight with Mission Control → Debrief, plus Rescue History.
+  - Its numbers come from `cadet.ts` (`cadetOptions`, `buildCadetDesign`, `cadetGauges`, `testFlight`), `flightMap.ts` (`flightFrames`, `flightMap`, `signalDelay`, `countdown`, `ghostFor`), `rescue.ts`, and `crisisOrders` + `standingOrderPolicy` (`index.ts`).
+  - Cadet words live in `src/ui/cadetWords.ts`; levels and saved stars in `src/ui/levels.ts`.
+- **Component tests** (`tests/ui/*.test.tsx`) start with `// @vitest-environment jsdom` and import `./setup` (cleanup, empty storage, `openMarsLevel`). With fake timers, advance time in small slices: each animation step schedules the next.
 - English only for now; the language toggle is hidden. Design references: `docs/design/`.
 
 ## Architecture
 
 **Data flow.** `src/data/*.json` (Sourced values) → `src/engine/data.ts` (typed casts plus `lookup()`) → physics modules → `src/engine/index.ts` (and `compare.ts`), which the UI calls.
 
-**`index.ts`** has four entry points (`previewCrisis` shows the crisis card a seed will draw, before `simulateMission` flies it):
+**`index.ts`** has four main entry points (`previewCrisis` shows the crisis card a seed will draw, before `simulateMission` flies it):
 - `evaluateDesign(design)` runs the whole pipeline:
   1. Trajectory: Lambert between the design's dates, a fixed route, or an Earth-centred transfer for the Moon.
   2. Power at the arrival date and at the end of science, from the ephemeris Sun distance.
