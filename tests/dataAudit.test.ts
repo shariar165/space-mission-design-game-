@@ -4,9 +4,11 @@ import { readdirSync, writeFileSync } from 'node:fs';
 import { afterAll, describe, expect, it } from 'vitest';
 import crisisCards from '../src/data/crisisCards.json';
 import destinations from '../src/data/destinations.json';
+import hazards from '../src/data/hazards.json';
 import launchVehicles from '../src/data/launchVehicles.json';
 import lessons from '../src/data/lessons.json';
 import missions from '../src/data/missions.json';
+import operations from '../src/data/operations.json';
 import orbitalElements from '../src/data/orbitalElements.json';
 import parts from '../src/data/parts.json';
 import rescueCases from '../src/data/rescueCases.json';
@@ -58,9 +60,11 @@ function walk(node: unknown, path: string, entries: Entry[], bare: string[]) {
 const DATA_FILES: Record<string, unknown> = {
   'crisisCards.json': crisisCards,
   'destinations.json': destinations,
+  'hazards.json': hazards,
   'launchVehicles.json': launchVehicles,
   'lessons.json': lessons,
   'missions.json': missions,
+  'operations.json': operations,
   'orbitalElements.json': orbitalElements,
   'parts.json': parts,
   'rescueCases.json': rescueCases,

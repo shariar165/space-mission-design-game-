@@ -1,8 +1,8 @@
-# Mission Drafting Table — Science Spec v0.3
+# Mission Drafting Table — Science Spec v0.4
 
 Oct 3, 2026 · @Shariar
 
-v0.2 (Oct 3, 2026) added the decisions taken while building the engine. v0.3 (Oct 3, 2026) adds the UI rules. All decisions are applied in the sections below and listed in the **Decision log** at the end.
+v0.2 (Oct 3, 2026) added the decisions taken while building the engine. v0.3 (Oct 3, 2026) adds the UI rules. v0.4 (Oct 4, 2026) adds Mission operations (engine only). All decisions are applied in the sections below and listed in the **Decision log** at the end.
 
 ## Purpose and model philosophy
 
@@ -294,6 +294,176 @@ These are summaries from general knowledge. Before release, each card's text mus
 - Costs apply only if the crisis is reached, except a test bought before launch (Genesis card), which is always paid.
 - Crisis handling score: safe choice and fine 100 · risky and fine 70 · safe and unlucky 50 · risky and lost 0.
 
+## Mission operations
+
+Mission Operations is where the player **manages** the mission they designed, and the engine **simulates** it day by day. It is a separate entry point (`src/engine/ops/`); Engineer mode and the Cadet flight keep the single-card model above.
+
+**Decided (v0.4):**
+- Ops replaces the generic cruise and science base rates with explicit hazards, so no failure is counted twice. Launch keeps the vehicle's Laplace reliability. The orbit-insertion anomaly reuses `BASE_RISK.arrival × f(Δv margin)`. An info row in the validation table compares the Ops loss rate with the Risk meter.
+- A mission extension is reported separately. The 0–100 score and the stars stay on the prime mission, so losing the craft in an extension never removes prime-mission credit.
+
+### Mission clock
+
+The clock counts days from launch (day 0), through cruise, arrival, science and (for sample return) the trip home, then any extension. It moves in whole days, but every event has an exact time in fractional days. A command takes effect at its exact arrival time, so a day is split into segments and power and data are counted segment by segment. Nothing the player does is instant.
+
+**Daily ledger.** Each day records:
+- power available and required, and the load fault protection had to shed;
+- data produced, downlinked, held in the recorder, and lost;
+- Δv and propellant spent, from the rocket equation at the craft's mass at that moment;
+- budget spent;
+- radiation dose.
+
+**Determinism.**
+- The mission is a function of (design, seed, command log), so a save or a replay only needs the seed and the commands.
+- Every hazard type has its own random stream: the seed mixed with an FNV-1a hash of the hazard name, fed to the same mulberry32 generator as the Monte Carlo.
+- All candidate times and outcome draws are made at the start. A player decision changes the odds of what comes next but never reshuffles the future (the same random numbers whatever the player does).
+
+### Power
+
+```latex
+P_{avail} = \min\left(P_{gen}(1 - f_{ecl}),\; \frac{E_{batt}}{t_{ecl,max}}\right) \quad (\text{solar}), \qquad P_{avail} = P_{RTG} \quad (\text{RTG})
+```
+
+- P_gen is the Power section's equation on that day (Sun distance from the ephemeris, degradation since launch).
+- f_ecl is the fraction of the day in eclipse.
+- E_batt is the battery energy from the existing sizing. The second term is the most the battery can carry through that day's longest eclipse.
+
+**Loads:**
+- the bus and engine (always);
+- heaters (a fraction of the `heaterPower` need);
+- each instrument at a duty cycle from 0 to 1 (science phase only);
+- the radio at its full DC draw while it is on.
+
+The default plan therefore needs exactly what the Power meter needs.
+
+**Fault protection** sheds load on board, at once, in this order: instruments, then radio, then heaters. The bus is never shed. A day that cannot power the bus is a brownout day, and three in a row lose the craft (game estimate). A day with heaters below their need is a cold day, and it multiplies the hardware hazard rates by k_cold (game estimate).
+
+### Data and the DSN
+
+- Science data is produced only in the science phase, at Σ duty × instrument data/day.
+- Each day's downlink capacity is the Communications link at that day's Earth distance, times the booked pass hours. It is zero during a solar conjunction or while the radio is off.
+- Data waits in an on-board recorder. Data beyond the recorder size (game estimate, 160 Gbit after MRO, to verify) is lost.
+- The pass is spread evenly over the day, so a command that arrives part-way through a day changes that day's downlink in proportion.
+
+**DSN cost.** The [DSN aperture fee](https://deepspace.jpl.nasa.gov/files/6_NASA_MOCS_2014_10_01_14.pdf) is
+
+```latex
+AF = R_B\left[A_W\left(0.9 + \frac{F_C}{10}\right)\right]
+```
+
+- R_B = $1,057/h (FY09).
+- A_W = 1 for a 34 m station and 4 for a 70 m station.
+- F_C = 7 contacts per week (one pass a day).
+- Each pass also pays 1 h of set-up and tear-down.
+- The default daily pass is already inside the operations cost. The player pays only for hours and aperture above it.
+- The FY09 rate is not inflated to the FY2019 cap year (stated).
+- A booking must be made a lead time ahead (7 days, game estimate). It is ground-side, so it needs no light-time trip.
+
+### Propellant
+
+The planned Δv budget (Propulsion section) is spent on the day each part happens:
+- trajectory corrections in four equal burns at fixed fractions of cruise (game estimate);
+- the Bennu deep-space manoeuvre on its route date;
+- the arrival burn and the capture → science orbit change on the arrival day;
+- orbit maintenance on each science and extension day.
+
+Responses to hazards are extra burns. Because Δv adds up across burns, with no hazards the prime mission ends with exactly capability − (required − lifetime reserve) left. A planned burn the remaining propellant cannot make loses the craft.
+
+### Budget
+
+The spare budget = (cost cap − development) + planned operations − spent. This is the same reserve convention as the crisis cards. Operations cost accrues daily; DSN extras and response costs are added when they happen.
+
+### Events known in advance
+
+**Solar conjunction.** The Sun–Earth–probe angle on each day:
+
+```latex
+\cos\varepsilon = \frac{(-\mathbf{r}_E)\cdot(\mathbf{r}_c - \mathbf{r}_E)}{|\mathbf{r}_E|\,|\mathbf{r}_c - \mathbf{r}_E|}
+```
+
+- r_E and r_c are the heliocentric positions of Earth and the craft (`craftPosition` in cruise, the destination's ephemeris position after arrival).
+- While ε < 2°, NASA stops commanding Mars spacecraft ([JPL, 2015: "the sun will be within two degrees of Mars in Earth's sky"](https://www.jpl.nasa.gov/news/mars-missions-to-pause-commanding-in-june-due-to-sun/)). The game also stops the downlink, so data waits in the recorder.
+- Hand check: near conjunction ε ≈ r_M/(r_E + r_M) · φ, where φ is the heliocentric angle off the Sun line, and φ̇ = n_E − n_M ≈ 0.462°/day. So ε̇ ≈ 0.28°/day and a 2° window lasts about 14 days, as NASA's ~2-week moratoria do.
+- The Moon has no conjunction: the ephemeris has no real lunar position.
+
+**Eclipse seasons.**
+- The science orbit is fixed in inertial space (no J2 precession, stated). Its inclination, node and argument of periapsis are measured from the planet's equator: the IAU node at α₀ + 90° on the J2000 equator. They are rotated into the ecliptic with ε₀ = 23.43928°.
+- Each day the engine finds when the craft is inside the cylindrical shadow, with the Sun direction ŝ = −r_planet/|r_planet|. Entry and exit are refined by bisection in mean anomaly, which gives the eclipse fraction and the longest single eclipse.
+- A season is a run of days with eclipse. With the Sun in the orbit plane and the shadow centred on apoapsis, this reproduces the Power section's worst-case eclipse.
+- Defaults are a polar orbit (game estimate). MAVEN's preset uses its published 75° ([Wood, DESCANSO / AAS 21-211](https://descanso.jpl.nasa.gov/evolution/AAS%2021-211.pdf)).
+
+**Jupiter radiation.**
+
+```latex
+\dot D(r) = \dot D_{ref}\left(\frac{r_{ref}}{r}\right)^{k} \quad (r < r_{belt}), \qquad 0 \text{ outside}
+```
+
+- The dose rate is averaged over the orbit each day and adds up against an electronics tolerance behind the vault.
+- The forecast gives the days on which the dose reaches 50%, 75% and 100% of the tolerance.
+- Beyond 100%, a daily loss rate applies.
+- Every value is a game estimate, to verify against Juno's radiation-vault design. Other destinations get no dose; solar storms carry their own risk.
+
+### Hazards drawn from rates
+
+Each hazard is a non-homogeneous Poisson process λ(t, state). It is drawn by thinning: candidates come at a bound rate λ̄, and a candidate becomes a hazard if u < λ(t, state)/λ̄, judged when Earth would learn of it. Every rate is a `Sourced` value. Rates without a source are game estimates.
+
+| Hazard | Rate model | Source of the rate |
+| --- | --- | --- |
+| Solar storm | λ = (λ_min + (λ_max − λ_min)·A(t))·(1 AU/r)². A(t) rises as (1 − cos)/2 from a cycle minimum (0) to its maximum (1), then falls back to the next minimum. The cycle mean of λ is the NOAA S3 + S4 count. | [NOAA Space Weather Scales](https://www.spaceweather.gov/noaa-scales-explanation): S3 10 and S4 3 per 11-year cycle. Cycle 24: minimum Dec 2008, maximum Apr 2014. Cycle 25: minimum Dec 2019, maximum Oct 2024 ([NASA/NOAA](https://science.nasa.gov/science-research/heliophysics/nasa-noaa-sun-reaches-maximum-phase-in-11-year-solar-cycle/)). Other cycles repeat every 11 years. λ_min/λ_max and the exponent are game estimates. |
+| Mars global dust storm | Constant inside the Ls 180–360° season (southern spring and summer), zero outside, averaging one per 3 Mars years. Ls is computed from the IAU pole and the ephemeris, so "more likely near perihelion" (Ls ≈ 251°) follows. | ["Once every three Mars years … on average"](https://www.nasa.gov/solar-system/the-fact-and-fiction-of-martian-dust-storms/). The season bounds are to verify. |
+| Debris or comet | A constant, rare rate at the destination. Earth sees it coming a long time ahead. | Game estimate |
+| Reaction wheel | Weibull per wheel, h(t) = (β/η)(t/η)^(β−1) with β > 1, times the wheels still working. 4 wheels are fitted and 3 are needed. | Game estimate |
+| Memory corruption | λ = λ₀ (1 + k_storm · [solar storm active]) (1 + k_rad · Ḋ/Ḋ_ref) | Game estimate |
+| Orbit-insertion anomaly | On the arrival day, if u < `BASE_RISK.arrival` × f(Δv margin left at arrival) | The Risk model's game values |
+
+### Commands and light time
+
+```latex
+t_{arrive} = t_{send} + \frac{d(t_{send})}{c}
+```
+
+- d is the Earth–craft distance when the command is sent (the light-time equation is not iterated; the craft moves very little in minutes).
+- **When Earth learns of a hazard:**
+  - one that the craft detects reaches Earth at t_onset + d/c;
+  - one that Earth sees first (solar observatories, comet surveys) is known a lead time *before* onset.
+- A response cannot be sent before the team has reacted (game estimate, 4 h).
+- Every hazard has a deadline. If no response has reached the craft by then, the craft follows its standing order if one is set and affordable; otherwise it does its fault-protection default, the free option.
+- No command can be sent during a conjunction moratorium; the receipt names the first day it can be.
+
+### Responses
+
+- Each hazard offers 2–3 responses. Each costs Δv (propellant), power (a minimum power margin that day), data (science days paused) or budget. Each has a failure chance and a failure effect: the craft, an instrument, the stored data, or a spell in safe mode.
+- Only the responses the remaining margins can pay for are offered. The free option is always offered.
+- A response is checked again when it reaches the craft. If it can no longer be paid for, the default runs instead.
+- Each outcome uses a number drawn at the start. Costs, failure chances and effects are game estimates.
+- **Real history.** Each hazard has a real-history text marked "to verify against NASA source" until it is checked.
+
+### Mission extension
+
+When the prime science phase ends (orbiters only), the mission pauses for a decision: end it, or extend by 1 year or by one NASA Senior Review cycle (3 years, to verify).
+
+**An option is offered only if all of these hold:**
+- the maintenance Δv for the extension fits the Δv left;
+- the power margin at the end of the extension is ≥ 0;
+- at Jupiter, the projected dose stays below the tolerance;
+- attitude control is still working;
+- the prime science return is at least the approval threshold (game estimate). This stands in for the Senior Review's science judgement.
+
+Extensions are paid with new money, so they do not draw on the prime budget. The extension's report gives the days flown, the data sent home, its cost and how it ended.
+
+### Debrief
+
+The prime mission is scored with the Scoring section's weights and band rules:
+- **science:** data downlinked by the end of the prime mission against the goal;
+- **mission success:** phases completed;
+- **budget:** development plus any operations overspend;
+- **Δv margin:** after response burns;
+- **power margin:** on the last prime day, eclipse included;
+- **mass margin:** as at launch;
+- **crisis handling:** the mean `crisisScore` over the hazards answered (100 when none came).
+
+Messages from Ops are codes with values, never English sentences with numbers, so the UI can translate them later.
+
 ## Validation set
 
 The engine passes validation when it reproduces each real mission's key numbers within ±10% using the same equations as the player. The results table goes on the Sources & Assumptions page; it is the strongest evidence for the Validity score.
@@ -318,6 +488,15 @@ MAVEN's mission ended after contact was lost on Dec. 6, 2025; NASA declared the 
 - Science orbit: about 150 × 6,300 km. Kepler's third law must give the published 4.5-hour period.
 - The orbit-insertion burn must use more than half the propellant.
 - 1-Earth-year primary mission.
+
+**Mission operations checks added in v0.4:**
+- **Mars solar conjunctions.** The engine's least Sun–Earth–Mars angle must fall within ±2 days of the middle of each published command moratorium:
+  - 2015: June 7–21, "within two degrees" ([JPL](https://www.jpl.nasa.gov/news/mars-missions-to-pause-commanding-in-june-due-to-sun/));
+  - 2017: July 22 – Aug. 1 ([JPL](https://www.jpl.nasa.gov/news/for-moratorium-on-sending-commands-to-mars-blame-the-sun/));
+  - 2019: Aug. 28 – Sept. 7 ([JPL](https://www.jpl.nasa.gov/news/whats-mars-solar-conjunction-and-why-does-it-matter/)).
+  The 2015 window at 2° must also match the published length within ±2 days.
+- **Mars perihelion Ls.** It is computed from the IAU pole and the ephemeris, against L_s,p = 251.000° + 0.0064891° × (year − 2000) ([NASA GISS Mars24 technical notes](https://www.giss.nasa.gov/tools/mars24/help/notes.html)).
+- **Info:** the Ops loss rate against the Risk meter. Ops replaces the base rates with hazards, so this row shows the difference and is not a pass/fail check.
 
 **Known gap:** the Atlas V payload curves are placeholders until NASA LSP points are exported, so the launch-capacity rows are not real evidence yet.
 
@@ -365,7 +544,15 @@ These are stated openly in the game. Each one is a standard simplification for e
 8. Mass growth margin 30%, tank mass 12% of propellant, and 50 m/s for trajectory corrections: game rules, not NASA requirements.
 9. Part costs are estimates until sourced; caps follow NASA Discovery / New Frontiers conventions.
 10. Base failure rates for non-launch phases are game values; launch reliability uses each vehicle's flight record.
-11. Thermal, radiation dose and atmospheric drag are not modelled, except through crisis cards.
+11. Thermal, radiation dose and atmospheric drag are not modelled, except through crisis cards. In Mission operations, the Jupiter radiation dose is modelled (game estimates), heaters are a power load, and cold days raise hardware hazard rates.
+13. **Mission operations:**
+    - the science orbit is fixed in inertial space (no J2 precession) and the shadow is cylindrical;
+    - the clock moves in whole days, with commands taking effect part-way through a day;
+    - hazards are independent Poisson processes;
+    - the solar cycle is a two-part cosine between published minima and maxima;
+    - the Moon has no conjunctions (no lunar ephemeris);
+    - cruise positions are drawn in the ecliptic plane;
+    - DSN fees are in FY09 dollars.
 12. Real-mission presets use published as-built dry mass (no 30% growth margin on top) and their planned prime-mission duration.
 
 Any game value must be labelled "game estimate" in its ⓘ popover, never presented as NASA data.
@@ -394,12 +581,24 @@ src/engine/
   cadet.ts            // Cadet guided build: sizing, cards, chips, gauges, testFlight()
   flightMap.ts        // craft position, signalDelay(), countdown(), flight frames, map, ghostFor()
   rescue.ts           // Rescue History cases, clues, consequence, stars
+  ops/                // Mission operations (no UI yet)
+    types.ts          //   state, ledger rows, events (codes + values), commands, decisions
+    predictable.ts    //   Sun–Earth–probe angle, conjunctions, eclipse seasons, Ls, Jupiter dose, forecast
+    random.ts         //   hazard rate models, per-hazard random streams, Poisson thinning
+    commands.ts       //   light-delayed command queue, moratorium
+    resources.ts      //   power plan and load shedding, recorder, DSN bookings and fees
+    responses.ts      //   hazard responses the margins can pay for, effects
+    extension.ts      //   extension options and report
+    timeline.ts       //   prepareOps (fixed day-by-day environment) and the mission clock
+    index.ts          //   startOperations, advanceOperations, sendCommand, decide, bookDsn, runOperations, operationsDebrief, operationsForecast
 src/data/
   destinations.json   launchVehicles.json   parts.json
   missions.json       // MAVEN, OSIRIS-REx, LRO presets
   crisisCards.json
   lessons.json        // Cadet lesson cards (Jupiter: Juno's gravity assist)
   rescueCases.json    // Rescue History: Mars Climate Orbiter
+  operations.json     // Mission operations parameters (conjunction threshold, solar cycles, DSN fees, …)
+  hazards.json        // Mission operations hazards, responses, real history
 tests/
   physics.test.ts     // each equation vs hand calculation
   validation.test.ts  // real missions within ±10%
@@ -438,7 +637,7 @@ interface Evaluation {
 }
 ```
 
-Entry points: `evaluateDesign`, `simulateMission`, `monteCarloMission`, `previewCrisis`, `crisisOrders` and `standingOrderPolicy` (`index.ts`); `designDelta` and `compareWithRealMission` (`compare.ts`); `bestLaunchWindow` (`trajectory.ts`); `cadetOptions`, `buildCadetDesign`, `cadetGauges` and `testFlight` (`cadet.ts`); `flightFrames`, `flightMap`, `signalDelay`, `countdown` and `ghostFor` (`flightMap.ts`); `rescueCase`, `inspectClue` and `rescueConsequence` (`rescue.ts`).
+Entry points: `evaluateDesign`, `simulateMission`, `monteCarloMission`, `previewCrisis`, `crisisOrders` and `standingOrderPolicy` (`index.ts`); `designDelta` and `compareWithRealMission` (`compare.ts`); `bestLaunchWindow` (`trajectory.ts`); `cadetOptions`, `buildCadetDesign`, `cadetGauges` and `testFlight` (`cadet.ts`); `flightFrames`, `flightMap`, `signalDelay`, `countdown` and `ghostFor` (`flightMap.ts`); `rescueCase`, `inspectClue` and `rescueConsequence` (`rescue.ts`); `startOperations`, `advanceOperations`, `sendCommand`, `decide`, `bookDsn`, `runOperations`, `operationsDebrief` and `operationsForecast` (`ops/index.ts`).
 
 Build order: constants → ephemeris → trajectory → propulsion → launch → power → comms → massCost → validation tests → risk, crisis, scoring. Don't build UI on a module until its tests pass.
 
@@ -508,3 +707,11 @@ The UI (`src/ui/`, React + Vite) follows the Claude Design mockups for Build Bay
 | 23 | Oct 4, 2026 | **Ghost path is rotated** about the Sun to start beside the player (the real mission flew in another year), and is labelled so. |
 | 24 | Oct 4, 2026 | **Fix: free crisis options are always offered.** `availableOptions` dropped the free option when a spare margin was negative, so an over-budget craft (which may launch) crashed the flight on its crisis. Zero-cost options are now always payable. |
 | 25 | Oct 4, 2026 | **Moon transfer timing.** The Moon transfer path is sampled evenly in angle, so craft positions in cruise come from Kepler's equation in time. The fixed Bennu route and the trip home stay approximate (drawing and light delay only). |
+| 26 | Oct 4, 2026 | **Mission operations** is a separate engine entry point (`src/engine/ops/`) with no UI yet. In Ops the explicit hazards **replace** the generic cruise and science base rates. Launch keeps the Laplace reliability, and the insertion anomaly reuses `BASE_RISK.arrival × f(Δv margin)`. |
+| 27 | Oct 4, 2026 | **Extension report is separate:** the 0–100 score and the stars stay on the prime mission. |
+| 28 | Oct 4, 2026 | **Determinism:** the mission is (design, seed, command log). Each hazard has its own random stream, and everything is drawn at the start by Poisson thinning, so decisions change the odds but never reshuffle the future. |
+| 29 | Oct 4, 2026 | **Conjunction:** no commands and no downlink while the Sun–Earth–probe angle is < 2° (JPL, 2015). Validated against the published 2015, 2017 and 2019 Mars moratoria. |
+| 30 | Oct 4, 2026 | **Eclipse seasons** come from a science orbit fixed in inertial space (no J2 precession), oriented from the IAU pole. MAVEN's inclination is 75° (AAS 21-211); the default is polar (game estimate). |
+| 31 | Oct 4, 2026 | **Mars Ls** is computed from the NASA fact-sheet pole and the ephemeris. It is checked against Mars24's perihelion Ls = 251° and drives the dust-storm season. |
+| 32 | Oct 4, 2026 | **DSN fees** use the published aperture-fee formula (R_B = $1,057/h FY09, A_W 1 for 34 m and 4 for 70 m, 1 h set-up per pass). The default daily pass is inside the operations cost; only extras are charged. |
+| 33 | Oct 4, 2026 | **Space weather rate** from NOAA's S3 + S4 counts (13 per 11-year cycle), shaped by the published cycle 24 and 25 minima and maxima. Mars global dust storms average one per 3 Mars years (NASA). |

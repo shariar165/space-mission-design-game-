@@ -4,10 +4,10 @@ import { G0, GAME_RULES, km, mu as muSI, S0 } from './constants';
 import { COMMS_CALIBRATED, dataMeter, dataPerDay_bits, dataRate, lightDelay_s, REFERENCE_LINK } from './comms';
 import { applicableCards, availableOptions, crisisScore, drawCrisis, safestOption, timeline, type CrisisCard, type CrisisOption, type PhaseWindow } from './crisis';
 import { DESTINATIONS, LAUNCH_VEHICLES, lookup, PARTS } from './data';
-import { earthDistance, julianDate, sunDistance } from './ephemeris';
+import { earthDistance, julianDate } from './ephemeris';
 import { launchMassCheck, launchSuccessProbability, payloadAtC3 } from './launch';
 import { componentMasses, costBreakdown, costEvaluation, massRollup, wetMass, type CostBreakdown } from './massCost';
-import { batteryMass, ETA_SYS, heaterPower, longestEclipse_s, powerMeter, rtgPower, solarPower, sunlightFraction } from './power';
+import { batteryMass, ETA_SYS, longestEclipse_s, powerMeter, powerOnDay, solarPower } from './power';
 import { deltaVBudget, deltaVCapability, deltaVMeter, engineBlockers, propellantBurned, type DeltaVBudget } from './propulsion';
 import { makeRng, phaseRisks, riskMeter, type Phase, type PhaseRisk } from './risk';
 import { budgetScore, marginBandScore, missionSuccessScore, nextStar, scienceGoal_Gbit, scienceScore, stars, totalScore, type Category } from './scoring';
@@ -53,21 +53,6 @@ export interface FullEvaluation extends Evaluation {
   };
 }
 
-function powerAt(design: Design, jd: number, years: number, baseRequired_W: number, heaterBase_W: number) {
-  const rSun = sunDistance(design.destination, jd);
-  const available_W =
-    design.power.type === 'solar'
-      ? solarPower({
-          area_m2: design.power.arrayArea_m2 ?? 0,
-          sunDistance_m: rSun,
-          degradationPerYear: PARTS.power.solarDegradation_perYear.value,
-          years,
-        })
-      : rtgPower(design.power.rtgCount ?? 0);
-  const heaters_W = heaterPower(heaterBase_W, sunlightFraction(rSun));
-  return { rSun, available_W, heaters_W, required_W: baseRequired_W + heaters_W };
-}
-
 export function evaluateDesign(design: Design): FullEvaluation {
   const dest = DESTINATIONS[design.destination];
   const bus = lookup(PARTS.buses, design.busId, 'bus');
@@ -110,8 +95,8 @@ export function evaluateDesign(design: Design): FullEvaluation {
   // --- Power (arrival day, and end of science for the end-of-mission margin) ---
   const commsDraw_W = design.comms.txPower_W / PARTS.comms.dcToRfEfficiency.value;
   const baseRequired_W = bus.power_W.value + instruments.reduce((s, i) => s + i.power_W.value, 0) + commsDraw_W + engine.power_W.value;
-  const atArrival = powerAt(design, jdArrival, (jdArrival - jdLaunch) / 365.25, baseRequired_W, bus.heaterBase_W.value);
-  const atEnd = powerAt(design, jdEndScience, (jdEndScience - jdLaunch) / 365.25, baseRequired_W, bus.heaterBase_W.value);
+  const atArrival = powerOnDay(design, jdArrival, (jdArrival - jdLaunch) / 365.25, baseRequired_W, bus.heaterBase_W.value);
+  const atEnd = powerOnDay(design, jdEndScience, (jdEndScience - jdLaunch) / 365.25, baseRequired_W, bus.heaterBase_W.value);
   const power = powerMeter(atArrival.available_W, atArrival.required_W, {
     S0,
     sunDistance: derived(atArrival.rSun, 'm', 'JPL approximate ephemeris on arrival day'),
@@ -387,7 +372,7 @@ function setUpCrisis(p: Prepared, rng: () => number): { tl: PhaseWindow[]; drawn
  * Craft mass during a phase (kg): the wet mass until arrival. After arrival, the wet mass minus the propellant
  * burned for the arrival burn, the capture → science orbit change and the trajectory corrections (rocket equation).
  */
-function massInPhase(ev: FullEvaluation, phase: Phase): number {
+export function massInPhase(ev: FullEvaluation, phase: Phase): number {
   const d = ev.details;
   if (phase === 'launch' || phase === 'cruise') return d.wetMass_kg;
   const b = d.deltaVBudget;

@@ -1,0 +1,69 @@
+{
+  "conjunction": {
+    "commandThreshold_deg": { "value": 2, "unit": "deg (Sun–Earth–probe angle)", "source": "JPL news, 'Mars Missions to Pause Commanding in June, Due to Sun' (2015): the moratorium applies while 'the sun will be within two degrees of Mars in Earth's sky'", "url": "https://www.jpl.nasa.gov/news/mars-missions-to-pause-commanding-in-june-due-to-sun/", "isGameEstimate": false }
+  },
+  "solarCycle": {
+    "cycle24": { "value": ["2008-12-01", "2014-04-01"], "unit": "[minimum, maximum] (UTC month)", "source": "NOAA SWPC: Solar Cycle 24 began in December 2008; its smoothed sunspot maximum came in April 2014", "url": "https://www.swpc.noaa.gov/news/sun-solar-maximum-solar-cycle-24-seeing-second-higher-peak-sunspot-number-updated", "isGameEstimate": false },
+    "cycle25": { "value": ["2019-12-01", "2024-10-01"], "unit": "[minimum, maximum] (UTC month)", "source": "NASA/NOAA: solar minimum Dec. 2019; on Oct. 15, 2024 NASA and NOAA announced the Sun had reached its solar maximum period", "url": "https://science.nasa.gov/science-research/heliophysics/nasa-noaa-sun-reaches-maximum-phase-in-11-year-solar-cycle/", "isGameEstimate": false },
+    "length_years": { "value": 11, "unit": "years", "source": "NOAA Space Weather Scales: 1 cycle = 11 years. Cycles before 24 and after 25 repeat the nearest cycle's shape every 11 years (game rule).", "url": "https://www.spaceweather.gov/noaa-scales-explanation", "isGameEstimate": false }
+  },
+  "spaceWeather": {
+    "strongStormsPerCycle": { "value": 13, "unit": "events per 11-year cycle", "source": "NOAA Space Weather Scales: solar radiation storms S3 (strong) 10 per cycle + S4 (severe) 3 per cycle; S5 (fewer than 1 per cycle) not counted. S3 effects include single-event upsets.", "url": "https://www.spaceweather.gov/noaa-scales-explanation", "isGameEstimate": false },
+    "quietToActiveRatio": { "value": 0.1, "unit": "λ_min / λ_max", "source": "Game estimate: storm rate at solar minimum as a fraction of the rate at maximum", "isGameEstimate": true },
+    "distanceExponent": { "value": 2, "unit": "n in (1 AU / r)^n", "source": "Game estimate: storm particle flux taken to fall as 1/r² with distance from the Sun", "isGameEstimate": true }
+  },
+  "marsDust": {
+    "globalStormsPerMarsYear": { "value": 0.3333333333, "unit": "storms per Mars year", "source": "NASA, 'The Fact and Fiction of Martian Dust Storms': 'Once every three Mars years (about 5 ½ Earth years), on average, normal storms grow into planet-encircling dust storms'", "url": "https://www.nasa.gov/solar-system/the-fact-and-fiction-of-martian-dust-storms/", "isGameEstimate": false },
+    "seasonStartLs_deg": { "value": 180, "unit": "deg Ls", "source": "Season of global storms: southern spring and summer (Ls 180–360°). NASA says larger storms happen in southern summer; the spring start is to verify against NASA source", "url": "https://www.nasa.gov/solar-system/the-fact-and-fiction-of-martian-dust-storms/", "isGameEstimate": true },
+    "seasonEndLs_deg": { "value": 360, "unit": "deg Ls", "source": "End of southern summer (Ls 360°); to verify against NASA source", "isGameEstimate": true },
+    "perihelionLs_deg": { "value": 251.0, "unit": "deg Ls at J2000", "source": "NASA GISS Mars24 technical notes: areocentric longitude of perihelion L_s,p = 251.000° + 0.0064891° × (yr − 2000)", "url": "https://www.giss.nasa.gov/tools/mars24/help/notes.html", "isGameEstimate": false },
+    "perihelionLsRate_degPerYear": { "value": 0.0064891, "unit": "deg per year", "source": "NASA GISS Mars24 technical notes: L_s,p = 251.000° + 0.0064891° × (yr − 2000)", "url": "https://www.giss.nasa.gov/tools/mars24/help/notes.html", "isGameEstimate": false }
+  },
+  "debris": {
+    "rate_perYear": { "value": 0.03, "unit": "events per year at the destination", "source": "Game estimate: close comet passes or debris streams at a planet are rare", "isGameEstimate": true }
+  },
+  "reactionWheels": {
+    "installed": { "value": 4, "unit": "wheels", "source": "Game estimate: four wheels in a pyramid, a common layout", "isGameEstimate": true },
+    "needed": { "value": 3, "unit": "wheels", "source": "Game estimate: three wheels give full three-axis control", "isGameEstimate": true },
+    "weibullShape": { "value": 2, "unit": "β (dimensionless)", "source": "Game estimate: wear-out failures, hazard rising with age (β > 1)", "isGameEstimate": true },
+    "weibullScale_years": { "value": 15, "unit": "η (years)", "source": "Game estimate: characteristic wheel life", "isGameEstimate": true }
+  },
+  "memory": {
+    "baseRate_perYear": { "value": 0.2, "unit": "events per year", "source": "Game estimate: memory upsets that need ground action", "isGameEstimate": true },
+    "stormFactor": { "value": 5, "unit": "k_storm", "source": "Game estimate: extra upset rate while a solar storm is active (NOAA S3 lists single-event upsets as likely)", "isGameEstimate": true },
+    "radiationFactor": { "value": 1, "unit": "k_rad per Ḋ_ref", "source": "Game estimate: upset rate rises with the radiation dose rate", "isGameEstimate": true }
+  },
+  "power": {
+    "coldHazardFactor": { "value": 2, "unit": "k_cold", "source": "Game estimate: hardware hazard rates on a day with heaters below need", "isGameEstimate": true },
+    "brownoutDaysToLoss": { "value": 3, "unit": "days in a row", "source": "Game estimate: days the bus can go unpowered before the craft is lost", "isGameEstimate": true }
+  },
+  "recorder": {
+    "capacity_Gbit": { "value": 160, "unit": "Gbit", "source": "Game estimate after MRO's solid-state recorder (about 160 Gbit); to verify against NASA source", "isGameEstimate": true }
+  },
+  "dsn": {
+    "baseRate_perHour": { "value": 1057, "unit": "$/h (FY09)", "source": "NASA's Mission Operations and Communications Services (JPL D-22674, Oct 2014), Eq. 2-1: R_B contact-dependent hourly rate, $1057/hr for FY09", "url": "https://deepspace.jpl.nasa.gov/files/6_NASA_MOCS_2014_10_01_14.pdf", "isGameEstimate": false },
+    "apertureWeight34": { "value": 1, "unit": "A_W", "source": "NASA MO&CS (Oct 2014), Eq. 2-1: A_W = 1.00 for 34-meter BWG and HEF stations", "url": "https://deepspace.jpl.nasa.gov/files/6_NASA_MOCS_2014_10_01_14.pdf", "isGameEstimate": false },
+    "apertureWeight70": { "value": 4, "unit": "A_W", "source": "NASA MO&CS (Oct 2014), Eq. 2-1: A_W = 4.00 for 70-meter stations", "url": "https://deepspace.jpl.nasa.gov/files/6_NASA_MOCS_2014_10_01_14.pdf", "isGameEstimate": false },
+    "contactsPerWeek": { "value": 7, "unit": "F_C (contacts per week)", "source": "Game rule: one pass a day (F_C in NASA MO&CS Eq. 2-1)", "isGameEstimate": true },
+    "passOverhead_h": { "value": 1, "unit": "h per pass", "source": "NASA MO&CS (Oct 2014): a 45-minute setup and a 15-minute tear-down are added to each scheduled pass", "url": "https://deepspace.jpl.nasa.gov/files/6_NASA_MOCS_2014_10_01_14.pdf", "isGameEstimate": false },
+    "bookingLead_days": { "value": 7, "unit": "days", "source": "Game estimate: DSN passes are scheduled ahead of time", "isGameEstimate": true }
+  },
+  "team": {
+    "reaction_h": { "value": 4, "unit": "h", "source": "Game estimate: time for the operations team to diagnose and prepare a command", "isGameEstimate": true }
+  },
+  "trajectoryCorrections": {
+    "cruiseFractions": { "value": [0.05, 0.3, 0.7, 0.95], "unit": "fraction of cruise", "source": "Game estimate: four trajectory-correction burns of equal size", "isGameEstimate": true }
+  },
+  "safeMode": {
+    "days": { "value": 7, "unit": "days", "source": "Game estimate: science paused while the craft recovers from safe mode", "isGameEstimate": true }
+  },
+  "extension": {
+    "optionYears": { "value": [1, 3], "unit": "years", "source": "Game rule: one year, or one NASA planetary Senior Review cycle (3 years, to verify against NASA source)", "isGameEstimate": true },
+    "approvalScience": { "value": 0.5, "unit": "fraction of the science goal", "source": "Game estimate: stands in for the Senior Review's judgement of science return", "isGameEstimate": true }
+  },
+  "orbitDefaults": {
+    "inclination_deg": { "value": 90, "unit": "deg to the planet's equator", "source": "Game estimate: a polar mapping orbit", "isGameEstimate": true },
+    "raan_deg": { "value": 0, "unit": "deg from the IAU node", "source": "Game estimate", "isGameEstimate": true },
+    "argPeriapsis_deg": { "value": 0, "unit": "deg", "source": "Game estimate", "isGameEstimate": true }
+  }
+}

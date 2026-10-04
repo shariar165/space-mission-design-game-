@@ -50,8 +50,12 @@ export interface Design {
   scienceDays?: number;
   /** Planned total lifetime at the target incl. extended mission (≥ scienceDays). Sizes the lifetime Δv reserve. */
   lifetimeDays?: number;
-  /** Science orbit (altitudes, km). Defaults to the capture orbit, i.e. no orbit-change burn. */
-  scienceOrbit?: { periapsis_km: number; apoapsis_km: number };
+  /**
+   * Science orbit (altitudes, km). Defaults to the capture orbit, i.e. no orbit-change burn. The optional
+   * orientation (degrees, measured from the planet's IAU equator and node) is used by Mission operations for
+   * eclipse seasons and the radiation dose; defaults come from operations.json.
+   */
+  scienceOrbit?: { periapsis_km: number; apoapsis_km: number; inclination_deg?: number; raan_deg?: number; argPeriapsis_deg?: number };
   /** 'direct' (default) uses Lambert between the dates; a fixed route uses a published real-mission route. */
   trajectoryOption?: 'direct' | 'nasa-earth-flyby';
   /**

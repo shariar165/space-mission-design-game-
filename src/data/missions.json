@@ -148,7 +148,8 @@
           "source": "NASAfacts: MAVEN Orbit Insertion: farthest point about 3,900 miles (roughly 6,300 kilometers)",
           "url": "https://science.nasa.gov/wp-content/uploads/2024/03/44740_MAVEN-Fact-Sheet.pdf",
           "isGameEstimate": false
-        }
+        },
+        "inclination_deg": {"value": 75, "unit": "deg to the Mars equator", "source": "L. J. Wood, 'The Evolution of Deep Space Navigation: 2014–2016' (AAS 21-211): MAVEN science orbit inclination 75 ± 1.875 deg (3σ)", "url": "https://descanso.jpl.nasa.gov/evolution/AAS%2021-211.pdf", "isGameEstimate": false}
       },
       "lifetimeDays": {
         "value": 365,

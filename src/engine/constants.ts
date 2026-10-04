@@ -20,6 +20,10 @@ export const MU_EARTH = sourced(398_600, 'km³/s²', 'NASA Mars/Earth Fact Sheet
 export const R_EARTH = sourced(6378.1, 'km', 'NASA Mars/Earth Fact Sheet (equatorial radius)', {
   url: MARS_FACT_SHEET,
 });
+/** Obliquity of the ecliptic at J2000 (rotates J2000 equatorial vectors into the ecliptic frame). */
+export const OBLIQUITY_J2000 = sourced(23.43928, 'deg', 'JPL Solar System Dynamics: Approximate Positions of the Planets (obliquity at J2000)', {
+  url: 'https://ssd.jpl.nasa.gov/planets/approx_pos.html',
+});
 export const EARTH_ORBIT_PERIOD = sourced(365.256, 'days', 'NASA Earth Fact Sheet (sidereal orbit period)', {
   url: EARTH_FACT_SHEET,
 });
@@ -44,6 +48,7 @@ export const CONSTANTS: Record<string, Sourced<number>> = {
   MU_EARTH,
   R_EARTH,
   EARTH_ORBIT_PERIOD,
+  OBLIQUITY_J2000,
   ...GAME_RULES,
 };
 
