@@ -116,6 +116,7 @@ export interface Parts {
     rtgMass_kg: S;
     rtgCost_M: S;
     batterySpecificEnergy_Wh_per_kg: S;
+    batteryMaxDepthOfDischarge: S;
     heaterSunlightFactor: S;
   };
   comms: {

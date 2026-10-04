@@ -307,10 +307,27 @@ const cadetBase = (d: Design['destination']) => starterDesign(d, FROM);
 
 describe('Cadet sizing: sizeKnob', () => {
   const mars = cadetBase('mars');
-  it('worst power margin = the lower of arrival day and end of science (panels age, the Sun moves away)', () => {
+  it('worst power margin = the Power meter (the worst day of the mission, end of science and eclipses included)', () => {
     const e = evaluateDesign(mars);
     const end = e.details.power.atEndOfScience;
-    expect(cadet.worstPowerMargin(e)).toBe(Math.min(e.meters.power.margin, (end.available_W - end.required_W) / end.required_W));
+    expect(cadet.worstPowerMargin(e)).toBe(e.meters.power.margin);
+    expect(cadet.worstPowerMargin(e)).toBeLessThanOrEqual((end.available_W - end.required_W) / end.required_W + 1e-12);
+  });
+
+  it('the battery gauge warns when the worst power day is in an eclipse season', () => {
+    const polar: Design = { ...mars, scienceOrbit: { periapsis_km: 400, apoapsis_km: 400, inclination_deg: 90 } };
+    for (const d of [mars, polar]) {
+      const e = evaluateDesign(d);
+      const w = cadet.cadetGauges(e).power.eclipse;
+      const seasons = e.details.power.eclipseSeasons;
+      expect(w.seasons).toBe(seasons.length);
+      expect(w.warn).toBe(seasons.length > 0 && e.details.power.worstDay.eclipseFraction > 0);
+      expect(w.worstMargin).toBe(e.meters.power.margin);
+      expect(w.sunlitMargin).toBeGreaterThanOrEqual(w.worstMargin);
+      if (seasons.length) expect(w.first).toEqual({ startDate: seasons[0]!.startDate, endDate: seasons[0]!.endDate });
+    }
+    // a low polar orbit at Mars spends about a third of some days in shadow: that is the weakest day
+    expect(cadet.cadetGauges(evaluateDesign(polar)).power.eclipse.warn).toBe(true);
   });
   it('the smallest array that reaches a 25% power margin (one input step smaller misses it)', () => {
     const d = cadet.sizeKnob(mars, 'arrayArea', 0.25);

@@ -5,7 +5,7 @@ import { useId, useState } from 'react';
 import { GAUGE_KEYS, type CadetGauges, type GaugeKey } from '../../engine/cadet';
 import type { FullEvaluation } from '../../engine/index';
 import type { Design, MeterStatus } from '../../engine/types';
-import { GAUGE_ICON, GAUGE_LABEL, GAUGE_SHORT, GAUGE_STATUS } from '../cadetWords';
+import { ECLIPSE_WORDS, GAUGE_ICON, GAUGE_LABEL, GAUGE_SHORT, GAUGE_STATUS } from '../cadetWords';
 import * as f from '../format';
 import { gaugeGeometry, meterView, scaleTilt } from '../meters';
 import { SourceInfo } from './SourceInfo';
@@ -48,16 +48,21 @@ export function Gauges({ gauges, ev, design, destName }: Props) {
                 <StatusIcon status={g.status} size={13} />
                 {GAUGE_STATUS[k][g.status]}
               </span>
+              {k === 'power' && gauges.power.eclipse.warn && (
+                <span className="gauge-eclipse">
+                  <span aria-hidden="true">🌑</span> {ECLIPSE_WORDS.badge}
+                </span>
+              )}
             </button>
           );
         })}
       </div>
-      {open && <Reveal k={open} ev={ev} design={design} id={panelId} onClose={() => setOpen(undefined)} />}
+      {open && <Reveal k={open} ev={ev} design={design} gauges={gauges} id={panelId} onClose={() => setOpen(undefined)} />}
     </section>
   );
 }
 
-function Reveal({ k, ev, design, id, onClose }: { k: GaugeKey; ev: FullEvaluation; design: Design; id: string; onClose: () => void }) {
+function Reveal({ k, ev, design, gauges, id, onClose }: { k: GaugeKey; ev: FullEvaluation; design: Design; gauges: CadetGauges; id: string; onClose: () => void }) {
   const meterKey = { weight: 'mass', power: 'power', fuel: 'deltaV', photos: 'data', budget: 'cost' } as const;
   const m = ev.meters[meterKey[k]];
   const v = meterView(meterKey[k], m, ev, design);
@@ -79,6 +84,7 @@ function Reveal({ k, ev, design, id, onClose }: { k: GaugeKey; ev: FullEvaluatio
         {m.limitSource && <SourceInfo s={m.limitSource} title={`${GAUGE_LABEL[k]} limit`} />}
       </div>
       <div className="reveal-say">{v.say}</div>
+      {k === 'power' && <EclipseBlock e={gauges.power.eclipse} />}
       {m.limitSource?.isGameEstimate && <span className="badge est">LIMIT RESTS ON A GAME ESTIMATE</span>}
       <div className="reveal-inputs">
         {Object.entries(m.inputs).map(([key, s]) => (
@@ -89,6 +95,44 @@ function Reveal({ k, ev, design, id, onClose }: { k: GaugeKey; ev: FullEvaluatio
           </span>
         ))}
       </div>
+    </div>
+  );
+}
+
+function EclipseBlock({ e }: { e: CadetGauges['power']['eclipse'] }) {
+  if (e.seasons === 0) return <div className="reveal-eclipse calm">{ECLIPSE_WORDS.none}</div>;
+  return (
+    <div className={`reveal-eclipse${e.warn ? ' warn' : ' calm'}`}>
+      <span className="kicker">
+        <span aria-hidden="true">🌑</span> {ECLIPSE_WORDS.title} · {f.num(e.seasons)}
+      </span>
+      <p>{e.warn ? ECLIPSE_WORDS.warn : ECLIPSE_WORDS.calm}</p>
+      <dl className="eclipse-facts">
+        {e.first && (
+          <div>
+            <dt>First season</dt>
+            <dd className="mono">
+              {f.isoDate(e.first.startDate)} – {f.isoDate(e.first.endDate)}
+            </dd>
+          </div>
+        )}
+        <div>
+          <dt>Longest shadow</dt>
+          <dd className="mono">{f.minutes(e.longestEclipse_s)}</dd>
+        </div>
+        <div>
+          <dt>Most of a day in shadow</dt>
+          <dd className="mono">{f.pct(e.maxShadowFraction)}</dd>
+        </div>
+        <div>
+          <dt>Spare power, worst day</dt>
+          <dd className="mono">{f.pct(e.worstMargin)}</dd>
+        </div>
+        <div>
+          <dt>Spare power, worst sunny day</dt>
+          <dd className="mono">{f.pct(e.sunlitMargin)}</dd>
+        </div>
+      </dl>
     </div>
   );
 }
@@ -124,6 +168,12 @@ function Art({ k, gauges }: { k: GaugeKey; gauges: CadetGauges }) {
           <rect x="20" y={top + 3 + (h - 6) * (1 - level)} width="24" height={(h - 6) * level} rx="3" fill={c} className="fill-anim" />
           <path d={`M14 ${top + 3 + (h - 6) * (1 - line)} H50`} stroke="#eaf0fa" strokeWidth="1.5" strokeDasharray="3 2" />
           <path d="M34 20 L27 34 H33 L30 46 L38 30 H32 Z" fill="#0a1430" opacity="0.55" />
+          {gauges.power.eclipse.warn && (
+            <g className="eclipse-mark">
+              <circle cx="50" cy="14" r="8" fill="#0a1430" stroke="var(--warn)" strokeWidth="2" />
+              <circle cx="53" cy="12" r="6" fill="var(--warn)" opacity="0.35" />
+            </g>
+          )}
         </svg>
       ) : (
         <svg viewBox="0 0 64 64" width="64" height="64">

@@ -90,10 +90,9 @@ export function smallestOnGrid(f: (x: number) => number, target: number, lo: num
   return at(b);
 }
 
-/** The power margin a design must keep: the lower of arrival day and the end of science. */
+/** The power margin a design must keep: the Power meter's, which is already the worst day of the mission (eclipses included). */
 export function worstPowerMargin(ev: FullEvaluation): number {
-  const end = ev.details.power.atEndOfScience;
-  return Math.min(ev.meters.power.margin, (end.available_W - end.required_W) / end.required_W);
+  return ev.meters.power.margin;
 }
 
 const KNOB: Record<Knob, { set: (d: Design, x: number) => Design; margin: (ev: FullEvaluation) => number }> = {
@@ -271,7 +270,38 @@ export interface Gauge {
   ratio: number;
 }
 
-export type CadetGauges = Record<Exclude<GaugeKey, 'photos'>, Gauge> & { photos: Gauge & { taken: number; sent: number } };
+/** Eclipse seasons for the battery gauge: when the planet's shadow sets the power limit, the gauge warns. */
+export interface EclipseWarning {
+  seasons: number;
+  first?: { startDate: string; endDate: string };
+  /** Longest single eclipse (s) and the largest share of a day in shadow, over the prime mission. */
+  longestEclipse_s: number;
+  maxShadowFraction: number;
+  /** Power margin on the worst day, and on the worst day with no eclipse. */
+  worstMargin: number;
+  sunlitMargin: number;
+  /** The worst power day is an eclipse day. */
+  warn: boolean;
+}
+
+export type CadetGauges = Record<Exclude<GaugeKey, 'photos' | 'power'>, Gauge> & {
+  power: Gauge & { eclipse: EclipseWarning };
+  photos: Gauge & { taken: number; sent: number };
+};
+
+export function eclipseWarning(ev: FullEvaluation): EclipseWarning {
+  const p = ev.details.power;
+  const first = p.eclipseSeasons[0];
+  return {
+    seasons: p.eclipseSeasons.length,
+    ...(first ? { first: { startDate: first.startDate, endDate: first.endDate } } : {}),
+    longestEclipse_s: Math.max(0, ...p.eclipseSeasons.map((s) => s.longestEclipse_s)),
+    maxShadowFraction: Math.max(0, ...p.eclipseSeasons.map((s) => s.maxFraction)),
+    worstMargin: p.worstDay.margin,
+    sunlitMargin: p.worstSunlitMargin,
+    warn: p.eclipseSeasons.length > 0 && p.worstDay.eclipseFraction > 0,
+  };
+}
 
 export function cadetGauges(ev: FullEvaluation): CadetGauges {
   const g = (key: GaugeKey): Gauge => {
@@ -281,7 +311,7 @@ export function cadetGauges(ev: FullEvaluation): CadetGauges {
   const data = ev.details.data;
   return {
     weight: g('weight'),
-    power: g('power'),
+    power: { ...g('power'), eclipse: eclipseWarning(ev) },
     fuel: g('fuel'),
     budget: g('budget'),
     photos: { ...g('photos'), taken: photos(data.producedPerDay_bits), sent: photos(Math.min(data.producedPerDay_bits, data.downlinkedPerDayAtArrival_bits)) },

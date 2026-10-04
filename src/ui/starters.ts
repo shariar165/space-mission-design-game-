@@ -33,7 +33,7 @@ const GENERIC: Record<'moon' | 'venus' | 'jupiter', Parts> = {
     power: { type: 'solar', arrayArea_m2: 6 },
     comms: { dishDiameter_m: 2, txPower_W: 100, groundDish_m: 34 },
     engineId: 'biprop-mmh-nto',
-    propellant_kg: 1300,
+    propellant_kg: 1100,
     scienceDays: 365,
     captureOrbit: { periapsis_km: 300, apoapsis_km: 60000 },
   },

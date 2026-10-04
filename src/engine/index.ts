@@ -7,7 +7,8 @@ import { DESTINATIONS, LAUNCH_VEHICLES, lookup, PARTS } from './data';
 import { earthDistance, julianDate } from './ephemeris';
 import { launchMassCheck, launchSuccessProbability, payloadAtC3 } from './launch';
 import { componentMasses, costBreakdown, costEvaluation, massRollup, wetMass, type CostBreakdown } from './massCost';
-import { batteryMass, ETA_SYS, longestEclipse_s, powerMeter, powerOnDay, solarPower } from './power';
+import { ETA_SYS, longestEclipse_s, powerMeter, powerOnDay, solarPower } from './power';
+import { designLoads, eclipseSeasons, powerProfile, worstPowerDay, type EclipseSeasonSummary, type PowerDay, type PowerProfile } from './powerProfile';
 import { deltaVBudget, deltaVCapability, deltaVMeter, engineBlockers, propellantBurned, type DeltaVBudget } from './propulsion';
 import { makeRng, phaseRisks, riskMeter, type Phase, type PhaseRisk } from './risk';
 import { budgetScore, marginBandScore, missionSuccessScore, nextStar, scienceGoal_Gbit, scienceScore, stars, totalScore, type Category } from './scoring';
@@ -25,7 +26,20 @@ export interface FullEvaluation extends Evaluation {
     deltaVBudget: DeltaVBudget;
     phaseRisks: PhaseRisk[];
     launchSuccess: number;
-    power: { available_W: number; required_W: number; atEndOfScience: { available_W: number; required_W: number } };
+    /**
+     * available/required: arrival day in sunlight, every instrument on (the generation figure compared with real
+     * missions). atEndOfScience: the last science day, eclipse included. worstDay: the Power meter's day.
+     */
+    power: {
+      available_W: number;
+      required_W: number;
+      atEndOfScience: { available_W: number; required_W: number };
+      worstDay: PowerDay;
+      /** Lowest margin on a day with no eclipse (the worst day if every day has one). */
+      worstSunlitMargin: number;
+      eclipseSeasons: EclipseSeasonSummary[];
+      battery: PowerProfile['battery'];
+    };
     data: { producedPerDay_bits: number; downlinkedPerDayAtArrival_bits: number };
     cost: { development_M: number; launch_M: number; operations_M: number; cap_M: number };
     /** Development cost of each part group ($M). */
@@ -90,25 +104,60 @@ export function evaluateDesign(design: Design): FullEvaluation {
   }
   const jdLaunch = julianDate(launchDate);
   const jdArrival = design.destination === 'moon' ? jdLaunch + transfer.flightDays : julianDate(arrivalDate);
-  const jdEndScience = jdArrival + scienceDays;
 
-  // --- Power (arrival day, and end of science for the end-of-mission margin) ---
+  // --- Power: every day from launch to the end of the prime mission, eclipses included ---
+  // The meter shows the worst day (spec: Power). Mission operations reads the same days (one model).
   const commsDraw_W = design.comms.txPower_W / PARTS.comms.dcToRfEfficiency.value;
-  const baseRequired_W = bus.power_W.value + instruments.reduce((s, i) => s + i.power_W.value, 0) + commsDraw_W + engine.power_W.value;
+  const instruments_W = instruments.reduce((s, i) => s + i.power_W.value, 0);
+  const baseRequired_W = bus.power_W.value + instruments_W + commsDraw_W + engine.power_W.value;
   const atArrival = powerOnDay(design, jdArrival, (jdArrival - jdLaunch) / 365.25, baseRequired_W, bus.heaterBase_W.value);
-  const atEnd = powerOnDay(design, jdEndScience, (jdEndScience - jdLaunch) / 365.25, baseRequired_W, bus.heaterBase_W.value);
-  const power = powerMeter(atArrival.available_W, atArrival.required_W, {
+
+  // Orbits: the worst-case eclipse in the science orbit sizes the battery.
+  const scienceOrbit = design.scienceOrbit ?? design.captureOrbit;
+  let worstEclipse_s = 0;
+  let orbitTransfer_ms = 0;
+  if (dest.missionType === 'orbiter') {
+    const R = km(dest.radius_km.value);
+    const mu = muSI(dest.gm_km3s2.value);
+    const sci = { rp: R + km(scienceOrbit.periapsis_km), ra: R + km(scienceOrbit.apoapsis_km) };
+    worstEclipse_s = longestEclipse_s(mu, R, sci.rp, sci.ra);
+    if (design.scienceOrbit) {
+      const cap = { rp: R + km(design.captureOrbit.periapsis_km), ra: R + km(design.captureOrbit.apoapsis_km) };
+      orbitTransfer_ms = orbitChangeDeltaV(mu, cap, sci);
+    }
+  }
+  const profile = powerProfile(
+    { design, jdLaunch, flightDays: transfer.flightDays, path: transfer.path, scienceDays, sampleReturn, loads: designLoads(design) },
+    worstEclipse_s,
+  );
+  const battery_kg = profile.battery.mass_kg;
+  const worst = worstPowerDay(profile);
+  const seasons = eclipseSeasons(profile);
+  const sunlitDays = profile.days.filter((d) => d.day <= profile.primeEndDay && d.eclipseFraction === 0);
+  const worstSunlit = sunlitDays.length ? sunlitDays.reduce((a, b) => (b.margin < a.margin ? b : a)) : worst;
+  // Last science day, eclipse included (the end-of-mission power margin for scoring).
+  const endDay = profile.days.filter((d) => d.phase === 'science').at(-1) ?? worst;
+  const power = powerMeter(worst.available_W, worst.required_W, {
     S0,
-    sunDistance: derived(atArrival.rSun, 'm', 'JPL approximate ephemeris on arrival day'),
+    sunDistance: derived(worst.sunDistance_m, 'm', `craft's distance from the Sun on the worst day (mission day ${worst.day}, ${worst.date})`),
     arrayArea: sourced(design.power.arrayArea_m2 ?? 0, 'm²', 'Player design'),
     etaSys: ETA_SYS,
     degradationPerYear: PARTS.power.solarDegradation_perYear,
+    eclipseFraction: derived(worst.eclipseFraction, 'fraction of the day', 'cylindrical shadow on the science orbit, fixed in inertial space'),
+    longestEclipse: derived(worst.longestEclipse_s, 's', 'longest single eclipse that day'),
+    batteryCapacity: derived(profile.battery.capacity_Wh, 'Wh', 'worst-case eclipse × heaviest science load / depth of discharge'),
+    depthOfDischarge: PARTS.power.batteryMaxDepthOfDischarge,
     busPower: bus.power_W,
-    heaters: derived(atArrival.heaters_W, 'W', 'base × (1 + k(1 − sunlight))'),
+    heaters: derived(worst.heaterNeed_W, 'W', 'base × (1 + k(1 − sunlight))'),
     commsDraw: derived(commsDraw_W, 'W', 'P_t / DC-to-RF efficiency'),
   });
+  power.equation =
+    'Worst day of the mission: P_avail = min(P_gen(1 − f_ecl), E_batt/t_ecl), P_gen = S₀(1 AU/r)²·A·η_sys·(1−d)^t (or RTG count × 110 W); margin = (available − required)/required';
   if (power.status === 'over') {
-    blockers.push(`Not enough power: ${Math.round(atArrival.available_W)} W available, ${Math.round(atArrival.required_W)} W needed.`);
+    blockers.push(`Not enough power on mission day ${worst.day} (${worst.date}): ${Math.round(worst.available_W)} W available, ${Math.round(worst.required_W)} W needed.`);
+  }
+  if (seasons.length && worst.eclipseFraction > 0) {
+    notes.push(`The worst power day falls in an eclipse season: the craft is in shadow ${Math.round(worst.eclipseFraction * 100)}% of that day.`);
   }
 
   let solarPowerRange_W: Evaluation['details']['solarPowerRange_W'];
@@ -119,21 +168,6 @@ export function evaluateDesign(design: Design): FullEvaluation {
       atPerihelion: solarPower({ area_m2: design.power.arrayArea_m2 ?? 0, sunDistance_m: ext.perihelion_m }),
       atAphelion: solarPower({ area_m2: design.power.arrayArea_m2 ?? 0, sunDistance_m: ext.aphelion_m }),
     };
-  }
-
-  // --- Orbits and batteries (longest eclipse in the science orbit) ---
-  const scienceOrbit = design.scienceOrbit ?? design.captureOrbit;
-  let battery_kg = 0;
-  let orbitTransfer_ms = 0;
-  if (dest.missionType === 'orbiter') {
-    const R = km(dest.radius_km.value);
-    const mu = muSI(dest.gm_km3s2.value);
-    const sci = { rp: R + km(scienceOrbit.periapsis_km), ra: R + km(scienceOrbit.apoapsis_km) };
-    battery_kg = batteryMass(longestEclipse_s(mu, R, sci.rp, sci.ra), atArrival.required_W);
-    if (design.scienceOrbit) {
-      const cap = { rp: R + km(design.captureOrbit.periapsis_km), ra: R + km(design.captureOrbit.apoapsis_km) };
-      orbitTransfer_ms = orbitChangeDeltaV(mu, cap, sci);
-    }
   }
 
   // --- Mass ---
@@ -234,7 +268,11 @@ export function evaluateDesign(design: Design): FullEvaluation {
       power: {
         available_W: atArrival.available_W,
         required_W: atArrival.required_W,
-        atEndOfScience: { available_W: atEnd.available_W, required_W: atEnd.required_W },
+        atEndOfScience: { available_W: endDay.available_W, required_W: endDay.required_W },
+        worstDay: worst,
+        worstSunlitMargin: worstSunlit.margin,
+        eclipseSeasons: seasons,
+        battery: profile.battery,
       },
       data: { producedPerDay_bits: produced, downlinkedPerDayAtArrival_bits: downlinked },
       cost: { development_M: cost.development_M, launch_M: cost.launch_M, operations_M: cost.operations_M, cap_M: cost.meter.limit },

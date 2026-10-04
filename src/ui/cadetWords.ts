@@ -135,6 +135,15 @@ export const GAUGE_STATUS: Record<GaugeKey, Record<'ok' | 'warning' | 'over', st
   budget: { ok: 'Under cap', warning: 'Tight', over: 'Over cap' },
 };
 
+/** The battery gauge's eclipse-season warning (numbers come from cadetGauges().power.eclipse). */
+export const ECLIPSE_WORDS = {
+  badge: 'Eclipse season',
+  title: 'Shadow seasons',
+  warn: 'Your weakest day is in the planet’s shadow: the panels go dark, the battery carries the craft, and the day’s power drops.',
+  calm: 'The craft passes through shadow, but its weakest day is a sunny one.',
+  none: 'No eclipses on this mission: the panels see the Sun every day.',
+};
+
 export const ORDERS_HELPER = 'Signals take minutes to reach your craft, so it cannot wait for you. Tell it now what to do if…';
 
 /** What an option costs, as cadet words (numbers are added by the caller from the engine). */

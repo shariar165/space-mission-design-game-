@@ -16,21 +16,14 @@ import { evaluateDesign, type FullEvaluation } from './index';
 import { missionPreset, presetDesign, type MissionId } from './missions';
 import type { Phase } from './risk';
 import { EARTH_ORBIT_PERIOD } from './constants';
+import { lerp, onHalfEllipse, positionAt, type XY } from './craftPath';
 import type { Design } from './types';
 
-export type XY = [number, number];
+export type { XY } from './craftPath';
+export { positionAt } from './craftPath';
 
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
-const lerp = (a: XY, b: XY, t: number): XY => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
 const dist = (a: XY, b: XY) => Math.hypot(a[0] - b[0], a[1] - b[1]);
-
-/** The point a fraction of the way along a sampled path (linear between samples). */
-export function positionAt(path: XY[], fraction: number): XY {
-  if (path.length === 0) return [0, 0];
-  const f = clamp01(fraction) * (path.length - 1);
-  const i = Math.floor(f);
-  return lerp(path[i]!, path[Math.min(i + 1, path.length - 1)]!, f - i);
-}
 
 function missionTimeline(ev: FullEvaluation): PhaseWindow[] {
   return timeline({
@@ -68,21 +61,6 @@ function bodies(design: Design, ev: FullEvaluation) {
     dest: (day: number) => xy(design.destination, day),
     destDistance: (day: number) => earthDistance(design.destination, jd0 + day),
   };
-}
-
-/**
- * Position on a periapsis → apoapsis half ellipse a time fraction of the way along: M = π·fraction,
- * M = E − e sin E, r = a(1 − e cos E), ν from E. The ellipse is read off the path's end points.
- */
-function onHalfEllipse(path: XY[], fraction: number): XY {
-  const r1 = Math.hypot(...(path[0] ?? [0, 0]));
-  const r2 = Math.hypot(...(path[path.length - 1] ?? [0, 0]));
-  const a = (r1 + r2) / 2;
-  const e = (r2 - r1) / (r2 + r1);
-  const E = solveKepler(Math.PI * clamp01(fraction), e);
-  const r = a * (1 - e * Math.cos(E));
-  const nu = 2 * Math.atan2(Math.sqrt(1 + e) * Math.sin(E / 2), Math.sqrt(1 - e) * Math.cos(E / 2));
-  return [r * Math.cos(nu), r * Math.sin(nu)];
 }
 
 /** Craft position on a mission day (may be fractional). */

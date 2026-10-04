@@ -47,17 +47,21 @@ export function meterView(key: MeterKey, m: Meter, ev: FullEvaluation, design: D
     case 'power': {
       const rtg = design.power.type === 'rtg';
       const sun = dest.sunlightVsEarth.value;
+      const w = ev.details.power.worstDay;
+      const when = `on mission day ${f.num(w.day)} (${f.isoDate(w.date)})`;
       return {
         title: 'Power',
-        sub: 'needed vs made',
+        sub: 'worst day: needed vs made',
         used: f.num(m.used),
         limit: f.watts(m.limit),
         say:
           m.status === 'over'
-            ? `Short by ${f.watts(-m.headroom)} on arrival at ${dest.name}.`
-            : rtg
-              ? `RTGs make the same power at any distance from the Sun.`
-              : `At ${dest.name} your panels get ${f.pct(sun, 1)} of the sunlight they get at Earth.`,
+            ? `Short by ${f.watts(-m.headroom)} ${when}.`
+            : w.eclipseFraction > 0
+              ? `The weakest day is ${when}, in an eclipse season: in shadow ${f.pct(w.eclipseFraction, 0)} of the day.`
+              : rtg
+                ? `RTGs make the same power at any distance from the Sun. The weakest day is ${when}.`
+                : `At ${dest.name} your panels get ${f.pct(sun, 1)} of the sunlight they get at Earth. The weakest day is ${when}.`,
       };
     }
     case 'deltaV':

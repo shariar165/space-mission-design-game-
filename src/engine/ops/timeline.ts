@@ -3,25 +3,17 @@
 // commands that arrive part-way through a day split it into segments and power and data are counted per segment.
 import { AU_M, G0, GAME_RULES, km } from '../constants';
 import { lightDelay_s, dataRate } from '../comms';
-import { phaseOnDay, timeline, type PhaseWindow } from '../crisis';
+import { timeline, type PhaseWindow } from '../crisis';
 import { DESTINATIONS, HAZARDS, lookup, OPERATIONS, PARTS, type HazardOption, type OpsPhase } from '../data';
-import { earthDistance, heliocentricPosition, julianDate, sunDistance } from '../ephemeris';
+import { earthDistance, heliocentricPosition, julianDate } from '../ephemeris';
 import { craftPosition, signalDelay } from '../flightMap';
 import { evaluateDesign, type FullEvaluation } from '../index';
-import { powerOnDay } from '../power';
+import { powerProfileFor } from '../powerProfile';
 import { propellantBurned } from '../propulsion';
 import type { Design, Vec3 } from '../types';
 import { commandArrival, inMoratorium, moratoriumEndDay, newsArrival } from './commands';
 import { END_MISSION, extensionOptions } from './extension';
-import {
-  eclipse,
-  isoDate,
-  orbitDoseRate_radPerDay,
-  scienceOrbitGeometry,
-  solarLongitude,
-  sunDirection,
-  sunEarthProbeAngle,
-} from './predictable';
+import { orbitDoseRate_radPerDay, scienceOrbitGeometry, solarLongitude, sunEarthProbeAngle } from './predictable';
 import {
   debrisRate_perDay,
   drawCandidates,
@@ -122,54 +114,47 @@ export function prepareOps(design: Design): OpsEnvironment {
   const radio_W = design.comms.txPower_W / PARTS.comms.dcToRfEfficiency.value;
   const bus_W = bus.power_W.value + engine.power_W.value;
   const baseRequired_W = bus_W + radio_W + instruments.reduce((s, i) => s + i.power_W.value, 0);
-  const battery_Wh = ev.details.massBreakdown.battery * PARTS.power.batterySpecificEnergy_Wh_per_kg.value;
+  const battery_Wh = ev.details.power.battery.capacity_Wh;
   const orbit = scienceOrbitGeometry(design, jdLaunch + arrivalDay);
   const doseRate = orbit ? orbitDoseRate_radPerDay(design.destination, orbit) : 0;
   const threshold = OPERATIONS.conjunction.commandThreshold_deg.value;
+  // Power, Sun distance and eclipses: the same days the Power meter reads (one model).
+  const power = powerProfileFor(design, ev, horizonDay);
 
   const days: EnvDay[] = [];
   for (let day = 0; day <= horizonDay; day++) {
-    const jd = jdLaunch + day;
-    const phase: OpsPhase = phaseOnDay(tl, day) ?? 'extended';
+    const pw = power.days[day]!;
+    const jd = pw.jd;
+    const phase: OpsPhase = pw.phase;
     const atDestination = day >= arrivalDay && phase !== 'return';
     const earthDistance_m = atDestination ? earthDistance(design.destination, jd) : signalDelay(design, day, ev).distance_m;
     let rCraft: Vec3 | undefined;
-    let sunDistance_m: number;
-    if (design.destination === 'moon') {
-      sunDistance_m = sunDistance('earth', jd);
-    } else if (atDestination) {
-      rCraft = heliocentricPosition(design.destination, jd);
-      sunDistance_m = Math.hypot(...rCraft);
-    } else {
-      const xy = craftPosition(design, day, ev);
-      rCraft = [xy[0], xy[1], 0];
-      sunDistance_m = Math.hypot(xy[0], xy[1]);
+    if (design.destination !== 'moon') {
+      if (atDestination) rCraft = heliocentricPosition(design.destination, jd);
+      else {
+        const xy = craftPosition(design, day, ev);
+        rCraft = [xy[0], xy[1], 0];
+      }
     }
     // Near Earth (launch, early cruise) the Sun is never behind the craft: no angle is reported.
     const sepAngle_deg = rCraft && earthDistance_m > 5e9 ? sunEarthProbeAngle(heliocentricPosition('earth', jd), rCraft) : undefined;
-    const p = powerOnDay(design, jd, day / YEAR, baseRequired_W, bus.heaterBase_W.value, sunDistance_m);
     const inOrbit = orbit && (phase === 'science' || phase === 'extended');
-    const ecl = inOrbit ? eclipse(orbit, sunDirection(design.destination, jd)) : { fraction: 0, longest_s: 0 };
-    const available_W =
-      design.power.type === 'solar'
-        ? Math.min(p.available_W * (1 - ecl.fraction), ecl.longest_s > 0 ? battery_Wh / (ecl.longest_s / 3600) : Infinity)
-        : p.available_W;
     const link = (dish: 34 | 70) => dataRate({ ...design.comms, groundDish_m: dish, distance_m: earthDistance_m });
     days.push({
       day,
       jd,
-      date: isoDate(jd),
+      date: pw.date,
       phase,
-      sunDistance_m,
+      sunDistance_m: pw.sunDistance_m,
       earthDistance_m,
       oneWay_s: lightDelay_s(earthDistance_m),
       ...(sepAngle_deg !== undefined ? { sepAngle_deg } : {}),
       conjunction: sepAngle_deg !== undefined && sepAngle_deg < threshold,
-      eclipseFraction: ecl.fraction,
-      longestEclipse_s: ecl.longest_s,
-      generation_W: p.available_W,
-      available_W,
-      heaterNeed_W: p.heaters_W,
+      eclipseFraction: pw.eclipseFraction,
+      longestEclipse_s: pw.longestEclipse_s,
+      generation_W: pw.generation_W,
+      available_W: pw.available_W,
+      heaterNeed_W: pw.heaterNeed_W,
       rate34_bps: link(34),
       rate70_bps: link(70),
       doseRate_radPerDay: inOrbit ? doseRate : 0,

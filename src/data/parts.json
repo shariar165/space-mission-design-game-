@@ -90,6 +90,7 @@
     "rtgMass_kg": { "value": 45, "unit": "kg", "source": "NASA MMRTG fact sheet (about 45 kg)", "url": "https://science.nasa.gov/wp-content/uploads/2024/02/mmrtg-factsheet-updated-5-18-20-1.pdf", "isGameEstimate": false },
     "rtgCost_M": { "value": 75, "unit": "$M (FY2019)", "source": "Game estimate (spec: RTGs are expensive and scarce)", "isGameEstimate": true },
     "batterySpecificEnergy_Wh_per_kg": { "value": 100, "unit": "Wh/kg", "source": "Game value for Li-ion, to be sourced (spec: Power)", "isGameEstimate": true },
+    "batteryMaxDepthOfDischarge": { "value": 0.3, "unit": "fraction of battery capacity used in the longest eclipse", "source": "Game estimate, to verify against a mission battery design: chosen from JPL D-101146, Energy Storage Technologies for Future Planetary Science Missions (Dec. 2017), which reports Li-ion cycle life of >30,000 cycles at 30% depth of discharge (an orbiter in a low orbit sees thousands of eclipses a year)", "url": "https://solarsystem.nasa.gov/system/downloadable_items/716_Energy_Storage_Tech_Report_FINAL.PDF", "isGameEstimate": true },
     "heaterSunlightFactor": { "value": 2, "unit": "dimensionless", "source": "Game rule: heater power = base × (1 + k·(1 − sunlight fraction)), k = 2", "isGameEstimate": true }
   },
   "comms": {

@@ -488,6 +488,89 @@ describe('power', () => {
 });
 
 // ---------------------------------------------------------------------------
+describe('power: worst day of the mission, eclipses included (one model with Mission operations)', () => {
+  it('battery capacity = eclipse × load / depth of discharge', async () => {
+    const { batteryCapacity_Wh } = await import('../src/engine/powerProfile');
+    // 2502.7 s × 500 W = 347.6 Wh; / 0.3 depth of discharge = 1158.66 Wh (→ 11.59 kg at 100 Wh/kg)
+    expect(batteryCapacity_Wh(2502.7, 500, 0.3)).toBeCloseTo(1158.66, 1);
+    expect(batteryCapacity_Wh(2502.7, 500, 1)).toBeCloseTo(347.6, 1);
+  });
+
+  const maven = presetDesign('maven');
+  const ev = evaluateDesign(maven);
+
+  it('the Power meter reads the worst day: its margin is the lowest of every prime-mission day', async () => {
+    const { powerProfileFor } = await import('../src/engine/powerProfile');
+    const prof = powerProfileFor(maven, ev);
+    const prime = prof.days.filter((d) => d.day <= prof.primeEndDay);
+    const lowest = Math.min(...prime.map((d) => d.margin));
+    expect(ev.meters.power.margin).toBeCloseTo(lowest, 12);
+    expect(ev.meters.power.limit).toBeCloseTo(ev.details.power.worstDay.available_W, 9);
+    expect(ev.meters.power.used).toBeCloseTo(ev.details.power.worstDay.required_W, 9);
+    // never better than the old arrival-day, sunlit, all-instruments-on figure
+    const arrival = (ev.details.power.available_W - ev.details.power.required_W) / ev.details.power.required_W;
+    expect(ev.meters.power.margin).toBeLessThanOrEqual(arrival + 1e-12);
+  });
+
+  it('cruise has no eclipse: available = generation, and the instruments are off', async () => {
+    const { powerProfileFor } = await import('../src/engine/powerProfile');
+    const prof = powerProfileFor(maven, ev);
+    const cruise = prof.days.filter((d) => d.phase === 'cruise');
+    expect(cruise.length).toBeGreaterThan(100);
+    for (const d of cruise) {
+      expect(d.eclipseFraction).toBe(0);
+      expect(d.available_W).toBe(d.generation_W);
+    }
+    const sci = prof.days.find((d) => d.phase === 'science')!;
+    // the science day draws the instruments too: the MAVEN payload's 120 W (parts.json, game estimate)
+    expect(sci.required_W - sci.heaterNeed_W - (cruise[0]!.required_W - cruise[0]!.heaterNeed_W)).toBeCloseTo(120, 9);
+  });
+
+  it('eclipse days: P_avail = P_gen(1 − f_ecl), because a battery sized within its depth of discharge never limits', async () => {
+    const { powerProfileFor } = await import('../src/engine/powerProfile');
+    const prof = powerProfileFor(maven, ev);
+    const ecl = prof.days.filter((d) => d.eclipseFraction > 0);
+    expect(ecl.length).toBeGreaterThan(0);
+    for (const d of ecl) {
+      expect(d.available_W).toBeCloseTo(d.generation_W * (1 - d.eclipseFraction), 9);
+      // E_batt / t_ecl ≥ load / DoD (t_ecl ≤ the worst case the battery was sized for)
+      expect(prof.battery.capacity_Wh / (d.longestEclipse_s / 3600)).toBeGreaterThanOrEqual(prof.battery.load_W / prof.battery.depthOfDischarge - 1e-6);
+    }
+  });
+
+  it('circular 400 km polar Mars orbit with the Sun in its plane: the eclipse cuts the day by asin(R/r)/π ≈ 35.2%', async () => {
+    const { powerProfileFor } = await import('../src/engine/powerProfile');
+    const d: Design = { ...presetDesign('maven'), scienceOrbit: { periapsis_km: 400, apoapsis_km: 400, inclination_deg: 90 } };
+    const e = evaluateDesign(d);
+    const prof = powerProfileFor(d, e);
+    const deepest = prof.days.reduce((a, b) => (b.eclipseFraction > a.eclipseFraction ? b : a));
+    // asin(3396.2/3796.2)/π = 0.35221; the inertial orbit reaches β ≈ 0 at least once in a Mars year
+    expect(deepest.eclipseFraction).toBeCloseTo(0.35221, 2);
+    expect(deepest.available_W).toBeCloseTo(deepest.generation_W * (1 - deepest.eclipseFraction), 9);
+    expect(e.details.power.worstDay.eclipseFraction).toBeGreaterThan(0.3);
+  });
+
+  it('Mission operations reads the same days: prepareOps available power = the profile, day for day', async () => {
+    const { powerProfileFor } = await import('../src/engine/powerProfile');
+    const { prepareOps } = await import('../src/engine/ops/timeline');
+    const env = prepareOps(maven);
+    const prof = powerProfileFor(maven, ev, env.horizonDay);
+    for (const day of [0, 50, env.arrivalDay, env.arrivalDay + 40, env.primeEndDay, env.horizonDay]) {
+      expect(env.days[day]!.available_W).toBe(prof.days[day]!.available_W);
+      expect(env.days[day]!.eclipseFraction).toBe(prof.days[day]!.eclipseFraction);
+    }
+    expect(env.battery_Wh).toBe(ev.details.power.battery.capacity_Wh);
+  });
+
+  it('the battery is sized for the worst-case eclipse at the heaviest science-day load, within the depth of discharge', () => {
+    const b = ev.details.power.battery;
+    // battery mass = capacity / specific energy (100 Wh/kg)
+    expect(b.mass_kg).toBeCloseTo(b.capacity_Wh / 100, 9);
+    expect(b.capacity_Wh).toBeCloseTo((b.sizedForEclipse_s / 3600) * b.load_W / 0.3, 6);
+    expect(ev.details.massBreakdown.battery).toBe(b.mass_kg);
+  });
+});
+
 describe('comms', () => {
   const ref = CM.REFERENCE_LINK;
   const same = {

@@ -186,9 +186,21 @@ S₀ = 1361 W/m², r = distance from the Sun on that mission day (from the ephem
 
 **RTG option.** NASA's [MMRTG fact sheet](https://science.nasa.gov/wp-content/uploads/2024/02/mmrtg-factsheet-updated-5-18-20-1.pdf) gives about 110 W at launch and about 45 kg. Power does not depend on the Sun, so it is the only real option for Jupiter and beyond. In-game it is expensive, scarce, and adds a launch-approval step.
 
-**Power budget.** Required power = bus + instruments + comms transmit + heaters. Heater power rises as sunlight falls (game approximation). Margin = (available − required) / required, shown on the Power meter.
+**Power budget.** Required power = bus + engine + comms transmit + heaters every day, plus the instruments in the science phase (Mission operations' default plan). Heater power rises as sunlight falls (game approximation). Margin = (available − required) / required.
 
-**Batteries.** Must cover the longest eclipse in the science orbit (worst case: cylindrical shadow centred on apoapsis). Battery mass = energy needed / specific energy (game value for Li-ion, to be sourced). Eclipse length comes from the orbit geometry.
+**The Power meter shows the worst day (v0.5).** The engine computes power on every day from launch to the end of the prime mission. It uses the craft's own distance from the Sun (along the transfer in cruise) and the Mission operations equation, eclipses included (see "Mission operations › Power"):
+
+- P_avail = min(P_gen(1 − f_ecl), E_batt/t_ecl) for solar; P_RTG for RTGs.
+- f_ecl and t_ecl come from the science orbit fixed in inertial space (see "Eclipse seasons").
+
+The meter shows the day with the lowest margin, and its ⓘ names that day. Mission operations reads the same days, so the meter and Ops are one model (`powerProfile.ts`). Before v0.5 the meter read only the arrival day in sunlight, so a design could look healthy and still shed load in an eclipse season. The arrival-day sunlit figure is still reported (`details.power.available_W`), because that is the number compared with real missions. The end-of-mission power margin used for scoring is the last science day, eclipse included.
+
+**Batteries.** Must cover the longest eclipse in the science orbit (worst case: cylindrical shadow centred on apoapsis) at the heaviest science-day load, using at most the maximum depth of discharge (DoD):
+
+- E_batt = t_ecl,max · P_load / DoD_max;
+- battery mass = E_batt / specific energy (game value for Li-ion, to be sourced).
+
+DoD_max = 30% is a game estimate, to verify against a mission battery design. It is chosen from JPL D-101146, *Energy Storage Technologies for Future Planetary Science Missions* (Dec. 2017): Li-ion gives more than 30,000 cycles at 30% DoD, and a low orbiter sees thousands of eclipses a year. Because the battery keeps this reserve, the battery term never limits P_avail, and the worst day is set by the sunlight lost to the shadow. Known consequence: an orbit with very long worst-case eclipses (the default Jupiter orbit) needs a very heavy battery.
 
 ## Communications
 
