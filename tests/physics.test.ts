@@ -1248,3 +1248,63 @@ describe('ops: Jupiter radiation dose (game estimates)', () => {
     expect(orbitDoseRate_radPerDay('jupiter', o)).toBeCloseTo(600, 6);
   });
 });
+
+describe('ops: resources', () => {
+  it('fault protection keeps the bus, then heaters, then radio; instruments are shed first', async () => {
+    const { shedLoads } = await import('../src/engine/ops/resources');
+    const want = { bus: 400, heaters: 160, instruments: 120, radio: 286 };
+    // 900 W: bus 400 → heaters 160 → radio 286 (= 846) → instruments get the last 54 W
+    expect(shedLoads(900, want)).toEqual({ bus: 400, heaters: 160, radio: 286, instruments: 54 });
+    // 500 W: bus 400 → heaters 100 → nothing left for radio or instruments
+    expect(shedLoads(500, want)).toEqual({ bus: 400, heaters: 100, radio: 0, instruments: 0 });
+    // 300 W: the bus itself is short (a brownout)
+    expect(shedLoads(300, want)).toEqual({ bus: 300, heaters: 0, radio: 0, instruments: 0 });
+  });
+
+  it('DSN aperture fee AF = R_B[A_W(0.9 + F_C/10)]: 34 m $1691.2/h, 70 m $6764.8/h; a day = (8 + 1) h', async () => {
+    const { apertureFee_perHour, dsnDayCost_M, dsnExtraCost_M } = await import('../src/engine/ops/resources');
+    // 1057 × 1 × (0.9 + 7/10) = 1057 × 1.6 = 1691.2; × 4 = 6764.8
+    expect(apertureFee_perHour(34)).toBeCloseTo(1691.2, 9);
+    expect(apertureFee_perHour(70)).toBeCloseTo(6764.8, 9);
+    // 8 h pass + 1 h set-up and tear-down: 9 × 1691.2 = $15,220.8 = 0.0152208 $M
+    expect(dsnDayCost_M({ dish: 34, hours: 8 })).toBeCloseTo(0.0152208, 12);
+    // upgrade to 70 m: 9 × 6764.8 − 15,220.8 = 60,883.2 − 15,220.8 = $45,662.4
+    expect(dsnExtraCost_M({ dish: 70, hours: 8 }, { dish: 34, hours: 8 })).toBeCloseTo(0.0456624, 12);
+    // fewer hours than the default pass is not a refund
+    expect(dsnExtraCost_M({ dish: 34, hours: 4 }, { dish: 34, hours: 8 })).toBe(0);
+  });
+
+  it('downlink capacity = link rate × booked hours; 70 m / 34 m = 10^(6.31/10) = 4.2756; zero in a conjunction', async () => {
+    const { downlinkCapacity_bitsPerDay } = await import('../src/engine/ops/resources');
+    const { prepareOps } = await import('../src/engine/ops/timeline');
+    const maven = presetDesign('maven');
+    const env = prepareOps(maven);
+    const day = env.days[env.arrivalDay + 40]!;
+    // the same value simulateMission uses for that date: dataPerDay_bits(dataRate(...)) with an 8-hour pass
+    const same = CM.dataPerDay_bits(CM.dataRate({ ...maven.comms, distance_m: E.earthDistance('mars', day.jd) }));
+    expect(downlinkCapacity_bitsPerDay(day, { dish: maven.comms.groundDish_m, hours: 8 })).toBeCloseTo(same, 0);
+    expect(downlinkCapacity_bitsPerDay(day, { dish: 70, hours: 8 }) / downlinkCapacity_bitsPerDay(day, { dish: 34, hours: 8 })).toBeCloseTo(4.2756, 4);
+    const conj = env.days[env.conjunctions[0]!.minDay]!;
+    expect(downlinkCapacity_bitsPerDay(conj, { dish: 70, hours: 8 })).toBe(0);
+  });
+
+  it('the default plan asks for what the Power meter needs (bus + instruments + radio + heaters), within 0.5%', async () => {
+    const { demand, defaultPowerPlan } = await import('../src/engine/ops/resources');
+    const { prepareOps } = await import('../src/engine/ops/timeline');
+    const env = prepareOps(presetDesign('maven'));
+    const d = demand(env, env.days[env.arrivalDay]!, defaultPowerPlan(env), { scienceOn: true });
+    // the meter uses the fractional arrival date; the ledger uses the whole arrival day (heaters move slightly)
+    const need = env.ev.details.power.required_W;
+    expect(Math.abs(d.bus + d.heaters + d.instruments + d.radio - need) / need).toBeLessThan(0.005);
+  });
+
+  it('with no bad luck, the Δv left after the prime mission = capability − (required − lifetime reserve)', async () => {
+    const { runOperations } = await import('../src/engine/ops/index');
+    const maven = presetDesign('maven');
+    const r = runOperations(maven, { rng: () => 0.999999 });
+    const d = evaluateDesign(maven).details;
+    // Δv adds up across burns: Isp g₀ ln(m0/m1) + Isp g₀ ln(m1/m2) = Isp g₀ ln(m0/m2)
+    expect(r.state.hazards).toEqual([]);
+    expect(r.debrief.deltaV.left_ms).toBeCloseTo(d.deltaVCapability_ms - (d.deltaVRequired_ms - d.deltaVBudget.lifetimeReserve_ms), 6);
+  });
+});

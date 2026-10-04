@@ -744,3 +744,214 @@ describe('Ghost of the real mission on the flight map', () => {
     expect(g.at(0)).toEqual(g.path[0]);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Mission operations API (spec: "Mission operations"). No UI yet; these are the entry points it will call.
+describe('Mission operations: determinism', () => {
+  const maven = presetDesign('maven');
+
+  it('same seed → same mission (events, ledger, debrief); a different seed → a different mission', async () => {
+    const ops = await import('../src/engine/ops/index');
+    const a = ops.runOperations(maven, { seed: 2013, extension: 'longest' });
+    const b = ops.runOperations(maven, { seed: 2013, extension: 'longest' });
+    expect(b.state.events).toEqual(a.state.events);
+    expect(b.state.ledger).toEqual(a.state.ledger);
+    expect(b.debrief).toEqual(a.debrief);
+    const c = ops.runOperations(maven, { seed: 2014, extension: 'longest' });
+    expect(c.state.hazards.map((h) => h.onset)).not.toEqual(a.state.hazards.map((h) => h.onset));
+  });
+
+  it('a player choice changes the odds, never the draws: storms come at the same times whatever the power plan', async () => {
+    const ops = await import('../src/engine/ops/index');
+    const plan = { ...ops.defaultPowerPlan(ops.prepareOps(maven)), heaters: 0.5 }; // cold every day
+    const a = ops.runOperations(maven, { seed: 5 });
+    const b = ops.runOperations(maven, { seed: 5, plan });
+    expect(b.state.draws).toEqual(a.state.draws);
+    // the storm rate depends only on the date and Sun distance, so its hazards are identical
+    const storms = (s: typeof a.state) => s.hazards.filter((h) => h.type === 'solar-storm' && h.onset < s.env.primeEndDay).map((h) => h.onset);
+    expect(storms(b.state)).toEqual(storms(a.state));
+    expect(b.state.coldDays).toBeGreaterThan(0);
+    expect(a.state.coldDays).toBe(0);
+  });
+
+  it('replaying the seed and the action log rebuilds the same mission (save/load)', async () => {
+    const ops = await import('../src/engine/ops/index');
+    const run = ops.runOperations(maven, { seed: 2013, extension: 'longest' });
+    expect(run.state.actions.length).toBeGreaterThan(1);
+    const replay = ops.replayOperations(maven, { seed: 2013 }, run.state.actions);
+    expect(replay.events).toEqual(run.state.events);
+    expect(replay.ledger).toEqual(run.state.ledger);
+    expect(ops.operationsDebrief(replay)).toEqual(run.debrief);
+  });
+
+  it('functions never change their input state', async () => {
+    const ops = await import('../src/engine/ops/index');
+    const s0 = ops.startOperations(maven, { seed: 3 });
+    const copy = JSON.stringify({ ...s0, env: undefined });
+    ops.advanceOperations(s0, { days: 400 });
+    ops.sendCommand(s0, { kind: 'power-plan', plan: s0.plan });
+    expect(JSON.stringify({ ...s0, env: undefined })).toBe(copy);
+  });
+});
+
+describe('Mission operations: commands and decisions', () => {
+  const maven = presetDesign('maven');
+
+  it('advanceOperations stops when Earth learns of a hazard, and the decision is open at that moment', async () => {
+    const ops = await import('../src/engine/ops/index');
+    const s = ops.advanceOperations(ops.startOperations(maven, { seed: 2013 }));
+    expect(s.status).toBe('flying');
+    expect(s.newDecisions.length).toBeGreaterThan(0);
+    const d = s.decisions.find((x) => x.id === s.newDecisions[0])!;
+    expect(d.openedAt).toBeCloseTo(s.t, 9);
+    // a response can only leave after the team has reacted (4 h)
+    expect(d.earliestSend - d.openedAt).toBeCloseTo(4 / 24, 9);
+  });
+
+  it('a command sent in a conjunction moratorium is refused, with the first day it can be sent', async () => {
+    const ops = await import('../src/engine/ops/index');
+    const env = ops.prepareOps(maven);
+    const w = env.conjunctions[0]!; // MAVEN: June 2015
+    let s = ops.startOperations(maven, { rng: () => 0.999999, env });
+    s = ops.advanceOperations(s, { until: w.startDay + 0.5 });
+    const r = ops.sendCommand(s, { kind: 'power-plan', plan: s.plan });
+    expect(r.receipt.accepted).toBe(false);
+    expect(r.receipt.reason).toBe('conjunction');
+    expect(r.receipt.retryAfterDay).toBe(w.endDay + 1);
+    // no downlink inside the window: data waits in the recorder
+    expect(s.ledger.find((x) => x.day === w.startDay + 0)?.downlinked_bits ?? 0).toBe(0);
+  });
+
+  it('a command takes effect one light time after it is sent', async () => {
+    const ops = await import('../src/engine/ops/index');
+    let s = ops.startOperations(maven, { rng: () => 0.999999 });
+    s = ops.advanceOperations(s, { until: s.env.arrivalDay + 20.25 });
+    const r = ops.sendCommand(s, { kind: 'power-plan', plan: { ...s.plan, radio: false } });
+    expect(r.receipt.accepted).toBe(true);
+    expect((r.receipt.arrivesAt! - r.receipt.sentAt) * 86_400).toBeCloseTo(s.env.days[s.env.arrivalDay + 20]!.oneWay_s, -1);
+    const after = ops.advanceOperations(r.state, { until: r.receipt.arrivesAt! - 1e-6 });
+    expect(after.plan.radio).toBe(true); // not yet
+    expect(ops.advanceOperations(after, { until: r.receipt.arrivesAt! + 1e-6 }).plan.radio).toBe(false);
+  });
+
+  it('when no response arrives in time the craft follows its standing order, else fault protection (the free option)', async () => {
+    const ops = await import('../src/engine/ops/index');
+    const free = ops.runOperations(maven, { seed: 2013, policy: 'default' });
+    const answered = free.state.hazards.filter((h) => h.choice);
+    expect(answered.length).toBeGreaterThan(0);
+    expect(answered.every((h) => h.choice!.by === 'fault-protection')).toBe(true);
+    expect(free.state.events.some((e) => e.code === 'deadline-missed')).toBe(true);
+    const ordered = ops.runOperations(maven, { seed: 2013, policy: 'default', standingOrders: { 'solar-storm': 'shelter' } });
+    const storms = ordered.state.hazards.filter((h) => h.type === 'solar-storm' && h.choice);
+    expect(storms.length).toBeGreaterThan(0);
+    expect(storms.every((h) => h.choice!.by === 'standing-order' && h.choice!.optionId === 'shelter')).toBe(true);
+  });
+
+  it('only responses the margins can pay for are offered; the free one always is, even over budget', async () => {
+    const { affordableResponses, isFree } = await import('../src/engine/ops/responses');
+    const { HAZARDS } = await import('../src/engine/data');
+    const opts = HAZARDS['mars-dust-storm']!.options;
+    const broke = affordableResponses(opts, { deltaV_ms: 5, budget_M: -10, powerMargin: -0.2, scienceDays: 10 });
+    // raise-periapsis needs 10 m/s (> 5), wait-it-out needs 30 science days (> 10): only the free option is left
+    expect(broke.map((o) => o.id)).toEqual(['carry-on']);
+    expect(broke.every(isFree)).toBe(true);
+    const rich = affordableResponses(opts, { deltaV_ms: 100, budget_M: 10, powerMargin: 0.3, scienceDays: 100 });
+    expect(rich.length).toBe(3);
+    // a one-time option cannot be used twice
+    const mem = HAZARDS['memory-corruption']!.options;
+    const used = affordableResponses(mem, { deltaV_ms: 100, budget_M: 10, powerMargin: 0.3, scienceDays: 100 }, ['backup-computer']);
+    expect(used.map((o) => o.id)).not.toContain('backup-computer');
+  });
+
+  it('every decision in a flown mission offered only affordable options, always including a free one', async () => {
+    const ops = await import('../src/engine/ops/index');
+    const { isFree } = await import('../src/engine/ops/responses');
+    for (const seed of [1, 2, 3, 2013]) {
+      const r = ops.runOperations(maven, { seed });
+      for (const d of r.state.decisions.filter((x) => x.kind === 'hazard')) expect(d.hazardOptions!.some(isFree)).toBe(true);
+    }
+  });
+
+  it('DSN bookings need the lead time; a 70 m booking costs the aperture-fee difference and sends more data', async () => {
+    const ops = await import('../src/engine/ops/index');
+    let s = ops.startOperations(maven, { rng: () => 0.999999 });
+    s = ops.advanceOperations(s, { until: s.env.arrivalDay + 10 });
+    const day = Math.floor(s.t);
+    expect(ops.bookDsn(s, day + 2, day + 3, { dish: 70, hours: 8 }).receipt.reason).toBe('lead-time');
+    const booked = ops.bookDsn(s, day + 7, day + 7, { dish: 70, hours: 8 });
+    expect(booked.receipt.accepted).toBe(true);
+    const base = ops.advanceOperations(s, { until: day + 9 });
+    const more = ops.advanceOperations(booked.state, { until: day + 9 });
+    expect(more.dsnExtra_M - base.dsnExtra_M).toBeCloseTo(0.0456624, 9);
+    expect(more.ledger[day + 7]!.downlinked_bits).toBeGreaterThanOrEqual(base.ledger[day + 7]!.downlinked_bits);
+  });
+});
+
+describe('Mission operations: extension and Debrief', () => {
+  const maven = presetDesign('maven');
+
+  it('the extension decision opens only when the prime mission ends', async () => {
+    const ops = await import('../src/engine/ops/index');
+    let s = ops.startOperations(maven, { rng: () => 0.999999 });
+    s = ops.advanceOperations(s, { until: s.env.primeEndDay });
+    expect(s.decisions.some((d) => d.id === 'extension')).toBe(false);
+    s = ops.advanceOperations(s);
+    expect(s.status).toBe('awaiting-extension');
+    expect(s.newDecisions).toContain('extension');
+    expect(s.t).toBe(s.env.primeEndDay + 1);
+  });
+
+  it('an extension the craft cannot pay Δv for is not offered (blockedBy deltaV); ending is always offered', async () => {
+    const { extensionOptions } = await import('../src/engine/ops/extension');
+    const { prepareOps } = await import('../src/engine/ops/timeline');
+    const env = prepareOps(maven);
+    const opts = extensionOptions(env, { deltaVLeft_ms: 1, dose_rad: 0, attitudeOk: true, primeScienceFraction: 0.9, instrumentsLost: [] });
+    expect(opts.find((o) => o.id === 'end')!.blockedBy).toEqual([]);
+    // 1 year of maintenance = 20 m/s per year × 1 = 20 m/s > 1 m/s
+    const one = opts.find((o) => o.years === 1)!;
+    expect(one.deltaVNeeded_ms).toBeCloseTo(20 * (one.days / 365.25), 9);
+    expect(one.blockedBy).toContain('deltaV');
+    const weak = extensionOptions(env, { deltaVLeft_ms: 500, dose_rad: 0, attitudeOk: true, primeScienceFraction: 0.1, instrumentsLost: [] });
+    expect(weak.find((o) => o.years === 1)!.blockedBy).toEqual(['science-review']);
+  });
+
+  it('the extension never changes the prime-mission score or stars (separate report)', async () => {
+    const ops = await import('../src/engine/ops/index');
+    for (const seed of [1, 2013]) {
+      const end = ops.runOperations(maven, { seed, extension: 'end' });
+      const ext = ops.runOperations(maven, { seed, extension: 'longest' });
+      expect(ext.debrief.score).toBeCloseTo(end.debrief.score, 9);
+      expect(ext.debrief.stars).toBe(end.debrief.stars);
+      expect(end.debrief.extension.outcome).toBe('declined');
+      expect(['completed', 'lost']).toContain(ext.debrief.extension.outcome);
+      expect(ext.debrief.extension.downlinked_Gbit).toBeGreaterThan(0);
+    }
+  });
+
+  it('the Debrief score is the open weighted sum of its categories', async () => {
+    const ops = await import('../src/engine/ops/index');
+    const r = ops.runOperations(maven, { seed: 2013 });
+    expect(r.debrief.score).toBeCloseTo(r.debrief.breakdown.reduce((s, b) => s + b.contribution, 0), 9);
+    expect(r.debrief.completed).toBe(true);
+  });
+
+  it('a blocked design never launches', async () => {
+    const ops = await import('../src/engine/ops/index');
+    const r = ops.runOperations({ ...presetDesign('osiris-rex'), trajectoryOption: 'direct' }, { seed: 1 });
+    expect(r.state.status).toBe('not-launched');
+    expect(r.debrief.launched).toBe(false);
+    expect(r.debrief.stars).toBe(0);
+  });
+
+  it('the forecast lists what the player can see coming, as codes with values (never sentences)', async () => {
+    const ops = await import('../src/engine/ops/index');
+    const f = ops.operationsForecast(maven);
+    expect(f.conjunctions[0]!.startDate.slice(0, 7)).toBe('2015-06');
+    expect(f.eclipseSeasons.length).toBeGreaterThan(0);
+    expect(f.dose).toBeUndefined(); // no radiation model at Mars
+    for (const e of f.events) for (const v of Object.values(e.values)) if (typeof v === 'string') expect(v).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    // every event code of a flown mission is plain data too
+    const r = ops.runOperations(maven, { seed: 2013 });
+    for (const e of r.state.events) for (const v of Object.values(e.values)) if (typeof v === 'string') expect(v).not.toMatch(/\s/);
+  });
+});

@@ -315,6 +315,7 @@ export function newState(
     burnsDone: 0,
     dvPlannedSpent_ms: 0,
     dvResponses_ms: 0,
+    dvExtensionResponses_ms: 0,
     opsCost_M: 0,
     dsnExtra_M: 0,
     responseBudget_M: 0,
@@ -580,7 +581,10 @@ function executeResponse(s: OpsState, rec: HazardRecord, option: HazardOption, b
   if (rec.type === 'reaction-wheel') s.attitude = chosen.id === 'thrusters' ? 'thrusters' : chosen.id === 'hybrid' ? 'hybrid' : 'degraded';
   const dv = chosen.cost.deltaV_ms?.value ?? 0;
   emit(s, t, 'command-executed', { hazardId: rec.id, optionId: chosen.id, by: source });
-  if (dv > 0 && burn(s, dv, 'response')) s.dvResponses_ms += dv;
+  if (dv > 0 && burn(s, dv, 'response')) {
+    if (isExtended(s, Math.floor(t))) s.dvExtensionResponses_ms += dv;
+    else s.dvResponses_ms += dv;
+  }
 }
 
 function resolveOutcome(s: OpsState, rec: HazardRecord, t: number) {
@@ -776,7 +780,8 @@ function integrate(s: OpsState, t0: number, t1: number) {
     T.demand_W[k] += want[k] * dt;
     T.served_W[k] += got[k] * dt;
   }
-  if (got.heaters < want.heaters - 1e-9) T.cold = true;
+  // Cold: heaters below what this day needs, whether fault protection shed them or the plan asked for less.
+  if (got.heaters < e.heaterNeed_W - 1e-9) T.cold = true;
   if (got.bus < want.bus - 1e-9) T.brownout = true;
   const instrFrac = want.instruments > 0 ? got.instruments / want.instruments : 0;
   const lost = new Set(s.instrumentsLost);

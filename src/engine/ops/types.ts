@@ -293,7 +293,9 @@ export interface OpsState {
   mass_kg: number;
   burnsDone: number;
   dvPlannedSpent_ms: number;
+  /** Δv spent on hazard responses in the prime mission, and in the extension (m/s). */
   dvResponses_ms: number;
+  dvExtensionResponses_ms: number;
   /** Operations cost of the prime science days, DSN extras and response costs ($M). */
   opsCost_M: number;
   dsnExtra_M: number;

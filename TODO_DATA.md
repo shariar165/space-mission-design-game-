@@ -273,3 +273,7 @@ Every value below has `isGameEstimate: true` and must show "game estimate" in it
 - Crisis cards: check the real-history text on each card against NASA LLIS or the official failure report and put that link on the card.
 - OSIRIS-REx: solar array area (to use the published 1,226–2,500 W as an independent η_sys check), dry mass, DSM-1 size, flyby day and arrival date.
 - Part costs: candidate sources are NASA's Cost Estimating Handbook and NASA instrument cost models.
+- Mission operations: check each hazard's real-history text (hazards.json) against the NASA mission page or LLIS and replace "to verify".
+- Mission operations: source the hazard rates (debris, reaction-wheel Weibull, memory upsets), response costs and failure chances; and the Jupiter radiation model against Juno's vault design.
+- Venus, Jupiter and Moon pole orientation: copy from the NSSDC fact sheets (unreachable during sourcing).
+- DSN aperture fee: find the current-year base rate (FY09 $1057/h is used, not inflated).

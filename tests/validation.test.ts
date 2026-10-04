@@ -12,6 +12,11 @@ import { missionPreset, presetDesign } from '../src/engine/missions';
 import { dataRate, REFERENCE_LINK } from '../src/engine/comms';
 import { propellantBurned } from '../src/engine/propulsion';
 import { bestArrival, bestLaunchWindow, hohmann, lambertTransfer, orbitPeriod } from '../src/engine/trajectory';
+import { julianDate } from '../src/engine/ephemeris';
+import { OPERATIONS } from '../src/engine/data';
+import { runOperations } from '../src/engine/ops/index';
+import { bodyConjunctions, perihelionJd, solarLongitude } from '../src/engine/ops/predictable';
+import { prepareOps } from '../src/engine/ops/timeline';
 
 const TOLERANCE = 0.1;
 
@@ -246,6 +251,59 @@ describe('OSIRIS-REx (Bennu, 2016) — arXiv 1702.06981', () => {
     info(M, 'Blockers on the NASA route', ev.blockers.join(' · ') || 'none');
     expect(best.flightDays).toBeLessThan(ev.trajectory.flightDays);
   });
+});
+
+// ---------------------------------------------------------------------------
+describe('Mission operations — Mars conjunctions, Ls, loss rate', () => {
+  const M = 'Mars (ops)';
+  // Published command moratoria (JPL news). The engine's least Sun–Earth–Mars angle must fall within ±2 days of
+  // each window's middle; the 2015 window ("within two degrees") must also match in length.
+  const MORATORIA = [
+    { year: 2015, open: '2015-06-07', close: '2015-06-21' },
+    { year: 2017, open: '2017-07-22', close: '2017-08-01' },
+    { year: 2019, open: '2019-08-28', close: '2019-09-07' },
+  ];
+
+  it('conjunction centres match the published moratoria (±2 days)', () => {
+    for (const m of MORATORIA) {
+      const open = julianDate(m.open);
+      const close = julianDate(m.close);
+      const [w] = bodyConjunctions('mars', open - 30, close + 30);
+      const mid = (open + close) / 2;
+      const off = w!.minJd - mid;
+      const ok = flag(M, `${m.year} conjunction: least Sun–Earth–Mars angle vs moratorium middle (±2 d)`, Math.abs(off) <= 2,
+        `${off >= 0 ? '+' : ''}${off.toFixed(1)} d (least angle ${w!.minAngle_deg.toFixed(2)}°)`, `${m.open} – ${m.close}`, '2° threshold (JPL 2015)');
+      expect(ok).toBe(true);
+    }
+  });
+
+  it('the 2015 window at 2° matches the published length (±2 days)', () => {
+    const [w] = bodyConjunctions('mars', julianDate('2015-05-01'), julianDate('2015-07-31'));
+    const len = w!.endJd - w!.startJd;
+    const published = julianDate('2015-06-21') - julianDate('2015-06-07');
+    const ok = flag(M, '2015 window length at 2°', Math.abs(len - published) <= 2, `${len.toFixed(1)} d`, `${published} d (June 7–21)`);
+    expect(ok).toBe(true);
+  });
+
+  it('Mars perihelion Ls from the IAU pole and the ephemeris vs Mars24 (±2°)', () => {
+    const jd = perihelionJd('mars', julianDate('2022-06-21'));
+    const yr = 2000 + (jd - 2451545) / 365.25;
+    const published = OPERATIONS.marsDust.perihelionLs_deg.value + OPERATIONS.marsDust.perihelionLsRate_degPerYear.value * (yr - 2000);
+    const ls = solarLongitude('mars', jd);
+    const ok = flag(M, 'Ls at perihelion (2022)', Math.abs(ls - published) <= 2, `${ls.toFixed(2)}°`, `${published.toFixed(2)}° (Mars24)`, 'Mars pole: NASA fact sheet');
+    expect(ok).toBe(true);
+  });
+
+  it('info: Ops loss rate vs the Risk meter (hazards replace the base rates in Ops)', () => {
+    const maven = presetDesign('maven');
+    const env = prepareOps(maven);
+    const runs = 300;
+    let lost = 0;
+    for (let seed = 1; seed <= runs; seed++) if (!runOperations(maven, { seed, env }).debrief.completed) lost++;
+    info('MAVEN (ops)', `Prime-mission loss rate over ${runs} seeded Ops runs (safe choices) vs the Risk meter`,
+      `${((100 * lost) / runs).toFixed(1)}%`, `${(100 * env.ev.meters.risk.used).toFixed(1)}% (Risk meter)`, 'hazard rates and response failure chances');
+    expect(lost).toBeLessThan(runs);
+  }, 120_000);
 });
 
 // ---------------------------------------------------------------------------

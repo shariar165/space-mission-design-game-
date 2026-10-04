@@ -76,6 +76,7 @@ All modules in the spec's build order are built.
 - `Evaluation.notes`: non-blocking messages, such as "flybys are not modelled". `Evaluation.details` holds the computed numbers the Debrief and validation need.
 - `Meter.calibrated`: `false` on the Data meter until a real reference link is chosen.
 - `meters.risk` is the mission failure probability vs an acceptable-risk limit (game value).
+- `Design.scienceOrbit.inclination_deg` / `raan_deg` / `argPeriapsis_deg` (optional, degrees from the planet's IAU equator): Mission operations uses them for eclipse seasons and the Jupiter dose. Defaults (polar) come from `operations.json`; MAVEN's preset has its published 75°.
 
 ## Known model limits (beyond the spec's Assumptions list)
 
@@ -86,4 +87,11 @@ All modules in the spec's build order are built.
 - The Earth position is the Earth–Moon barycentre (JPL table), and UTC is used for TDB (about 69 s off).
 - Flight map and light delay: in cruise the craft is placed along the time-sampled Lambert path (Moon: Kepler's equation on the transfer half-ellipse). The fixed Bennu route and the trip home are approximate (drawing and light delay only; the return transfer is not modelled).
 - The ghost of a real mission is its preset path turned about the Sun to start beside the player (it flew in another year). The rotation keeps its shape and Sun distances.
+- Mission operations (`src/engine/ops/`, no UI yet):
+  - the science orbit is fixed in inertial space (no J2 precession);
+  - cruise positions for the Sun–Earth–probe angle lie in the ecliptic plane;
+  - the Moon has no conjunctions (there is no lunar ephemeris);
+  - DSN fees are FY09 dollars against FY2019 caps.
+  - The Ops model counts eclipses in available power and the Power meter does not, so in a long eclipse season fault protection may shed instrument power on a design the meter calls fine (MAVEN: about 90 days at aphelion).
+  - Most hazard rates, response costs and failure chances are game estimates (`TODO_DATA.md`).
 - At the Moon the Atlas V 401 can lift about 4,600 kg, so a Cadet craft's mass margin stays above the 30% band and the third star is out of reach. A smaller launcher with a sourced payload curve would fix this.

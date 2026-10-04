@@ -1,5 +1,6 @@
 // Mission operations: public API (spec: Mission operations). Every function takes a state and returns a new one;
 // the input is never changed. A mission is a function of (design, seed, actions): replayOperations rebuilds it.
+// Every player action is logged, refused ones too, because a refusal is itself an event.
 import type { Phase } from '../risk';
 import { budgetScore, marginBandScore, missionSuccessScore, nextStar, scienceGoal_Gbit, scienceScore, stars, totalScore, type Category } from '../scoring';
 import { crisisScore } from '../crisis';
@@ -64,7 +65,7 @@ export function advanceOperations(state: OpsState, opts: { days?: number; until?
 export function sendCommand(state: OpsState, command: Command): { state: OpsState; receipt: CommandReceipt } {
   const s = cloneState(state);
   const receipt = queueCommand(s, command, s.t);
-  if (receipt.accepted) s.actions.push({ t: state.t, kind: 'command', command });
+  s.actions.push({ t: state.t, kind: 'command', command });
   return { state: s, receipt };
 }
 
@@ -84,7 +85,7 @@ export function decide(state: OpsState, decisionId: string, optionId: string): {
     receipt = queueCommand(s, { kind: 'respond', hazardId: dec.hazardId!, optionId }, Math.max(s.t, dec.earliestSend));
     if (receipt.accepted) dec.commanded = true;
   }
-  if (receipt.accepted) s.actions.push({ t: state.t, kind: 'decide', decisionId, optionId });
+  s.actions.push({ t: state.t, kind: 'decide', decisionId, optionId });
   return { state: s, receipt };
 }
 
@@ -98,10 +99,10 @@ export function bookDsn(state: OpsState, fromDay: number, toDay: number, booking
   else {
     for (let d = fromDay; d <= toDay; d++) s.dsn[d] = { ...booking };
     s.events.push({ t: s.t, code: 'dsn-booked', values: { fromDay, toDay, dish: booking.dish, hours: booking.hours } });
-    s.actions.push({ t: state.t, kind: 'dsn', fromDay, toDay, booking });
     receipt = { accepted: true, sentAt: s.t, arrivesAt: s.t };
   }
   if (!receipt.accepted) s.events.push({ t: s.t, code: 'dsn-refused', values: { reason: receipt.reason ?? '' } });
+  s.actions.push({ t: state.t, kind: 'dsn', fromDay, toDay, booking });
   return { state: s, receipt };
 }
 
@@ -274,7 +275,8 @@ export function operationsDebrief(s: OpsState): OpsDebrief {
   const required_W = need.bus + need.heaters + need.instruments + need.radio;
   const endMargins = { deltaV: dvMargin, power: (eEnd.available_W - required_W) / required_W, mass: ev.meters.mass.margin };
 
-  const answered = s.hazards.filter((h) => h.choice && h.offered && HAZARDS[h.type]!.options.length > 0);
+  // Prime mission only: hazards that struck after the prime mission belong to the extension's report.
+  const answered = s.hazards.filter((h) => h.choice && h.offered && HAZARDS[h.type]!.options.length > 0 && h.onset < env.primeEndDay + 1);
   const crisis = answered.length
     ? answered.reduce((a, h) => a + crisisScore(h.choice!.choseSafest, h.choice!.badOutcome ?? false), 0) / answered.length
     : 100;

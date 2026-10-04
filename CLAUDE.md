@@ -76,6 +76,16 @@ There is no lint step.
   - It rolls each phase, downlinks science day by day using the ephemeris distance, then scores the mission, awards stars and builds the next-star hint.
 - `monteCarloMission` runs `simulateMission` many times (default 1,000) from one seeded generator.
 
+**Mission operations (`src/engine/ops/`, engine only, no UI yet; spec "Mission operations").**
+- Entry points in `ops/index.ts`:
+  - `startOperations`, `advanceOperations` (stops at each new decision), `sendCommand`, `decide`, `bookDsn`;
+  - `runOperations` (headless, with a policy), `replayOperations` (seed + action log);
+  - `operationsDebrief`, `operationsForecast`.
+- `timeline.ts` `prepareOps(design)` precomputes the fixed day-by-day environment: distances, light time, Sun–Earth–probe angle, eclipses, power, link rates and dose. The clock then runs in days, split part-way through a day when a command arrives.
+- **Determinism:** each hazard has its own seeded stream (`subRng`), and every random number is drawn at the start (Poisson thinning). Tests rely on the same seed giving the same mission, and on decisions never reshuffling later draws. `rng: () => 0.999999` means no bad luck.
+- **Separate from the prime score:** in Ops the hazards replace the generic cruise and science base rates. The extension is reported separately and never changes the prime score.
+- Data: `operations.json` (parameters) and `hazards.json` (hazards, responses, real history marked "to verify").
+
 **Module responsibilities that span files:**
 - **Margins → risk → score.** `meter.ts` sets status: below 0 is over, below 10% is a warning.
   - `risk.ts` turns margins into phase failure factors: f = 1 at ≥10%, 3 at 0%, ∞ below 0.
