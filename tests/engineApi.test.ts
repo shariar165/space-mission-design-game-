@@ -2,7 +2,10 @@
 // Hand calculations are in the comments, as in physics.test.ts.
 import { describe, expect, it } from 'vitest';
 import { compareWithRealMission, designDelta, METER_KEYS, REAL_MISSION_FOR } from '../src/engine/compare';
-import { evaluateDesign, MONTE_CARLO_SEED, monteCarloMission, previewCrisis, simulateMission } from '../src/engine/index';
+import { crisisOrders, evaluateDesign, MONTE_CARLO_SEED, monteCarloMission, previewCrisis, simulateMission, standingOrderPolicy } from '../src/engine/index';
+import { applicableCards, availableOptions, safestOption } from '../src/engine/crisis';
+import { earthDistance, julianDate } from '../src/engine/ephemeris';
+import { countdown, craftPosition, flightFrames, flightMap, signalDelay } from '../src/engine/flightMap';
 import { presetDesign } from '../src/engine/missions';
 import { MAX_SCORE, nextStar, nextStarHint, SCORE_GRADES, scoreGrade } from '../src/engine/scoring';
 import { bestLaunchWindow, lambertTransfer } from '../src/engine/trajectory';
@@ -513,5 +516,147 @@ describe('Test Flight (where the mission would fail, before launch)', () => {
     const mc = monteCarloMission(d, { runs: 200, seed: MONTE_CARLO_SEED });
     for (const c of t.checkpoints) expect(c.lossChance).toBeCloseTo((mc.failuresByPhase[c.phase] ?? 0) / 200, 12);
     expect(t.successRate).toBe(mc.successRate);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Light-delay Mission Control: standing orders, signal delay and flight frames.
+
+describe('Standing orders (the craft acts on orders queued before launch)', () => {
+  const base = cadetBase('mars');
+  const good = cadet.buildCadetDesign(base, cadet.defaultChoices(base));
+
+  it('crisisOrders lists every card this mission can meet, with the options the spare margins can pay for', () => {
+    const o = crisisOrders(good);
+    const e = evaluateDesign(good);
+    expect(o.map((c) => c.card.id).sort()).toEqual(applicableCards('orbiter', false).map((c) => c.id).sort());
+    for (const c of o) {
+      const avail = availableOptions(c.card, {
+        deltaV_ms: e.details.deltaVCapability_ms - e.details.deltaVRequired_ms,
+        budget_M: e.details.cost.cap_M - e.details.cost.development_M,
+        powerMargin: e.meters.power.margin,
+      });
+      expect(c.available.map((x) => x.id)).toEqual(avail.map((x) => x.id));
+      expect(c.defaultOptionId).toBe(safestOption(avail).id);
+    }
+  });
+
+  it('a Δv option shows the propellant it burns: rocket equation at the craft mass in that phase', () => {
+    const nav = crisisOrders(good).find((c) => c.card.id === 'unit-mismatch')!;
+    const opt = nav.available.find((x) => x.id === 'nav-check')!;
+    const e = evaluateDesign(good);
+    // cruise: wet mass; m = m₀(1 − e^(−Δv/(Isp g₀))), Δv = 15 m/s
+    expect(nav.fuel_kg['nav-check']).toBeCloseTo(e.details.wetMass_kg * (1 - Math.exp(-opt.cost.deltaV_ms!.value / (e.details.isp_s * 9.80665))), 9);
+    expect(nav.fuel_kg['trust-plan']).toBe(0);
+  });
+
+  it('the policy flies the queued option for whichever card is drawn', () => {
+    let checked = 0;
+    for (let seed = 1; seed <= 40; seed++) {
+      const p = previewCrisis(good, seed)!;
+      const pick = p.options[p.options.length - 1]!.id; // the riskier, free option
+      const sim = simulateMission(good, { seed, crisisPolicy: standingOrderPolicy({ [p.card.id]: pick }) });
+      expect(sim.crisis!.optionId).toBe(pick);
+      checked++;
+    }
+    expect(checked).toBe(40);
+  });
+
+  it('no order (or one the margins cannot pay for) → the craft takes the safest available option', () => {
+    const p = previewCrisis(good, 7)!;
+    const sim = simulateMission(good, { seed: 7, crisisPolicy: standingOrderPolicy({ [p.card.id]: 'not-an-option' }) });
+    expect(sim.crisis!.optionId).toBe(safestOption(p.options).id);
+    expect(simulateMission(good, { seed: 7, crisisPolicy: standingOrderPolicy({}) }).crisis!.optionId).toBe(safestOption(p.options).id);
+  });
+});
+
+describe('Signal delay on the crisis day', () => {
+  const base = cadetBase('mars');
+  const good = cadet.buildCadetDesign(base, cadet.defaultChoices(base));
+  const e = evaluateDesign(good);
+  const jd0 = julianDate(e.details.launchDate);
+
+  it('at the destination: one-way light time from the ephemeris Earth distance (t = d / c)', () => {
+    const day = Math.round(e.trajectory.flightDays) + 30;
+    const s = signalDelay(good, day, e);
+    expect(s.distance_m).toBeCloseTo(earthDistance('mars', jd0 + day), 0);
+    expect(s.oneWay_s).toBeCloseTo(s.distance_m / 299_792_458, 9);
+    // a command sent when the news arrives reaches the craft one more trip later
+    expect(s.roundTrip_s).toBeCloseTo(2 * s.oneWay_s, 9);
+  });
+
+  it('on launch day the craft is at Earth: no delay', () => {
+    expect(signalDelay(good, 0, e).distance_m).toBeLessThan(1e3);
+  });
+
+  it('in cruise the craft is part-way along its transfer: farther than launch, nearer than the start of science', () => {
+    const mid = signalDelay(good, e.trajectory.flightDays / 2, e).distance_m;
+    expect(mid).toBeGreaterThan(1e9);
+    const pos = craftPosition(good, e.trajectory.flightDays / 2, e);
+    const path = e.trajectory.path;
+    // half the flight time = half-way along the time-sampled path (64 steps → point 32)
+    expect(pos[0]).toBeCloseTo(path[32]![0], -3);
+    expect(pos[1]).toBeCloseTo(path[32]![1], -3);
+  });
+
+  it('Moon: 384,000 km → 1.28 s one way', () => {
+    const m = cadet.buildCadetDesign(cadetBase('moon'), cadet.defaultChoices(cadetBase('moon')));
+    const em = evaluateDesign(m);
+    expect(signalDelay(m, Math.round(em.trajectory.flightDays) + 10, em).oneWay_s).toBeCloseTo(384_000_000 / 299_792_458, 6);
+  });
+
+  it('countdown: 760 s one way, a quarter of the way there → 570 s left; never below zero', () => {
+    expect(countdown(760, 0.25)).toBe(570);
+    expect(countdown(760, 1.5)).toBe(0);
+    expect(countdown(760, 0)).toBe(760);
+  });
+});
+
+describe('Flight frames (what the Flight screen animates)', () => {
+  const base = cadetBase('mars');
+  const good = cadet.buildCadetDesign(base, cadet.defaultChoices(base));
+  const e = evaluateDesign(good);
+
+  it('runs from launch to the end day, with the crisis day as an exact frame', () => {
+    const fr = flightFrames(good, { endDay: 700, crisisDay: 214, frames: 60 }, e);
+    expect(fr[0]!.day).toBe(0);
+    expect(fr[fr.length - 1]!.day).toBe(700);
+    expect(fr.some((x) => x.day === 214)).toBe(true);
+    for (let i = 1; i < fr.length; i++) expect(fr[i]!.day).toBeGreaterThanOrEqual(fr[i - 1]!.day);
+  });
+  it('each frame carries its phase and the Earth distance from the same signal model', () => {
+    const fr = flightFrames(good, { endDay: 700, frames: 40 }, e);
+    for (const x of fr) {
+      expect(x.earthDistance_m).toBeCloseTo(signalDelay(good, x.day, e).distance_m, 0);
+    }
+    expect(fr[0]!.phase).toBe('launch');
+    expect(fr.find((x) => x.day > e.trajectory.flightDays + 1)!.phase).toBe('science');
+  });
+});
+
+describe('Flight map geometry', () => {
+  it('Mars: heliocentric frame; the orbits and the path fit inside the extent (Mars aphelion ≈ 1.666 AU)', () => {
+    const b = cadetBase('mars');
+    const d = cadet.buildCadetDesign(b, cadet.defaultChoices(b));
+    const e = evaluateDesign(d);
+    const m = flightMap(d, e);
+    const AU = 149_597_870_700;
+    expect(m.frame).toBe('sun');
+    expect(m.path).toEqual(e.trajectory.path);
+    expect(m.extent_m / AU).toBeGreaterThan(1.666);
+    expect(m.extent_m / AU).toBeLessThan(2);
+    for (const p of [...m.earthOrbit, ...m.destOrbit, ...m.path]) expect(Math.max(Math.abs(p[0]), Math.abs(p[1]))).toBeLessThanOrEqual(m.extent_m);
+  });
+  it('Moon: Earth-centred frame, the Moon on a circle of 384,000 km', () => {
+    const b = cadetBase('moon');
+    const d = cadet.buildCadetDesign(b, cadet.defaultChoices(b));
+    const m = flightMap(d);
+    expect(m.frame).toBe('earth');
+    for (const p of m.destOrbit) expect(Math.hypot(p[0], p[1])).toBeCloseTo(384_000_000, -1);
+  });
+  it('frames carry the one-way light time t = d / c', () => {
+    const b = cadetBase('mars');
+    const d = cadet.buildCadetDesign(b, cadet.defaultChoices(b));
+    for (const x of flightFrames(d, { endDay: 400, frames: 10 })) expect(x.oneWay_s).toBeCloseTo(x.earthDistance_m / 299_792_458, 9);
   });
 });

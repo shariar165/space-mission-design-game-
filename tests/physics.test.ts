@@ -757,6 +757,29 @@ describe('crisis', () => {
     expect(poor.length).toBeGreaterThan(0); // the free option is always there
   });
 
+  it('the free option stays on offer even when a spare margin is negative (over budget is not a blocker)', () => {
+    // Over the cost cap: budget spare −$20M. The free option costs nothing, so it is still offered.
+    for (const card of CR.CRISIS_CARDS) {
+      const broke = CR.availableOptions(card, { deltaV_ms: -10, budget_M: -20, powerMargin: -0.1 });
+      expect(broke.map((o) => o.id), card.id).toEqual(card.options.filter((o) => !o.cost.deltaV_ms && !o.cost.budget_M && !o.requires).map((o) => o.id));
+      expect(broke.length, card.id).toBeGreaterThan(0);
+    }
+  });
+
+  it('an over-budget craft that launches can still meet its crisis (no crash)', () => {
+    const maven = presetDesign('maven');
+    const pricey: Design = {
+      ...maven,
+      busId: 'large-bus',
+      instrumentIds: [...maven.instrumentIds, 'radar', 'camera', 'spectrometer'],
+      power: { type: 'solar', arrayArea_m2: 30 },
+    };
+    const e = evaluateDesign(pricey);
+    expect(e.meters.cost.status).toBe('over');
+    expect(e.blockers).toEqual([]); // it launches
+    for (let seed = 1; seed <= 20; seed++) expect(() => simulateMission(pricey, { seed })).not.toThrow();
+  });
+
   it('crisis handling score: outcome vs risk taken', () => {
     expect(CR.crisisScore(true, false)).toBe(100); // safe choice, good outcome
     expect(CR.crisisScore(false, false)).toBe(70); // risky, got lucky

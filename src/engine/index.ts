@@ -2,7 +2,7 @@
 // what comes back. Every number is computed here; nothing is hand-typed into the UI.
 import { G0, GAME_RULES, km, mu as muSI, S0 } from './constants';
 import { COMMS_CALIBRATED, dataMeter, dataPerDay_bits, dataRate, lightDelay_s, REFERENCE_LINK } from './comms';
-import { availableOptions, crisisScore, drawCrisis, safestOption, timeline, type CrisisCard, type CrisisOption, type PhaseWindow } from './crisis';
+import { applicableCards, availableOptions, crisisScore, drawCrisis, safestOption, timeline, type CrisisCard, type CrisisOption, type PhaseWindow } from './crisis';
 import { DESTINATIONS, LAUNCH_VEHICLES, lookup, PARTS } from './data';
 import { earthDistance, julianDate, sunDistance } from './ephemeris';
 import { launchMassCheck, launchSuccessProbability, payloadAtC3 } from './launch';
@@ -387,8 +387,8 @@ function setUpCrisis(p: Prepared, rng: () => number): { tl: PhaseWindow[]; drawn
  * Craft mass during a phase (kg): the wet mass until arrival. After arrival, the wet mass minus the propellant
  * burned for the arrival burn, the capture → science orbit change and the trajectory corrections (rocket equation).
  */
-function massInPhase(p: Prepared, phase: Phase): number {
-  const d = p.ev.details;
+function massInPhase(ev: FullEvaluation, phase: Phase): number {
+  const d = ev.details;
   if (phase === 'launch' || phase === 'cruise') return d.wetMass_kg;
   const b = d.deltaVBudget;
   return d.wetMass_kg - propellantBurned(d.wetMass_kg, b.arrival_ms + b.orbitTransfer_ms + b.trajectoryCorrections_ms, d.isp_s);
@@ -539,7 +539,7 @@ function run(p: Prepared, rng: () => number, policy: CrisisPolicy): SimulationRe
       reached: crisisReached,
       badOutcome,
       deltaVSpent_ms,
-      propellantSpent_kg: propellantBurned(massInPhase(p, drawn.phase), deltaVSpent_ms, d.isp_s),
+      propellantSpent_kg: propellantBurned(massInPhase(p.ev, drawn.phase), deltaVSpent_ms, d.isp_s),
       scienceDaysLost: crisisReached ? scienceDaysLost : 0,
       budgetSpent_M: crisisReached || drawn.card.decisionBeforeLaunch ? (chosen.cost.budget_M?.value ?? 0) : 0,
     },
@@ -564,6 +564,49 @@ export function previewCrisis(
   if (p.ev.blockers.length) return undefined;
   const { drawn, options } = setUpCrisis(p, makeRng(seed));
   return { card: drawn.card, day: drawn.day, phase: drawn.phase, options, safestOptionId: safestOption(drawn.card.options).id };
+}
+
+// ---------------------------------------------------------------------------
+// Standing orders (Cadet Mission Control). Signals take minutes to reach the craft, so the player queues
+// what it should do for each crisis before launch, and the craft acts on its own when the crisis comes.
+
+export interface CrisisOrder {
+  card: CrisisCard;
+  /** Options the spare margins can pay for (the free option is always one). */
+  available: CrisisOption[];
+  /** The order the craft follows if the player sets none: the safest available option. */
+  defaultOptionId: string;
+  /** Propellant each option burns (kg): rocket equation at the craft mass in the card's phase (cruise for "any"). */
+  fuel_kg: Record<string, number>;
+}
+
+/** Every crisis card this mission can meet, with what the spare margins can pay for. */
+export function crisisOrders(design: Design): CrisisOrder[] {
+  const ev = evaluateDesign(design);
+  const d = ev.details;
+  const spare = {
+    deltaV_ms: d.deltaVCapability_ms - d.deltaVRequired_ms,
+    budget_M: d.cost.cap_M - d.cost.development_M,
+    powerMargin: ev.meters.power.margin,
+  };
+  return applicableCards(DESTINATIONS[design.destination].missionType, d.sampleReturn).map((card) => {
+    const available = availableOptions(card, spare);
+    const m0 = massInPhase(ev, card.eventPhase === 'any' ? 'cruise' : card.eventPhase);
+    return {
+      card,
+      available,
+      defaultOptionId: safestOption(available).id,
+      fuel_kg: Object.fromEntries(card.options.map((o) => [o.id, propellantBurned(m0, o.cost.deltaV_ms?.value ?? 0, d.isp_s)])),
+    };
+  });
+}
+
+/** A crisis policy from standing orders (card id → option id). A missing or unaffordable order → the safest option. */
+export function standingOrderPolicy(orders: Record<string, string>): CrisisPolicy {
+  return (card, options) => {
+    const id = orders[card.id];
+    return id !== undefined && options.some((o) => o.id === id) ? id : safestOption(options).id;
+  };
 }
 
 /** Fly one mission. Reproducible for a given seed. */

@@ -89,11 +89,13 @@ export function availableOptions(
   card: CrisisCard,
   spare: { deltaV_ms: number; budget_M: number; powerMargin: number },
 ): CrisisOption[] {
+  // A cost of zero is always payable, even when a spare margin is negative (an over-budget craft can launch).
+  const payable = (cost: number, spare: number) => cost <= 0 || cost <= spare;
   return card.options.filter(
     (o) =>
-      (o.cost.deltaV_ms?.value ?? 0) <= spare.deltaV_ms &&
-      (o.cost.budget_M?.value ?? 0) <= spare.budget_M &&
-      (o.requires?.powerMargin?.value ?? -Infinity) <= spare.powerMargin,
+      payable(o.cost.deltaV_ms?.value ?? 0, spare.deltaV_ms) &&
+      payable(o.cost.budget_M?.value ?? 0, spare.budget_M) &&
+      (o.requires?.powerMargin === undefined || o.requires.powerMargin.value <= spare.powerMargin),
   );
 }
 

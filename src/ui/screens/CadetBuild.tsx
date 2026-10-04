@@ -4,12 +4,13 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import { cadetGauges, cadetOptions, testFlight, type CadetChoices, type CadetStep } from '../../engine/cadet';
 import { DESTINATIONS } from '../../engine/data';
-import type { FullEvaluation } from '../../engine/index';
+import type { CrisisOrder, FullEvaluation } from '../../engine/index';
 import type { Design } from '../../engine/types';
-import { STEP_QUESTION, STEP_TITLE, stepHelper } from '../cadetWords';
+import { ORDERS_HELPER, STEP_QUESTION, STEP_TITLE, stepHelper } from '../cadetWords';
 import { CadetCraft } from '../components/CadetCraft';
 import { ChoiceCard } from '../components/ChoiceCard';
 import { Gauges } from '../components/Gauges';
+import { OrdersPanel } from '../components/OrdersPanel';
 import { TestFlight } from '../components/TestFlight';
 import { Check } from '../components/icons';
 
@@ -22,8 +23,10 @@ interface Props {
   ev: FullEvaluation;
   /** Steps the player decides in this level; the others keep their balanced cards. */
   steps: readonly CadetStep[];
-  /** 0 … steps.length − 1 are decisions; steps.length is the Review screen. */
+  /** 0 … steps.length − 1 are decisions, then the Orders screen (if any), then the Review screen. */
   stepIdx: number;
+  /** Standing orders for Mission Control (levels that teach light delay). */
+  orders?: { list: CrisisOrder[]; chosen: Record<string, string>; onChoose: (cardId: string, optionId: string) => void };
   onChoose: (step: CadetStep, id: string) => void;
   onStep: (i: number) => void;
   onLaunch: () => void;
@@ -33,12 +36,17 @@ interface Props {
   onTestFlight?: (failed: boolean) => void;
 }
 
-export function CadetBuild({ base, choices, design, ev, steps, stepIdx, onChoose, onStep, onLaunch, goal, onTestFlight }: Props) {
+export function CadetBuild({ base, choices, design, ev, steps, stepIdx, onChoose, onStep, onLaunch, goal, onTestFlight, orders }: Props) {
   const dest = DESTINATIONS[design.destination];
-  const review = stepIdx >= steps.length;
+  const ordersIdx = orders ? steps.length : -1;
+  const reviewIdx = steps.length + (orders ? 1 : 0);
+  const go = (i: number) => onStep(Math.max(0, Math.min(reviewIdx, i)));
+  const onOrders = stepIdx === ordersIdx;
+  const review = stepIdx >= reviewIdx;
+  const deciding = !review && !onOrders;
   const step = steps[Math.min(stepIdx, steps.length - 1)]!;
   const gauges = useMemo(() => cadetGauges(ev), [ev]);
-  const options = useMemo(() => (review ? [] : cadetOptions(base, choices, step)), [base, choices, step, review]);
+  const options = useMemo(() => (deciding ? cadetOptions(base, choices, step) : []), [base, choices, step, deciding]);
   const [flight, setFlight] = useState<ReturnType<typeof testFlight>>();
   const blocked = ev.blockers.length > 0;
 
@@ -51,7 +59,7 @@ export function CadetBuild({ base, choices, design, ev, steps, stepIdx, onChoose
             type="button"
             className={`cdot${i === stepIdx ? ' current' : i < stepIdx ? ' done' : ''}`}
             aria-current={i === stepIdx ? 'step' : undefined}
-            onClick={() => onStep(i)}
+            onClick={() => go(i)}
           >
             <span className="cdot-icon" aria-hidden="true">
               {i < stepIdx ? <Check size={14} /> : STEP_ICON[s]}
@@ -59,7 +67,15 @@ export function CadetBuild({ base, choices, design, ev, steps, stepIdx, onChoose
             <span className="cdot-name">{STEP_TITLE[s]}</span>
           </button>
         ))}
-        <button type="button" className={`cdot${review ? ' current' : ''}`} aria-current={review ? 'step' : undefined} onClick={() => onStep(steps.length)}>
+        {orders && (
+          <button type="button" className={`cdot${onOrders ? ' current' : stepIdx > ordersIdx ? ' done' : ''}`} aria-current={onOrders ? 'step' : undefined} onClick={() => go(ordersIdx)}>
+            <span className="cdot-icon" aria-hidden="true">
+              {stepIdx > ordersIdx ? <Check size={14} /> : '📜'}
+            </span>
+            <span className="cdot-name">Orders</span>
+          </button>
+        )}
+        <button type="button" className={`cdot${review ? ' current' : ''}`} aria-current={review ? 'step' : undefined} onClick={() => go(reviewIdx)}>
           <span className="cdot-icon" aria-hidden="true">
             🏁
           </span>
@@ -76,7 +92,16 @@ export function CadetBuild({ base, choices, design, ev, steps, stepIdx, onChoose
         </section>
 
         <section className="cpanel" aria-labelledby="cpanel-title">
-          {review ? (
+          {onOrders && orders ? (
+            <>
+              <div className="ckicker">Before launch — standing orders</div>
+              <h1 id="cpanel-title" className="ctitle">
+                Give your craft its orders
+              </h1>
+              <p className="chelper">{ORDERS_HELPER}</p>
+              <OrdersPanel orders={orders.list} chosen={orders.chosen} onChoose={orders.onChoose} />
+            </>
+          ) : review ? (
             <>
               <div className="ckicker">Ready to fly?</div>
               <h1 id="cpanel-title" className="ctitle">
@@ -117,12 +142,12 @@ export function CadetBuild({ base, choices, design, ev, steps, stepIdx, onChoose
             </>
           )}
           <div className="cnav">
-            <button type="button" className="btn-big ghost" disabled={stepIdx === 0} onClick={() => onStep(stepIdx - 1)}>
+            <button type="button" className="btn-big ghost" disabled={stepIdx === 0} onClick={() => go(stepIdx - 1)}>
               ← Back
             </button>
             {!review && (
-              <button type="button" className="btn-big" onClick={() => onStep(stepIdx + 1)}>
-                {stepIdx === steps.length - 1 ? 'Review craft →' : 'Next →'}
+              <button type="button" className="btn-big" onClick={() => go(stepIdx + 1)}>
+                {stepIdx + 1 === ordersIdx ? 'Orders →' : stepIdx + 1 === reviewIdx ? 'Review craft →' : 'Next →'}
               </button>
             )}
           </div>

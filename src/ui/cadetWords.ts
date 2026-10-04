@@ -134,3 +134,8 @@ export const GAUGE_STATUS: Record<GaugeKey, Record<'ok' | 'warning' | 'over', st
   photos: { ok: 'All sent', warning: 'Tight', over: 'Jammed' },
   budget: { ok: 'Under cap', warning: 'Tight', over: 'Over cap' },
 };
+
+export const ORDERS_HELPER = 'Signals take minutes to reach your craft, so it cannot wait for you. Tell it now what to do if…';
+
+/** What an option costs, as cadet words (numbers are added by the caller from the engine). */
+export const COST_ICON = { fuel: '⛽', budget: '💰', science: '🔭' } as const;

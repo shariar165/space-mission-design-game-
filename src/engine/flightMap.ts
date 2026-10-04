@@ -1,0 +1,169 @@
+// Where the craft is during the flight, for the Flight map and Mission Control (Cadet). Positions are
+// ecliptic x, y in metres: heliocentric, or Earth-centred for the Moon (spec: Ephemeris).
+// - Cruise: along the transfer path, which trajectory.ts samples evenly in time (Lambert), so a time
+//   fraction maps to a path fraction. The Moon path and the fixed Bennu route are sampled differently;
+//   there the position is approximate (drawing and light delay only, never physics).
+// - At the destination: the destination's ephemeris position.
+// - Trip home (sample return): a straight line from the destination back to Earth (approximate; the
+//   return transfer is not modelled, spec: Assumptions).
+import { lightDelay_s } from './comms';
+import { phaseOnDay, timeline, type PhaseWindow } from './crisis';
+import { DESTINATIONS } from './data';
+import { earthDistance, heliocentricPosition, julianDate } from './ephemeris';
+import { evaluateDesign, type FullEvaluation } from './index';
+import type { Phase } from './risk';
+import { EARTH_ORBIT_PERIOD } from './constants';
+import type { Design } from './types';
+
+export type XY = [number, number];
+
+const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
+const lerp = (a: XY, b: XY, t: number): XY => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+const dist = (a: XY, b: XY) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+
+/** The point a fraction of the way along a sampled path (linear between samples). */
+export function positionAt(path: XY[], fraction: number): XY {
+  if (path.length === 0) return [0, 0];
+  const f = clamp01(fraction) * (path.length - 1);
+  const i = Math.floor(f);
+  return lerp(path[i]!, path[Math.min(i + 1, path.length - 1)]!, f - i);
+}
+
+function missionTimeline(ev: FullEvaluation): PhaseWindow[] {
+  return timeline({
+    flightDays: ev.trajectory.flightDays,
+    scienceDays: ev.details.scienceDays,
+    returnDays: ev.details.sampleReturn ? Math.round(ev.trajectory.flightDays) : undefined,
+  });
+}
+
+/** Earth, destination and the frame they are drawn in, on a mission day. */
+function bodies(design: Design, ev: FullEvaluation) {
+  const jd0 = julianDate(ev.details.launchDate);
+  if (design.destination === 'moon') {
+    const r = earthDistance('moon', jd0);
+    const period = DESTINATIONS.moon.orbitPeriod_days.value;
+    const flight = ev.trajectory.flightDays;
+    return {
+      frame: 'earth' as const,
+      earth: (_day: number): XY => [0, 0],
+      // The transfer ends on the far side ([−r, 0]); the Moon is there on arrival and keeps orbiting.
+      dest: (day: number): XY => {
+        const th = Math.PI + (2 * Math.PI * (day - flight)) / period;
+        return [r * Math.cos(th), r * Math.sin(th)];
+      },
+      destDistance: (_day: number) => r,
+    };
+  }
+  const xy = (body: 'earth' | Design['destination'], day: number): XY => {
+    const p = heliocentricPosition(body, jd0 + day);
+    return [p[0], p[1]];
+  };
+  return {
+    frame: 'sun' as const,
+    earth: (day: number) => xy('earth', day),
+    dest: (day: number) => xy(design.destination, day),
+    destDistance: (day: number) => earthDistance(design.destination, jd0 + day),
+  };
+}
+
+/** Craft position on a mission day (may be fractional). */
+export function craftPosition(design: Design, day: number, ev: FullEvaluation = evaluateDesign(design)): XY {
+  const b = bodies(design, ev);
+  const tl = missionTimeline(ev);
+  const flight = ev.trajectory.flightDays;
+  const science = tl.find((w) => w.phase === 'science')!;
+  const ret = tl.find((w) => w.phase === 'return');
+  if (day <= 0) return b.frame === 'earth' ? ev.trajectory.path[0] ?? [0, 0] : b.earth(0);
+  if (day < flight) return positionAt(ev.trajectory.path, day / flight);
+  if (!ret || day <= science.endDay) return b.dest(day);
+  return lerp(b.dest(science.endDay), b.earth(ret.endDay), clamp01((day - science.endDay) / (ret.endDay - science.endDay)));
+}
+
+/** Earth–craft distance and one-way light time on a mission day: t = d / c. */
+export function signalDelay(
+  design: Design,
+  day: number,
+  ev: FullEvaluation = evaluateDesign(design),
+): { distance_m: number; oneWay_s: number; roundTrip_s: number } {
+  const b = bodies(design, ev);
+  const tl = missionTimeline(ev);
+  const science = tl.find((w) => w.phase === 'science')!;
+  const atDestination = day >= ev.trajectory.flightDays && day <= science.endDay;
+  const distance_m = atDestination ? b.destDistance(day) : dist(craftPosition(design, day, ev), b.earth(day));
+  const oneWay_s = lightDelay_s(distance_m);
+  // News of a crisis needs one trip to reach Earth, and a reply one more trip back to the craft.
+  return { distance_m, oneWay_s, roundTrip_s: 2 * oneWay_s };
+}
+
+/** Seconds left before a signal arrives, a fraction of the way through its trip. */
+export function countdown(oneWay_s: number, fraction: number): number {
+  return oneWay_s * (1 - clamp01(fraction));
+}
+
+export interface FlightFrame {
+  day: number;
+  phase: Phase;
+  craft: XY;
+  earth: XY;
+  dest: XY;
+  earthDistance_m: number;
+  /** One-way light time Earth ↔ craft (s). */
+  oneWay_s: number;
+}
+
+/**
+ * Frames for the Flight screen: whole days from launch to endDay, evenly spread, always including the
+ * arrival day and the crisis day so the animation can stop exactly there.
+ */
+export function flightFrames(
+  design: Design,
+  opts: { endDay: number; crisisDay?: number; frames?: number },
+  ev: FullEvaluation = evaluateDesign(design),
+): FlightFrame[] {
+  const n = Math.max(2, opts.frames ?? 80);
+  const tl = missionTimeline(ev);
+  const b = bodies(design, ev);
+  const days = new Set<number>();
+  for (let i = 0; i < n; i++) days.add(Math.round((opts.endDay * i) / (n - 1)));
+  const arrival = Math.round(ev.trajectory.flightDays);
+  if (arrival <= opts.endDay) days.add(arrival);
+  if (opts.crisisDay !== undefined && opts.crisisDay <= opts.endDay) days.add(opts.crisisDay);
+  const last = tl[tl.length - 1]!.phase;
+  return [...days]
+    .sort((a, b2) => a - b2)
+    .map((day) => {
+      const s = signalDelay(design, day, ev);
+      return {
+        day,
+        phase: phaseOnDay(tl, day) ?? last,
+        craft: craftPosition(design, day, ev),
+        earth: b.earth(day),
+        dest: b.dest(day),
+        earthDistance_m: s.distance_m,
+        oneWay_s: s.oneWay_s,
+      };
+    });
+}
+
+export interface FlightMapGeometry {
+  /** 'sun': heliocentric; 'earth': Earth-centred (Moon). */
+  frame: 'sun' | 'earth';
+  earthOrbit: XY[];
+  destOrbit: XY[];
+  /** The player's transfer (evaluateDesign().trajectory.path). */
+  path: XY[];
+  /** Half-width of a square that holds everything (m), for drawing. */
+  extent_m: number;
+}
+
+/** Static map: one full orbit of Earth and of the destination, and the transfer path. */
+export function flightMap(design: Design, ev: FullEvaluation = evaluateDesign(design)): FlightMapGeometry {
+  const b = bodies(design, ev);
+  const loop = (f: (day: number) => XY, period: number, n: number) => Array.from({ length: n + 1 }, (_, i) => f((period * i) / n));
+  const earthOrbit = b.frame === 'sun' ? loop(b.earth, EARTH_ORBIT_PERIOD.value, 96) : [];
+  const destOrbit = loop(b.dest, DESTINATIONS[design.destination].orbitPeriod_days.value, 128);
+  const path = ev.trajectory.path;
+  const extent_m = 1.08 * Math.max(...[...earthOrbit, ...destOrbit, ...path].map((p) => Math.max(Math.abs(p[0]), Math.abs(p[1]))));
+  return { frame: b.frame, earthOrbit, destOrbit, path, extent_m };
+}

@@ -2,14 +2,14 @@ import { DESTINATIONS } from '../../engine/data';
 import type { DestinationId } from '../../engine/types';
 import { Check, Logo } from './icons';
 
-export type Step = 'build' | 'crisis' | 'debrief';
+export type Step = 'build' | 'crisis' | 'flight' | 'debrief';
 export type Mode = 'cadet' | 'engineer';
 
 const STEPS: { id: string; label: string; ours?: Step[] }[] = [
   { id: 'mission', label: 'Mission' },
   { id: 'build', label: 'Build', ours: ['build'] },
   { id: 'window', label: 'Window' },
-  { id: 'flight', label: 'Flight', ours: ['crisis'] },
+  { id: 'flight', label: 'Flight', ours: ['crisis', 'flight'] },
   { id: 'debrief', label: 'Debrief', ours: ['debrief'] },
 ];
 
