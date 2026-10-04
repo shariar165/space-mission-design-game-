@@ -46,7 +46,7 @@ export function TopBar({ step, mode, onMode, missionName, onMissionName, destina
       <div className="brand">
         <Logo />
         <div>
-          <div className="brand-name">Mission Drafting Table</div>
+          <div className="brand-name">SIGNAL DELAY</div>
           <div className="brand-sub">
             <input aria-label="Mission name" value={missionName} size={Math.max(8, missionName.length)} onChange={(e) => onMissionName(e.target.value)} />
             {!cadet && (

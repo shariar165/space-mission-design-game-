@@ -1,6 +1,8 @@
-# Mission Drafting Table
+# Signal Delay
 
-A NASA space-mission design game: a pure TypeScript simulation engine (`src/engine`) and a React + Vite UI (`src/ui`). **Cadet mode** (the default) is a guided game: a level map, one decision per screen, metaphor gauges, a Test Flight, light-delay Mission Control, Rescue History and a ghost of the real NASA path. **Engineer mode** keeps the full Build Bay, crisis card and Debrief with every equation and source. The UI only displays numbers the engine computes. The science rules are in [docs/SCIENCE_SPEC.md](docs/SCIENCE_SPEC.md). Every constant and data value is a `Sourced<T>` that carries its source and an `isGameEstimate` flag.
+*You don't fly the rocket. You keep a robot alive millions of kilometres away, and every order arrives minutes late.*
+
+A NASA space-mission design game: a pure TypeScript simulation engine (`src/engine`) and a React + Vite UI (`src/ui`) in a retro mission-control look (design: the Claude Design "Signal Delay" screens, copied in `docs/design/signal-delay/`). **Cadet mode** (the default): pick a mission, **Pack** the rocket nose (volume and weight are separate limits) for the dangers you can see coming, pick a launch day, then **Fly & Survive**: danger cards stop time, you choose, and the order crawls to the robot at light speed. The **Mission Report** prints the flight as a comic. **Engineer mode** builds in the full Build Bay and flies the same Fly & Survive with every equation and source. One flight model everywhere: the Mission operations engine. The UI only displays numbers the engine computes. The science rules are in [docs/SCIENCE_SPEC.md](docs/SCIENCE_SPEC.md). Every constant and data value is a `Sourced<T>` that carries its source and an `isGameEstimate` flag.
 
 ## Setup (everything lives in `.venv`)
 
@@ -25,6 +27,7 @@ npm install
 | `npm run test:validation` | Real-mission validation only; writes `docs/VALIDATION_RESULTS.md` |
 | `npm run todo-data` | Data audit; regenerates `TODO_DATA.md` |
 | `npm run typecheck` | `tsc --noEmit` |
+| `npm run shots` | Playwright screenshots of the game and the design copies at 1440 × 900 and 390 × 844 (browsers live in `.venv/ms-playwright`) |
 
 ## Layout
 
@@ -51,23 +54,27 @@ src/engine/
   rescue.ts       Rescue History cases (Mars Climate Orbiter), clues, consequence, stars
   ops/            Mission operations: day-by-day clock, hazards, commands with light delay, DSN, extension;
                   console.ts is the Operations Console view model (consoleView, powerPlanPreview, dsnOptions)
-src/ui/           React UI: App.tsx, screens/ (Engineer: BuildBay, CrisisScreen, Debrief; Cadet: LevelMap,
-                  CadetBuild, Flight, Rescue; both: OpsConsole), components/ (ops/ for the console),
-                  levels.ts (Cadet levels and saved stars), cadetWords.ts and opsWords.ts (wording),
-                  useOpsSession.ts (console clock), format.ts (unit display only), meters.ts, starters.ts
-                  styles/app.css (shared + Engineer), styles/cadet.css (Cadet), styles/ops.css (console; 1440 and 390 layouts)
+  pack.ts         Signal Delay Pack: nose grid, part effects (Design.kit), danger deck, launch calendar
+  ops/fly.ts      Fly & Survive view model: five-segment tiles, danger-card times and chips, Coming Up ribbon
+  ops/report.ts   Mission Report: comic panels, what saved / hurt you, you vs the real mission
+src/ui/           React UI: App.tsx, screens/ (Pack, FlyAndSurvive, MissionReport; Engineer BuildBay; LevelMap,
+                  Rescue), components/sd (icons, teletype, lever), components/fly, components/report,
+                  components/ops (console drawers), levels.ts (levels, shelves and saved stars),
+                  sdWords.ts (Signal Delay wording), sdGeometry.ts (pixel layout), useOpsSession.ts (clock),
+                  format.ts (unit display only), styles/theme.css (design tokens) + sd-*.css per screen
 src/data/         destinations, orbitalElements, launchVehicles, parts, missions, crisisCards, lessons,
-                  rescueCases (all values Sourced)
+                  rescueCases, pack (all values Sourced)
 tests/            physics.test.ts, validation.test.ts, dataAudit.test.ts, engineApi.test.ts, uiGuards.test.ts,
                   ui/*.test.tsx (component tests)
-docs/design/      reference copy of the Claude Design mockups
+docs/design/      reference copies of the Claude Design mockups (signal-delay/ is the current UI)
+tests/visual/     Playwright screenshot harness (npm run shots), not part of npm test
 ```
 
 All modules in the spec's build order are built.
 
-- **Cadet:** Level map → guided build (Science, Power, Radio, Fuel, Rocket, then standing orders from Mars on) → Test Flight → Launch → Flight map with Mission Control on the crisis day → Debrief with the level result. Rescue History opens from the map.
-- **Engineer:** Build Bay → one crisis card → Debrief. The Mission and Window screens come next.
-- **Operations Console (both modes, spec UI rules 16–20):** from the Debrief, "Run mission operations" flies the same craft day by day: hazard alerts with light-delayed commands, the power plan, calls home on the 34 m or 70 m dish, conjunction blackouts, safe mode, then the extension decision and the Ops debrief (prime stars kept separate). Cadet opens it from the Mars level on.
+- **Cadet:** Level map → Pack (parts shelf, rocket nose, weight scale, danger deck, launch calendar, ARM, LAUNCH) → Fly & Survive → Mission Report with the level stars. Rescue History opens from the map.
+- **Engineer:** Build Bay → Fly & Survive (Engineer readouts and the EQUATIONS drawer) → Mission Report with the score breakdown, every comparison row's ⓘ and the Mission operations risk.
+- **Fly & Survive (both modes, spec UI rules 16–20):** the Mission operations engine flies the craft day by day: danger cards with light-delayed orders, the eclipse planning card, the power plan, calls home on the 34 m or 70 m dish, conjunction blackouts, safe mode and the extension decision.
 
 ## Additions to the spec interfaces
 
@@ -80,6 +87,7 @@ All modules in the spec's build order are built.
 - `Evaluation.notes`: non-blocking messages, such as "flybys are not modelled". `Evaluation.details` holds the computed numbers the Debrief and validation need.
 - `Meter.calibrated`: `false` on the Data meter until a real reference link is chosen.
 - `meters.risk` is the mission failure probability vs an acceptable-risk limit (game value).
+- `Design.kit` (Signal Delay Pack only): a battery factor, extra dry mass, per-hazard failure-chance factors, a cold factor for heaters and the autopilot flag. Real missions carry none, so every factor defaults to 1.
 - `Design.scienceOrbit.inclination_deg` / `raan_deg` / `argPeriapsis_deg` (optional, degrees from the planet's IAU equator): Mission operations uses them for eclipse seasons and the Jupiter dose. Defaults (polar) come from `operations.json`; MAVEN's preset has its published 75°.
 
 ## Known model limits (beyond the spec's Assumptions list)

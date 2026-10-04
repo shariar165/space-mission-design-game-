@@ -170,3 +170,6 @@
 .pk.phone .pk-arm.on .pk-arm-knob { top: 3px; }
 .pk.phone .pk-go { height: 56px; border-radius: 7px; border-bottom-width: 5px; font-size: 26px; }
 .pk.phone .pk-lesson { padding: 12px; }
+
+/* Shelf badges wrap two to a row, so a part that covers many dangers keeps the card height. */
+.pk:not(.phone) .pk-tray-badges { display: grid; grid-template-columns: repeat(2, 24px); gap: 4px; }
