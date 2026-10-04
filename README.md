@@ -1,5 +1,7 @@
 # Signal Delay
 
+**[▶ Play now](https://shariar165.github.io/space-mission-design-game-/)** · runs in the browser, no install
+
 *You don't fly the rocket. You keep a robot alive millions of kilometres away, and every order arrives minutes late.*
 
 A NASA space-mission design game: a pure TypeScript simulation engine (`src/engine`) and a React + Vite UI (`src/ui`) in a retro mission-control look (design: the Claude Design "Signal Delay" screens, copied in `docs/design/signal-delay/`). **Cadet mode** (the default): pick a mission, **Pack** the rocket nose (volume and weight are separate limits) for the dangers you can see coming, pick a launch day, then **Fly & Survive**: danger cards stop time, you choose, and the order crawls to the robot at light speed. The **Mission Report** prints the flight as a comic. **Engineer mode** builds in the full Build Bay and flies the same Fly & Survive with every equation and source. One flight model everywhere: the Mission operations engine. The UI only displays numbers the engine computes. The science rules are in [docs/SCIENCE_SPEC.md](docs/SCIENCE_SPEC.md). Every constant and data value is a `Sourced<T>` that carries its source and an `isGameEstimate` flag.
