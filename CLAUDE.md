@@ -48,7 +48,8 @@ There is no lint step.
 - **The UI never computes a number.** It calls the engine and only formats units (`src/ui/format.ts`). Need a new on-screen number? Add it to the engine (with a test in `tests/engineApi.test.ts`), not the UI. `tests/uiGuards.test.ts` fails on digits in JSX text or "number + unit" in UI strings, and on any React/DOM import in `src/engine`.
 - Engineer mode shows each `Meter.equation` and every `Meter.inputs` entry; ⓘ (`SourceInfo`) shows the `Sourced<T>` record, with a "game estimate" badge when `isGameEstimate`.
 - UI entry points: `evaluateDesign`, `useOpsRisk` (`riskRunner.ts` → `opsRisk.worker.ts` → `riskBatch` / `riskEstimateFromTally`), `previewCrisis` + `simulateMission` (crisis card → Debrief), `monteCarloMission`, `designDelta` and `compareWithRealMission` (`compare.ts`), `bestLaunchWindow` (starter dates).
-- **Two modes.** Engineer mode (Build Bay → crisis card → Debrief) must stay as it is. Cadet mode (the default) is the guided game in spec UI rules 9–15:
+- **Operations Console** (spec UI rules 16–20, both modes, opened from the Debrief): `src/ui/screens/OpsConsole.tsx` + `components/ops/*`, clock in `useOpsSession.ts` (`advanceOperations`, `decide`, `sendCommand`, `bookDsn`, `nextEventT`, resume via `replayOperations(…, until)`). Every number comes from `ops/console.ts`: `consoleView`, `powerPlanPreview`, `dsnOptions`. Words live in `opsWords.ts`, pixel layout in `opsGeometry.ts`. New console constants go in `CONSOLE_RULES` (registered in the data audit).
+- **Two modes.** Engineer mode (Build Bay → crisis card → Debrief) must stay as it is; its Debrief only gains the optional "Run mission operations" button. Cadet mode (the default) is the guided game in spec UI rules 9–15:
   - Level map → `CadetBuild` (one decision per screen) → Flight with Mission Control → Debrief, plus Rescue History.
   - Its numbers come from `cadet.ts` (`cadetOptions`, `buildCadetDesign`, `cadetGauges`, `testFlight`), `flightMap.ts` (`flightFrames`, `flightMap`, `signalDelay`, `countdown`, `ghostFor`), `rescue.ts`, and `crisisOrders` + `standingOrderPolicy` (`index.ts`).
   - Cadet words live in `src/ui/cadetWords.ts`; levels and saved stars in `src/ui/levels.ts`.
@@ -76,7 +77,7 @@ There is no lint step.
   - It rolls each phase, downlinks science day by day using the ephemeris distance, then scores the mission, awards stars and builds the next-star hint.
 - `monteCarloMission` runs `simulateMission` many times (default 1,000) from one seeded generator.
 
-**Mission operations (`src/engine/ops/`, engine only, no UI yet; spec "Mission operations").**
+**Mission operations (`src/engine/ops/`; spec "Mission operations"; UI: the Operations Console).**
 - Entry points in `ops/index.ts`:
   - `startOperations`, `advanceOperations` (stops at each new decision), `sendCommand`, `decide`, `bookDsn`;
   - `runOperations` (headless, with a policy), `replayOperations` (seed + action log);

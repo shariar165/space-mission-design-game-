@@ -156,8 +156,11 @@ export function runOperations(
   return { state: s, debrief: operationsDebrief(s) };
 }
 
-/** Rebuild a mission from its seed and action log (save/load). */
-export function replayOperations(design: Design, opts: StartOptions, actions: OpsAction[]): OpsState {
+/**
+ * Rebuild a mission from its seed and action log (save/load). With `until`, stop at that mission time (resume a
+ * session where it was left) instead of flying on to the end.
+ */
+export function replayOperations(design: Design, opts: StartOptions, actions: OpsAction[], until?: number): OpsState {
   let s = startOperations(design, opts);
   for (const a of actions) {
     while ((s.status === 'flying' || s.status === 'awaiting-extension') && s.t < a.t) {
@@ -167,6 +170,10 @@ export function replayOperations(design: Design, opts: StartOptions, actions: Op
     if (a.kind === 'command') s = sendCommand(s, a.command).state;
     else if (a.kind === 'decide') s = decide(s, a.decisionId, a.optionId).state;
     else s = bookDsn(s, a.fromDay, a.toDay, a.booking).state;
+  }
+  if (until !== undefined) {
+    while (s.status === 'flying' && s.t < until - 1e-12) s = advanceOperations(s, { until });
+    return s;
   }
   while (s.status === 'flying') s = advanceOperations(s);
   return s;

@@ -130,6 +130,10 @@ export interface TimelineEvent {
 export interface ConsoleTimeline {
   from: number;
   to: number;
+  /** Window length (days). */
+  days: number;
+  /** Day labels along the axis, every twelfth of the strip. */
+  ticks: { day: number; left: number }[];
   bands: TimelineBand[];
   events: TimelineEvent[];
   /** The next milestone beyond the window, if any. */
@@ -152,6 +156,10 @@ export interface AlertOption {
   isFree: boolean;
   /** What the craft does if no command reaches it by the deadline. */
   isFallback: boolean;
+  /** The costs in Cadet units: propellant for the Δv at today's mass (kg), budget in coins, photos not taken. */
+  fuel_kg: number;
+  coins: number;
+  photosLost: number;
 }
 
 export interface ConsoleAlert {
@@ -189,6 +197,8 @@ export interface ConsoleCommand {
   arrivesAt: number;
   progress: number;
   timeLeft_s: number;
+  /** A hazard response waits for the team to react: seconds until it leaves Earth (0 once it has left). */
+  departsIn_s: number;
   status: CommandRecord['status'];
 }
 
@@ -204,6 +214,7 @@ export interface ConsoleOutcome {
   t: number;
   scienceDaysLost: number;
   budget_M: number;
+  coins: number;
   deltaV_ms: number;
 }
 
@@ -214,8 +225,10 @@ export interface ConsoleBlackout {
   total?: number;
   endDay?: number;
   retryAfterDay?: number;
+  /** Whole days until contact returns (counting today). */
+  daysLeft?: number;
   /** The next moratorium, while it is still ahead. */
-  upcoming?: { window: ConjunctionWindow; inDays: number; lastSendDay: number };
+  upcoming?: { window: ConjunctionWindow; inDays: number; lastSendDay: number; length_days: number; /** Inside the warning time (CONSOLE_RULES). */ soon: boolean };
 }
 
 export interface ConsoleScience {
@@ -253,6 +266,12 @@ function scienceOnDay(s: OpsState, day: number): boolean {
 
 const sum = (d: Loads) => d.bus + d.heaters + d.instruments + d.radio;
 
+/** Science data a full day makes with the plan in force (bits/day). */
+function sciencePerDay(s: OpsState): number {
+  const lost = new Set(s.instrumentsLost);
+  return s.env.loads.instruments.reduce((a, i) => a + (lost.has(i.id) ? 0 : Math.max(0, Math.min(1, s.plan.instruments[i.id] ?? 0)) * i.data_bitsPerDay), 0);
+}
+
 function upcomingConjunction(s: OpsState): ConjunctionWindow | undefined {
   return s.env.conjunctions.find((w) => w.startDay > s.t);
 }
@@ -265,7 +284,7 @@ function chipFor(s: OpsState, alert: ConsoleAlert | undefined, science: ConsoleS
   if (alert) return 'hazard';
   if (blackout.active) return 'blackout';
   if (science.paused && science.cause === 'safe-mode') return 'safe-mode';
-  if (blackout.upcoming && blackout.upcoming.inDays <= CONSOLE_RULES.conjunctionWarning_days.value) return 'conjunction-soon';
+  if (blackout.upcoming?.soon) return 'conjunction-soon';
   return 'nominal';
 }
 
@@ -390,11 +409,11 @@ function blackoutView(s: OpsState): ConsoleBlackout {
     const w = env.conjunctions.find((c) => c.startDay <= day && day <= c.endDay);
     const retry = moratoriumEndDay(env, s.t);
     return w
-      ? { active: true, window: w, dayOf: day - w.startDay + 1, total: w.endDay - w.startDay + 1, endDay: w.endDay, retryAfterDay: retry }
+      ? { active: true, window: w, dayOf: day - w.startDay + 1, total: w.endDay - w.startDay + 1, endDay: w.endDay, retryAfterDay: retry, daysLeft: retry - day }
       : { active: true, retryAfterDay: retry };
   }
   const w = upcomingConjunction(s);
-  return w ? { active: false, upcoming: { window: w, inDays: w.startDay - dayOf(s), lastSendDay: w.startDay - 1 } } : { active: false };
+  return w ? { active: false, upcoming: { window: w, inDays: w.startDay - dayOf(s), lastSendDay: w.startDay - 1, length_days: w.endDay - w.startDay + 1, soon: w.startDay - dayOf(s) <= CONSOLE_RULES.conjunctionWarning_days.value } } : { active: false };
 }
 
 function scienceView(s: OpsState): ConsoleScience {
@@ -462,6 +481,9 @@ function alertView(s: OpsState): ConsoleAlert | undefined {
         isSafest: o.id === dec.safestOptionId,
         isFree: isFree(o),
         isFallback: o.id === fb.option.id,
+        fuel_kg: o.cost.deltaV_ms?.value ? propellantBurned(s.mass_kg, o.cost.deltaV_ms.value, s.env.isp_s) : 0,
+        coins: o.cost.budget_M?.value ? coins(o.cost.budget_M.value, s.env.ev.details.cost.cap_M) : 0,
+        photosLost: photosOf((o.cost.scienceDays?.value ?? 0) * sciencePerDay(s)),
       };
     }),
   };
@@ -485,6 +507,7 @@ function lastOutcomeView(s: OpsState): ConsoleOutcome | undefined {
     t: ev.t,
     scienceDaysLost: o.cost.scienceDays?.value ?? 0,
     budget_M: o.cost.budget_M?.value ?? 0,
+    coins: o.cost.budget_M?.value ? coins(o.cost.budget_M.value, s.env.ev.details.cost.cap_M) : 0,
     deltaV_ms: o.cost.deltaV_ms?.value ?? 0,
   };
 }
@@ -501,6 +524,7 @@ function commandsView(s: OpsState): ConsoleCommand[] {
       arrivesAt: c.arrivesAt,
       progress,
       timeLeft_s: c.status === 'in-flight' ? Math.max(0, (c.arrivesAt - s.t) * DAY_S) : 0,
+      departsIn_s: c.status === 'in-flight' ? Math.max(0, (c.sentAt - s.t) * DAY_S) : 0,
       status: c.status,
     };
   });
@@ -556,7 +580,7 @@ function timelineView(s: OpsState): ConsoleTimeline {
   // The first day a new booking can still be made (ground lead time), skipping moratorium days.
   let slot = day + OPERATIONS.dsn.bookingLead_days.value;
   while (env.days[slot]?.conjunction) slot++;
-  if (inWindow(slot) && slot <= env.horizonDay && !events.some((x) => x.kind === 'dsn' && x.day === slot)) events.push({ kind: 'open-slot', day: slot, left: at(slot) });
+  if (s.status === 'flying' && inWindow(slot) && slot <= env.horizonDay && !events.some((x) => x.kind === 'dsn' && x.day === slot)) events.push({ kind: 'open-slot', day: slot, left: at(slot) });
   events.sort((a, b) => a.day - b.day);
 
   const ahead =
@@ -565,7 +589,10 @@ function timelineView(s: OpsState): ConsoleTimeline {
       : env.primeEndDay >= to
         ? { kind: 'prime-end' as const, day: env.primeEndDay, inDays: env.primeEndDay - day }
         : undefined;
-  return { from, to, bands, events, ...(ahead ? { ahead } : {}) };
+  const step = span / 12;
+  const ticks: { day: number; left: number }[] = [];
+  for (let d = Math.ceil((from + step / 2) / step) * step; d < to; d += step) ticks.push({ day: d, left: at(d) });
+  return { from, to, days: span, ticks, bands, events, ...(ahead ? { ahead } : {}) };
 }
 
 function signalFor(s: OpsState): SignalState {
@@ -621,7 +648,7 @@ export interface PowerPlanPreview {
   plan: PowerPlan;
   today: { available_W: number; demand: Loads; required_W: number; margin: number; status: MeterStatus };
   /** The coming (or current) eclipse season: battery depth of discharge in its longest eclipse with this plan. */
-  eclipse?: { season: EclipseSeason; load_W: number; depthOfDischarge: number; limit: number; margin: number; lowestCharge: number; status: MeterStatus };
+  eclipse?: { season: EclipseSeason; load_W: number; depthOfDischarge: number; limit: number; margin: number; lowestCharge: number; lowestAllowedCharge: number; status: MeterStatus };
   science_bitsPerDay: number;
   sciencePhotosPerDay: number;
   downlink_bitsPerDay: number;
@@ -655,7 +682,7 @@ export function powerPlanPreview(s: OpsState, plan: PowerPlan): PowerPlanPreview
     const load = sum(demand(env, sd, plan, { scienceOn: scienceOnDay(s, sd.day), lost: s.instrumentsLost }));
     const dod = env.battery_Wh > 0 ? (load * season.longestEclipse_s) / (env.battery_Wh * 3600) : Infinity;
     const m = (limit - dod) / limit;
-    eclipse = { season, load_W: load, depthOfDischarge: dod, limit, margin: m, lowestCharge: 1 - dod, status: marginStatus(m) };
+    eclipse = { season, load_W: load, depthOfDischarge: dod, limit, margin: m, lowestCharge: 1 - dod, lowestAllowedCharge: 1 - limit, status: marginStatus(m) };
   }
   const scienceMax = live.reduce((a, i) => a + i.power_W, 0);
   return {
@@ -744,7 +771,7 @@ export function dsnOptions(s: OpsState, requestedDay?: number): DsnOptionsView {
 
 /**
  * The next moment worth stopping the clock for: a command arriving, a phase, a planned burn (not daily upkeep),
- * a conjunction or eclipse season edge, science resuming, the end of the prime mission. Hazards Earth has not
+ * a conjunction warning or edge, an eclipse season start, science resuming, the end of the prime mission. Hazards Earth has not
  * seen yet are never included (advanceOperations stops on its own when one becomes known).
  */
 export function nextEventT(s: OpsState): number {
@@ -757,6 +784,8 @@ export function nextEventT(s: OpsState): number {
   for (const b of env.burns.slice(s.burnsDone)) if (b.kind !== 'maintenance') after(b.day);
   for (const w of env.timeline) after(w.startDay);
   for (const w of env.conjunctions) {
+    // The warning comes first, so commands can still be queued before the Sun blocks the radio.
+    after(w.startDay - CONSOLE_RULES.conjunctionWarning_days.value);
     after(w.startDay);
     after(w.endDay + 1);
   }

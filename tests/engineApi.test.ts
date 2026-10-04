@@ -804,6 +804,19 @@ describe('Mission operations: determinism', () => {
     expect(ops.operationsDebrief(replay)).toEqual(run.debrief);
   });
 
+  it('replaying with `until` resumes a session exactly where it was left', async () => {
+    const ops = await import('../src/engine/ops/index');
+    let s = ops.advanceOperations(ops.startOperations(maven, { seed: 2013 }));
+    const dec = s.decisions.find((d) => d.id === s.newDecisions[0])!;
+    s = ops.decide(s, dec.id, dec.safestOptionId!).state;
+    s = ops.advanceOperations(s, { until: s.t + 30.5 });
+    const resumed = ops.replayOperations(maven, { seed: 2013 }, s.actions, s.t);
+    expect(resumed.t).toBeCloseTo(s.t, 12);
+    expect(resumed.events).toEqual(s.events);
+    expect(resumed.ledger).toEqual(s.ledger);
+    expect(resumed.recorder_bits).toBe(s.recorder_bits);
+  });
+
   it('functions never change their input state', async () => {
     const ops = await import('../src/engine/ops/index');
     const s0 = ops.startOperations(maven, { seed: 3 });
@@ -1062,6 +1075,7 @@ describe('Operations console view', () => {
     const before = consoleView(s);
     expect(before.blackout.active).toBe(false);
     expect(before.blackout.upcoming!.inDays).toBe(6);
+    expect(before.blackout.upcoming!.soon).toBe(true);
     // the last day a command can still leave is the day before the window
     expect(before.blackout.upcoming!.lastSendDay).toBe(w.startDay - 1);
     expect(6).toBeLessThanOrEqual(CONSOLE_RULES.conjunctionWarning_days.value);

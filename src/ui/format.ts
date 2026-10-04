@@ -1,5 +1,6 @@
 // Display formatting only: unit conversion and rounding, following the spec's display rules
 // ("Constants and units"). No physics here; every value comes from the engine.
+import { AU_M } from '../engine/constants';
 import type { Sourced } from '../engine/types';
 
 const nf = (digits: number) => new Intl.NumberFormat('en-US', { minimumFractionDigits: digits, maximumFractionDigits: digits });
@@ -108,3 +109,32 @@ export function clock(s: number): string {
 
 /** Photos per day, rounded down to whole photos. */
 export const photos = (n: number) => num(Math.floor(n));
+
+const pad2 = (n: number) => String(n).padStart(2, '0');
+
+/** A light time as minutes and seconds ("11 m 54 s"), or hours and minutes when long. */
+export function lightTime(s: number): string {
+  const t = Math.max(0, Math.round(s));
+  const h = Math.floor(t / 3600);
+  const m = Math.floor((t % 3600) / 60);
+  const sec = t % 60;
+  if (h > 0) return `${h} h ${pad2(m)} m`;
+  return m > 0 ? `${m} m ${pad2(sec)} s` : `${sec} s`;
+}
+
+/** Mission elapsed time from fractional days ("214 d 06:42:10"). */
+export function met(tDays: number): string {
+  const total = Math.max(0, Math.floor(tDays * 86_400));
+  const d = Math.floor(total / 86_400);
+  const r = total % 86_400;
+  return `${num(d)} d ${pad2(Math.floor(r / 3600))}:${pad2(Math.floor((r % 3600) / 60))}:${pad2(r % 60)}`;
+}
+
+/** A link data rate (bit/s → kbps or Mbps). */
+export const rate = (bps: number) => (bps >= 1e6 ? `${num(bps / 1e6, 2)} Mbps` : `${num(bps / 1e3, 0)} kbps`);
+
+/** An angle in degrees. */
+export const deg = (x: number, digits = 1) => `${num(x, digits)}°`;
+
+/** Distance in AU (Engineer). */
+export const au = (m: number) => `${num(m / AU_M, 3)} AU`;

@@ -14,13 +14,20 @@ interface Props {
   failed?: boolean;
   /** Faint path of the real mission, if there is one (Mars, Bennu). */
   ghost?: { path: XY[]; at?: XY; label: string };
+  /** Operations Console: the Earth–craft radio line, with light pulses travelling along it. */
+  signal?: 'downlink' | 'uplink' | 'blocked' | 'none';
+  /** No moving pulses (prefers-reduced-motion). */
+  still?: boolean;
 }
 
-export function FlightMapView({ map, frame, trail, destination, destName, failed, ghost }: Props) {
+export function FlightMapView({ map, frame, trail, destination, destName, failed, ghost, signal, still }: Props) {
   const s = 92 / map.extent_m;
   const pt = (p: XY) => `${(p[0] * s).toFixed(2)},${(-p[1] * s).toFixed(2)}`;
   const line = (ps: XY[]) => ps.map(pt).join(' ');
   const at = (p: XY) => ({ cx: p[0] * s, cy: -p[1] * s });
+  const from = signal === 'uplink' ? frame.earth : frame.craft;
+  const to = signal === 'uplink' ? frame.craft : frame.earth;
+  const path = `M${pt(from)} L${pt(to)}`;
   return (
     <svg className="flight-map" viewBox="-100 -100 200 200" role="img" aria-label={`Flight map: your craft on its way to ${destName}`}>
       <defs>
@@ -41,6 +48,21 @@ export function FlightMapView({ map, frame, trail, destination, destName, failed
       )}
       <polyline points={line(map.path)} className="fm-path" />
       <polyline points={line(trail)} className="fm-trail" />
+      {signal && signal !== 'none' && (
+        <g className={`fm-signal ${signal}`}>
+          <path d={path} />
+          {signal !== 'blocked' &&
+            (still ? (
+              <circle {...at([(from[0] + to[0]) / 2, (from[1] + to[1]) / 2])} r="1.6" />
+            ) : (
+              [0, 1, 2].map((i) => (
+                <circle key={i} r={i === 0 ? 1.7 : 1.1} opacity={i === 0 ? 1 : 0.55}>
+                  <animateMotion dur={signal === 'uplink' ? '1.6s' : '2.6s'} begin={`-${i * 0.18}s`} repeatCount="indefinite" path={path} />
+                </circle>
+              ))
+            ))}
+        </g>
+      )}
       {map.frame === 'sun' && <circle {...at(frame.earth)} r="3.2" fill="#4c8dff" stroke="#cfe0ff" strokeWidth="0.6" />}
       <circle {...at(frame.dest)} r={destination === 'jupiter' ? 5 : 3.4} fill={DEST_COLOR[destination]} />
       <g className={`fm-craft${failed ? ' failed' : ''}`} transform={`translate(${frame.craft[0] * s} ${-frame.craft[1] * s})`}>
