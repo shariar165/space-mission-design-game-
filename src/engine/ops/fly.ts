@@ -271,3 +271,6 @@ export function outcomeIn_s(s: OpsState, hazardId: string): number | undefined {
   if (!rec || rec.outcomeDone || rec.resolveAt === undefined) return undefined;
   return Math.max(0, rec.resolveAt - s.t) * DAY_S;
 }
+
+/** How the tiles are counted (Engineer equations drawer). */
+export const TILE_EQUATION = 'segments = N × min(1, margin / m_full), at least one while ≥ 0 · systems = N − k × (wheels lost + instruments lost + safe mode + brownout + degraded)';

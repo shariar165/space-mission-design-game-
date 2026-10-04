@@ -19,6 +19,7 @@ import {
   drawCandidates,
   dustStormRate_perDay,
   insertionAnomalyChance,
+  coldMultiplier,
   memoryRate_perDay,
   solarActivity,
   stormRate_perDay,
@@ -27,7 +28,7 @@ import {
   wheelHazard_perYear,
 } from './random';
 import { defaultBooking, defaultPowerPlan, demand, downlinkCapacity_bitsPerDay, dsnExtraCost_M, shedLoads } from './resources';
-import { affordableResponses, defaultResponse, safestResponse, type Spare } from './responses';
+import { affordableResponses, defaultResponse, effectiveFailureChance, safestResponse, type Spare } from './responses';
 import type {
   Command,
   CommandReceipt,
@@ -447,7 +448,7 @@ function hazardRate(s: OpsState, type: string, t: number): number {
   const e = env.days[Math.floor(onset)];
   if (!e || !h.destinations.includes(env.design.destination) || !h.phases.includes(e.phase)) return 0;
   if (e.phase === 'extended' && (!s.extension || onset > s.extension.endDay + 1)) return 0;
-  const kCold = s.today.cold ? OPERATIONS.power.coldHazardFactor.value : 1;
+  const kCold = s.today.cold ? coldMultiplier(env.design.kit?.coldFactor) : 1;
   switch (type) {
     case 'solar-storm':
       return stormRate_perDay(e.jd, e.sunDistance_m);
@@ -458,7 +459,7 @@ function hazardRate(s: OpsState, type: string, t: number): number {
     case 'reaction-wheel':
       return s.attitude === 'wheels' && s.wheelsWorking > 0 ? (s.wheelsWorking * wheelHazard_perYear(onset / YEAR) * kCold) / YEAR : 0;
     case 'memory-corruption':
-      return memoryRate_perDay({ stormActive: stormActiveAt(s, onset), doseRate_radPerDay: e.doseRate_radPerDay, cold: s.today.cold });
+      return memoryRate_perDay({ stormActive: stormActiveAt(s, onset), doseRate_radPerDay: e.doseRate_radPerDay, cold: s.today.cold, ...(env.design.kit?.coldFactor !== undefined ? { coldFactor: env.design.kit.coldFactor } : {}) });
     case 'radiation-damage': {
       const tol = DESTINATIONS[env.design.destination].radiation?.tolerance_rad.value ?? Infinity;
       return s.dose_rad >= tol ? boundRate(env, type) : 0;
@@ -543,7 +544,7 @@ function executeResponse(s: OpsState, rec: HazardRecord, option: HazardOption, b
   const nowAffordable = affordableResponses(h.options, spareNow(s), s.oneTimeUsed);
   if (!nowAffordable.some((o) => o.id === chosen.id)) {
     emit(s, t, 'response-unaffordable', { hazardId: rec.id, optionId: chosen.id });
-    const def = defaultResponse(nowAffordable, s.standingOrders[rec.type]);
+    const def = defaultResponse(nowAffordable, s.standingOrders[rec.type], s.env.design.kit?.autopilot);
     chosen = def.option;
     source = def.by;
   }
@@ -576,7 +577,7 @@ function resolveOutcome(s: OpsState, rec: HazardRecord, t: number) {
   rec.outcomeDone = true;
   if (!rec.choice) return;
   const option = HAZARDS[rec.type]!.options.find((o) => o.id === rec.choice!.optionId)!;
-  const bad = rec.uOutcome < option.failureChance.value;
+  const bad = rec.uOutcome < effectiveFailureChance(s.env.design, rec.type, option.failureChance.value);
   rec.choice.badOutcome = bad;
   emit(s, t, 'response-outcome', { hazardId: rec.id, optionId: option.id, bad });
   if (!bad) return;
@@ -609,7 +610,7 @@ function resolveOutcome(s: OpsState, rec: HazardRecord, t: number) {
 function applyDeadline(s: OpsState, rec: HazardRecord, t: number) {
   const h = HAZARDS[rec.type]!;
   const offered = affordableResponses(h.options, spareNow(s), s.oneTimeUsed);
-  const def = defaultResponse(offered, s.standingOrders[rec.type]);
+  const def = defaultResponse(offered, s.standingOrders[rec.type], s.env.design.kit?.autopilot);
   if (!rec.offered) rec.offered = offered.map((o) => o.id);
   emit(s, t, 'deadline-missed', { hazardId: rec.id, optionId: def.option.id, by: def.by });
   executeResponse(s, rec, def.option, def.by, t);

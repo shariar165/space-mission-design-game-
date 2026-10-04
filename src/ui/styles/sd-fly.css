@@ -220,3 +220,12 @@
 .fly-status-brand { grid-column: 2; }
 .fly-status .sd-lever { grid-column: 3; }
 .dc-overlay.phone .dc-tag { font-size: 9px; letter-spacing: 0.08em; white-space: nowrap; }
+
+/* Engineer: equations drawer */
+.fly-eqs { background: rgba(5, 12, 7, 0.95); border: 1px solid var(--sd-crt-line); border-radius: 8px; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; color: var(--sd-crt-mid); }
+.fly-eqs-head { display: flex; justify-content: space-between; align-items: center; font: 700 11px/1 var(--sd-mono); letter-spacing: 0.16em; color: var(--sd-ink-2); }
+.fly-eq { display: flex; flex-direction: column; gap: 6px; border-top: 1px solid var(--sd-crt-grid); padding-top: 10px; }
+.fly-eq-k { font: 700 10px/1 var(--sd-mono); letter-spacing: 0.16em; color: var(--sd-ink-3); }
+.fly-eq-v { font: 400 18px/1.15 var(--sd-crt-font); color: var(--sd-amber); }
+.fly-eq ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font: 400 12px/1.3 var(--sd-mono); }
+.fly-eq li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: center; }

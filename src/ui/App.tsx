@@ -3,15 +3,14 @@
 // Cadet: Level map → build → Fly & Survive → Mission Report → next level.
 // Engineer: Build Bay → Fly & Survive → Mission Report (with Engineer details).
 import { useEffect, useMemo, useState } from 'react';
-import { buildCadetDesign, CADET_STEPS, defaultChoices, type CadetChoices, type CadetStep } from '../engine/cadet';
-import { crisisOrders, evaluateDesign } from '../engine/index';
+import { evaluateDesign } from '../engine/index';
 import { operationsDebrief, type OpsState } from '../engine/ops/index';
 import type { Design, DestinationId } from '../engine/types';
-import { LevelGoal } from './components/LevelCards';
 import { TopBar, type Mode, type Step } from './components/TopBar';
-import { levelById, loadProgress, saveProgress, withStars, type Level, type Progress } from './levels';
+import { levelById, loadProgress, saveProgress, shelfOf, withStars, type Level, type Progress } from './levels';
 import { BuildBay } from './screens/BuildBay';
-import { CadetBuild } from './screens/CadetBuild';
+import { Pack } from './screens/Pack';
+import { shelfFor } from '../engine/pack';
 import { FlyAndSurvive } from './screens/FlyAndSurvive';
 import { LevelMap } from './screens/LevelMap';
 import { RescueCaseView, RescueSelect } from './screens/Rescue';
@@ -41,15 +40,13 @@ function storedMode(): Mode {
 }
 
 interface CadetState {
-  /** The level's starter design; the cards are applied on top of it. */
+  /** The level's starter design; the packed parts are applied on top of it (Pack). */
   base: Design;
-  choices: CadetChoices;
-  stepIdx: number;
-  /** The level being played; undefined is a free build (all steps). */
+  /** The level being played; undefined is a free build (every part). */
   levelId?: string;
 }
 
-const cadetStart = (base: Design, levelId?: string): CadetState => ({ base, choices: defaultChoices(base), stepIdx: 0, ...(levelId ? { levelId } : {}) });
+const cadetStart = (base: Design, levelId?: string): CadetState => ({ base, ...(levelId ? { levelId } : {}) });
 
 export function App() {
   const [mode, setMode] = useState<Mode>(storedMode);
@@ -59,8 +56,6 @@ export function App() {
   const [step, setStep] = useState<Step>(() => (mode === 'cadet' ? 'map' : 'build'));
   const [fixedSeed] = useState(urlSeed);
   const [seed, setSeed] = useState(() => fixedSeed ?? newSeed());
-  /** Standing orders (crisis card id → option id) the Cadet craft follows on its own. */
-  const [orders, setOrders] = useState<Record<string, string>>({});
   const [progress, setProgress] = useState<Progress>(loadProgress);
   const [rescueId, setRescueId] = useState<RescueCaseId>();
   /** The craft being flown, pinned at launch (a mode switch only changes what is shown). */
@@ -70,12 +65,9 @@ export function App() {
 
   const cadetMode = mode === 'cadet';
   const level = levelById(cadet.levelId);
-  const cadetDesign = useMemo(() => buildCadetDesign(cadet.base, cadet.choices), [cadet.base, cadet.choices]);
-  /** The design being built and flown: Cadet derives it from the cards, Engineer edits it directly. */
-  const active = cadetMode ? cadetDesign : design;
+  /** The design being built: Cadet packs on top of the level's starter, Engineer edits it directly. */
+  const active = cadetMode ? cadet.base : design;
   const ev = useMemo(() => evaluateDesign(active), [active]);
-  const withOrders = level?.orders ?? true;
-  const orderList = useMemo(() => (cadetMode && withOrders ? crisisOrders(cadetDesign) : []), [cadetMode, withOrders, cadetDesign]);
 
   useEffect(() => {
     try {
@@ -103,7 +95,7 @@ export function App() {
     // Carry the craft across: Engineer starts from the Cadet build; Cadet re-reads the Engineer design as a free build.
     // In flight or on the report only the layer changes.
     if (m === 'engineer') {
-      setDesign(cadetDesign);
+      setDesign(flyDesign && step !== 'map' ? flyDesign : cadet.base);
       if (step === 'map' || step === 'rescue') setStep('build');
     } else if (step !== 'fly' && step !== 'report') {
       setCadet(cadetStart(design));
@@ -115,22 +107,19 @@ export function App() {
     const s = starterDesign(l.destination, today());
     setCadet(cadetStart(s, l.id));
     setMissionName(defaultMissionName(l.destination));
-    setOrders({});
     setFlown(undefined);
     setStep('build');
   };
 
   const award = (stars: number) => level && setProgress((p) => withStars(p, level.id, stars));
 
-  const chooseCard = (s: CadetStep, id: string) => setCadet((c) => ({ ...c, choices: { ...c.choices, [s]: id } }));
-
   /** Launch: Fly & Survive flies the pinned craft with this seed. */
-  const launch = () => {
-    if (ev.blockers.length) return;
-    setFlyDesign(active);
+  const launchDesign = (d: Design) => {
+    setFlyDesign(d);
     setFlown(undefined);
     setStep('fly');
   };
+  const launch = () => ev.blockers.length === 0 && launchDesign(active);
 
   const finish = (s: OpsState) => {
     if (cadetMode) award(operationsDebrief(s).stars);
@@ -141,7 +130,7 @@ export function App() {
 
   return (
     <div className={`app${step === 'build' && !cadetMode ? ' fixed' : ''}${cadetMode ? ' is-cadet' : ''}${step === 'fly' ? ' is-fly' : ''}`}>
-      {step !== 'fly' && (
+      {step !== 'fly' && !(step === 'build' && cadetMode) && (
         <TopBar
           step={step}
           mode={mode}
@@ -175,22 +164,16 @@ export function App() {
         />
       )}
       {step === 'build' && cadetMode && (
-        <CadetBuild
+        <Pack
+          key={`${cadet.levelId ?? 'free'}-${cadet.base.destination}`}
           base={cadet.base}
-          choices={cadet.choices}
-          design={cadetDesign}
-          ev={ev}
-          steps={level?.steps ?? CADET_STEPS}
-          stepIdx={cadet.stepIdx}
-          onChoose={chooseCard}
-          onStep={(i) => setCadet((c) => ({ ...c, stepIdx: i }))}
-          onLaunch={launch}
-          orders={withOrders ? { list: orderList, chosen: orders, onChoose: (cardId, optionId) => setOrders((o) => ({ ...o, [cardId]: optionId })) } : undefined}
-          goal={level && <LevelGoal level={level} stars={progress[level.id] ?? 0} onMap={() => setStep('map')} />}
-          onTestFlight={(result) => {
-            // Jupiter: the lesson star is for finding the launch failure in a Test Flight.
-            if (level?.impossible && result.firstFail === 'launch') award(1);
-          }}
+          shelf={level ? shelfOf(level) : shelfFor(cadet.base.destination)}
+          mode={mode}
+          onMode={changeMode}
+          missionName={missionName}
+          {...(level?.impossible ? { impossible: true, onLesson: () => award(1) } : {})}
+          onHome={() => setStep('map')}
+          onLaunch={launchDesign}
         />
       )}
       {step === 'build' && !cadetMode && <BuildBay design={design} ev={ev} engineer onChange={setDesign} onLaunch={launch} />}

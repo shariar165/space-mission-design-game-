@@ -127,14 +127,19 @@ export function memoryDoseRef_radPerDay(): number {
 }
 
 /** λ = λ₀ (1 + k_storm·[storm active]) (1 + k_rad·Ḋ/Ḋ_ref) × k_cold on a cold day  (per day). */
-export function memoryRate_perDay(p: { stormActive: boolean; doseRate_radPerDay: number; cold: boolean }): number {
+export function memoryRate_perDay(p: { stormActive: boolean; doseRate_radPerDay: number; cold: boolean; coldFactor?: number }): number {
   const m = OPERATIONS.memory;
   return (
     (m.baseRate_perYear.value / YEAR_DAYS) *
     (1 + m.stormFactor.value * (p.stormActive ? 1 : 0)) *
     (1 + m.radiationFactor.value * (p.doseRate_radPerDay / memoryDoseRef_radPerDay())) *
-    (p.cold ? OPERATIONS.power.coldHazardFactor.value : 1)
+    (p.cold ? coldMultiplier(p.coldFactor) : 1)
   );
+}
+
+/** The cold-day hardware hazard factor, softened by a packed heater: 1 + (k_cold − 1) × coldFactor. */
+export function coldMultiplier(coldFactor = 1): number {
+  return 1 + (OPERATIONS.power.coldHazardFactor.value - 1) * coldFactor;
 }
 
 /** Orbit-insertion anomaly on the arrival day: p = p_base,arrival × f(Δv margin left), as the Risk model. */

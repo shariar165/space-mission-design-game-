@@ -2,6 +2,7 @@
 // only the build steps it teaches; the other steps keep their balanced cards, so every level starts
 // flyable (tests/ui/levelMap.test.tsx checks this). Words and ids only: no numbers.
 import type { CadetStep } from '../engine/cadet';
+import { shelfFor, type PartId } from '../engine/pack';
 import type { DestinationId } from '../engine/types';
 
 export interface Level {
@@ -17,13 +18,18 @@ export interface Level {
   orders: boolean;
   /** Jupiter: the star is for finding out why the direct flight is impossible. */
   impossible?: boolean;
+  /** Pack: the parts on the shelf (default: everything the destination offers). Early levels teach with fewer. */
+  shelf?: PartId[];
 }
+
+/** The parts a level puts on the shelf. */
+export const shelfOf = (l: Level): PartId[] => l.shelf ?? shelfFor(l.destination);
 
 const ALL: CadetStep[] = ['science', 'power', 'radio', 'fuel', 'rocket'];
 
 export const LEVELS: Level[] = [
-  { id: 'moon-1', destination: 'moon', title: 'First Light', concept: 'Power', blurb: 'Pick solar wings that keep your craft charged.', steps: ['power'], orders: false },
-  { id: 'moon-2', destination: 'moon', title: 'Heavy Lifting', concept: 'Fuel & weight', blurb: 'Every kilogram of fuel must be lifted too.', steps: ['power', 'fuel', 'rocket'], orders: false },
+  { id: 'moon-1', destination: 'moon', title: 'First Light', concept: 'Power', blurb: 'Pick solar wings that keep your craft charged.', steps: ['power'], orders: false, shelf: ['computer', 'engine', 'camera', 'solar', 'battery'] },
+  { id: 'moon-2', destination: 'moon', title: 'Heavy Lifting', concept: 'Fuel & weight', blurb: 'Every kilogram of fuel must be lifted too.', steps: ['power', 'fuel', 'rocket'], orders: false, shelf: ['computer', 'engine', 'camera', 'spectrometer', 'solar', 'battery', 'tank', 'dish'] },
   { id: 'moon-3', destination: 'moon', title: 'Full Build', concept: 'Science & radio', blurb: 'Build the whole craft yourself.', steps: ALL, orders: false },
   { id: 'mars', destination: 'mars', title: 'Red Planet', concept: 'Light delay', blurb: 'Too far to steer live: give your craft orders.', steps: ALL, orders: true },
   { id: 'venus', destination: 'venus', title: 'Cloud Diver', concept: 'Budget', blurb: 'Big radar, small wallet. Watch the coin jar.', steps: ALL, orders: true },

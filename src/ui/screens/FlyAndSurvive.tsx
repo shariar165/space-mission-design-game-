@@ -13,6 +13,7 @@ import { BlackoutPanel, CommandQueue, ExtensionDecision, NoticeToast, OpsSummary
 import { PowerDial } from '../components/ops/PowerDial';
 import { CrtMap } from '../components/fly/CrtMap';
 import { DangerCard, type CardView, type ChipView, type ChoiceView } from '../components/fly/DangerCard';
+import { EquationsPanel } from '../components/fly/EquationsPanel';
 import { ModeLever, type Mode } from '../components/sd/ModeLever';
 import { SDIcon } from '../components/sd/SDIcon';
 import { Segments } from '../components/sd/Segments';
@@ -50,7 +51,7 @@ interface Props {
   onDone: (s: OpsState) => void;
 }
 
-type Panel = 'power' | 'call' | 'queue';
+type Panel = 'power' | 'call' | 'queue' | 'eqs';
 
 const SPEED_LABEL = (s: OpsSpeed) => (s === 0 ? 'II' : `${f.num(s)}×`);
 const SPEED_NAME = (s: OpsSpeed) => (s === 0 ? 'Pause' : `${f.num(s)}× speed`);
@@ -382,6 +383,11 @@ export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome,
         <SDIcon icon="share" size={16} />
         ORDERS
       </button>
+      {engineer && (
+        <button type="button" className="fly-action" aria-pressed={panel === 'eqs'} onClick={() => setPanel((p) => (p === 'eqs' ? undefined : 'eqs'))}>
+          EQUATIONS
+        </button>
+      )}
       <button type="button" className="fly-action" onClick={ops.nextEvent} disabled={lockedUi} aria-label="Next event">
         NEXT EVENT ▸
       </button>
@@ -431,6 +437,11 @@ export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome,
             onPlan={() => setPanel('power')}
             onCall={() => setPanel('call')}
           />
+        </div>
+      )}
+      {panel === 'eqs' && (
+        <div className="fly-drawer">
+          <EquationsPanel gauges={view.gauges} onClose={() => setPanel(undefined)} />
         </div>
       )}
       {awaitingExt && (

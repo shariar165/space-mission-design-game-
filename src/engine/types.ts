@@ -65,6 +65,23 @@ export interface Design {
    * margin is for concept designs and is not added on top of a flown mass.
    */
   asFlownDryMass_kg?: Sourced<number>;
+  /**
+   * Signal Delay Pack: extras packed in the nose (pack.ts). Real missions carry none, so every factor defaults to 1.
+   */
+  kit?: DesignKit;
+}
+
+export interface DesignKit {
+  /** Battery capacity × this (big battery); its mass scales with it. */
+  batteryFactor?: number;
+  /** Dry mass of packed parts with no other model (shield, bumper, spare computer, heaters, autopilot), kg. */
+  extraMass_kg?: number;
+  /** Failure-chance multiplier per hazard type (Mission operations): shield, bumper, spare computer. */
+  hazardFactor?: Record<string, number>;
+  /** Scales the extra hardware hazard of a cold day: k = 1 + (k_cold − 1) × coldFactor (heater pack). */
+  coldFactor?: number;
+  /** With no standing order, the robot answers a hazard with its safest affordable response (autopilot chip). */
+  autopilot?: boolean;
 }
 
 export type MeterStatus = 'ok' | 'warning' | 'over';

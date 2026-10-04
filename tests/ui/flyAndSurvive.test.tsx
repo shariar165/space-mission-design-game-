@@ -118,4 +118,14 @@ describe('Fly & Survive: Engineer mode', () => {
     expect(document.querySelector('.ops-met')!.textContent).toBe(`LIGHT TIME t = d / c = ${f.mmss(v.clock.oneWay_s)}`);
     expect(screen.getByText(f.kg(flyTiles(s, v).fuel.propellantLeft_kg))).toBeTruthy();
   });
+
+  it('the EQUATIONS drawer shows each gauge’s equation and the ⓘ of its inputs', () => {
+    open('engineer');
+    const v = consoleView(startOperations(maven, { seed: 2013 }));
+    fireEvent.click(screen.getByRole('button', { name: 'EQUATIONS' }));
+    const eqs = [...document.querySelectorAll('.ops-eq')].map((e) => e.textContent);
+    expect(eqs).toContain(v.gauges.power.equation);
+    expect(eqs).toContain(v.gauges.fuel.equation);
+    expect(screen.getAllByRole('button', { name: /^Source of / }).length).toBeGreaterThan(8);
+  });
 });

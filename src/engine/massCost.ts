@@ -25,11 +25,13 @@ export interface ComponentMasses {
   power: number;
   comms: number;
   tanks: number;
+  /** Packed extras with no other model (Signal Delay kit); 0 for every other design. */
+  kit?: number;
 }
 
-/** m_dry = (1 + k_margin)(m_bus + Σ m_instruments + m_power + m_comms + m_tanks), k_margin = 0.30. */
+/** m_dry = (1 + k_margin)(m_bus + Σ m_instruments + m_power + m_comms + m_tanks + m_kit), k_margin = 0.30. */
 export function massRollup(c: ComponentMasses): { subtotal_kg: number; growthMargin_kg: number; dry_kg: number } {
-  const subtotal_kg = c.bus + c.instruments.reduce((a, b) => a + b, 0) + c.power + c.comms + c.tanks;
+  const subtotal_kg = c.bus + c.instruments.reduce((a, b) => a + b, 0) + c.power + c.comms + c.tanks + (c.kit ?? 0);
   const k = GAME_RULES.massGrowthMargin.value;
   return { subtotal_kg, growthMargin_kg: k * subtotal_kg, dry_kg: (1 + k) * subtotal_kg };
 }
@@ -59,6 +61,7 @@ export function componentMasses(design: Design, batteryMass_kg: number): Compone
       c.dishArealMass_kg_per_m2.value * dishArea(design.comms.dishDiameter_m) +
       c.transmitterMass_kg_per_W.value * design.comms.txPower_W,
     tanks: tankMass(design.propellant_kg),
+    ...(design.kit?.extraMass_kg ? { kit: design.kit.extraMass_kg } : {}),
   };
 }
 

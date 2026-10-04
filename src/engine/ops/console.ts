@@ -10,7 +10,7 @@ import { propellantBurned } from '../propulsion';
 import { gameEstimate, sourced, type Design, type MeterStatus, type Sourced } from '../types';
 import { commandArrival, inMoratorium, moratoriumEndDay, oneWayAt } from './commands';
 import { defaultBooking, demand, downlinkCapacity_bitsPerDay, dsnExtraCost_M, type Loads } from './resources';
-import { defaultResponse, isFree, optionBlockers, type ResponseBlocker } from './responses';
+import { defaultResponse, effectiveFailureChance, isFree, optionBlockers, type ResponseBlocker } from './responses';
 import { bookingFor, deltaVLeft_ms, deltaVStillNeeded_ms, powerMarginNow, spareNow } from './timeline';
 import type {
   CommandRecord,
@@ -442,8 +442,13 @@ function alertView(s: OpsState): ConsoleAlert | undefined {
   const arrivesIfSent = commandArrival(s.env, sendAt);
   const blockedByConjunction = inMoratorium(s.env, sendAt);
   const standingOrder = s.standingOrders[rec.type];
-  const fb = defaultResponse(offered.length ? offered : h.options, standingOrder);
+  const fb = defaultResponse(offered.length ? offered : h.options, standingOrder, s.env.design.kit?.autopilot);
   const offeredIds = new Set(offered.map((o) => o.id));
+  // Packed protections (Signal Delay kit) scale the failure chance; the data value is kept when there are none.
+  const chance = (o: (typeof h.options)[number]): Sourced<number> => {
+    const v = effectiveFailureChance(s.env.design, rec.type, o.failureChance.value);
+    return v === o.failureChance.value ? o.failureChance : derived(v, o.failureChance.unit, `${o.failureChance.source} × the packed protection`);
+  };
   return {
     decisionId: dec.id,
     hazardId: rec.id,
@@ -473,8 +478,8 @@ function alertView(s: OpsState): ConsoleAlert | undefined {
         cost: o.cost,
         ...(o.requires ? { requires: o.requires } : {}),
         oneTime: o.oneTime ?? false,
-        failureChance: o.failureChance,
-        riskLevel: riskLevel(o.failureChance.value),
+        failureChance: chance(o),
+        riskLevel: riskLevel(chance(o).value),
         failureEffect: o.failureEffect,
         affordable: offeredIds.has(o.id),
         blockedBy: offeredIds.has(o.id) ? [] : blockedBy.length ? blockedBy : ['one-time'],

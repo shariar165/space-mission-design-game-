@@ -2,6 +2,7 @@
 // formatted here, through format.ts. Cadet reads short uppercase lines; Engineer adds the numbers.
 import type { FailureEffect, OpsPhase } from '../engine/data';
 import type { ComingUpKind, ConsoleOutcome, FlyChip } from '../engine/ops/index';
+import type { DeckCard, PackBlockerCode, PartId } from '../engine/pack';
 import type { SDIconName } from './components/sd/SDIcon';
 import * as f from './format';
 
@@ -111,3 +112,86 @@ export const RESULT_EFFECT_CHIP: Record<FailureEffect, string> = {
   'stored-data': 'PHOTOS WIPED',
   'safe-mode': 'SAFE MODE',
 };
+
+// ---------------------------------------------------------------------------
+// Pack
+
+
+export const PART_LOOK: Record<PartId, { name: string; short: string; icon: SDIconName; color: string }> = {
+  computer: { name: 'Flight computer', short: 'BRAIN', icon: 'computer', color: 'var(--sd-part-brain)' },
+  engine: { name: 'Main engine', short: 'ENGINE', icon: 'burn', color: 'var(--sd-part-drive)' },
+  camera: { name: 'Camera', short: 'CAMERA', icon: 'camera', color: 'var(--sd-part-science)' },
+  spectrometer: { name: 'Spectrometer', short: 'SPECTRO', icon: 'data', color: 'var(--sd-part-science)' },
+  magnetometer: { name: 'Magnetometer', short: 'MAG', icon: 'orbit', color: 'var(--sd-part-science)' },
+  radar: { name: 'Radar sounder', short: 'RADAR', icon: 'data', color: 'var(--sd-part-science)' },
+  sniffer: { name: 'Air sniffer (MAVEN suite)', short: 'SNIFFER', icon: 'data', color: 'var(--sd-part-science)' },
+  dish: { name: 'Big dish antenna', short: 'DISH', icon: 'dish', color: 'var(--sd-part-science)' },
+  solar: { name: 'Extra solar panel', short: 'SOLAR', icon: 'panel', color: 'var(--sd-part-power)' },
+  battery: { name: 'Big battery', short: 'BATTERY', icon: 'battery', color: 'var(--sd-part-power)' },
+  tank: { name: 'Extra fuel tank', short: 'FUEL', icon: 'tank', color: 'var(--sd-part-drive)' },
+  heater: { name: 'Heater pack', short: 'HEAT', icon: 'heater', color: 'var(--sd-part-guard)' },
+  shield: { name: 'Radiation shield', short: 'SHIELD', icon: 'shield', color: 'var(--sd-part-guard)' },
+  bumper: { name: 'Debris bumper', short: 'BUMPER', icon: 'shield', color: 'var(--sd-part-guard)' },
+  spare: { name: 'Spare computer', short: 'SPARE', icon: 'computer', color: 'var(--sd-part-brain)' },
+  autopilot: { name: 'Autopilot chip', short: 'AUTO', icon: 'computer', color: 'var(--sd-part-brain)' },
+};
+
+/** Science parts earn data (the green star badge). */
+export const SCIENCE_PARTS: PartId[] = ['camera', 'spectrometer', 'magnetometer', 'radar', 'sniffer', 'dish'];
+
+export const DANGER_LOOK: Record<string, { title: string; short: string; line: string; icon: SDIconName }> = {
+  eclipse: { title: 'ECLIPSE SEASON', short: 'ECLIPSE', line: 'The planet hides the Sun. Power runs low.', icon: 'eclipse' },
+  conjunction: { title: 'SUN IN THE WAY', short: 'SUN', line: 'No calls home for about two weeks.', icon: 'conj' },
+  'solar-storm': { title: 'SOLAR STORM', short: 'STORM', line: 'The Sun spits particles that fry electronics.', icon: 'storm' },
+  'mars-dust-storm': { title: 'DUST STORM', short: 'DUST', line: 'Mars air swells and drags on low orbits.', icon: 'dust' },
+  debris: { title: 'COMET DUST', short: 'DEBRIS', line: 'Tiny grains hit faster than bullets.', icon: 'debris' },
+  'reaction-wheel': { title: 'WHEEL FAILURE', short: 'WHEEL', line: 'A spinning wheel that points the robot wears out.', icon: 'sys' },
+  'memory-corruption': { title: 'MEMORY GLITCH', short: 'MEMORY', line: 'Radiation flips bits in the computer.', icon: 'computer' },
+  'insertion-anomaly': { title: 'ARRIVAL BURN GOES WRONG', short: 'ARRIVAL', line: 'The braking burn does not go to plan.', icon: 'orbit' },
+};
+
+export const dangerLook = (id: string, title: string) => DANGER_LOOK[id] ?? { title: title.toUpperCase(), short: title.toUpperCase(), line: '', icon: 'sys' as SDIconName };
+
+export function deckWhen(c: DeckCard): string {
+  if (c.kind === 'eclipse' || c.kind === 'conjunction') return 'CERTAIN · YOU CAN SEE IT COMING';
+  return c.detectedBy === 'earth' ? 'SURPRISE · WITH A WARNING' : 'SURPRISE · NO WARNING';
+}
+
+export const STAMP: Record<DeckCard['stamp'], { word: string; short: string; color: string }> = {
+  covered: { word: 'COVERED', short: 'OK', color: 'var(--sd-ok)' },
+  some: { word: 'SOME COVER', short: 'SOME', color: 'var(--sd-soso)' },
+  none: { word: 'NOT COVERED', short: 'NONE', color: 'var(--sd-bad)' },
+};
+
+export const PACK_BLOCKER: Record<PackBlockerCode, string> = {
+  'too-heavy': 'TOO HEAVY FOR THIS ROCKET',
+  'no-power': 'NOT ENOUGH POWER',
+  'no-fuel': 'NOT ENOUGH FUEL TO GET THERE',
+  'no-capture': 'THIS ENGINE CANNOT BRAKE INTO ORBIT',
+  'flight-too-long': 'THAT FLIGHT IS TOO LONG FOR THE GAME',
+  'no-science': 'PACK AT LEAST ONE INSTRUMENT',
+  other: 'NOT READY TO LAUNCH',
+};
+
+export const NO_ROOM = 'NO ROOM IN THE NOSE';
+
+export const DAY_WORDS: Record<'good' | 'soso' | 'bad', { msg: (dest: string) => string; short: string }> = {
+  good: { msg: (d) => `GOOD DAY · ${d.toUpperCase()} IS IN REACH`, short: 'GOOD' },
+  soso: { msg: () => 'SO-SO · LITTLE TO SPARE', short: 'SO-SO' },
+  bad: { msg: (d) => `BAD DAY · ${d.toUpperCase()} IS OUT OF REACH`, short: 'BAD' },
+};
+
+export const WEIGHT_WORDS: Record<'ok' | 'warning' | 'over', string> = {
+  ok: 'LIGHT ENOUGH',
+  warning: 'NEARLY TOO HEAVY',
+  over: 'TOO HEAVY FOR THIS ROCKET',
+};
+
+/** "NOV 1" from an ISO date. */
+export const shortDate = (iso: string) => new Date(`${iso.slice(0, 10)}T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }).toUpperCase();
+/** "NOV–DEC 2013" for the calendar head. */
+export function monthSpan(fromIso: string, toIso: string): string {
+  const m = (iso: string) => new Date(`${iso.slice(0, 10)}T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' }).toUpperCase();
+  const y = toIso.slice(0, 4);
+  return m(fromIso) === m(toIso) ? `${m(fromIso)} ${y}` : `${m(fromIso)}–${m(toIso)} ${y}`;
+}
