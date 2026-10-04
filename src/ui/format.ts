@@ -64,6 +64,10 @@ export function sourcedValue(s: Sourced<unknown>): string {
   if (typeof v !== 'number') return Array.isArray(v) ? `${v.length} points` : String(v);
   if (s.unit === 'm' && Math.abs(v) >= 1e7) return millionKm(v);
   if (s.unit === 'fraction' || s.unit === 'probability') return pct(v, Math.abs(v) < 0.01 ? 2 : 1);
+  if (s.unit === 'seed') return `seed ${String(v)}`;
+  // 'fraction of the day', 'fraction per year', 'fraction of 1 AU sunlight' … read as a percentage
+  if (s.unit.startsWith('fraction ')) return `${pct(v, Math.abs(v) < 0.01 ? 2 : 1)} ${s.unit.slice('fraction '.length)}`;
+  if (s.unit === 'runs' || s.unit === 'flights') return `${num(v)} ${s.unit}`;
   const digits = Math.abs(v) >= 100 ? 0 : Math.abs(v) >= 1 ? 2 : 3;
   const unit = s.unit.startsWith('$M') ? 'M' : s.unit;
   if (s.unit.startsWith('$M')) return `$${num(v, digits)}${unit}`;
