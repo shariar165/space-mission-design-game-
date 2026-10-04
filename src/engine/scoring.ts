@@ -27,6 +27,12 @@ export const MARGIN_BAND = {
   zeroAt: gameEstimate(0.8, 'fraction', 'Game rule (spec: Scoring): falls to 0 at 80% margin'),
 };
 
+/** Star rules (spec: Scoring, Stars), as Sourced game rules (the Mission Report shows them in Engineer mode). */
+export const STAR_RULES = {
+  phasesToReachScience: gameEstimate(3, 'phases', 'Game rule (spec: Stars): one star for reaching science, i.e. launch, cruise and arrival completed'),
+  scienceForSecondStar: gameEstimate(70, 'score (0–100)', 'Game rule (spec: Stars): a second star at a science score of 70'),
+};
+
 export const BUDGET_ZERO_AT_OVERRUN = gameEstimate(0.2, 'fraction over cap', 'Game rule: budget score falls linearly from 100 at the cap to 0 at 20% over');
 
 /** Debrief labels for a category score sᵢ (0–100). Display rule only; the score itself is unchanged. */
@@ -98,7 +104,7 @@ export interface EndMargins {
 /** Stars, in order: 1 reached the destination and started science; 2 science ≥ 70%; 3 every margin in band. */
 export function stars(p: { reachedScience: boolean; scienceScore: number; margins: EndMargins }): number {
   if (!p.reachedScience) return 0;
-  if (p.scienceScore < 70) return 1;
+  if (p.scienceScore < STAR_RULES.scienceForSecondStar.value) return 1;
   if (!(inBand(p.margins.deltaV) && inBand(p.margins.power) && inBand(p.margins.mass))) return 2;
   return 3;
 }

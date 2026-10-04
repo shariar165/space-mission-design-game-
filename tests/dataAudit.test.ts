@@ -10,6 +10,7 @@ import rideshares from '../src/data/rideshares.json';
 import lessons from '../src/data/lessons.json';
 import missions from '../src/data/missions.json';
 import operations from '../src/data/operations.json';
+import pack from '../src/data/pack.json';
 import orbitalElements from '../src/data/orbitalElements.json';
 import parts from '../src/data/parts.json';
 import rescueCases from '../src/data/rescueCases.json';
@@ -20,10 +21,11 @@ import { LBF_TO_N, RESCUE_MAX_STARS } from '../src/engine/rescue';
 import { COST_CAPS } from '../src/engine/massCost';
 import { ETA_SYS } from '../src/engine/power';
 import { ACCEPTABLE_MISSION_RISK, BASE_RISK, MARGIN_RISK_FACTOR_AT_ZERO } from '../src/engine/risk';
-import { BUDGET_ZERO_AT_OVERRUN, MARGIN_BAND, SCORE_GRADES, WEIGHTS } from '../src/engine/scoring';
+import { BUDGET_ZERO_AT_OVERRUN, MARGIN_BAND, SCORE_GRADES, STAR_RULES, WEIGHTS } from '../src/engine/scoring';
 import type { Sourced } from '../src/engine/types';
 import { RISK_RUNS, RISK_SEED } from '../src/engine/ops/riskEstimate';
 import { CONSOLE_RULES } from '../src/engine/ops/console';
+import { FLY_RULES } from '../src/engine/ops/fly';
 
 interface Entry {
   path: string;
@@ -69,6 +71,7 @@ const DATA_FILES: Record<string, unknown> = {
   'missions.json': missions,
   'operations.json': operations,
   'orbitalElements.json': orbitalElements,
+  'pack.json': pack,
   'parts.json': parts,
   'rescueCases.json': rescueCases,
   'rideshares.json': rideshares,
@@ -89,6 +92,8 @@ const ENGINE_VALUES: Record<string, Record<string, Sourced<unknown>>> = {
   'rescue.ts': { LBF_TO_N, RESCUE_MAX_STARS },
   'ops/riskEstimate.ts': { RISK_RUNS, RISK_SEED },
   'ops/console.ts CONSOLE_RULES': CONSOLE_RULES,
+  'ops/fly.ts FLY_RULES': FLY_RULES,
+  'scoring.ts STAR_RULES': STAR_RULES,
 };
 
 const all: Entry[] = [];

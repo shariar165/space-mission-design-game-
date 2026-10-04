@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&amp;family=B612:wght@400;700&amp;family=B612+Mono:wght@400;700&amp;family=VT323&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#0b0c09;color:#cbbf9f}a{color:#b23a22;text-decoration:none}a:hover{color:#d8432b}</style>
+</helmet>
+
+<section id="report" data-screen-label="03 Mission Report" style="padding:56px 64px 80px;display:flex;flex-direction:column;gap:28px">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap;max-width:1900px">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="font:400 14px/1 'B612 Mono',monospace;letter-spacing:.2em;color:#8a8270">SIGNAL DELAY · SCREEN 03 OF 06</div>
+      <h1 style="margin:0;font:800 56px/1 'Big Shoulders Display',sans-serif;color:#efe6cf;letter-spacing:.02em">MISSION REPORT</h1>
+      <p style="margin:0;max-width:640px;font:400 16px/1.5 'B612',sans-serif;color:#a49b84;text-wrap:pretty">The teletype prints your mission as a 4-panel comic. Then: stars, what saved you, what hurt you, how the real NASA mission did, and one new card for your Notebook.</p>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <button onClick="{{ replay }}" style="cursor:pointer;padding:10px 16px;border-radius:4px;border:1px solid #ffb547;background:#ffb547;color:#1b1a16;font:700 12px/1 'B612 Mono',monospace;letter-spacing:.1em;white-space:nowrap">▸ REPLAY PRINT-OUT</button>
+      <button onClick="{{ toggleMode }}" style="cursor:pointer;padding:10px 16px;border-radius:4px;border:1px solid #3a3d33;background:#1c1e18;color:{{ engLbl }};font:700 12px/1 'B612 Mono',monospace;letter-spacing:.1em;white-space:nowrap">{{ modeBtn }}</button>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:56px;align-items:flex-start;flex-wrap:wrap">
+    <div id="3a" style="display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;gap:10px;align-items:center"><span style="padding:4px 9px;border-radius:3px;background:#ffb547;color:#1b1a16;font:700 13px/1 'B612 Mono',monospace">3a</span><span style="font:400 13px/1 'B612 Mono',monospace;color:#8a8270;letter-spacing:.1em;white-space:nowrap">DESKTOP · 1440 × 900</span></div>
+      <div style="width:1440px;height:900px;box-sizing:border-box;padding:18px;background:#1c1e18;border-radius:10px;box-shadow:0 30px 80px rgba(0,0,0,.55),inset 0 1px 0 #34372e;display:flex">
+        <div style="flex:1;position:relative;background:#efe6cf;border-radius:4px;padding:22px 64px 24px;display:grid;grid-template-rows:auto auto minmax(0,1fr);gap:18px;overflow:hidden">
+          <div style="position:absolute;left:0;top:0;bottom:0;width:40px;border-right:1px dashed #c4b897;background-image:radial-gradient(circle,#1c1e18 6px,transparent 7px);background-size:40px 36px;background-position:center 10px"></div>
+          <div style="position:absolute;right:0;top:0;bottom:0;width:40px;border-left:1px dashed #c4b897;background-image:radial-gradient(circle,#1c1e18 6px,transparent 7px);background-size:40px 36px;background-position:center 10px"></div>
+
+          <div style="display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:36px;align-items:center;padding:0 12px">
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <span style="font:700 12px/1 'B612 Mono',monospace;letter-spacing:.2em;color:#7a715c">TELETYPE 03 · ORBITER-1 · MARS · DAY 001–672</span>
+              <span style="font:900 54px/0.9 'Big Shoulders Display',sans-serif;color:#1b1a16;letter-spacing:.01em">MISSION REPORT</span>
+            </div>
+            <div style="display:flex;gap:18px">
+              <sc-for list="{{ stars }}" as="s" hint-placeholder-count="3">
+                <div style="display:flex;flex-direction:column;align-items:center;gap:6px;width:92px">
+                  <dc-import name="SDIcon" icon="star" size="44" color="{{ s.col }}" fill="{{ s.fill }}" sw="1.6" hint-size="44px,44px"></dc-import>
+                  <span style="font:700 10px/1.2 'B612 Mono',monospace;letter-spacing:.1em;color:#3a372e;text-align:center">{{ s.label }}</span>
+                  <sc-if value="{{ eng }}" hint-placeholder-val="{{ false }}"><span style="font:400 10px/1.2 'B612 Mono',monospace;color:#7a715c;text-align:center">{{ s.rule }}</span></sc-if>
+                </div>
+              </sc-for>
+            </div>
+            <div style="padding:10px 16px;border:4px solid #2f8a4a;border-radius:4px;transform:rotate(-4deg);font:900 30px/0.9 'Big Shoulders Display',sans-serif;letter-spacing:.06em;color:#2f8a4a;text-align:center">MISSION<br>COMPLETE</div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;padding:14px;background:#1b1a16;border-radius:3px">
+            <sc-for list="{{ panels }}" as="p" hint-placeholder-count="4">
+              <div style="position:relative;height:300px;background:#16182a;overflow:hidden;opacity:{{ p.op }}">
+                <svg viewBox="0 0 340 300" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0;width:100%;height:100%">
+                  <circle cx="30" cy="40" r="1.6" fill="#efe6cf"></circle><circle cx="290" cy="60" r="1.2" fill="#efe6cf"></circle><circle cx="210" cy="24" r="1.8" fill="#efe6cf"></circle><circle cx="80" cy="150" r="1.1" fill="#efe6cf"></circle><circle cx="320" cy="180" r="1.5" fill="#efe6cf"></circle><circle cx="140" cy="210" r="1.2" fill="#efe6cf"></circle>
+                  <sc-if value="{{ p.is1 }}" hint-placeholder-val="{{ false }}">
+                    <circle cx="170" cy="470" r="230" fill="#3a86d8"></circle>
+                    <path d="M40 270 q40 -30 90 -20 q20 20 -10 40 z M200 250 q60 -20 100 10 l-10 40 h-80 z" fill="#5cc46e"></path>
+                    <path d="M170 236 q-24 30 -60 64 M170 236 q24 30 60 64" stroke="#efe6cf" stroke-opacity=".35" stroke-width="14" fill="none" stroke-linecap="round"></path>
+                    <path d="M162 190 h16 l6 26 q-14 30 -28 0 z" fill="#ffb547"></path><path d="M165 196 h10 l3 14 q-8 16 -16 0 z" fill="#ffe08a"></path>
+                    <rect x="158" y="96" width="24" height="96" fill="#efe6cf"></rect>
+                    <path d="M158 96 L170 64 L182 96 Z" fill="#d8432b"></path>
+                    <path d="M158 168 L144 194 L158 190 Z M182 168 L196 194 L182 190 Z" fill="#d8432b"></path>
+                    <rect x="158" y="128" width="24" height="6" fill="#1b1a16"></rect>
+                  </sc-if>
+                  <sc-if value="{{ p.is2 }}" hint-placeholder-val="{{ false }}">
+                    <circle cx="-30" cy="150" r="120" fill="#ff9a2e"></circle><circle cx="-30" cy="150" r="100" fill="#ffc94a"></circle>
+                    <path d="M120 40 A150 150 0 0 1 120 260" stroke="#ffb547" stroke-width="7" fill="none" stroke-dasharray="14 10"></path>
+                    <path d="M170 20 A190 190 0 0 1 170 280" stroke="#ffb547" stroke-opacity=".6" stroke-width="6" fill="none" stroke-dasharray="12 12"></path>
+                    <g transform="translate(262 150) scale(2.4)">
+                      <rect x="-27" y="-6" width="17" height="12" fill="#3a6fd8" stroke="#bcd3ff" stroke-width="1"></rect><rect x="10" y="-6" width="17" height="12" fill="#3a6fd8" stroke="#bcd3ff" stroke-width="1"></rect>
+                      <rect x="-8" y="-8" width="16" height="16" rx="2" fill="#f2c94c" stroke="#8a6a12" stroke-width="1"></rect><path d="M-7 -8 q7 -10 14 0 z" fill="#efe6cf"></path>
+                    </g>
+                    <path d="M240 98 l10 10 -8 4 12 12 M286 196 l-10 -8 8 -4 -12 -12" stroke="#ff5a3d" stroke-width="4" fill="none" stroke-linejoin="round"></path>
+                    <text x="236" y="250" fill="#ffb547" font-family="Big Shoulders Display, sans-serif" font-weight="900" font-size="40" transform="rotate(-8 236 250)">ZZZT!</text>
+                  </sc-if>
+                  <sc-if value="{{ p.is3 }}" hint-placeholder-val="{{ false }}">
+                    <ellipse cx="250" cy="190" rx="170" ry="60" fill="none" stroke="#efe6cf" stroke-opacity=".5" stroke-width="2.5" stroke-dasharray="6 8" transform="rotate(-18 250 190)"></ellipse>
+                    <circle cx="260" cy="210" r="110" fill="#d6603a"></circle>
+                    <circle cx="225" cy="180" r="22" fill="#9e3a1f"></circle><circle cx="290" cy="240" r="14" fill="#9e3a1f"></circle><path d="M210 112 q50 -22 100 0 z" fill="#f4eee0"></path>
+                    <g transform="translate(96 92) scale(2.1) rotate(-18)">
+                      <path d="M-34 -4 L-58 0 L-34 4 Z" fill="#ffb547"></path><path d="M-30 -2.5 L-44 0 L-30 2.5 Z" fill="#ffe08a"></path>
+                      <rect x="-27" y="-6" width="17" height="12" fill="#3a6fd8" stroke="#bcd3ff" stroke-width="1"></rect><rect x="10" y="-6" width="17" height="12" fill="#3a6fd8" stroke="#bcd3ff" stroke-width="1"></rect>
+                      <rect x="-8" y="-8" width="16" height="16" rx="2" fill="#f2c94c" stroke="#8a6a12" stroke-width="1"></rect><path d="M-7 -8 q7 -10 14 0 z" fill="#efe6cf"></path>
+                    </g>
+                    <text x="20" y="268" fill="#ffb547" font-family="Big Shoulders Display, sans-serif" font-weight="900" font-size="36" transform="rotate(-6 20 268)">FWOOOSH</text>
+                  </sc-if>
+                  <sc-if value="{{ p.is4 }}" hint-placeholder-val="{{ false }}">
+                    <circle cx="170" cy="160" r="70" fill="#ff9a2e"></circle><circle cx="170" cy="160" r="56" fill="#ffc94a"></circle>
+                    <circle cx="36" cy="160" r="18" fill="#3a86d8"></circle><path d="M26 154 q6 -8 14 -4 q2 6 -6 8 z" fill="#5cc46e"></path>
+                    <circle cx="304" cy="160" r="16" fill="#d6603a"></circle>
+                    <path d="M58 160 H96" stroke="#8cff9e" stroke-width="4" stroke-dasharray="6 6"></path>
+                    <path d="M108 148 l20 24 M128 148 l-20 24" stroke="#ff5a3d" stroke-width="6" stroke-linecap="round"></path>
+                    <g transform="translate(300 118) scale(1.3)"><rect x="-27" y="-6" width="17" height="12" fill="#3a6fd8"></rect><rect x="10" y="-6" width="17" height="12" fill="#3a6fd8"></rect><rect x="-8" y="-8" width="16" height="16" rx="2" fill="#f2c94c"></rect></g>
+                    <text x="248" y="250" fill="#8cff9e" font-family="VT323, monospace" font-size="30">. . .</text>
+                  </sc-if>
+                </svg>
+                <div style="position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(rgba(239,230,207,.08) 1px,transparent 1.6px);background-size:6px 6px"></div>
+                <div style="position:absolute;left:10px;top:10px;right:10px;padding:9px 11px;background:#f2c94c;border:2px solid #1b1a16;box-shadow:3px 3px 0 #1b1a16;display:flex;flex-direction:column;gap:4px">
+                  <span style="font:900 16px/1 'Big Shoulders Display',sans-serif;letter-spacing:.08em;color:#1b1a16">{{ p.day }}</span>
+                  <span style="min-height:38px;font:700 14px/1.35 'B612',sans-serif;color:#1b1a16">{{ p.text }}</span>
+                </div>
+                <sc-if value="{{ eng }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;left:10px;bottom:8px;font:400 16px/1 'VT323',monospace;color:#8cff9e">{{ p.eng }}</span></sc-if>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr) minmax(0,1fr);gap:18px;min-height:0;padding:0 12px">
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <div style="padding:14px 16px;border:2px solid #1b1a16;border-radius:4px;display:grid;grid-template-columns:44px minmax(0,1fr);gap:12px;align-items:start">
+                <span style="width:44px;height:44px;border-radius:4px;background:#2f8a4a;display:grid;place-items:center"><dc-import name="SDIcon" icon="computer" size="24" color="#efe6cf" hint-size="24px,24px"></dc-import></span>
+                <div style="display:flex;flex-direction:column;gap:5px"><span style="font:700 11px/1 'B612 Mono',monospace;letter-spacing:.18em;color:#2f8a4a">WHAT SAVED YOU</span><span style="font:400 16px/1.4 'B612',sans-serif;color:#1b1a16;text-wrap:pretty">The <b>autopilot chip</b>. It flew the robot alone for two weeks while the Sun blocked your radio.</span></div>
+              </div>
+              <div style="padding:14px 16px;border:2px solid #1b1a16;border-radius:4px;display:grid;grid-template-columns:44px minmax(0,1fr);gap:12px;align-items:start">
+                <span style="width:44px;height:44px;border-radius:4px;background:#d8432b;display:grid;place-items:center"><dc-import name="SDIcon" icon="storm" size="24" color="#efe6cf" hint-size="24px,24px"></dc-import></span>
+                <div style="display:flex;flex-direction:column;gap:5px"><span style="font:700 11px/1 'B612 Mono',monospace;letter-spacing:.18em;color:#b23a22">WHAT HURT YOU</span><span style="font:400 16px/1.4 'B612',sans-serif;color:#1b1a16;text-wrap:pretty">Keeping science on in the <b>Day 214 storm</b>. The star tracker never fully recovered.</span></div>
+              </div>
+            </div>
+
+            <div style="padding:14px 18px;background:#1b1a16;border-radius:4px;display:flex;flex-direction:column;gap:10px">
+              <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:800 22px/1 'Big Shoulders Display',sans-serif;letter-spacing:.06em;color:#efe6cf">YOU vs THE REAL ONE</span><span style="font:400 18px/1 'VT323',monospace;color:#47c96b">NASA MAVEN · 2013–2025</span></div>
+              <div style="display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) minmax(0,1.2fr);gap:0;font:400 21px/1.15 'VT323',monospace">
+                <span style="color:#8a8270;padding:5px 0;border-bottom:1px solid #2c2f27"></span><span style="color:#ffb547;padding:5px 0;border-bottom:1px solid #2c2f27">YOU</span><span style="color:#8cff9e;padding:5px 0;border-bottom:1px solid #2c2f27">MAVEN</span>
+                <sc-for list="{{ compare }}" as="c" hint-placeholder-count="4">
+                  <span style="color:#a49b84;padding:6px 8px 6px 0;border-bottom:1px solid #2c2f27">{{ c.k }}</span><span style="color:#ffb547;padding:6px 8px 6px 0;border-bottom:1px solid #2c2f27">{{ c.you }}</span><span style="color:#8cff9e;padding:6px 0;border-bottom:1px solid #2c2f27">{{ c.nasa }}</span>
+                </sc-for>
+              </div>
+              <sc-if value="{{ eng }}" hint-placeholder-val="{{ false }}"><span style="font:400 11px/1.4 'B612 Mono',monospace;color:#8a8270">SOURCES · NASA mission pages; end-of-mission briefing 3 Jun 2026. Burn length to verify.</span></sc-if>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <div style="position:relative;flex:1;padding:16px 18px;background:#fbf6e8;border:2px solid #1b1a16;border-radius:6px;box-shadow:5px 5px 0 #1b1a16;display:flex;flex-direction:column;gap:8px;transform:rotate(1deg)">
+                <span style="position:absolute;top:-12px;right:14px;padding:5px 9px;background:#d8432b;color:#efe6cf;font:900 14px/1 'Big Shoulders Display',sans-serif;letter-spacing:.12em">NEW CARD</span>
+                <span style="font:700 11px/1 'B612 Mono',monospace;letter-spacing:.18em;color:#7a715c">ENGINEER’S NOTEBOOK · 07 / 24</span>
+                <span style="font:900 30px/0.95 'Big Shoulders Display',sans-serif;color:#1b1a16">SAFE BEATS CURIOUS</span>
+                <span style="font:400 14px/1.45 'B612',sans-serif;color:#3a372e;text-wrap:pretty">When a solar storm is coming, real teams switch instruments off. In 2003 one storm killed a sensor on Mars Odyssey for good.</span>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                <a href="Signal Delay - Notebook.dc.html" style="height:50px;border-radius:5px;border:2px solid #1b1a16;border-bottom-width:5px;display:grid;place-items:center;font:800 18px/1 'Big Shoulders Display',sans-serif;letter-spacing:.1em;color:#1b1a16">OPEN NOTEBOOK</a>
+                <a href="Signal Delay - Pack.dc.html" style="height:50px;border-radius:5px;background:#d8432b;border-bottom:5px solid #7a1f10;display:grid;place-items:center;font:800 18px/1 'Big Shoulders Display',sans-serif;letter-spacing:.1em;color:#efe6cf">FLY AGAIN</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MOBILE -->
+    <div id="3b" style="display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;gap:10px;align-items:center"><span style="padding:4px 9px;border-radius:3px;background:#ffb547;color:#1b1a16;font:700 13px/1 'B612 Mono',monospace">3b</span><span style="font:400 13px/1 'B612 Mono',monospace;color:#8a8270;letter-spacing:.1em;white-space:nowrap">MOBILE · 390 × 844 · SCROLLS</span></div>
+      <div style="width:390px;height:844px;box-sizing:border-box;padding:10px;background:#1c1e18;border-radius:34px;box-shadow:0 30px 80px rgba(0,0,0,.55),0 0 0 8px #0f100c;display:flex;overflow:hidden">
+        <div style="flex:1;background:#efe6cf;border-radius:24px;overflow-y:auto;scrollbar-width:none;padding:18px 16px 24px;display:grid;grid-template-columns:minmax(0,1fr);align-content:start;gap:16px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+            <div style="display:flex;flex-direction:column;gap:4px"><span style="font:700 10px/1 'B612 Mono',monospace;letter-spacing:.16em;color:#7a715c">ORBITER-1 · DAY 672</span><span style="font:900 38px/0.9 'Big Shoulders Display',sans-serif;color:#1b1a16">MISSION<br>REPORT</span></div>
+            <div style="padding:6px 9px;border:3px solid #2f8a4a;border-radius:3px;transform:rotate(-5deg);font:900 17px/0.9 'Big Shoulders Display',sans-serif;color:#2f8a4a;text-align:center">MISSION<br>COMPLETE</div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+            <sc-for list="{{ stars }}" as="s" hint-placeholder-count="3"><div style="display:flex;flex-direction:column;align-items:center;gap:4px"><dc-import name="SDIcon" icon="star" size="34" color="{{ s.col }}" fill="{{ s.fill }}" sw="1.6" hint-size="34px,34px"></dc-import><span style="font:700 9px/1.2 'B612 Mono',monospace;letter-spacing:.08em;color:#3a372e;text-align:center">{{ s.label }}</span></div></sc-for>
+          </div>
+          <div style="display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:0 16px;scroll-snap-type:x mandatory">
+            <sc-for list="{{ panels }}" as="p" hint-placeholder-count="4">
+              <div style="flex:none;width:300px;height:250px;position:relative;background:#16182a;border:5px solid #1b1a16;scroll-snap-align:center;overflow:hidden;opacity:{{ p.op }}">
+                <svg viewBox="0 0 340 300" preserveAspectRatio="xMidYMid slice" style="position:absolute;inset:0;width:100%;height:100%">
+                  <sc-if value="{{ p.is1 }}" hint-placeholder-val="{{ false }}"><circle cx="170" cy="470" r="230" fill="#3a86d8"></circle><path d="M40 270 q40 -30 90 -20 q20 20 -10 40 z M200 250 q60 -20 100 10 l-10 40 h-80 z" fill="#5cc46e"></path><path d="M162 190 h16 l6 26 q-14 30 -28 0 z" fill="#ffb547"></path><rect x="158" y="96" width="24" height="96" fill="#efe6cf"></rect><path d="M158 96 L170 64 L182 96 Z" fill="#d8432b"></path><path d="M158 168 L144 194 L158 190 Z M182 168 L196 194 L182 190 Z" fill="#d8432b"></path></sc-if>
+                  <sc-if value="{{ p.is2 }}" hint-placeholder-val="{{ false }}"><circle cx="-30" cy="150" r="120" fill="#ff9a2e"></circle><circle cx="-30" cy="150" r="100" fill="#ffc94a"></circle><path d="M120 40 A150 150 0 0 1 120 260" stroke="#ffb547" stroke-width="7" fill="none" stroke-dasharray="14 10"></path><g transform="translate(262 160) scale(2.4)"><rect x="-27" y="-6" width="17" height="12" fill="#3a6fd8"></rect><rect x="10" y="-6" width="17" height="12" fill="#3a6fd8"></rect><rect x="-8" y="-8" width="16" height="16" rx="2" fill="#f2c94c"></rect></g><text x="226" y="260" fill="#ffb547" font-family="Big Shoulders Display, sans-serif" font-weight="900" font-size="40">ZZZT!</text></sc-if>
+                  <sc-if value="{{ p.is3 }}" hint-placeholder-val="{{ false }}"><circle cx="260" cy="210" r="110" fill="#d6603a"></circle><circle cx="225" cy="180" r="22" fill="#9e3a1f"></circle><path d="M210 112 q50 -22 100 0 z" fill="#f4eee0"></path><g transform="translate(96 120) scale(2.1) rotate(-18)"><path d="M-34 -4 L-58 0 L-34 4 Z" fill="#ffb547"></path><rect x="-27" y="-6" width="17" height="12" fill="#3a6fd8"></rect><rect x="10" y="-6" width="17" height="12" fill="#3a6fd8"></rect><rect x="-8" y="-8" width="16" height="16" rx="2" fill="#f2c94c"></rect></g></sc-if>
+                  <sc-if value="{{ p.is4 }}" hint-placeholder-val="{{ false }}"><circle cx="170" cy="180" r="70" fill="#ff9a2e"></circle><circle cx="170" cy="180" r="56" fill="#ffc94a"></circle><circle cx="36" cy="180" r="18" fill="#3a86d8"></circle><circle cx="304" cy="180" r="16" fill="#d6603a"></circle><path d="M58 180 H96" stroke="#8cff9e" stroke-width="4" stroke-dasharray="6 6"></path><path d="M108 168 l20 24 M128 168 l-20 24" stroke="#ff5a3d" stroke-width="6" stroke-linecap="round"></path></sc-if>
+                </svg>
+                <div style="position:absolute;left:8px;top:8px;right:8px;padding:8px 10px;background:#f2c94c;border:2px solid #1b1a16;box-shadow:3px 3px 0 #1b1a16;display:flex;flex-direction:column;gap:3px"><span style="font:900 15px/1 'Big Shoulders Display',sans-serif;letter-spacing:.08em;color:#1b1a16">{{ p.day }}</span><span style="min-height:36px;font:700 14px/1.3 'B612',sans-serif;color:#1b1a16">{{ p.text }}</span></div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;justify-content:center;gap:6px"><span style="width:18px;height:6px;border-radius:3px;background:#1b1a16"></span><span style="width:6px;height:6px;border-radius:3px;background:#c4b897"></span><span style="width:6px;height:6px;border-radius:3px;background:#c4b897"></span><span style="width:6px;height:6px;border-radius:3px;background:#c4b897"></span></div>
+          <div style="padding:12px 14px;border:2px solid #1b1a16;border-radius:4px;display:flex;flex-direction:column;gap:5px"><span style="font:700 10px/1 'B612 Mono',monospace;letter-spacing:.16em;color:#2f8a4a">WHAT SAVED YOU</span><span style="font:400 15px/1.4 'B612',sans-serif;color:#1b1a16">The <b>autopilot chip</b> flew alone for two weeks.</span></div>
+          <div style="padding:12px 14px;border:2px solid #1b1a16;border-radius:4px;display:flex;flex-direction:column;gap:5px"><span style="font:700 10px/1 'B612 Mono',monospace;letter-spacing:.16em;color:#b23a22">WHAT HURT YOU</span><span style="font:400 15px/1.4 'B612',sans-serif;color:#1b1a16">Science on in the <b>Day 214 storm</b>.</span></div>
+          <div style="padding:12px 14px;background:#1b1a16;border-radius:4px;display:flex;flex-direction:column;gap:8px">
+            <span style="font:800 18px/1 'Big Shoulders Display',sans-serif;letter-spacing:.06em;color:#efe6cf">YOU vs NASA MAVEN</span>
+            <sc-for list="{{ compare }}" as="c" hint-placeholder-count="4">
+              <div style="display:flex;flex-direction:column;gap:2px;padding-bottom:6px;border-bottom:1px solid #2c2f27;font:400 19px/1.1 'VT323',monospace"><span style="color:#a49b84">{{ c.k }}</span><span style="display:flex;justify-content:space-between;gap:10px"><span style="color:#ffb547">YOU · {{ c.you }}</span><span style="color:#8cff9e;text-align:right">{{ c.nasaShort }}</span></span></div>
+            </sc-for>
+          </div>
+          <div style="position:relative;padding:16px;background:#fbf6e8;border:2px solid #1b1a16;border-radius:6px;box-shadow:4px 4px 0 #1b1a16;display:flex;flex-direction:column;gap:6px;margin-top:6px">
+            <span style="position:absolute;top:-11px;right:12px;padding:4px 8px;background:#d8432b;color:#efe6cf;font:900 13px/1 'Big Shoulders Display',sans-serif;letter-spacing:.12em">NEW CARD</span>
+            <span style="font:700 10px/1 'B612 Mono',monospace;letter-spacing:.16em;color:#7a715c">NOTEBOOK · 07 / 24</span>
+            <span style="font:900 26px/0.95 'Big Shoulders Display',sans-serif;color:#1b1a16">SAFE BEATS CURIOUS</span>
+            <span style="font:400 14px/1.45 'B612',sans-serif;color:#3a372e">When a storm is coming, real teams switch instruments off.</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <a href="Signal Delay - Notebook.dc.html" style="height:50px;border-radius:5px;border:2px solid #1b1a16;border-bottom-width:5px;display:grid;place-items:center;font:800 16px/1 'Big Shoulders Display',sans-serif;letter-spacing:.1em;color:#1b1a16">NOTEBOOK</a>
+            <a href="Signal Delay - Pack.dc.html" style="height:50px;border-radius:5px;background:#d8432b;border-bottom:5px solid #7a1f10;display:grid;place-items:center;font:800 16px/1 'Big Shoulders Display',sans-serif;letter-spacing:.1em;color:#efe6cf">FLY AGAIN</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const PANELS=[
+ {day:'DAY 0 · LIFTOFF',text:'Off from Florida. Shield, battery and autopilot packed.',eng:'NOV 18 · C3 12.2 km²/s²'},
+ {day:'DAY 214 · SOLAR STORM',text:'You kept science on. The star tracker blinked, then rebooted.',eng:'SEU ×1 · SYS 5 → 4'},
+ {day:'DAY 307 · ARRIVE AT MARS',text:'A 34-minute burn. Mars caught you.',eng:'Δv 1.2 km/s · FUEL 4 → 2'},
+ {day:'DAY 424 · SUN IN THE WAY',text:'No radio for two weeks. The autopilot flew alone.',eng:'SEP < 2° · 14 d autonomous'}
+];
+const STEP=2.4,CPS=38;
+class Component extends DCLogic {
+  state={t:0,mode:'cadet'};
+  componentDidMount(){this.last=performance.now();this.iv=setInterval(()=>{const n=performance.now();const dt=(n-this.last)/1000;this.last=n;if(this.state.t<STEP*4+2)this.setState({t:this.state.t+dt});},40);}
+  componentWillUnmount(){clearInterval(this.iv);}
+  renderVals(){
+    const s=this.state,eng=s.mode==='eng';
+    const panels=PANELS.map((p,i)=>{const lt=s.t-i*STEP;const on=lt>0;
+      return {...p,is1:i===0,is2:i===1,is3:i===2,is4:i===3,op:on?1:.12,text:on?p.text.slice(0,Math.floor(lt*CPS)):''};});
+    return {eng,panels,
+      stars:[{label:'ROBOT SURVIVED',rule:'SYS > 0 at day 672',fill:true,col:'#d8a21c'},{label:'SCIENCE GOAL',rule:'DATA ≥ 4',fill:true,col:'#d8a21c'},{label:'NO DAMAGE',rule:'SYS = 5 at end',fill:false,col:'#a49b84'}],
+      compare:[
+        {k:'LAUNCH',you:'NOV 18',nasa:'NOV 18, 2013',nasaShort:'MAVEN · NOV 18, 2013'},
+        {k:'MARS ARRIVAL BURN',you:'34 MIN',nasa:'33 MIN (SEP 2014)',nasaShort:'MAVEN · 33 MIN'},
+        {k:'PLANNED TO LAST',you:'1 YEAR',nasa:'1 YEAR',nasaShort:'MAVEN · 1 YEAR'},
+        {k:'ACTUALLY LASTED',you:'STILL FLYING',nasa:'11 YEARS',nasaShort:'MAVEN · 11 YEARS'},
+        {k:'HOW IT ENDED',you:'—',nasa:'SPUN, BATTERY DIED · DEC 2025',nasaShort:'SPIN DRAINED BATTERY'}
+      ],
+      replay:()=>this.setState({t:0}),
+      toggleMode:()=>this.setState({mode:eng?'cadet':'eng'}),modeBtn:eng?'ENGINEER MODE ON':'CADET MODE · SWITCH',engLbl:eng?'#ffb547':'#cbbf9f'};
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,424 @@
+{
+  "_comment": "Signal Delay Pack (spec: UI rules, Pack). Footprints, masses and effects are game rules. A part changes the design through evaluateDesign or Mission operations; 'covers' names the dangers its effect touches.",
+  "grid": {
+    "cols": {
+      "value": 6,
+      "unit": "squares",
+      "source": "Game rule (Pack): the rocket nose is a 6 × 6 grid of squares (fairing volume)",
+      "isGameEstimate": true
+    },
+    "rows": {
+      "value": 6,
+      "unit": "squares",
+      "source": "Game rule (Pack): the rocket nose is a 6 × 6 grid of squares (fairing volume)",
+      "isGameEstimate": true
+    }
+  },
+  "coverage": {
+    "covered": {
+      "value": 2,
+      "unit": "parts",
+      "source": "Game rule (Pack): two or more parts covering a danger stamp it COVERED",
+      "isGameEstimate": true
+    },
+    "some": {
+      "value": 1,
+      "unit": "parts",
+      "source": "Game rule (Pack): one part stamps SOME COVER",
+      "isGameEstimate": true
+    }
+  },
+  "calendar": {
+    "days": {
+      "value": 42,
+      "unit": "days",
+      "source": "Game rule (Pack): the launch calendar shows six weeks",
+      "isGameEstimate": true
+    },
+    "before": {
+      "value": 20,
+      "unit": "days",
+      "source": "Game rule (Pack): the calendar starts 20 days before the best launch day",
+      "isGameEstimate": true
+    },
+    "searchStep": {
+      "value": 2,
+      "unit": "days",
+      "source": "Game rule (Pack): arrival dates are searched every 2 days for the calendar",
+      "isGameEstimate": true
+    }
+  },
+  "parts": {
+    "computer": {
+      "kind": "bus",
+      "locked": true,
+      "w": {
+        "value": 2,
+        "unit": "squares",
+        "source": "Game rule (Pack): footprint in nose squares",
+        "isGameEstimate": true
+      },
+      "h": {
+        "value": 2,
+        "unit": "squares",
+        "source": "Game rule (Pack): footprint in nose squares",
+        "isGameEstimate": true
+      },
+      "covers": []
+    },
+    "engine": {
+      "kind": "engine",
+      "locked": true,
+      "w": {
+        "value": 2,
+        "unit": "squares",
+        "source": "Game rule (Pack): footprint in nose squares",
+        "isGameEstimate": true
+      },
+      "h": {
+        "value": 1,
+        "unit": "squares",
+        "source": "Game rule (Pack): footprint in nose squares",
+        "isGameEstimate": true
+      },
+      "covers": []
+    },
+    "camera": {
+      "kind": "instrument",
+      "instrumentId": "camera",
+      "w": {
+        "value": 2,
+        "unit": "squares",
+        "source": "Game rule (Pack): footprint in nose squares",
+        "isGameEstimate": true
+      },
+      "h": {
+        "value": 2,
+        "unit": "squares",
+        "source": "Game rule (Pack): footprint in nose squares",
+        "isGameEstimate": true
+      },
+      "covers": []
+    },
+    "spectrometer": {
+      "kind": "instrument",
+      "instrumentId": "spectrometer",
+      "w": {
+        "value": 2,
+        "unit": "squares",
+        "source": "Game rule (Pack): footprint in nose squares",
+        "isGameEstimate": true
+      },
+      "h": {
+        "value": 1,
+        "unit": "squares",
+        "source": "Game rule (Pack): footprint in nose squares",
+        "isGameEstimate": true
+      },
+      "covers": []
+    },
+    "magnetometer": {
+      "kind": "instrument",
+      "instrumentId": "magnetometer",
+      "w": {
+        "value": 1,
+        "unit": "squares",
+        "source": "Game rule (Pack): footprint in nose squares",
+        "isGameEstimate": true
+      },
+      "h": {
+        "value": 1,
+        "unit": "squares",
+        "source": "Game rule (Pack): footprint in nose squares",
+        "isGameEstimate": true
+      },
+      "covers": []
+    },
+    "radar": {
+      "kind": "instrument",
+      "instrumentId": "radar",
+      "w": {
+        "value": 3,
+        "unit": "squares",
+        "source": "Game rule (Pack): footprint in nose squares",
+        "isGameEstimate": true
+      },
+      "h": {
+        "value": 1,
+        "unit": "squares",
+        "source": "Game rule (Pack): footprint in nose squares",
+        "isGameEstimate": true
+      },
+      "covers": []
+    },
+    "sniffer": {
+      "kind": "instrument",
+      "instrumentId": "maven-science-payload",
+      "w": {
+        "value": 2,
+        "unit": "squares",
+        "source": "Game rule (Pack): footprint in nose squares",
+        "isGameEstimate": true
+      },
+      "h": {
+        "value": 3,
+        "unit": "squares",
+        "source": "Game rule (Pack): footprint in nose squares",
+        "isGameEstimate": true
+      },
+      "covers": []
+    },
+    "dish": {
+      "kind": "dish",
+      "w": {
+        "value": 2,
+        "unit": "squares",
+        "source": "Game rule (Pack): footprint in nose squares",
+        "isGameEstimate": true
+      },
+      "h": {
+        "value": 2,
+        "unit": "squares",
+        "source": "Game rule (Pack): footprint in nose squares",
+        "isGameEstimate": true
+      },
+      "covers": []
+    },
+    "solar": {
+      "kind": "power",
+      "w": {
+        "value": 3,
+        "unit": "squares",
+        "source": "Game rule (Pack): footprint in nose squares",
+        "isGameEstimate": true
+      },
+      "h": {
+        "value": 1,
+        "unit": "squares",
+        "source": "Game rule (Pack): footprint in nose squares",
+        "isGameEstimate": true
+      },
+      "extraArrayArea_m2": {
+        "value": 4,
+        "unit": "m²",
+        "source": "Game rule (Pack): an extra solar panel adds 4 m² of array",
+        "isGameEstimate": true
+      },
+      "extraRtg": {
+        "value": 1,
+        "unit": "RTGs",
+        "source": "Game rule (Pack): on a nuclear craft the extra power part is one more RTG",
+        "isGameEstimate": true
+      },
+      "covers": [
+        "eclipse",
+        "reaction-wheel",
+        "memory-corruption"
+      ]
+    },
+    "battery": {
+      "kind": "battery",
+      "w": {
+        "value": 2,
+        "unit": "squares",
+        "source": "Game rule (Pack): footprint in nose squares",
+        "isGameEstimate": true
+      },
+      "h": {
+        "value": 1,
+        "unit": "squares",
+        "source": "Game rule (Pack): footprint in nose squares",
+        "isGameEstimate": true
+      },
+      "batteryFactor": {
+        "value": 1.5,
+        "unit": "× capacity",
+        "source": "Game rule (Pack): the big battery holds 1.5 times the sized capacity",
+        "isGameEstimate": true
+      },
+      "covers": [
+        "eclipse"
+      ]
+    },
+    "tank": {
+      "kind": "propellant",
+      "w": {
+        "value": 2,
+        "unit": "squares",
+        "source": "Game rule (Pack): footprint in nose squares",
+        "isGameEstimate": true
+      },
+      "h": {
+        "value": 2,
+        "unit": "squares",
+        "source": "Game rule (Pack): footprint in nose squares",
+        "isGameEstimate": true
+      },
+      "extraPropellant": {
+        "value": 0.2,
+        "unit": "fraction of the load",
+        "source": "Game rule (Pack): the extra tank carries 20% more propellant",
+        "isGameEstimate": true
+      },
+      "covers": [
+        "mars-dust-storm",
+        "debris",
+        "reaction-wheel",
+        "insertion-anomaly"
+      ]
+    },
+    "heater": {
+      "kind": "kit",
+      "w": {
+        "value": 1,
+        "unit": "squares",
+        "source": "Game rule (Pack): footprint in nose squares",
+        "isGameEstimate": true
+      },
+      "h": {
+        "value": 1,
+        "unit": "squares",
+        "source": "Game rule (Pack): footprint in nose squares",
+        "isGameEstimate": true
+      },
+      "mass_kg": {
+        "value": 8,
+        "unit": "kg",
+        "source": "Game estimate: a heater pack with its own controller",
+        "isGameEstimate": true
+      },
+      "coldFactor": {
+        "value": 0.5,
+        "unit": "of the cold-day extra hazard",
+        "source": "Game rule (Pack): heaters halve the extra hardware hazard of a cold day",
+        "isGameEstimate": true
+      },
+      "covers": [
+        "eclipse",
+        "reaction-wheel",
+        "memory-corruption"
+      ]
+    },
+    "shield": {
+      "kind": "kit",
+      "w": {
+        "value": 2,
+        "unit": "squares",
+        "source": "Game rule (Pack): footprint in nose squares",
+        "isGameEstimate": true
+      },
+      "h": {
+        "value": 2,
+        "unit": "squares",
+        "source": "Game rule (Pack): footprint in nose squares",
+        "isGameEstimate": true
+      },
+      "mass_kg": {
+        "value": 40,
+        "unit": "kg",
+        "source": "Game estimate: aluminium shielding around the electronics",
+        "isGameEstimate": true
+      },
+      "hazardFactor": {
+        "solar-storm": {
+          "value": 0.5,
+          "unit": "× failure chance",
+          "source": "Game rule (Pack): a radiation shield halves the failure chance of a solar-storm response",
+          "isGameEstimate": true
+        }
+      },
+      "covers": [
+        "solar-storm"
+      ]
+    },
+    "bumper": {
+      "kind": "kit",
+      "w": {
+        "value": 3,
+        "unit": "squares",
+        "source": "Game rule (Pack): footprint in nose squares",
+        "isGameEstimate": true
+      },
+      "h": {
+        "value": 1,
+        "unit": "squares",
+        "source": "Game rule (Pack): footprint in nose squares",
+        "isGameEstimate": true
+      },
+      "mass_kg": {
+        "value": 30,
+        "unit": "kg",
+        "source": "Game estimate: a Whipple-style debris bumper",
+        "isGameEstimate": true
+      },
+      "hazardFactor": {
+        "debris": {
+          "value": 0.4,
+          "unit": "× failure chance",
+          "source": "Game rule (Pack): a debris bumper cuts the failure chance of a debris response to 40%",
+          "isGameEstimate": true
+        }
+      },
+      "covers": [
+        "debris"
+      ]
+    },
+    "spare": {
+      "kind": "kit",
+      "w": {
+        "value": 1,
+        "unit": "squares",
+        "source": "Game rule (Pack): footprint in nose squares",
+        "isGameEstimate": true
+      },
+      "h": {
+        "value": 1,
+        "unit": "squares",
+        "source": "Game rule (Pack): footprint in nose squares",
+        "isGameEstimate": true
+      },
+      "mass_kg": {
+        "value": 12,
+        "unit": "kg",
+        "source": "Game estimate: a second flight computer",
+        "isGameEstimate": true
+      },
+      "hazardFactor": {
+        "memory-corruption": {
+          "value": 0.5,
+          "unit": "× failure chance",
+          "source": "Game rule (Pack): a spare computer halves the failure chance of a memory-corruption response",
+          "isGameEstimate": true
+        }
+      },
+      "covers": [
+        "memory-corruption"
+      ]
+    },
+    "autopilot": {
+      "kind": "kit",
+      "w": {
+        "value": 1,
+        "unit": "squares",
+        "source": "Game rule (Pack): footprint in nose squares",
+        "isGameEstimate": true
+      },
+      "h": {
+        "value": 2,
+        "unit": "squares",
+        "source": "Game rule (Pack): footprint in nose squares",
+        "isGameEstimate": true
+      },
+      "mass_kg": {
+        "value": 2,
+        "unit": "kg",
+        "source": "Game estimate: an autonomy computer card",
+        "isGameEstimate": true
+      },
+      "autopilot": true,
+      "covers": [
+        "conjunction"
+      ]
+    }
+  }
+}

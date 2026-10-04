@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&amp;family=B612:wght@400;700&amp;family=B612+Mono:wght@400;700&amp;family=VT323&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#0b0c09;color:#cbbf9f}a{color:#ffb547;text-decoration:none}a:hover{color:#ffd28a}</style>
+</helmet>
+
+<section id="notebook" data-screen-label="06 Notebook" style="padding:56px 64px 80px;display:flex;flex-direction:column;gap:28px">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap;max-width:1900px">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="font:400 14px/1 'B612 Mono',monospace;letter-spacing:.2em;color:#8a8270">SIGNAL DELAY · SCREEN 06 OF 06</div>
+      <h1 style="margin:0;font:800 56px/1 'Big Shoulders Display',sans-serif;color:#efe6cf;letter-spacing:.02em">ENGINEER’S NOTEBOOK</h1>
+      <p style="margin:0;max-width:640px;font:400 16px/1.5 'B612',sans-serif;color:#a49b84;text-wrap:pretty">Every mission earns one real lesson from real spaceflight. Locked cards hint at how to earn them. Tap a card to read it.</p>
+    </div>
+    <button onClick="{{ toggleMode }}" style="cursor:pointer;padding:10px 16px;border-radius:4px;border:1px solid #3a3d33;background:#1c1e18;color:{{ engLbl }};font:700 12px/1 'B612 Mono',monospace;letter-spacing:.1em;white-space:nowrap">{{ modeBtn }}</button>
+  </div>
+
+  <div style="display:flex;gap:56px;align-items:flex-start;flex-wrap:wrap">
+    <div id="6a" style="display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;gap:10px;align-items:center"><span style="padding:4px 9px;border-radius:3px;background:#ffb547;color:#1b1a16;font:700 13px/1 'B612 Mono',monospace">6a</span><span style="font:400 13px/1 'B612 Mono',monospace;color:#8a8270;letter-spacing:.1em;white-space:nowrap">DESKTOP · 1440 × 900</span></div>
+      <div style="width:1440px;height:900px;box-sizing:border-box;padding:22px;background:#1c1e18;border-radius:10px;box-shadow:0 30px 80px rgba(0,0,0,.55),inset 0 1px 0 #34372e;display:grid;grid-template-rows:auto minmax(0,1fr);gap:18px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:20px">
+          <div style="display:flex;align-items:flex-end;gap:22px">
+            <a href="Signal Delay - Home.dc.html" style="font:400 22px/1 'VT323',monospace;color:#8a8270">◂ HOME</a>
+            <span style="font:900 44px/0.9 'Big Shoulders Display',sans-serif;color:#efe6cf;letter-spacing:.03em">ENGINEER’S NOTEBOOK</span>
+            <span style="font:400 26px/1 'VT323',monospace;color:#8cff9e">{{ got }} OF 24 COLLECTED</span>
+          </div>
+          <div style="display:flex;gap:6px">
+            <sc-for list="{{ cats }}" as="c" hint-placeholder-count="6"><button onClick="{{ c.pick }}" style="cursor:pointer;display:flex;align-items:center;gap:7px;padding:9px 12px;border-radius:4px;border:1px solid {{ c.bd }};background:{{ c.bg }};color:{{ c.fg }};font:700 11px/1 'B612 Mono',monospace;letter-spacing:.12em;white-space:nowrap"><span style="width:9px;height:9px;border-radius:2px;background:{{ c.col }}"></span>{{ c.label }}</button></sc-for>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:20px;min-height:0">
+          <div style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));grid-auto-rows:170px;gap:12px;align-content:start;overflow:auto;scrollbar-width:none">
+            <sc-for list="{{ cards }}" as="k" hint-placeholder-count="24">
+              <button onClick="{{ k.pick }}" style="cursor:{{ k.cur }};position:relative;padding:0;border-radius:7px;overflow:hidden;text-align:left;border:{{ k.bd }};background:{{ k.bg }};box-shadow:{{ k.ring }};display:flex;flex-direction:column;opacity:{{ k.op }}">
+                <span style="height:8px;background:{{ k.band }}"></span>
+                <span style="flex:1;padding:10px 12px 12px;display:flex;flex-direction:column;justify-content:space-between">
+                  <span style="display:flex;justify-content:space-between;align-items:center"><span style="font:400 22px/1 'VT323',monospace;color:{{ k.numCol }}">{{ k.num }}</span><dc-import name="SDIcon" icon="{{ k.icon }}" size="26" color="{{ k.iconCol }}" hint-size="26px,26px"></dc-import></span>
+                  <span style="font:900 20px/0.95 'Big Shoulders Display',sans-serif;color:{{ k.titleCol }};text-wrap:balance">{{ k.title }}</span>
+                  <span style="font:700 9px/1.3 'B612 Mono',monospace;letter-spacing:.12em;color:{{ k.subCol }}">{{ k.sub }}</span>
+                </span>
+                <sc-if value="{{ k.isNew }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:14px;left:40px;padding:3px 6px;background:#d8432b;color:#efe6cf;font:900 11px/1 'Big Shoulders Display',sans-serif;letter-spacing:.1em">NEW</span></sc-if>
+              </button>
+            </sc-for>
+          </div>
+          <div style="position:relative;background:#efe6cf;border-radius:10px;overflow:hidden;display:flex;flex-direction:column">
+            <div style="height:14px;background:{{ sel.band }}"></div>
+            <div style="padding:22px 26px;display:flex;flex-direction:column;gap:16px;flex:1">
+              <div style="display:flex;justify-content:space-between;align-items:center"><span style="font:700 11px/1 'B612 Mono',monospace;letter-spacing:.18em;color:#7a715c">LESSON {{ sel.num }} · {{ sel.catName }}</span><span style="width:52px;height:52px;border-radius:6px;background:{{ sel.band }};display:grid;place-items:center"><dc-import name="SDIcon" icon="{{ sel.icon }}" size="28" color="#1b1a16" hint-size="28px,28px"></dc-import></span></div>
+              <span style="font:900 46px/0.9 'Big Shoulders Display',sans-serif;color:#1b1a16">{{ sel.title }}</span>
+              <span style="font:400 18px/1.45 'B612',sans-serif;color:#1b1a16;text-wrap:pretty">{{ sel.body }}</span>
+              <div style="padding-top:14px;border-top:2px dashed #c4b897;display:flex;flex-direction:column;gap:6px"><span style="font:700 11px/1 'B612 Mono',monospace;letter-spacing:.18em;color:#b23a22">REAL HISTORY</span><span style="font:400 15px/1.45 'B612',sans-serif;color:#3a372e;text-wrap:pretty">{{ sel.real }}</span></div>
+              <sc-if value="{{ eng }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:12px 14px;background:#1b1a16;border-radius:5px;display:flex;flex-direction:column;gap:6px"><span style="font:700 10px/1 'B612 Mono',monospace;letter-spacing:.16em;color:#a49b84">THE NUMBERS</span><span style="font:400 22px/1.15 'VT323',monospace;color:#8cff9e">{{ sel.eng }}</span><span style="font:400 11px/1.4 'B612 Mono',monospace;color:#8a8270">SOURCE · {{ sel.src }}</span></div>
+              </sc-if>
+              <div style="margin-top:auto;display:flex;justify-content:space-between;align-items:center;font:400 20px/1 'VT323',monospace;color:#7a715c"><span>EARNED · {{ sel.earned }}</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="6b" style="display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;gap:10px;align-items:center"><span style="padding:4px 9px;border-radius:3px;background:#ffb547;color:#1b1a16;font:700 13px/1 'B612 Mono',monospace">6b</span><span style="font:400 13px/1 'B612 Mono',monospace;color:#8a8270;letter-spacing:.1em;white-space:nowrap">MOBILE · 390 × 844 · TAP A CARD</span></div>
+      <div style="width:390px;height:844px;box-sizing:border-box;background:#1c1e18;border-radius:34px;box-shadow:0 30px 80px rgba(0,0,0,.55),0 0 0 8px #0f100c;position:relative;overflow:hidden">
+        <div style="position:absolute;inset:0;overflow-y:auto;scrollbar-width:none;padding:44px 14px 24px;display:grid;grid-template-columns:minmax(0,1fr);align-content:start;gap:14px">
+          <div style="display:flex;flex-direction:column;gap:6px;padding:0 4px"><a href="Signal Delay - Home.dc.html" style="font:400 20px/1 'VT323',monospace;color:#8a8270">◂ HOME</a><span style="font:900 36px/0.9 'Big Shoulders Display',sans-serif;color:#efe6cf">NOTEBOOK</span><span style="font:400 22px/1 'VT323',monospace;color:#8cff9e">{{ got }} OF 24 COLLECTED</span></div>
+          <div style="display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 -14px;padding:0 14px">
+            <sc-for list="{{ cats }}" as="c" hint-placeholder-count="6"><button onClick="{{ c.pick }}" style="flex:none;cursor:pointer;display:flex;align-items:center;gap:6px;padding:10px 12px;border-radius:4px;border:1px solid {{ c.bd }};background:{{ c.bg }};color:{{ c.fg }};font:700 11px/1 'B612 Mono',monospace;letter-spacing:.1em;white-space:nowrap"><span style="width:8px;height:8px;border-radius:2px;background:{{ c.col }}"></span>{{ c.label }}</button></sc-for>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:136px;gap:8px">
+            <sc-for list="{{ cards }}" as="k" hint-placeholder-count="24">
+              <button onClick="{{ k.pickM }}" style="cursor:{{ k.cur }};position:relative;padding:0;border-radius:6px;overflow:hidden;text-align:left;border:{{ k.bd }};background:{{ k.bg }};display:flex;flex-direction:column;opacity:{{ k.op }}">
+                <span style="height:6px;background:{{ k.band }}"></span>
+                <span style="flex:1;padding:8px;display:flex;flex-direction:column;justify-content:space-between">
+                  <span style="display:flex;justify-content:space-between;align-items:center"><span style="font:400 18px/1 'VT323',monospace;color:{{ k.numCol }}">{{ k.num }}</span><dc-import name="SDIcon" icon="{{ k.icon }}" size="20" color="{{ k.iconCol }}" hint-size="20px,20px"></dc-import></span>
+                  <span style="font:900 16px/0.95 'Big Shoulders Display',sans-serif;color:{{ k.titleCol }}">{{ k.title }}</span>
+                </span>
+                <sc-if value="{{ k.isNew }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:10px;left:32px;padding:2px 5px;background:#d8432b;color:#efe6cf;font:900 10px/1 'Big Shoulders Display',sans-serif;letter-spacing:.1em">NEW</span></sc-if>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+        <sc-if value="{{ sheetOpen }}" hint-placeholder-val="{{ false }}">
+          <div onClick="{{ closeSheet }}" style="position:absolute;inset:0;background:rgba(3,6,4,.7)"></div>
+          <div style="position:absolute;left:0;right:0;bottom:0;background:#efe6cf;border-radius:22px 22px 0 0;overflow:hidden;display:flex;flex-direction:column">
+            <div style="height:10px;background:{{ sel.band }}"></div>
+            <div style="padding:14px 20px 26px;display:flex;flex-direction:column;gap:12px">
+              <div style="display:flex;justify-content:space-between;align-items:center"><span style="font:700 10px/1 'B612 Mono',monospace;letter-spacing:.16em;color:#7a715c">LESSON {{ sel.num }} · {{ sel.catName }}</span><button onClick="{{ closeSheet }}" style="cursor:pointer;width:44px;height:44px;border-radius:50%;border:2px solid #1b1a16;background:none;display:grid;place-items:center"><dc-import name="SDIcon" icon="cross" size="16" color="#1b1a16" hint-size="16px,16px"></dc-import></button></div>
+              <span style="font:900 36px/0.9 'Big Shoulders Display',sans-serif;color:#1b1a16">{{ sel.title }}</span>
+              <span style="font:400 16px/1.45 'B612',sans-serif;color:#1b1a16">{{ sel.body }}</span>
+              <div style="padding-top:10px;border-top:2px dashed #c4b897;display:flex;flex-direction:column;gap:5px"><span style="font:700 10px/1 'B612 Mono',monospace;letter-spacing:.16em;color:#b23a22">REAL HISTORY</span><span style="font:400 14px/1.45 'B612',sans-serif;color:#3a372e">{{ sel.real }}</span></div>
+              <sc-if value="{{ eng }}" hint-placeholder-val="{{ false }}"><div style="padding:10px 12px;background:#1b1a16;border-radius:5px;font:400 19px/1.15 'VT323',monospace;color:#8cff9e">{{ sel.eng }}</div></sc-if>
+              <span style="font:400 18px/1 'VT323',monospace;color:#7a715c">EARNED · {{ sel.earned }}</span>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const CATS={signal:['SIGNAL','#6fa8e8'],power:['POWER','#f2c94c'],weather:['SPACE WEATHER','#e0673f'],nav:['NAVIGATION','#9fb49a'],people:['PEOPLE','#b9a6e6']};
+const L=[
+ {cat:'signal',icon:'data',title:'ORDERS ARE ALWAYS LATE',body:'Radio is fast, but space is huge. An order to Mars takes minutes to arrive, so you decide before the danger, never during it.',real:'Depending on where the planets are, a radio signal takes roughly 3 to 22 minutes to travel between Earth and Mars.',eng:'t = d / c · d ≈ 0.37–2.67 AU → 3.1–22.2 min',src:'NASA Mars communications basics (to verify)',earned:'MISSION 1 · DAY 12'},
+ {cat:'signal',icon:'conj',title:'THE SUN GETS IN THE WAY',body:'Sometimes the Sun sits right between Earth and your robot. Its noise scrambles radio, so nobody sends orders.',real:'About every 26 months, Mars teams pause commands for roughly two weeks during solar conjunction.',eng:'SEP < ~2° · moratorium ≈ 14 d · period 780 d',src:'NASA Mars solar conjunction (to verify)',earned:'MISSION 2 · DAY 424'},
+ {cat:'nav',icon:'calendar',title:'PACK FOR WHAT YOU CAN SEE',body:'Eclipses and Sun-in-the-way days are known years ahead. Surprises are what spare parts are for.',real:'Mission planners map eclipse and conjunction seasons before launch, then design batteries and autonomy to match.',eng:'Ephemeris-predicted events · margin ≥ 1 season',src:'General mission design practice',earned:'MISSION 2 · PACK'},
+ {cat:'power',icon:'eclipse',title:'BATTERIES HATE THE DARK',body:'In Mars’s shadow, solar panels make nothing. The battery has to carry the robot until the Sun comes back.',real:'Mars orbiters pass through eclipse seasons when every orbit includes a stretch with no sunlight.',eng:'E = P × t_ecl · DoD limit sets max eclipse',src:'Spacecraft power design (to verify per mission)',earned:'MISSION 3 · DAY 352'},
+ {cat:'nav',icon:'sys',title:'SAFE MODE IS A FRIEND',body:'When a robot gets confused, it shuts off extras, points its antenna at Earth and waits for help.',real:'Feb 2022: MAVEN went into safe mode when its rotation sensors misbehaved. The team recovered it over the next weeks.',eng:'IMU anomaly → safe mode → Earth-point HGA',src:'NASA Goddard, MAVEN status update, 2022',earned:'MISSION 3 · DAY 410'},
+ {cat:'people',icon:'cross',title:'CHECK YOUR UNITS',body:'Two teams, two kinds of numbers, one lost spacecraft. Always agree on units out loud.',real:'1999: one team used pounds of force, the other used newtons. Mars Climate Orbiter flew too low and was lost.',eng:'1 lbf·s = 4.45 N·s · error ×4.45',src:'NASA MCO Mishap Investigation Board, 1999',earned:'RESCUE HISTORY · MCO'},
+ {cat:'weather',icon:'storm',title:'SAFE BEATS CURIOUS',body:'When a solar storm is coming, real teams switch instruments off. Missing two days of science beats losing an instrument forever.',real:'Oct 2003: a huge solar storm hit Mars Odyssey. Its radiation sensor, MARIE, never worked again.',eng:'SPE fluence peak · instrument SEU / latch-up',src:'NASA JPL, Mars Odyssey MARIE (to verify)',earned:'MISSION 4 · DAY 214',isNew:true},
+ {cat:'power',icon:'sys',title:'SPIN IS DANGER',body:'A robot that spins can’t point its panels at the Sun or its antenna at Earth. The battery quietly runs out.',real:'Dec 2025: MAVEN came out from behind Mars spinning fast and was never heard from properly again. NASA ended the mission in June 2026.',eng:'ω ≫ nominal → no Sun-point → battery depletion',src:'NASA end-of-mission statement, 3 Jun 2026',earned:'RESCUE HISTORY · MAVEN'}
+];
+const HINTS=[['weather','Survive a dust storm at Mars'],['signal','Book a call during a blackout'],['power','Finish with full power'],['nav','Land a tight orbit'],['people','Play 5 Daily Missions'],['weather','Fly through solar max'],['nav','Rescue SOHO'],['signal','Relay for a rover'],['power','Survive 3 eclipse seasons'],['people','Fly in Engineer mode'],['nav','Visit the Moon'],['weather','Lose an instrument'],['signal','Fly to Jupiter'],['power','Pack no battery and live'],['nav','Fix a course twice'],['people','Get 3 stars 3 times']];
+const ALL=[...L.map((x,i)=>({...x,num:String(i+1).padStart(2,'0'),open:true})),...HINTS.map(([cat,h],i)=>({cat,num:String(i+9).padStart(2,'0'),open:false,hint:h,icon:'lock'}))];
+class Component extends DCLogic {
+  state={sel:6,filter:'all',sheet:false,mode:'cadet'};
+  renderVals(){
+    const s=this.state,eng=s.mode==='eng';
+    const cats=[['all','ALL','#efe6cf'],...Object.entries(CATS).map(([k,[n,c]])=>[k,n,c])].map(([k,n,c])=>{const on=s.filter===k;return {label:n,col:c,bg:on?'#efe6cf':'#23251f',fg:on?'#1b1a16':'#cbbf9f',bd:on?'#efe6cf':'#3a3d33',pick:()=>this.setState({filter:k})};});
+    const cards=ALL.map((k,i)=>{const dim=s.filter!=='all'&&k.cat!==s.filter;const sel=i===s.sel;const col=CATS[k.cat][1];
+      return k.open?{num:k.num,icon:k.icon,title:k.title,sub:CATS[k.cat][0],isNew:!!k.isNew,band:col,bg:'#efe6cf',bd:'none',numCol:'#7a715c',iconCol:'#1b1a16',titleCol:'#1b1a16',subCol:'#7a715c',cur:'pointer',op:dim?.25:1,
+          ring:sel?'0 0 0 3px #ffb547,0 0 22px rgba(255,181,71,.45)':'0 3px 0 #0f100c',pick:()=>this.setState({sel:i}),pickM:()=>this.setState({sel:i,sheet:true})}
+        :{num:k.num,icon:'lock',title:k.hint.toUpperCase(),sub:'LOCKED',isNew:false,band:'#2c2f27',bg:'#141510',bd:'1px dashed #3a3d33',numCol:'#4a4d42',iconCol:'#4a4d42',titleCol:'#6f685a',subCol:'#4a4d42',cur:'default',op:dim?.25:1,ring:'none',pick:()=>{},pickM:()=>{}};});
+    const k=ALL[s.sel];
+    return {eng,cats,cards,got:L.length,
+      sel:{...k,band:CATS[k.cat][1],catName:CATS[k.cat][0]},
+      sheetOpen:s.sheet,closeSheet:()=>this.setState({sheet:false}),
+      toggleMode:()=>this.setState({mode:eng?'cadet':'eng'}),modeBtn:eng?'ENGINEER MODE ON':'CADET MODE · SWITCH',engLbl:eng?'#ffb547':'#cbbf9f'};
+  }
+}
+</script>
+</body>
+</html>

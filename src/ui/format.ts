@@ -138,3 +138,27 @@ export const deg = (x: number, digits = 1) => `${num(x, digits)}°`;
 
 /** Distance in AU (Engineer). */
 export const au = (m: number) => `${num(m / AU_M, 3)} AU`;
+
+/** A countdown as MM:SS, zero-padded (the CRT countdown), or H:MM:SS when an hour or longer. */
+export function mmss(s: number): string {
+  const t = Math.max(0, Math.round(s));
+  const h = Math.floor(t / 3600);
+  const m = Math.floor((t % 3600) / 60);
+  return h > 0 ? `${h}:${pad2(m)}:${pad2(t % 60)}` : `${pad2(m)}:${pad2(t % 60)}`;
+}
+
+/** A day number padded to three digits for the CRT clock ("007"). */
+export const dayPad = (d: number) => String(Math.max(0, Math.floor(d))).padStart(3, '0');
+
+/** A duration in one big word for a danger card: "30 HOURS", "12 MINUTES", "3 DAYS", "40 SECONDS". */
+export function durationWords(s: number): string {
+  const t = Math.max(0, s);
+  if (t >= 2 * 86_400) return `${num(Math.round(t / 86_400))} DAYS`;
+  if (t >= 2 * 3600) return `${num(Math.round(t / 3600))} HOURS`;
+  if (t >= 3600) return `${num(Math.round(t / 60))} MINUTES`;
+  if (t >= 90) return `${num(Math.round(t / 60))} MINUTES`;
+  return `${num(Math.round(t))} SECONDS`;
+}
+
+/** A segment change on a chip, with a true minus sign: "−1", "+2". */
+export const signedInt = (n: number) => (n === 0 ? '0' : `${n > 0 ? '+' : '−'}${num(Math.abs(n))}`);

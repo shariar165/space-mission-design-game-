@@ -1,9 +1,9 @@
 {
-  "name": "mission-drafting-table",
+  "name": "signal-delay",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Mission Drafting Table — a NASA space-mission design game: simulation engine + React UI. See docs/SCIENCE_SPEC.md.",
+  "description": "Signal Delay — a NASA space-mission game: keep a robot alive millions of km away where every order arrives late. Simulation engine + React UI. See docs/SCIENCE_SPEC.md.",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
@@ -12,9 +12,11 @@
     "test:watch": "vitest",
     "test:validation": "vitest run tests/validation.test.ts",
     "typecheck": "tsc --noEmit",
-    "todo-data": "vitest run tests/dataAudit.test.ts"
+    "todo-data": "vitest run tests/dataAudit.test.ts",
+    "shots": "playwright test"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/react": "^16.3.3",
     "@testing-library/user-event": "^14.6.7",

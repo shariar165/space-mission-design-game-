@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-This is **Mission Drafting Table**, a NASA space-mission design game: a pure TypeScript simulation engine (`src/engine`) and a React + Vite UI (`src/ui`). The science rules live in `docs/SCIENCE_SPEC.md`, which is the source of truth for every equation, constant and rule (and, under "UI rules", for what the screens may show). Read the relevant section before changing a module.
+This is **Signal Delay** (formerly Mission Drafting Table), a NASA space-mission game: a pure TypeScript simulation engine (`src/engine`) and a React + Vite UI (`src/ui`). The science rules live in `docs/SCIENCE_SPEC.md`, which is the source of truth for every equation, constant and rule (and, under "UI rules", for what the screens may show). Read the relevant section before changing a module.
 
 ## Toolchain: everything lives in `.venv`
 
@@ -16,6 +16,8 @@ Node 22.16.0 is installed **inside the Python venv** by `nodeenv`. The user want
 ```bash
 export PATH="$PWD/.venv/Scripts:$PATH"  # Git Bash
 ```
+
+Playwright (`@playwright/test`, a devDependency) keeps its browsers inside the venv: `playwright.config.ts` sets `PLAYWRIGHT_BROWSERS_PATH=.venv/ms-playwright`. To install them: `PLAYWRIGHT_BROWSERS_PATH=.venv/ms-playwright npx playwright install chromium`.
 
 ## Commands
 
@@ -30,6 +32,7 @@ export PATH="$PWD/.venv/Scripts:$PATH"  # Git Bash
 | Validation only (rewrites `docs/VALIDATION_RESULTS.md`) | `npm run test:validation` |
 | Data audit (rewrites `TODO_DATA.md`) | `npm run todo-data` |
 | Typecheck | `npm run typecheck` (`tsc --noEmit`, TypeScript 7, strict, `noUncheckedIndexedAccess`) |
+| Screenshots | `npm run shots` (Playwright: game and design copies at 1440 × 900 and 390 × 844; `-- fly`, `-- pack`, `-- report`, `-- design`). App shots go to `test-results/shots/`, design shots to `docs/design/signal-delay/shots/` |
 
 There is no lint step.
 
@@ -43,22 +46,31 @@ There is no lint step.
 - **Tests first:** write `tests/physics.test.ts` cases before the code. Hand calculations go in comments next to each assertion.
 - **One model for everyone:** real missions (`src/data/missions.json`) go through exactly the same `evaluateDesign` as player designs. `src/engine/missions.ts` turns a Sourced preset into a plain `Design`.
 
-## UI rules (spec: "UI rules")
+## UI rules (spec: "UI rules", rules 21–27 for Signal Delay)
 
-- **The UI never computes a number.** It calls the engine and only formats units (`src/ui/format.ts`). Need a new on-screen number? Add it to the engine (with a test in `tests/engineApi.test.ts`), not the UI. `tests/uiGuards.test.ts` fails on digits in JSX text or "number + unit" in UI strings, and on any React/DOM import in `src/engine`.
-- Engineer mode shows each `Meter.equation` and every `Meter.inputs` entry; ⓘ (`SourceInfo`) shows the `Sourced<T>` record, with a "game estimate" badge when `isGameEstimate`.
-- UI entry points: `evaluateDesign`, `useOpsRisk` (`riskRunner.ts` → `opsRisk.worker.ts` → `riskBatch` / `riskEstimateFromTally`), `previewCrisis` + `simulateMission` (crisis card → Debrief), `monteCarloMission`, `designDelta` and `compareWithRealMission` (`compare.ts`), `bestLaunchWindow` (starter dates).
-- **Operations Console** (spec UI rules 16–20, both modes, opened from the Debrief): `src/ui/screens/OpsConsole.tsx` + `components/ops/*`, clock in `useOpsSession.ts` (`advanceOperations`, `decide`, `sendCommand`, `bookDsn`, `nextEventT`, resume via `replayOperations(…, until)`). Every number comes from `ops/console.ts`: `consoleView`, `powerPlanPreview`, `dsnOptions`. Words live in `opsWords.ts`, pixel layout in `opsGeometry.ts`. New console constants go in `CONSOLE_RULES` (registered in the data audit).
-- **Two modes.** Engineer mode (Build Bay → crisis card → Debrief) must stay as it is; its Debrief only gains the optional "Run mission operations" button. Cadet mode (the default) is the guided game in spec UI rules 9–15:
-  - Level map → `CadetBuild` (one decision per screen) → Flight with Mission Control → Debrief, plus Rescue History.
-  - Its numbers come from `cadet.ts` (`cadetOptions`, `buildCadetDesign`, `cadetGauges`, `testFlight`), `flightMap.ts` (`flightFrames`, `flightMap`, `signalDelay`, `countdown`, `ghostFor`), `rescue.ts`, and `crisisOrders` + `standingOrderPolicy` (`index.ts`).
-  - Cadet words live in `src/ui/cadetWords.ts`; levels and saved stars in `src/ui/levels.ts`.
+- **The UI never computes a number.** It calls the engine and only formats units (`src/ui/format.ts`). Need a new on-screen number? Add it to the engine (with a test in `tests/engineApi.test.ts`, `tests/fly.test.ts`, `tests/pack.test.ts` or `tests/report.test.ts`), not the UI. `tests/uiGuards.test.ts` fails on digits in JSX text or "number + unit" in UI strings, and on any React/DOM import in `src/engine`. Put styles in CSS files, not inline strings.
+- **Design source of truth:** the Claude Design "Signal Delay" screens, copied byte-for-byte in `docs/design/signal-delay/` (with reference shots). Tokens are CSS variables in `src/ui/styles/theme.css`; each screen has its own `sd-*.css`. After a visual change, run `npm run shots` and compare the app and design PNGs side by side.
+- **One flight model everywhere (the Mission operations engine).**
+  - Cadet: Level map → `Pack` → `FlyAndSurvive` → `MissionReport`.
+  - Engineer: `BuildBay` → `FlyAndSurvive` (Engineer readouts and the EQUATIONS drawer) → `MissionReport` with Engineer details.
+  - The old crisis-card flight is gone from the UI (`simulateMission` / `previewCrisis` stay for engine and validation tests).
+- Engineer mode shows each equation and every input; ⓘ (`SourceInfo`) shows the `Sourced<T>` record, with a "game estimate" badge when `isGameEstimate`.
+- **Fly & Survive** (`screens/FlyAndSurvive.tsx`, `components/fly/*`):
+  - Clock in `useOpsSession.ts` (`advanceOperations`, `decide`, `sendCommand`, `bookDsn`, `nextEventT`; a transit plays the team's reaction, the light-time trip, then the wait for the outcome).
+  - Numbers come from `consoleView`, `powerPlanPreview`, `dsnOptions` (`ops/console.ts`) and `flyTiles`, `flyCard`, `comingUp`, `eclipseCard`, `outcomeIn_s` (`ops/fly.ts`).
+  - **Risk chips read "⚠ +n risk" (`riskIncrease`), never a negative number.**
+  - The console panels (`components/ops/PowerDial`, `BookCall`, `OpsPanels`) are drawers.
+- **Pack** (`screens/Pack.tsx`): numbers from `pack.ts` (`buildPackDesign`, `packBlockers`, `dangerDeck`, `calendarTransfers`, `dayQuality`, `fitPart`) and `evaluateDesign` / `cadetGauges`. Part data and effects live in `src/data/pack.json`; a part's effect reaches the engine through `Design.kit`. Volume (the nose) and weight (the launch meter) are separate limits, and each blocker names the one that failed. Levels carry their shelf (`levels.ts` `shelfOf`).
+- **Mission Report** (`screens/MissionReport.tsx`, `components/report/ComicArt.tsx`): `operationsDebrief`, `reportPanels`, `reportVerdict` and `reportCompare` (`ops/report.ts`), star rules from `STAR_RULES`, and risk from `useOpsRisk`.
+- Words live in `src/ui/sdWords.ts` (Signal Delay), with `opsWords.ts` for the drawers. Pixel layout lives in `src/ui/sdGeometry.ts`. Levels and saved stars are in `src/ui/levels.ts`. New display constants go in `FLY_RULES` / `CONSOLE_RULES` / `pack.json`, registered in the data audit.
 - **Component tests** (`tests/ui/*.test.tsx`) start with `// @vitest-environment jsdom` and import `./setup` (cleanup, empty storage, `openMarsLevel`). With fake timers, advance time in small slices: each animation step schedules the next.
-- English only for now; the language toggle is hidden. Design references: `docs/design/`.
+- English only for now; the language toggle is hidden.
 
 ## Architecture
 
 **Data flow.** `src/data/*.json` (Sourced values) → `src/engine/data.ts` (typed casts plus `lookup()`) → physics modules → `src/engine/index.ts` (and `compare.ts`), which the UI calls.
+
+**Signal Delay engine modules:** `pack.ts` (Pack: nose, part effects, danger deck, launch calendar), `ops/fly.ts` (Fly & Survive view model) and `ops/report.ts` (Mission Report).
 
 **`index.ts`** has four main entry points (`previewCrisis` shows the crisis card a seed will draw, before `simulateMission` flies it):
 - `evaluateDesign(design)` runs the whole pipeline:

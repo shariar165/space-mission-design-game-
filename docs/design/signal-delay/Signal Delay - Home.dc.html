@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&amp;family=B612:wght@400;700&amp;family=B612+Mono:wght@400;700&amp;family=VT323&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#0b0c09;color:#cbbf9f}a{color:#ffb547;text-decoration:none}a:hover{color:#ffd28a}</style>
+</helmet>
+
+
+
+<section id="home" data-screen-label="04 Home" style="padding:56px 64px 80px;display:flex;flex-direction:column;gap:28px">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap;max-width:1900px">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="font:400 14px/1 'B612 Mono',monospace;letter-spacing:.2em;color:#8a8270">SIGNAL DELAY · SCREEN 04 OF 06</div>
+      <h1 style="margin:0;font:800 56px/1 'Big Shoulders Display',sans-serif;color:#efe6cf;letter-spacing:.02em">HOME</h1>
+      <p style="margin:0;max-width:640px;font:400 16px/1.5 'B612',sans-serif;color:#a49b84;text-wrap:pretty">Four switches, nothing else. The CRT loops the whole idea in one picture: an order leaves Earth, and you watch it crawl to the robot.</p>
+    </div>
+  </div>
+  <div style="display:flex;gap:56px;align-items:flex-start;flex-wrap:wrap">
+    <div id="4a" style="display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;gap:10px;align-items:center"><span style="padding:4px 9px;border-radius:3px;background:#ffb547;color:#1b1a16;font:700 13px/1 'B612 Mono',monospace">4a</span><span style="font:400 13px/1 'B612 Mono',monospace;color:#8a8270;letter-spacing:.1em;white-space:nowrap">DESKTOP · 1440 × 900</span></div>
+      <div style="width:1440px;height:900px;box-sizing:border-box;padding:56px 64px;background:#1c1e18;border-radius:10px;box-shadow:0 30px 80px rgba(0,0,0,.55),inset 0 1px 0 #34372e;display:grid;grid-template-columns:600px minmax(0,1fr);gap:56px">
+        <div style="display:flex;flex-direction:column;gap:28px;justify-content:center">
+          <div style="display:flex;flex-direction:column;gap:18px">
+            <span style="font:700 12px/1 'B612 Mono',monospace;letter-spacing:.26em;color:#8a8270">MISSION CONTROL · EST. 1969</span>
+            <span style="font:900 120px/0.82 'Big Shoulders Display',sans-serif;color:#efe6cf;letter-spacing:.01em">SIGNAL<br>DELAY</span>
+            <div style="min-height:96px;font:400 30px/1.1 'VT323',monospace;color:#8cff9e;text-shadow:0 0 8px rgba(140,255,158,.5)">{{ pitch }}<span style="opacity:{{ cursorO }}">█</span></div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px">
+            <a href="Signal Delay - Pack.dc.html" style="grid-column:1 / span 3;display:grid;grid-template-columns:64px minmax(0,1fr) auto;gap:18px;align-items:center;padding:18px 22px;border-radius:8px;background:#ffb547;border-bottom:7px solid #9a6514;box-shadow:0 0 30px rgba(255,181,71,.25)">
+              <span style="width:64px;height:64px;border-radius:6px;background:#1b1a16;display:grid;place-items:center"><dc-import name="SDIcon" icon="play" size="30" color="#ffb547" fill="{{ true }}" hint-size="30px,30px"></dc-import></span>
+              <span style="display:flex;flex-direction:column;gap:4px"><span style="font:900 44px/0.9 'Big Shoulders Display',sans-serif;letter-spacing:.06em;color:#1b1a16">PLAY</span><span style="font:400 15px/1.3 'B612',sans-serif;color:#3a2a0a">Mission 4 · Orbiter to Mars</span></span>
+              <span style="font:400 26px/1 'VT323',monospace;color:#1b1a16">▸</span>
+            </a>
+            <sc-for list="{{ menu }}" as="m" hint-placeholder-count="3">
+              <a href="{{ m.href }}" style="display:flex;flex-direction:column;gap:12px;padding:16px;border-radius:8px;background:#23251f;border:1px solid #3a3d33;border-bottom:5px solid #121410" style-hover="border-color:#ffb547">
+                <span style="display:flex;justify-content:space-between;align-items:center"><span style="width:44px;height:44px;border-radius:5px;background:#050c07;display:grid;place-items:center"><dc-import name="SDIcon" icon="{{ m.icon }}" size="24" color="#8cff9e" hint-size="24px,24px"></dc-import></span><span style="font:400 20px/1 'VT323',monospace;color:{{ m.tagCol }}">{{ m.tag }}</span></span>
+                <span style="font:800 26px/0.95 'Big Shoulders Display',sans-serif;letter-spacing:.04em;color:#efe6cf">{{ m.label }}</span>
+                <span style="font:400 14px/1.35 'B612',sans-serif;color:#a49b84">{{ m.sub }}</span>
+              </a>
+            </sc-for>
+          </div>
+        </div>
+        <div style="position:relative;border-radius:28px;border:14px solid #2c2f27;background:#050c07;box-shadow:inset 0 0 80px rgba(0,0,0,.9),0 0 0 1px #3a3d33;overflow:hidden">
+          <svg viewBox="0 0 600 700" preserveAspectRatio="xMidYMid meet" style="position:absolute;inset:0;width:100%;height:100%">
+            <circle cx="300" cy="350" r="240" fill="none" stroke="#1f5a32" stroke-width="1.5" stroke-dasharray="3 7"></circle>
+            <circle cx="300" cy="350" r="40" fill="#ff9a2e"></circle><circle cx="300" cy="350" r="31" fill="#ffc94a"></circle>
+            <g transform="translate(130 520)"><circle r="34" fill="#3a86d8"></circle><path d="M-22 -10 q10 -16 24 -10 q4 12 -10 16 q-10 2 -14 -6z M4 12 q12 -2 16 8 q-8 10 -18 4z" fill="#5cc46e"></path><text y="62" text-anchor="middle" fill="#8cff9e" font-family="VT323, monospace" font-size="26">EARTH</text></g>
+            <g transform="translate(470 170)"><circle r="44" fill="#d6603a"></circle><circle cx="-14" cy="-8" r="11" fill="#9e3a1f"></circle><circle cx="14" cy="18" r="7" fill="#9e3a1f"></circle><path d="M-22 -36 q22 -14 44 0 z" fill="#f4eee0"></path><ellipse rx="80" ry="26" fill="none" stroke="#8cff9e" stroke-opacity=".35" stroke-width="1.5" stroke-dasharray="4 6" transform="rotate(-20)"></ellipse></g>
+            <line x1="130" y1="520" x2="{{ cx }}" y2="{{ cy }}" stroke="#ffb547" stroke-opacity=".35" stroke-width="2" stroke-dasharray="3 8"></line>
+            <circle cx="{{ px }}" cy="{{ py }}" r="{{ ringR }}" fill="none" stroke="#ffb547" stroke-opacity="{{ ringO }}" stroke-width="2.5"></circle>
+            <circle cx="{{ px }}" cy="{{ py }}" r="8" fill="#ffd28a"></circle>
+            <g transform="{{ craftT }}"><rect x="-27" y="-6" width="17" height="12" fill="#3a6fd8" stroke="#bcd3ff" stroke-width="1"></rect><rect x="10" y="-6" width="17" height="12" fill="#3a6fd8" stroke="#bcd3ff" stroke-width="1"></rect><rect x="-8" y="-8" width="16" height="16" rx="2" fill="#f2c94c" stroke="#8a6a12" stroke-width="1"></rect><path d="M-7 -8 q7 -10 14 0 z" fill="#efe6cf"></path></g>
+          </svg>
+          <div style="position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.22) 0 1px,transparent 1px 3px)"></div>
+          <div style="position:absolute;left:26px;top:22px;display:flex;flex-direction:column;gap:4px;font:400 24px/1 'VT323',monospace;color:#47c96b"><span>ORDER: TURN ON CAMERA</span><span style="color:#ffb547;font-size:56px;text-shadow:0 0 14px rgba(255,181,71,.6)">{{ homeCount }}</span><span>UNTIL THE ROBOT HEARS YOU</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="4b" style="display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;gap:10px;align-items:center"><span style="padding:4px 9px;border-radius:3px;background:#ffb547;color:#1b1a16;font:700 13px/1 'B612 Mono',monospace">4b</span><span style="font:400 13px/1 'B612 Mono',monospace;color:#8a8270;letter-spacing:.1em;white-space:nowrap">MOBILE · 390 × 844</span></div>
+      <div style="width:390px;height:844px;box-sizing:border-box;padding:46px 18px 22px;background:#1c1e18;border-radius:34px;box-shadow:0 30px 80px rgba(0,0,0,.55),0 0 0 8px #0f100c;display:flex;flex-direction:column;gap:16px;overflow:hidden">
+        <span style="font:900 72px/0.82 'Big Shoulders Display',sans-serif;color:#efe6cf">SIGNAL<br>DELAY</span>
+        <div style="min-height:78px;font:400 23px/1.1 'VT323',monospace;color:#8cff9e;text-shadow:0 0 8px rgba(140,255,158,.5)">{{ pitch }}<span style="opacity:{{ cursorO }}">█</span></div>
+        <div style="position:relative;height:170px;border-radius:16px;border:6px solid #2c2f27;background:#050c07;overflow:hidden">
+          <svg viewBox="0 0 440 180" preserveAspectRatio="xMidYMid meet" style="position:absolute;inset:0;width:100%;height:100%">
+            <g transform="translate(50 120)"><circle r="26" fill="#3a86d8"></circle><path d="M-17 -8 q8 -12 18 -8 q3 9 -8 12 q-8 2 -10 -4z" fill="#5cc46e"></path></g>
+            <g transform="translate(370 90)"><circle r="34" fill="#d6603a"></circle><circle cx="-10" cy="-6" r="8" fill="#9e3a1f"></circle><path d="M-17 -28 q17 -11 34 0 z" fill="#f4eee0"></path></g>
+            <line x1="50" y1="120" x2="{{ mcx }}" y2="{{ mcy }}" stroke="#ffb547" stroke-opacity=".35" stroke-width="2" stroke-dasharray="3 8"></line>
+            <circle cx="{{ mpx }}" cy="{{ mpy }}" r="{{ ringR }}" fill="none" stroke="#ffb547" stroke-opacity="{{ ringO }}" stroke-width="2"></circle>
+            <circle cx="{{ mpx }}" cy="{{ mpy }}" r="6" fill="#ffd28a"></circle>
+            <g transform="{{ craftTm }}"><rect x="-27" y="-6" width="17" height="12" fill="#3a6fd8"></rect><rect x="10" y="-6" width="17" height="12" fill="#3a6fd8"></rect><rect x="-8" y="-8" width="16" height="16" rx="2" fill="#f2c94c"></rect><path d="M-7 -8 q7 -10 14 0 z" fill="#efe6cf"></path></g>
+          </svg>
+          <span style="position:absolute;left:12px;bottom:8px;font:400 30px/1 'VT323',monospace;color:#ffb547;text-shadow:0 0 10px rgba(255,181,71,.6)">{{ homeCount }}</span>
+        </div>
+        <a href="Signal Delay - Pack.dc.html" style="display:grid;grid-template-columns:48px minmax(0,1fr) auto;gap:14px;align-items:center;padding:12px 16px;border-radius:8px;background:#ffb547;border-bottom:6px solid #9a6514">
+          <span style="width:48px;height:48px;border-radius:5px;background:#1b1a16;display:grid;place-items:center"><dc-import name="SDIcon" icon="play" size="22" color="#ffb547" fill="{{ true }}" hint-size="22px,22px"></dc-import></span>
+          <span style="display:flex;flex-direction:column;gap:3px"><span style="font:900 34px/0.9 'Big Shoulders Display',sans-serif;letter-spacing:.06em;color:#1b1a16">PLAY</span><span style="font:400 13px/1.2 'B612',sans-serif;color:#3a2a0a">Mission 4 · To Mars</span></span>
+          <span style="font:400 24px/1 'VT323',monospace;color:#1b1a16">▸</span>
+        </a>
+        <sc-for list="{{ menu }}" as="m" hint-placeholder-count="3">
+          <a href="{{ m.href }}" style="display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 14px;border-radius:8px;background:#23251f;border:1px solid #3a3d33;border-bottom:4px solid #121410">
+            <span style="width:40px;height:40px;border-radius:5px;background:#050c07;display:grid;place-items:center"><dc-import name="SDIcon" icon="{{ m.icon }}" size="21" color="#8cff9e" hint-size="21px,21px"></dc-import></span>
+            <span style="font:800 22px/1 'Big Shoulders Display',sans-serif;letter-spacing:.04em;color:#efe6cf">{{ m.label }}</span>
+            <span style="font:400 18px/1 'VT323',monospace;color:{{ m.tagCol }}">{{ m.tag }}</span>
+          </a>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="daily" data-screen-label="05 Daily share" style="padding:56px 64px 80px;display:flex;flex-direction:column;gap:28px;border-top:1px solid #23251f">
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <div style="font:400 14px/1 'B612 Mono',monospace;letter-spacing:.2em;color:#8a8270">SIGNAL DELAY · SCREEN 05 OF 06</div>
+    <h1 style="margin:0;font:800 56px/1 'Big Shoulders Display',sans-serif;color:#efe6cf;letter-spacing:.02em">DAILY MISSION · SHARE CARD</h1>
+    <p style="margin:0;max-width:640px;font:400 16px/1.5 'B612',sans-serif;color:#a49b84;text-wrap:pretty">Same mission for everyone, once a day. Each row is one danger card; each square is one choice. Green held, amber cost you, red hurt. No spoilers: the grid shows how it went, not what you picked.</p>
+  </div>
+  <div style="display:flex;gap:56px;align-items:flex-start;flex-wrap:wrap">
+    <div id="5a" style="display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;gap:10px;align-items:center"><span style="padding:4px 9px;border-radius:3px;background:#ffb547;color:#1b1a16;font:700 13px/1 'B612 Mono',monospace">5a</span><span style="font:400 13px/1 'B612 Mono',monospace;color:#8a8270;letter-spacing:.1em;white-space:nowrap">DESKTOP · 1440 × 900</span></div>
+      <div style="width:1440px;height:900px;box-sizing:border-box;background:#0d0e0b;border-radius:10px;box-shadow:0 30px 80px rgba(0,0,0,.55);display:grid;place-items:center;position:relative;overflow:hidden">
+        <div style="position:absolute;inset:0;background-image:radial-gradient(#1c1e18 1px,transparent 1px);background-size:24px 24px"></div>
+        <div style="position:relative;display:grid;grid-template-columns:440px 420px;gap:40px;align-items:center">
+          <div style="background:#efe6cf;border-radius:12px;overflow:hidden;box-shadow:0 30px 70px rgba(0,0,0,.6);display:flex;flex-direction:column">
+            <div style="padding:14px 22px;background:#d8432b;display:flex;justify-content:space-between;align-items:center"><span style="font:900 22px/1 'Big Shoulders Display',sans-serif;letter-spacing:.08em;color:#efe6cf">SIGNAL DELAY</span><span style="font:700 12px/1 'B612 Mono',monospace;letter-spacing:.14em;color:#efe6cf">DAILY #{{ dailyNo }}</span></div>
+            <div style="padding:22px 26px 26px;display:flex;flex-direction:column;gap:18px">
+              <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px">
+                <div style="display:flex;flex-direction:column;gap:4px"><span style="font:700 11px/1 'B612 Mono',monospace;letter-spacing:.16em;color:#7a715c">{{ dailyDate }} · MARS</span><span style="font:900 40px/0.9 'Big Shoulders Display',sans-serif;color:#1b1a16">DUST STORM WEEK</span></div>
+                <div style="display:flex;gap:4px"><dc-import name="SDIcon" icon="star" size="30" color="#d8a21c" fill="{{ true }}" sw="1.5" hint-size="30px,30px"></dc-import><dc-import name="SDIcon" icon="star" size="30" color="#d8a21c" fill="{{ true }}" sw="1.5" hint-size="30px,30px"></dc-import><dc-import name="SDIcon" icon="star" size="30" color="#a49b84" sw="1.5" hint-size="30px,30px"></dc-import></div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:8px;padding:16px;background:#1b1a16;border-radius:6px">
+                <sc-for list="{{ grid }}" as="r" hint-placeholder-count="5">
+                  <div style="display:grid;grid-template-columns:34px repeat(4,40px) minmax(0,1fr);gap:8px;align-items:center">
+                    <span style="width:34px;height:34px;border-radius:4px;background:#2c2f27;display:grid;place-items:center"><dc-import name="SDIcon" icon="{{ r.icon }}" size="20" color="#efe6cf" hint-size="20px,20px"></dc-import></span>
+                    <sc-for list="{{ r.sq }}" as="q" hint-placeholder-count="4"><span style="height:34px;border-radius:4px;background:{{ q.bg }};border:{{ q.bd }}"></span></sc-for>
+                    <span style="font:400 18px/1 'VT323',monospace;color:#8a8270;text-align:right">DAY {{ r.day }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;font:400 22px/1 'VT323',monospace;color:#1b1a16"><span>ROBOT ALIVE · DAY 672</span><span style="color:#7a715c">STREAK 6</span></div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:18px">
+            <span style="font:900 44px/0.95 'Big Shoulders Display',sans-serif;color:#efe6cf">YOU MADE IT.<br>SHOW YOUR CREW.</span>
+            <div style="padding:16px 18px;background:#050c07;border-radius:6px;box-shadow:inset 0 0 12px #000;display:flex;flex-direction:column;gap:8px">
+              <span style="font:700 10px/1 'B612 Mono',monospace;letter-spacing:.16em;color:#47c96b">COPIES AS TEXT</span>
+              <span style="white-space:pre;font:400 18px/1.35 'B612 Mono',monospace;color:#8cff9e">{{ shareText }}</span>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <button onClick="{{ copy }}" style="cursor:pointer;height:56px;border-radius:6px;border:none;border-bottom:5px solid #9a6514;background:#ffb547;color:#1b1a16;font:800 20px/1 'Big Shoulders Display',sans-serif;letter-spacing:.1em">{{ copyLbl }}</button>
+              <button style="cursor:pointer;height:56px;border-radius:6px;border:1px solid #4a4d42;border-bottom:5px solid #121410;background:#23251f;color:#efe6cf;font:800 20px/1 'Big Shoulders Display',sans-serif;letter-spacing:.1em">SAVE IMAGE</button>
+            </div>
+            <span style="font:400 20px/1 'VT323',monospace;color:#8a8270">NEXT DAILY IN {{ nextDaily }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="5b" style="display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;gap:10px;align-items:center"><span style="padding:4px 9px;border-radius:3px;background:#ffb547;color:#1b1a16;font:700 13px/1 'B612 Mono',monospace">5b</span><span style="font:400 13px/1 'B612 Mono',monospace;color:#8a8270;letter-spacing:.1em;white-space:nowrap">MOBILE · 390 × 844</span></div>
+      <div style="width:390px;height:844px;box-sizing:border-box;padding:16px;background:#0d0e0b;border-radius:34px;box-shadow:0 30px 80px rgba(0,0,0,.55),0 0 0 8px #0f100c;display:flex;flex-direction:column;justify-content:flex-end;gap:14px;overflow:hidden">
+        <span style="font:900 34px/0.95 'Big Shoulders Display',sans-serif;color:#efe6cf;padding:0 4px">YOU MADE IT.</span>
+        <div style="background:#efe6cf;border-radius:12px;overflow:hidden;display:flex;flex-direction:column">
+          <div style="padding:12px 16px;background:#d8432b;display:flex;justify-content:space-between;align-items:center"><span style="font:900 18px/1 'Big Shoulders Display',sans-serif;letter-spacing:.08em;color:#efe6cf">SIGNAL DELAY</span><span style="font:700 11px/1 'B612 Mono',monospace;color:#efe6cf">DAILY #{{ dailyNo }}</span></div>
+          <div style="padding:16px;display:flex;flex-direction:column;gap:14px">
+            <div style="display:flex;justify-content:space-between;align-items:flex-end"><span style="font:900 30px/0.9 'Big Shoulders Display',sans-serif;color:#1b1a16">DUST STORM<br>WEEK</span><div style="display:flex;gap:2px"><dc-import name="SDIcon" icon="star" size="24" color="#d8a21c" fill="{{ true }}" sw="1.5" hint-size="24px,24px"></dc-import><dc-import name="SDIcon" icon="star" size="24" color="#d8a21c" fill="{{ true }}" sw="1.5" hint-size="24px,24px"></dc-import><dc-import name="SDIcon" icon="star" size="24" color="#a49b84" sw="1.5" hint-size="24px,24px"></dc-import></div></div>
+            <div style="display:flex;flex-direction:column;gap:6px;padding:12px;background:#1b1a16;border-radius:6px">
+              <sc-for list="{{ grid }}" as="r" hint-placeholder-count="5">
+                <div style="display:grid;grid-template-columns:30px repeat(4,34px) minmax(0,1fr);gap:6px;align-items:center">
+                  <span style="width:30px;height:30px;border-radius:4px;background:#2c2f27;display:grid;place-items:center"><dc-import name="SDIcon" icon="{{ r.icon }}" size="17" color="#efe6cf" hint-size="17px,17px"></dc-import></span>
+                  <sc-for list="{{ r.sq }}" as="q" hint-placeholder-count="4"><span style="height:30px;border-radius:3px;background:{{ q.bg }};border:{{ q.bd }}"></span></sc-for>
+                  <span style="font:400 15px/1 'VT323',monospace;color:#8a8270;text-align:right">D{{ r.day }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="display:flex;justify-content:space-between;font:400 19px/1 'VT323',monospace;color:#1b1a16"><span>ROBOT ALIVE · DAY 672</span><span style="color:#7a715c">STREAK 6</span></div>
+          </div>
+        </div>
+        <div style="padding:16px;background:#1c1e18;border-radius:18px;display:flex;flex-direction:column;gap:10px">
+          <button onClick="{{ copy }}" style="cursor:pointer;height:56px;border-radius:7px;border:none;border-bottom:5px solid #9a6514;background:#ffb547;color:#1b1a16;font:800 20px/1 'Big Shoulders Display',sans-serif;letter-spacing:.1em">{{ copyLblM }}</button>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <button style="cursor:pointer;height:48px;border-radius:7px;border:1px solid #4a4d42;background:#23251f;color:#efe6cf;font:800 16px/1 'Big Shoulders Display',sans-serif;letter-spacing:.1em">SAVE IMAGE</button>
+            <a href="#home" style="height:48px;border-radius:7px;border:1px solid #4a4d42;background:#23251f;color:#efe6cf;display:grid;place-items:center;font:800 16px/1 'Big Shoulders Display',sans-serif;letter-spacing:.1em">HOME</a>
+          </div>
+          <span style="font:400 18px/1 'VT323',monospace;color:#8a8270;text-align:center">NEXT DAILY IN {{ nextDaily }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const PITCH='YOU DON’T FLY THE ROCKET. YOU KEEP A ROBOT ALIVE MILLIONS OF KM AWAY — AND EVERY ORDER ARRIVES MINUTES LATE.';
+const ROWS=[{icon:'dust',day:12,r:['g','a']},{icon:'eclipse',day:19,r:['g','g']},{icon:'storm',day:26,r:['r','g','g']},{icon:'conj',day:33,r:['g']},{icon:'debris',day:41,r:['a','g']}];
+const COL={g:'#2f8a4a',a:'#d8a21c',r:'#c2361d'},EMO={g:'🟩',a:'🟨',r:'🟥'},IEMO={dust:'🌪️',eclipse:'🌑',storm:'☀️',conj:'🔇',debris:'☄️'};
+const LT=754;
+class Component extends DCLogic {
+  state={t:0,copied:false};
+  componentDidMount(){this.t0=performance.now();this.iv=setInterval(()=>this.setState({t:(performance.now()-this.t0)/1000}),40);}
+  componentWillUnmount(){clearInterval(this.iv);}
+  renderVals(){
+    const t=this.state.t,cyc=(t%6)/5,p=Math.min(1,cyc);
+    const a=t*0.9,cx=470+80*Math.cos(a)*Math.cos(-0.35)-26*Math.sin(a)*Math.sin(-0.35),cy=170+80*Math.cos(a)*Math.sin(-0.35)+26*Math.sin(a)*Math.cos(-0.35);
+    const px=130+(cx-130)*p,py=520+(cy-520)*p,ring=(t*1.4)%1;
+    const mcx=370+58*Math.cos(a),mcy=90+20*Math.sin(a),mpx=50+(mcx-50)*p,mpy=120+(mcy-120)*p;
+    const rem=Math.max(0,Math.round(LT*(1-p)));
+    const now=new Date(),mid=new Date(now);mid.setHours(24,0,0,0);const left=Math.floor((mid-now)/1000);
+    const share='SIGNAL DELAY · DAILY #412  ★★☆\n'+ROWS.map(r=>IEMO[r.icon]+' '+r.r.map(k=>EMO[k]).join('')).join('\n')+'\n🤖 alive · day 672';
+    return {
+      pitch:PITCH.slice(0,Math.floor(t*30)),cursorO:Math.floor(t*2.2)%2?0:1,
+      cx,cy,px,py,mcx,mcy,mpx,mpy,craftTm:`translate(${mcx.toFixed(1)} ${mcy.toFixed(1)}) scale(0.9)`,ringR:10+ring*26,ringO:(1-ring)*.8,craftT:`translate(${cx.toFixed(1)} ${cy.toFixed(1)}) scale(1.4)`,
+      homeCount:p>=1?'RECEIVED ✓':String(Math.floor(rem/60)).padStart(2,'0')+':'+String(rem%60).padStart(2,'0'),
+      menu:[
+        {label:'DAILY MISSION',sub:'Dust Storm Week. Same mission for everyone today.',icon:'calendar',tag:'NEW TODAY',tagCol:'#ffb547',href:'#daily'},
+        {label:'RESCUE HISTORY',sub:'Real robots that nearly died. Try to save them.',icon:'rescue',tag:'3 OF 9',tagCol:'#47c96b',href:'#home'},
+        {label:'NOTEBOOK',sub:'Real lessons you have earned.',icon:'book',tag:'7 OF 24',tagCol:'#47c96b',href:'Signal Delay - Notebook.dc.html'}
+      ],
+      dailyNo:412,dailyDate:now.toLocaleDateString('en-US',{month:'short',day:'numeric'}).toUpperCase(),
+      grid:ROWS.map(r=>({icon:r.icon,day:r.day,sq:[0,1,2,3].map(i=>r.r[i]?{bg:COL[r.r[i]],bd:'none'}:{bg:'transparent',bd:'1px dashed #3a3d33'})})),
+      shareText:share,
+      nextDaily:String(Math.floor(left/3600)).padStart(2,'0')+':'+String(Math.floor(left%3600/60)).padStart(2,'0')+':'+String(left%60).padStart(2,'0'),
+      copy:()=>{try{navigator.clipboard&&navigator.clipboard.writeText(share);}catch(e){}this.setState({copied:true});setTimeout(()=>this.setState({copied:false}),1600);},
+      copyLbl:this.state.copied?'COPIED ✓':'COPY RESULT',copyLblM:this.state.copied?'COPIED ✓':'SHARE RESULT'
+    };
+  }
+}
+</script>
+</body>
+</html>

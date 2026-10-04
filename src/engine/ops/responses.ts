@@ -1,6 +1,7 @@
 // Hazard responses (spec: Mission operations, "Responses"). Only the responses the remaining margins can pay for
 // are offered; the free option always is. A response is checked again when it reaches the craft.
 import type { HazardOption } from '../data';
+import type { Design } from '../types';
 
 /** What the craft can still spend right now. */
 export interface Spare {
@@ -37,6 +38,11 @@ export function affordableResponses(options: HazardOption[], spare: Spare, oneTi
   return options.filter((o) => optionBlockers(o, spare, oneTimeUsed).length === 0);
 }
 
+/** A response's failure chance with the packed protections (Signal Delay kit): data value × the hazard's factor. */
+export function effectiveFailureChance(design: Design, hazardType: string, failureChance: number): number {
+  return Math.min(1, failureChance * (design.kit?.hazardFactor?.[hazardType] ?? 1));
+}
+
 /** The safe choice: the lowest failure chance. */
 export function safestResponse(options: HazardOption[]): HazardOption {
   return options.reduce((a, b) => (b.failureChance.value < a.failureChance.value ? b : a));
@@ -46,9 +52,15 @@ export function safestResponse(options: HazardOption[]): HazardOption {
  * What the craft does when no command arrives in time: its standing order if one is set and affordable,
  * otherwise its fault-protection default (the free option; the safest affordable one if a hazard has no free option).
  */
-export function defaultResponse(offered: HazardOption[], standingOrder?: string): { option: HazardOption; by: 'standing-order' | 'fault-protection' } {
+export function defaultResponse(
+  offered: HazardOption[],
+  standingOrder?: string,
+  autopilot = false,
+): { option: HazardOption; by: 'standing-order' | 'fault-protection' } {
   const ordered = standingOrder !== undefined ? offered.find((o) => o.id === standingOrder) : undefined;
   if (ordered) return { option: ordered, by: 'standing-order' };
+  // A packed autopilot chip is an on-board standing rule: the safest response the margins can pay for.
+  if (autopilot && offered.length) return { option: safestResponse(offered), by: 'standing-order' };
   const free = offered.find(isFree);
   return { option: free ?? safestResponse(offered), by: 'fault-protection' };
 }

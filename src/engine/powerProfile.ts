@@ -201,8 +201,10 @@ export function powerProfile(p: PowerProfileInput, worstCaseEclipse_s: number, t
   const scienceLoads = partial.filter((x) => x.g.phase === 'science').map((x) => x.required_W);
   const load_W = scienceLoads.length ? Math.max(...scienceLoads) : 0;
   const dod = PARTS.power.batteryMaxDepthOfDischarge.value;
-  const capacity_Wh = worstCaseEclipse_s > 0 ? batteryCapacity_Wh(worstCaseEclipse_s, load_W, dod) : 0;
-  const mass_kg = worstCaseEclipse_s > 0 ? batteryMass(worstCaseEclipse_s, load_W) / dod : 0;
+  // A packed big battery (Signal Delay kit) multiplies the sized capacity and its mass.
+  const kitBattery = p.design.kit?.batteryFactor ?? 1;
+  const capacity_Wh = worstCaseEclipse_s > 0 ? kitBattery * batteryCapacity_Wh(worstCaseEclipse_s, load_W, dod) : 0;
+  const mass_kg = worstCaseEclipse_s > 0 ? (kitBattery * batteryMass(worstCaseEclipse_s, load_W)) / dod : 0;
 
   const days: PowerDay[] = partial.map(({ g, generation_W, heaterNeed_W, required_W }) => {
     const available_W = solar

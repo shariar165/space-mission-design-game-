@@ -19,3 +19,24 @@ Both copies were unescaped from the Claude Design API on Oct 3, 2026; their size
 The Operations Console files were imported on Oct 4, 2026 through the claude_design MCP. Each copy matches the project file byte for byte: Operations Console 30,643, Ops Console Desktop 88,451, Ops Console Mobile 47,204, support.js 69,150. The desktop file was also checked identical to the API's own read. The console follows the mockup's six states (normal, hazard, queue, blackout, safe mode, extension) and its two close-ups (Upcoming timeline with "Book a call home", the Power dial). Where the mockup shows something the engine does not model, the console shows the engine's own result instead (spec UI rules 16–20).
 
 The Cadet screens (Level map, guided build, Flight and Mission Control, Rescue History) have no mockup: they were designed directly in code (`src/ui/styles/cadet.css`) because the Claude Design connection was unavailable. They are checked at 1440 px desktop and 390 px phone widths.
+
+## Signal Delay (current UI, Oct 5, 2026)
+
+Imported through the claude_design MCP from the same project. Each copy in `signal-delay/` matches the project file byte for byte (Fly and Survive 51,581; Pack 30,521; Mission Report 27,681; Home (+ Daily share) 24,737; Notebook 18,488; SDIcon 4,456). `signal-delay/shots/` holds reference screenshots of each frame at 1440 × 900 and 390 × 844 (`npm run shots -- design`).
+
+| Screen | Design file (frames) | Implemented in |
+| --- | --- | --- |
+| 01 Fly & Survive | `Signal Delay - Fly and Survive.dc.html` (1a, 1b) | `src/ui/screens/FlyAndSurvive.tsx`, `components/fly/*`, `styles/sd-fly.css` |
+| 02 Pack | `Signal Delay - Pack.dc.html` (2a, 2b) | `src/ui/screens/Pack.tsx`, `styles/sd-pack.css` |
+| 03 Mission Report | `Signal Delay - Mission Report.dc.html` (3a, 3b) | `src/ui/screens/MissionReport.tsx`, `components/report/ComicArt.tsx`, `styles/sd-report.css` |
+| 04 Home, 05 Daily share | `Signal Delay - Home.dc.html` (4a/4b, 5a/5b) | next pull request |
+| 06 Notebook | `Signal Delay - Notebook.dc.html` (6a, 6b) | next pull request |
+| Icons | `SDIcon.dc.html` | `src/ui/components/sd/SDIcon.tsx` |
+| Tokens | all of the above | `src/ui/styles/theme.css` |
+
+Differences from the mockups, on purpose:
+- The canvas controls (the "JUMP TO" buttons, the "SCREEN 0X OF 06" headers and the phone's 9:41 status bar) are not shipped.
+- Every number is engine output. The mockups' numbers are placeholders, and so is their "−2 RISK" chip: the game shows "⚠ +n risk".
+- Pack adds a weight scale beside the nose, because weight is a separate limit from volume.
+- The Mission Report compares launch date, planned science and mass/power/Δv, not burn length or actual lifetime (spec UI rule 5).
+- Responses with three choices put the third under the danger card. Every danger card offers "Let the robot decide".

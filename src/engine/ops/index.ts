@@ -2,7 +2,7 @@
 // the input is never changed. A mission is a function of (design, seed, actions): replayOperations rebuilds it.
 // Every player action is logged, refused ones too, because a refusal is itself an event.
 import type { Phase } from '../risk';
-import { budgetScore, marginBandScore, missionSuccessScore, nextStar, scienceGoal_Gbit, scienceScore, stars, totalScore, type Category } from '../scoring';
+import { budgetScore, marginBandScore, missionSuccessScore, nextStar, scienceGoal_Gbit, scienceScore, STAR_RULES, stars, totalScore, type Category } from '../scoring';
 import { crisisScore } from '../crisis';
 import { DESTINATIONS, HAZARDS, OPERATIONS } from '../data';
 import type { Design } from '../types';
@@ -297,7 +297,7 @@ export function operationsDebrief(s: OpsState): OpsDebrief {
   };
   const t = totalScore(scores);
   const launched = s.status !== 'not-launched' && !(s.status === 'lost' && s.failureT === 0);
-  const reachedScience = launched && phasesCompleted >= 3;
+  const reachedScience = launched && phasesCompleted >= STAR_RULES.phasesToReachScience.value;
   const st = stars({ reachedScience, scienceScore: sciScore, margins: endMargins });
   const failedPrime: Phase | undefined = lostInPrime && s.failedPhase !== 'extended' ? (s.failedPhase as Phase) : undefined;
   const next = nextStar({
@@ -360,4 +360,6 @@ export function operationsDebrief(s: OpsState): OpsDebrief {
 export { defaultBooking, defaultPowerPlan, prepareOps, primeScienceFraction };
 export { consoleView, dsnOptions, nextEventT, opsAvailable, powerPlanPreview, CONSOLE_RULES } from './console';
 export type * from './console';
+export { comingUp, eclipseCard, flyCard, flyTiles, FLY_RULES, outcomeIn_s, segmentsFromFraction, segmentsFromMargin, systemsHealth } from './fly';
+export type * from './fly';
 export type * from './types';

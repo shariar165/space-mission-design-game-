@@ -1,8 +1,8 @@
-# Mission Drafting Table — Science Spec v0.5
+# Signal Delay — Science Spec v0.6
 
 Oct 3, 2026 · @Shariar
 
-v0.2 (Oct 3, 2026) added the decisions taken while building the engine. v0.3 (Oct 3, 2026) adds the UI rules. v0.4 (Oct 4, 2026) adds Mission operations (engine only). v0.5 (Oct 4, 2026) makes the Risk and Power meters come from the Mission operations model (Monte Carlo; worst day with eclipses), sizes batteries by depth of discharge, adds the Moon rideshare and copies the fact-sheet values. All decisions are applied in the sections below and listed in the **Decision log** at the end.
+v0.2 (Oct 3, 2026) added the decisions taken while building the engine. v0.3 (Oct 3, 2026) adds the UI rules. v0.4 (Oct 4, 2026) adds Mission operations (engine only). v0.5 (Oct 4, 2026) makes the Risk and Power meters come from the Mission operations model (Monte Carlo; worst day with eclipses), sizes batteries by depth of discharge, adds the Moon rideshare and copies the fact-sheet values. v0.6 (Oct 5, 2026) renames the game Signal Delay and rebuilds the UI from the Claude Design "Signal Delay" screens: Pack, Fly & Survive and the Mission Report, with one flight model (Mission operations) in both modes. All decisions are applied in the sections below and listed in the **Decision log** at the end.
 
 ## Purpose and model philosophy
 
@@ -674,12 +674,12 @@ The UI (`src/ui/`, React + Vite) follows the Claude Design mockups for Build Bay
 2. **Engineer mode** shows each meter's `equation` and every entry in `inputs`. **ⓘ** opens the `Sourced<T>` record: source, unit, link, and a "game estimate" badge when `isGameEstimate` is true.
 3. **Status** is always shown with an icon, a colour and a label. Over-limit bars are also hatched.
 4. **Mission Budget meters:** mass, power, Δv, data, cost and risk. The mockup's "Reliability ≥ 85% (Π Rᵢ)" meter is replaced by the engine's Risk meter (mission failure probability against 20%, game estimate). The Risk meter is the Mission operations Monte Carlo and always shows its run count and seed. While it runs, it shows the runs so far and a provisional value with no status. See "Why there is no Reliability meter" in the risk section. When a meter's limit rests on a game estimate (risk limit, comms reference link), the badge shows on the meter itself, not only in ⓘ.
-5. **Debrief comparison** with a real mission uses mass, power and Δv only (see "MAVEN cost"), with the biggest gap flagged. Mars is compared with MAVEN and Bennu with OSIRIS-REx. Other destinations have no comparison until a sourced preset exists.
+5. **Real-mission comparison** (Mission Report) uses mass, power and Δv (see "MAVEN cost"), with the biggest gap flagged, plus the preset's launch date and planned science days. Burn length, actual lifetime and how the mission ended are not shown: there is no thrust data, and the history is free text (v0.6). Mars is compared with MAVEN and Bennu with OSIRIS-REx. Other destinations have no comparison until a sourced preset exists.
 6. **Score** is shown as 0–100. Category grades are STRONG ≥ 70, FAIR 40–69, WEAK < 40 (game rule). The row the next-star hint is about is highlighted.
 7. **English only for now.** The language toggle is hidden until engine messages are returned as codes with values.
-8. **Engineer flow, until the Window screen exists:** Build Bay → Launch → one crisis card (only the options the margins can pay for) → Debrief. Cadet flies through the Flight screen (rule 12).
+8. **Engineer flow (v0.6):** Build Bay → Launch → Fly & Survive → Mission Report with Engineer details. The single crisis card is no longer flown in the UI; `simulateMission`, `previewCrisis` and `monteCarloMission` stay for the engine and validation tests.
 
-**Cadet mode (the default).** Engineer mode keeps rules 1–8 exactly. Cadet follows rule 1 too: every number comes from the engine.
+**Cadet mode (the default).** Cadet follows rule 1 too: every number comes from the engine. Since v0.6, rules 9–12 are replaced in the UI by the Signal Delay rules 21–27 (Pack replaces the guided build, the Test Flight and standing orders; Fly & Survive replaces the Flight screen and Mission Control). The engine functions behind them (`cadetOptions`, `testFlight`, `crisisOrders`, `flightFrames`) are kept and tested.
 
 9. **One decision per screen.** The guided build asks Science, Power, Radio, Fuel, Rocket in turn ("Step 2 of 5 — Power"), with 2–3 big cards and at most one short helper line.
    - Each card is a whole design from `cadetOptions`.
@@ -705,7 +705,7 @@ The UI (`src/ui/`, React + Vite) follows the Claude Design mockups for Build Bay
 
 **Operations Console (both modes).** Built from the Claude Design mockups `Operations Console.dc.html`, `Ops Console Desktop.dc.html` and `Ops Console Mobile.dc.html` (copies in `docs/design/`). It follows rule 1: every number comes from `consoleView`, `powerPlanPreview` and `dsnOptions` (`src/engine/ops/console.ts`). Cadet reads sentences; Engineer adds the mission elapsed time, distances, the Sun–Earth–probe angle, each gauge's equation and the ⓘ of its inputs.
 
-16. **Console.** Opened from the Debrief ("Run mission operations"): in Cadet from the Mars level on (light delay is its lesson), in Engineer for any design that can launch. It flies the same craft, pinned when the console opens, with the Debrief's seed.
+16. **Console (v0.6: Fly & Survive).** Every launch, in both modes and from every level, flies the craft in Fly & Survive (rule 22), pinned at launch, with the flight's seed.
     - The layout has a clock row (day, phase, status chip, one-way light time, Pause / 1× / 10× / 100× = 0 / 1 / 10 / 100 mission days a real minute, "Next event").
     - The map reuses the flight map, with the real-mission ghost and light pulses along the Earth–craft line. Resources (power today, fuel, recorder, budget reserve) use rule 3 statuses.
     - The Upcoming strip shows the next 60 days (game rule): conjunctions and eclipse seasons as bands; planned burns (not daily upkeep), phases, marked passes and the first bookable day as points.
@@ -720,6 +720,25 @@ The UI (`src/ui/`, React + Vite) follows the Claude Design mockups for Build Bay
 19. **Blackout and safe mode.** In a conjunction the console shows "Radio blackout · day x of n", the day contact returns, and "Skip ahead". Send buttons are disabled. Safe mode shows the instruments off and the day science resumes: the engine resumes it by itself, so there is no "Recover" button.
 20. **Extension and Ops debrief.** At the end of the prime mission the console offers End / +1 yr / +3 yr cards from the extension decision, with the reasons a blocked one cannot be flown. The Ops debrief shows the prime score and stars from `operationsDebrief`, with the extension reported separately.
     - **Not shown, because the engine does not model it:** a failure chance for an extension, DSN station names (DSS-xx), a "send all at the next pass" queue (each command leaves at once and pays the light delay), and the Bangla text (rule 7).
+
+**Signal Delay screens (v0.6).** Built from the Claude Design project "Signal Delay" (`docs/design/signal-delay/`): the design is the visual source of truth, and rule 1 holds everywhere. Display game rules are Sourced and registered in the data audit (`FLY_RULES`, `STAR_RULES`, `pack.json`).
+
+21. **Theme.** Colours, fonts (Big Shoulders Display, B612, B612 Mono, VT323), radii, spacing and shadows come from the design as CSS variables in `src/ui/styles/theme.css`. The design canvas's demo controls (screen headers, "jump to", the phone clock) are not shipped.
+22. **Fly & Survive.** A CRT map (Sun-centred; the path flown and the path ahead; the real mission's turned ghost), a teletype log line, four five-segment tiles (power from today's margin, fuel from propellant left, data from science sent home against the goal, systems health), the day clock with Pause / 1× / 10× / 100×, and a Coming Up ribbon of the next 150 days (eclipse and conjunction seasons, course fixes, the arrival burn, Mars dust-storm seasons; never a hazard Earth has not seen).
+    - A **danger card** stops time. It shows the hazard, "danger arrives in …", "your order takes …" (one-way light time), the real history with its "to verify" badge, and every response as a choice (← / →, ↓ for a third; swipe on a phone). Unaffordable responses are shown disabled with what is missing. Chips show the costs as segment drops and the **risk increase over the safest response as "⚠ +n risk", never as a negative number**.
+    - Choosing sends the order: first the team's reaction, then the light-time trip with a live countdown and a pulse crawling from Earth to the robot. If the order lands before the danger strikes, time runs on until the outcome. The result is typed out as an INCOMING message.
+    - An **eclipse planning card** opens a few days before each eclipse season: keep the plan (warm) or turn the heaters down (save power), with the battery depth-of-discharge segments from `powerPlanPreview`. Saving power is a command with light delay.
+    - The power plan, call home, command queue, blackout, safe mode and extension are drawers. Engineer adds r, d, t = d/c and an EQUATIONS drawer with every gauge's equation and ⓘ.
+23. **Systems health** (game rule): five segments, one off per reaction wheel lost, instrument lost, safe mode now, brownout streak and degraded pointing; none when the craft is lost.
+24. **Pack.** The nose is volume: a 6 × 6 grid of squares, and each part has a footprint (game rules). Weight is a separate limit: the launch meter, drawn as a scale beside the nose. Every part changes the design or Mission operations (`pack.json`, `Design.kit`):
+    - instruments, the 3 m dish, +4 m² of array (or one more RTG), +20% propellant, a 1.5× battery, kit mass;
+    - failure-chance factors (shield, bumper, spare computer), a heater cold factor;
+    - the autopilot: with no standing order, the robot takes its safest affordable response.
+
+    Blockers name the limit that failed: "No room in the nose", "Too heavy for this rocket", power, fuel, capture, flight length, no science.
+25. **Danger deck.** The destination's hazards plus the foreseeable eclipse season and solar conjunction. A danger is COVERED by two or more packed parts whose effect touches it, and has SOME COVER with one (game rule). The coverage lists are tested against the data (the tank covers exactly the hazards with a Δv-costing response).
+26. **Launch calendar.** Six weeks of launch days around the best one, each with its lowest-energy arrival. A day is good, so-so or bad by the worse of the launch-mass and Δv meter statuses on that day (ok / warning / over). LAUNCH needs the ARM lever, a day that is not bad and no blockers.
+27. **Mission Report.** The flight as four comic panels (launch, the two most significant moments, the end), stars with their rules (`STAR_RULES`), what saved you and what hurt you, you vs the real mission (rule 5) and a real lesson from the flight (a Sourced real-history text). Engineer adds the score breakdown (Σ wᵢsᵢ, with the next-star row highlighted), the ⓘ of every comparison value and the Mission operations risk.
 
 ## Decision log
 
@@ -768,3 +787,8 @@ The UI (`src/ui/`, React + Vite) follows the Claude Design mockups for Build Bay
 | 41 | Oct 4, 2026 | **Power dial = two handles + a radio switch.** The mockup's radio slice would need a radio power level the engine does not model, so the power plan keeps the radio on/off and no physics was added. |
 | 42 | Oct 4, 2026 | **Safe mode resumes by itself** (`pausedUntil`); the mockup's "Recover" button is replaced by the day science resumes. |
 | 43 | Oct 4, 2026 | **Ops sessions resume:** the action log and mission time are kept in the browser, and `replayOperations(design, opts, actions, until)` rebuilds the mission to that time. |
+| 44 | Oct 5, 2026 | **Renamed Signal Delay; UI rebuilt from the Claude Design "Signal Delay" screens** (rules 21–27). The design is the visual source of truth; its tokens live in `theme.css`. Screenshots at 1440 × 900 and 390 × 844 are compared with the design copies (`npm run shots`; Playwright installed in the venv). |
+| 45 | Oct 5, 2026 | **One flight model everywhere.** Both modes fly Fly & Survive (Mission operations) and end on the Mission Report. The crisis-card flight and the separate "Run mission operations" step are removed from the UI. |
+| 46 | Oct 5, 2026 | **Pack is a real mechanic** (user decision). Footprints, the 6 × 6 nose, part effects and coverage are labelled game rules. Real missions carry no kit, so validation is unchanged. Volume and weight are separate limits, and blockers name which one failed. |
+| 47 | Oct 5, 2026 | **Risk shows as an increase.** A choice's risk chip is the number of risk-bar steps above the hazard's safest response ("⚠ +n risk"), never a negative number. |
+| 48 | Oct 5, 2026 | **Star rules Sourced** (`STAR_RULES`: 3 phases for the first star, a science score of 70 for the second) instead of literals. |
