@@ -1,6 +1,12 @@
 // Shared set-up for the component tests (jsdom). Not a test file itself.
 import { cleanup } from '@testing-library/react';
 import { afterEach, beforeEach, vi } from 'vitest';
+import { inlineRunner, setRiskRunner } from '../../src/ui/riskRunner';
+
+// jsdom has no Web Worker: the Risk meter's Monte Carlo runs inline, with fewer runs (each one is still a full
+// Mission operations flight through the engine).
+export const TEST_RISK_RUNS = 20;
+setRiskRunner(inlineRunner(), TEST_RISK_RUNS);
 
 beforeEach(() => {
   // jsdom has no layout: scrolling is a no-op, and every test starts from empty storage.

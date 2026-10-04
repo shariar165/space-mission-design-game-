@@ -21,6 +21,7 @@ import { ETA_SYS } from '../src/engine/power';
 import { ACCEPTABLE_MISSION_RISK, BASE_RISK, MARGIN_RISK_FACTOR_AT_ZERO } from '../src/engine/risk';
 import { BUDGET_ZERO_AT_OVERRUN, MARGIN_BAND, SCORE_GRADES, WEIGHTS } from '../src/engine/scoring';
 import type { Sourced } from '../src/engine/types';
+import { RISK_RUNS, RISK_SEED } from '../src/engine/ops/riskEstimate';
 
 interface Entry {
   path: string;
@@ -83,6 +84,7 @@ const ENGINE_VALUES: Record<string, Record<string, Sourced<unknown>>> = {
   'cadet.ts DISH_SIZES': DISH_SIZES,
   'cadet.ts': { PHOTO_FRAME_Mbit, COIN_FRACTION },
   'rescue.ts': { LBF_TO_N, RESCUE_MAX_STARS },
+  'ops/riskEstimate.ts': { RISK_RUNS, RISK_SEED },
 };
 
 const all: Entry[] = [];

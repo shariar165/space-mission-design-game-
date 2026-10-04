@@ -1,6 +1,6 @@
 // How each engine Meter is shown: title, what "used / limit" mean, and the Cadet one-liner.
 // Every number is read from evaluateDesign()'s output; this file only chooses words and units.
-import type { MeterKey } from '../engine/compare';
+import type { PanelKey } from '../engine/compare';
 import { GAME_RULES } from '../engine/constants';
 import { DESTINATIONS, LAUNCH_VEHICLES } from '../engine/data';
 import type { FullEvaluation } from '../engine/index';
@@ -17,7 +17,7 @@ export interface MeterView {
   say: string;
 }
 
-export const METER_TITLES: Record<MeterKey, string> = {
+export const METER_TITLES: Record<PanelKey, string> = {
   mass: 'Mass',
   power: 'Power',
   deltaV: 'Δv',
@@ -28,7 +28,7 @@ export const METER_TITLES: Record<MeterKey, string> = {
 
 const perDay = (b: number) => `${f.bits(b)}/day`;
 
-export function meterView(key: MeterKey, m: Meter, ev: FullEvaluation, design: Design): MeterView {
+export function meterView(key: PanelKey, m: Meter, ev: FullEvaluation, design: Design): MeterView {
   const dest = DESTINATIONS[design.destination];
   const lv = LAUNCH_VEHICLES[design.launchVehicleId];
   const lvName = lv?.name ?? design.launchVehicleId;
@@ -105,14 +105,17 @@ export function meterView(key: MeterKey, m: Meter, ev: FullEvaluation, design: D
             : `${f.money(m.headroom)} under the cap. Launch and operations are paid separately.`,
       };
     }
-    case 'risk':
+    case 'risk': {
+      const runs = m.inputs.runs?.value ?? 0;
+      const lost = m.inputs.lostRuns?.value ?? 0;
       return {
         title: 'Risk',
         sub: 'chance of losing the mission',
         used: f.pct(m.used),
         limit: `${f.pct(m.limit, 0)} max`,
-        say: `A ${f.pct(m.used, 0)} chance of losing the mission, from launch to the end of science.`,
+        say: `Lost in ${f.num(lost)} of ${f.num(runs)} simulated missions, flown day by day from launch to the end of science (± ${f.pct(m.inputs.standardError?.value ?? 0)}).`,
       };
+    }
   }
 }
 
@@ -123,7 +126,7 @@ export function barGeometry(m: Meter): { fill: number; limitAt: number } {
 }
 
 /** One sentence for a meter in WARNING, used in the blockers panel. */
-export function warningText(key: MeterKey, m: Meter): string {
+export function warningText(key: PanelKey, m: Meter): string {
   return `${METER_TITLES[key]} margin is only ${f.signedPct(m.margin)}. You can fly, but you are below the ${f.pct(GAME_RULES.marginWarning.value, 0)} safety margin.`;
 }
 

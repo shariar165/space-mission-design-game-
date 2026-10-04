@@ -10,7 +10,7 @@ import { componentMasses, costBreakdown, costEvaluation, massRollup, wetMass, ty
 import { ETA_SYS, longestEclipse_s, powerMeter, powerOnDay, solarPower } from './power';
 import { designLoads, eclipseSeasons, powerProfile, worstPowerDay, type EclipseSeasonSummary, type PowerDay, type PowerProfile } from './powerProfile';
 import { deltaVBudget, deltaVCapability, deltaVMeter, engineBlockers, propellantBurned, type DeltaVBudget } from './propulsion';
-import { makeRng, phaseRisks, riskMeter, type Phase, type PhaseRisk } from './risk';
+import { makeRng, phaseRisks, type Phase, type PhaseRisk } from './risk';
 import { budgetScore, marginBandScore, missionSuccessScore, nextStar, scienceGoal_Gbit, scienceScore, stars, totalScore, type Category } from './scoring';
 import { arrivalDeltaV, maxFlightDays, orbitChangeDeltaV, sunDistanceExtremes, transferForDesign } from './trajectory';
 import { sourced, type Design, type Evaluation, type Meter, type Sourced } from './types';
@@ -19,11 +19,14 @@ const derived = (value: number, unit: string, equation: string) => sourced(value
 
 /** Everything evaluateDesign computes, including the extra numbers the simulation and Debrief need. */
 export interface FullEvaluation extends Evaluation {
-  meters: Evaluation['meters'] & { risk: Meter };
   details: Evaluation['details'] & {
     launchDate: string;
     arrivalDate: string;
     deltaVBudget: DeltaVBudget;
+    /**
+     * The single-card flight's phase failure chances (simulateMission). The Risk meter is not this formula: it is
+     * the Mission operations Monte Carlo (ops/riskEstimate.ts), which the UI runs in a Web Worker.
+     */
     phaseRisks: PhaseRisk[];
     launchSuccess: number;
     /**
@@ -240,7 +243,7 @@ export function evaluateDesign(design: Design): FullEvaluation {
   });
 
   return {
-    meters: { mass: launch.meter, power, deltaV, data, cost: cost.meter, risk: riskMeter(risks) },
+    meters: { mass: launch.meter, power, deltaV, data, cost: cost.meter },
     blockers,
     notes,
     trajectory: {

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import type { MeterKey } from '../../engine/compare';
+import type { PanelKey } from '../../engine/compare';
 import type { FullEvaluation } from '../../engine/index';
 import type { Design, Meter } from '../../engine/types';
 import { label, signedPct, sourcedValue } from '../format';
@@ -11,7 +11,7 @@ import { StatusChip } from './StatusChip';
  * One Mission Budget meter. Cadet: used / limit, margin and a one-liner.
  * Engineer: also the meter's equation and every input, each with its ⓘ source.
  */
-export function MeterCard({ k, m, ev, design, engineer }: { k: MeterKey; m: Meter; ev: FullEvaluation; design: Design; engineer: boolean }) {
+export function MeterCard({ k, m, ev, design, engineer }: { k: PanelKey; m: Meter; ev: FullEvaluation; design: Design; engineer: boolean }) {
   const v = meterView(k, m, ev, design);
   const g = barGeometry(m);
   const inputs = Object.entries(m.inputs);

@@ -92,8 +92,6 @@ export interface Evaluation {
     deltaV: Meter;
     data: Meter;
     cost: Meter;
-    /** Added when risk.ts is built. */
-    risk?: Meter;
   };
   /** Plain-language reasons the craft cannot launch, e.g. "Too heavy by 120 kg". */
   blockers: string[];

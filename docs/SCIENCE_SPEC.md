@@ -272,14 +272,20 @@ fᵢ = 1 at the recommended margin, rising as a margin shrinks (for example, Δv
 - **Margin factor:** f(m) = 1 for m ≥ 10%, rising linearly to 3 at 0%. Below 0% the phase fails for certain.
 - **Which margins feed which phase:** cruise ← power; arrival (capture or rendezvous) ← Δv; science ← power; sample return ← Δv.
 - **Base rates:** cruise 2%, arrival 4%, science 2% per year, sample return 3%.
-- **Risk meter:** shows 1 − Π(1 − p_phase) against an acceptable mission risk of 20%.
+- **Single-card flight:** `simulateMission` (the Cadet Flight and the Engineer crisis card) flies these phase risks. Their product 1 − Π(1 − p_phase) is reported only as the flight model's own loss chance.
+- **Risk meter (v0.5): the Mission operations Monte Carlo, not a formula.** The engine flies the design through the day-by-day Ops simulation N = 500 times (seed 2013). It always takes the safest response and ends at the prime mission, both game rules. The meter shows the share of runs whose prime mission was lost, against an acceptable mission risk of 20%.
+  - The run count, seed, lost runs and standard error √(p(1 − p)/N) are inputs of the meter and are shown on screen.
+  - A design that cannot launch is lost in every run.
+  - Run i always uses the same seed, so the result does not depend on how the runs are batched.
+  - The UI flies the runs in a Web Worker and fills the meter in as they come; its status appears only when every run is in.
+  - Hazard rates are **not** tuned to match the old phase formula. The validation table reports both as an info row: for MAVEN, 4.0% ± 0.9 (Ops) against 12.1% (phase formula).
   - The 20% limit is a **game estimate**. No NASA source giving a single numeric acceptable-loss probability for robotic science missions was found; NASA's payload risk classes are qualitative.
   - The meter shows a "game estimate" badge next to its limit, and ⓘ opens the record.
 
 **Why there is no Reliability meter (decided).** The Build Bay mockup showed "Reliability ≥ 85%" as R = Π Rᵢ over 14 subsystems. The game uses the Risk meter in that slot instead, for three reasons:
 1. **No sourced data.** A series-reliability product needs a sourced reliability Rᵢ for every part. The catalogue has none, so the 85% target and every Rᵢ would be invented numbers.
-2. **One model.** The Risk meter is the same phase-risk model that `simulateMission` and the Monte Carlo fly. A separate reliability number would disagree with what then happens in flight.
-3. **It teaches the trade.** Risk responds to the player's margins (f(margin) above), so cutting Δv or power margin visibly raises the risk.
+2. **One model.** The Risk meter is the Mission operations simulation itself (v0.5). A separate reliability number would disagree with what then happens in flight.
+3. **It teaches the trade.** Risk responds to the player's margins: thin Δv raises the insertion anomaly chance, and thin power means shed loads, cold days and brownouts in Ops. So cutting a margin visibly raises the risk.
 
 If sourced part reliabilities are added later, they belong in p_base for each phase, not in a second meter.
 
@@ -311,7 +317,7 @@ These are summaries from general knowledge. Before release, each card's text mus
 Mission Operations is where the player **manages** the mission they designed, and the engine **simulates** it day by day. It is a separate entry point (`src/engine/ops/`); Engineer mode and the Cadet flight keep the single-card model above.
 
 **Decided (v0.4):**
-- Ops replaces the generic cruise and science base rates with explicit hazards, so no failure is counted twice. Launch keeps the vehicle's Laplace reliability. The orbit-insertion anomaly reuses `BASE_RISK.arrival × f(Δv margin)`. An info row in the validation table compares the Ops loss rate with the Risk meter.
+- Ops replaces the generic cruise and science base rates with explicit hazards, so no failure is counted twice. Launch keeps the vehicle's Laplace reliability. The orbit-insertion anomaly reuses `BASE_RISK.arrival × f(Δv margin)`. Since v0.5 the Risk meter *is* the Ops Monte Carlo; an info row compares it with the single-card flight's phase formula.
 - A mission extension is reported separately. The 0–100 score and the stars stay on the prime mission, so losing the craft in an extension never removes prime-mission credit.
 
 ### Mission clock
@@ -660,7 +666,7 @@ The UI (`src/ui/`, React + Vite) follows the Claude Design mockups for Build Bay
 1. **The engine computes every number on screen.** The UI only converts units for display (the display rules in "Constants and units"). Part-card effects come from `designDelta`, the real-mission comparison from `compareWithRealMission`, the crisis card from `previewCrisis`, and starter launch dates from `bestLaunchWindow`.
 2. **Engineer mode** shows each meter's `equation` and every entry in `inputs`. **ⓘ** opens the `Sourced<T>` record: source, unit, link, and a "game estimate" badge when `isGameEstimate` is true.
 3. **Status** is always shown with an icon, a colour and a label. Over-limit bars are also hatched.
-4. **Mission Budget meters:** mass, power, Δv, data, cost and risk. The mockup's "Reliability ≥ 85% (Π Rᵢ)" meter is replaced by the engine's Risk meter (mission failure probability against 20%, game estimate). See "Why there is no Reliability meter" in the risk section. When a meter's limit rests on a game estimate (risk limit, comms reference link), the badge shows on the meter itself, not only in ⓘ.
+4. **Mission Budget meters:** mass, power, Δv, data, cost and risk. The mockup's "Reliability ≥ 85% (Π Rᵢ)" meter is replaced by the engine's Risk meter (mission failure probability against 20%, game estimate). The Risk meter is the Mission operations Monte Carlo and always shows its run count and seed. While it runs, it shows the runs so far and a provisional value with no status. See "Why there is no Reliability meter" in the risk section. When a meter's limit rests on a game estimate (risk limit, comms reference link), the badge shows on the meter itself, not only in ⓘ.
 5. **Debrief comparison** with a real mission uses mass, power and Δv only (see "MAVEN cost"), with the biggest gap flagged. Mars is compared with MAVEN and Bennu with OSIRIS-REx. Other destinations have no comparison until a sourced preset exists.
 6. **Score** is shown as 0–100. Category grades are STRONG ≥ 70, FAIR 40–69, WEAK < 40 (game rule). The row the next-star hint is about is highlighted.
 7. **English only for now.** The language toggle is hidden until engine messages are returned as codes with values.

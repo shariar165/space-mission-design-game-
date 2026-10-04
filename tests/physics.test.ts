@@ -1004,9 +1004,9 @@ describe('simulateMission', () => {
     expect(r.hint).toMatch(/^Fix this first: /);
   });
 
-  it('Monte Carlo success rate agrees with the risk meter within 3σ (+ crisis chances)', () => {
+  it('the single-card flight Monte Carlo agrees with its own phase formula within 3σ (+ crisis chances)', () => {
     const ev = evaluateDesign(maven);
-    const p = 1 - ev.meters.risk.used;
+    const p = 1 - R.riskMeter(ev.details.phaseRisks).used;
     const mc = monteCarloMission(maven, { runs: 1000, seed: 5 });
     const sigma = Math.sqrt((p * (1 - p)) / 1000);
     // safe crisis choices fail at most 1% of the time, so the MC rate can sit up to ~0.01 below p
@@ -1015,10 +1015,12 @@ describe('simulateMission', () => {
     expect(mc.starsHistogram.reduce((a, b) => a + b, 0)).toBe(1000);
   });
 
-  it('evaluateDesign now fills the Risk meter', () => {
+  it('evaluateDesign keeps the flight’s phase risks but no Risk meter: that is the Mission operations Monte Carlo', () => {
     const ev = evaluateDesign(maven);
-    expect(ev.meters.risk.used).toBeGreaterThan(0);
-    expect(ev.meters.risk.used).toBeLessThan(1);
+    expect('risk' in ev.meters).toBe(false);
+    const flight = R.riskMeter(ev.details.phaseRisks).used;
+    expect(flight).toBeGreaterThan(0);
+    expect(flight).toBeLessThan(1);
     expect(ev.details.phaseRisks.map((ph) => ph.phase)).toEqual(['launch', 'cruise', 'arrival', 'science']);
   });
 });

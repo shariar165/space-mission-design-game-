@@ -15,6 +15,7 @@ import { COST_CAPS } from '../src/engine/massCost';
 import { LAUNCH_VEHICLES as LVS } from '../src/engine/data';
 import { starterDesign } from '../src/ui/starters';
 import { inspectClue, rescueCase, rescueConsequence, rescueStars } from '../src/engine/rescue';
+import { mergeTallies, opsRiskEstimate, riskBatch, riskEnvironment, riskEstimateFromTally, RISK_RUNS, RISK_SEED, runSeed } from '../src/engine/ops/riskEstimate';
 
 const maven = presetDesign('maven');
 const ev = evaluateDesign(maven);
@@ -262,8 +263,9 @@ describe('bestLaunchWindow', () => {
 
 describe('limits that are game estimates are labelled at the meter', () => {
   it('risk limit is the 20% acceptable mission risk, a game estimate', () => {
-    expect(ev.meters.risk.limitSource?.value).toBe(0.2);
-    expect(ev.meters.risk.limitSource?.isGameEstimate).toBe(true);
+    const m = riskEstimateFromTally({ runs: 10, lost: 1, lostByPhase: { cruise: 1 } }, RISK_SEED.value, 10).meter;
+    expect(m.limitSource?.value).toBe(0.2);
+    expect(m.limitSource?.isGameEstimate).toBe(true);
   });
   it('cost limit is the NASA Discovery cap ($500M FY2019), not an estimate', () => {
     expect(ev.meters.cost.limitSource?.value).toBe(500);
@@ -971,4 +973,48 @@ describe('Mission operations: extension and Debrief', () => {
     const r = ops.runOperations(maven, { seed: 2013 });
     for (const e of r.state.events) for (const v of Object.values(e.values)) if (typeof v === 'string') expect(v).not.toMatch(/\s/);
   });
+});
+
+// ---------------------------------------------------------------------------
+// The Risk meter: the Mission operations Monte Carlo (ops/riskEstimate.ts), run in a Web Worker by the UI.
+
+describe('Risk meter from the Mission operations Monte Carlo', () => {
+  it('defaults: 500 runs, seed 2013 (the Engineer Monte Carlo seed), both labelled game rules', () => {
+    expect(RISK_RUNS.value).toBe(500);
+    expect(RISK_SEED.value).toBe(MONTE_CARLO_SEED);
+    expect(RISK_RUNS.isGameEstimate && RISK_SEED.isGameEstimate).toBe(true);
+  });
+
+  it('meter from a tally: used = lost/N, margin = (limit − used)/limit, standard error √(p(1 − p)/N)', () => {
+    // 30 lost of 200: p = 0.15; margin = (0.20 − 0.15)/0.20 = 0.25; σ = √(0.15 × 0.85 / 200) = 0.025249
+    const e = riskEstimateFromTally({ runs: 200, lost: 30, lostByPhase: { science: 30 } }, 7, 500);
+    expect(e.meter.used).toBeCloseTo(0.15, 12);
+    expect(e.meter.margin).toBeCloseTo(0.25, 12);
+    expect(e.meter.status).toBe('ok');
+    expect(e.stdErr).toBeCloseTo(0.025249, 6);
+    expect(e.complete).toBe(false);
+    expect(e.meter.inputs.runs!.value).toBe(200);
+    expect(e.meter.inputs.lostRuns!.value).toBe(30);
+    expect(e.meter.inputs.seed!.value).toBe(7);
+  });
+
+  it('run i always has the same seed, so batches add up to the same tally however they are split', () => {
+    expect(runSeed(2013, 5)).toBe(runSeed(2013, 5));
+    expect(runSeed(2013, 5)).not.toBe(runSeed(2013, 6));
+    const env = riskEnvironment(maven);
+    const whole = riskBatch(maven, env, 2013, 0, 40);
+    const split = mergeTallies(riskBatch(maven, env, 2013, 0, 15), riskBatch(maven, env, 2013, 15, 25));
+    expect(split).toEqual(whole);
+    expect(opsRiskEstimate(maven, { runs: 40, env }).tally).toEqual(whole);
+  }, 60_000);
+
+  it('a design that cannot launch is lost in every run (risk = 100%, over the limit)', () => {
+    const blocked: Design = { ...maven, propellant_kg: 40_000 };
+    expect(evaluateDesign(blocked).blockers.length).toBeGreaterThan(0);
+    const e = opsRiskEstimate(blocked, { runs: 5 });
+    expect(e.tally).toEqual({ runs: 5, lost: 5, lostByPhase: { 'not-launched': 5 } });
+    expect(e.meter.used).toBe(1);
+    expect(e.meter.status).toBe('over');
+    expect(e.complete).toBe(true);
+  }, 60_000);
 });

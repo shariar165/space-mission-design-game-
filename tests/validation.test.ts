@@ -17,6 +17,8 @@ import { OPERATIONS } from '../src/engine/data';
 import { runOperations } from '../src/engine/ops/index';
 import { bodyConjunctions, perihelionJd, solarLongitude } from '../src/engine/ops/predictable';
 import { prepareOps } from '../src/engine/ops/timeline';
+import { opsRiskEstimate } from '../src/engine/ops/riskEstimate';
+import { riskMeter } from '../src/engine/risk';
 
 const TOLERANCE = 0.1;
 
@@ -294,15 +296,13 @@ describe('Mission operations — Mars conjunctions, Ls, loss rate', () => {
     expect(ok).toBe(true);
   });
 
-  it('info: Ops loss rate vs the Risk meter (hazards replace the base rates in Ops)', () => {
+  it('info: the Risk meter (Ops Monte Carlo) vs the single-card flight’s phase formula', () => {
     const maven = presetDesign('maven');
-    const env = prepareOps(maven);
-    const runs = 300;
-    let lost = 0;
-    for (let seed = 1; seed <= runs; seed++) if (!runOperations(maven, { seed, env }).debrief.completed) lost++;
-    info('MAVEN (ops)', `Prime-mission loss rate over ${runs} seeded Ops runs (safe choices) vs the Risk meter`,
-      `${((100 * lost) / runs).toFixed(1)}%`, `${(100 * env.ev.meters.risk.used).toFixed(1)}% (Risk meter)`, 'hazard rates and response failure chances');
-    expect(lost).toBeLessThan(runs);
+    const e = opsRiskEstimate(maven);
+    const formula = riskMeter(evaluateDesign(maven).details.phaseRisks).used;
+    info('MAVEN (ops)', `Risk meter: prime-mission loss rate over ${e.tally.runs} seeded Ops runs (safest responses, seed ${e.seed}) vs the single-card flight's phase formula`,
+      `${(100 * e.meter.used).toFixed(1)}% ± ${(100 * e.stdErr).toFixed(1)}`, `${(100 * formula).toFixed(1)}% (phase formula)`, 'hazard rates and response failure chances');
+    expect(e.tally.lost).toBeLessThan(e.tally.runs);
   }, 120_000);
 });
 
