@@ -1,10 +1,8 @@
 // @vitest-environment jsdom
 // Level map: unlocks and stars that persist (the Pack tests cover each level's shelf and the Jupiter lesson).
-import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
 import { App } from '../../src/ui/App';
-import { LevelBanner } from '../../src/ui/components/LevelCards';
-import { LEVELS } from '../../src/ui/levels';
 import './setup';
 
 const levelButton = (title: RegExp) => screen.getByRole('button', { name: title });
@@ -26,20 +24,4 @@ describe('Level map', () => {
     expect(screen.getByRole('button', { name: /^First Light/ }).textContent).toContain('First Light');
   });
 
-});
-
-describe('Level result banner', () => {
-  const moon1 = LEVELS[0]!;
-  it('with a star: Next level opens the next one', () => {
-    const onPlay = vi.fn();
-    render(<LevelBanner level={moon1} stars={2} onPlay={onPlay} onMap={() => undefined} onRetry={() => undefined} />);
-    expect(screen.getByText('Level complete!')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: /Next: Heavy Lifting/ }));
-    expect(onPlay).toHaveBeenCalledWith(LEVELS[1]);
-  });
-  it('with no star: try again, and no way forward yet', () => {
-    render(<LevelBanner level={moon1} stars={0} onPlay={() => undefined} onMap={() => undefined} onRetry={() => undefined} />);
-    expect(screen.getByText(/Try again!/)).toBeTruthy();
-    expect(screen.queryByRole('button', { name: /Next:/ })).toBeNull();
-  });
 });

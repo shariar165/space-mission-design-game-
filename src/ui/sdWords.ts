@@ -3,6 +3,8 @@
 import type { FailureEffect, OpsPhase } from '../engine/data';
 import type { ComingUpKind, ConsoleOutcome, FlyChip } from '../engine/ops/index';
 import type { DeckCard, PackBlockerCode, PartId } from '../engine/pack';
+import type { Hurt, ReportPanel, Saved } from '../engine/ops/report';
+import type { Category } from '../engine/scoring';
 import type { SDIconName } from './components/sd/SDIcon';
 import * as f from './format';
 
@@ -195,3 +197,112 @@ export function monthSpan(fromIso: string, toIso: string): string {
   const y = toIso.slice(0, 4);
   return m(fromIso) === m(toIso) ? `${m(fromIso)} ${y}` : `${m(fromIso)}–${m(toIso)} ${y}`;
 }
+
+// ---------------------------------------------------------------------------
+// Mission Report
+
+
+const hazardTitle = (type: string, title: string) => (DANGER_LOOK[type]?.title ?? title.toUpperCase());
+
+export interface PanelWords {
+  head: string;
+  text: string;
+}
+
+/** Caption for a comic panel. `label` gives a choice's short label, `title` a hazard's engine title. */
+export function panelWords(
+  p: ReportPanel,
+  ctx: { dest: string; rocket: string; label: (type: string, id: string) => string; title: (type: string) => string; autopilot: boolean; sent_Gbit: number },
+): PanelWords {
+  const day = `DAY ${f.num(p.day)}`;
+  switch (p.kind) {
+    case 'launch':
+      return { head: `${day} · LIFTOFF`, text: `Off the pad on an ${ctx.rocket}. The robot is on its own now.` };
+    case 'launch-failed':
+      return { head: `${day} · LAUNCH FAILED`, text: 'The rocket failed on launch day. Rockets are not perfect.' };
+    case 'not-launched':
+      return { head: `${day} · NOT LAUNCHED`, text: 'The craft never left the ground.' };
+    case 'hazard': {
+      const t = hazardTitle(p.hazardType!, ctx.title(p.hazardType!));
+      const label = ctx.label(p.hazardType!, p.optionId!);
+      const how = p.bad ? `It went wrong: ${RESULT_EFFECT_CHIP[p.effect ?? 'safe-mode'].toLowerCase()}.` : 'It worked.';
+      const who =
+        p.by === 'standing-order' ? `The robot followed its order: ${label}.` : p.by === 'fault-protection' ? `No order in time. The robot chose: ${label}.` : `You chose: ${label}.`;
+      return { head: `${day} · ${t}`, text: `${who} ${how}` };
+    }
+    case 'arrival':
+      return { head: `${day} · ARRIVE AT ${ctx.dest.toUpperCase()}`, text: `A long braking burn. ${ctx.dest} caught you.` };
+    case 'conjunction':
+      return {
+        head: `${day} · SUN IN THE WAY`,
+        text: `No radio for ${f.num(p.blackoutDays ?? 0)} days. ${ctx.autopilot ? 'The autopilot flew alone.' : 'The robot waited it out.'}`,
+      };
+    case 'lost':
+      return { head: `${day} · CONTACT LOST`, text: 'The robot went silent. Nobody heard it again.' };
+    case 'complete':
+      return { head: `${day} · MISSION COMPLETE`, text: `Science done: ${f.gbit(ctx.sent_Gbit)} sent home.` };
+  }
+}
+
+export const PANEL_SOUND: Partial<Record<string, string>> = {
+  'solar-storm': 'ZZZT!',
+  'mars-dust-storm': 'WHOOOSH',
+  debris: 'PING!',
+  'reaction-wheel': 'GRRRK',
+  'memory-corruption': 'BEEP?',
+  'insertion-anomaly': 'FWUMP',
+};
+
+export const STAR_WORDS = (dest: string) => [`REACHED ${dest.toUpperCase()}`, 'SCIENCE GOAL', 'MARGINS IN THE BAND'] as const;
+
+const CATEGORY_WORD: Record<Category, string> = {
+  science: 'science sent home',
+  success: 'mission phases',
+  budget: 'the budget',
+  deltaV: 'the fuel margin',
+  power: 'the power margin',
+  mass: 'the weight margin',
+  crisis: 'crisis handling',
+};
+export const CATEGORY_NAME: Record<Category, string> = {
+  science: 'SCIENCE',
+  success: 'SUCCESS',
+  budget: 'BUDGET',
+  deltaV: 'Δv MARGIN',
+  power: 'POWER MARGIN',
+  mass: 'MASS MARGIN',
+  crisis: 'CRISIS HANDLING',
+};
+
+export function savedWords(v: Saved, ctx: { label: (type: string, id: string) => string; title: (type: string) => string }): { strong: string; rest: string } {
+  switch (v.code) {
+    case 'part':
+      return { strong: `The ${PART_LOOK[v.part].name.toLowerCase()}`, rest: `. It made the ${hazardTitle(v.hazardType, ctx.title(v.hazardType)).toLowerCase()} far less dangerous.` };
+    case 'autopilot':
+      return { strong: 'The autopilot chip', rest: `. It answered the ${hazardTitle(v.hazardType, ctx.title(v.hazardType)).toLowerCase()} on its own.` };
+    case 'choice':
+      return { strong: `Choosing “${ctx.label(v.hazardType, v.optionId).toLowerCase()}”`, rest: ` when the ${hazardTitle(v.hazardType, ctx.title(v.hazardType)).toLowerCase()} came.` };
+    case 'quiet':
+      return { strong: 'Good planning', rest: '. Nothing went wrong this time.' };
+  }
+}
+
+export function hurtWords(v: Hurt, ctx: { label: (type: string, id: string) => string; title: (type: string) => string }): { strong: string; rest: string } {
+  switch (v.code) {
+    case 'bad-outcome':
+      return {
+        strong: `“${ctx.label(v.hazardType, v.optionId).toLowerCase()}”`,
+        rest: ` in the ${hazardTitle(v.hazardType, ctx.title(v.hazardType)).toLowerCase()}: ${RESULT_EFFECT_CHIP[v.effect].toLowerCase()}.`,
+      };
+    case 'category':
+      return { strong: CATEGORY_WORD[v.category], rest: ` scored only ${f.num(v.score)} out of 100.` };
+    case 'nothing':
+      return { strong: 'Nothing big', rest: '. Every score was fair or better.' };
+  }
+}
+
+export const REPORT_STAMP: Record<'complete' | 'lost' | 'not-launched', { word: string[]; color: string }> = {
+  complete: { word: ['MISSION', 'COMPLETE'], color: 'var(--sd-ok)' },
+  lost: { word: ['ROBOT', 'LOST'], color: 'var(--sd-red)' },
+  'not-launched': { word: ['NOT', 'LAUNCHED'], color: 'var(--sd-red)' },
+};

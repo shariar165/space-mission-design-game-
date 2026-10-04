@@ -7,6 +7,7 @@ import './styles/cadet.css';
 import './styles/ops.css';
 import './styles/sd-fly.css';
 import './styles/sd-pack.css';
+import './styles/sd-report.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

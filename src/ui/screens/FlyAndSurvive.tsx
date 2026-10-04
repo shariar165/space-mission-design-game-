@@ -5,11 +5,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { DESTINATIONS, HAZARDS, PARTS } from '../../engine/data';
 import { flightMap, ghostFor, pathAhead } from '../../engine/flightMap';
-import { comingUp, eclipseCard, flyCard, flyTiles, FLY_RULES, operationsDebrief, outcomeIn_s, type FlyChip, type OpsState } from '../../engine/ops/index';
+import { comingUp, eclipseCard, flyCard, flyTiles, FLY_RULES, outcomeIn_s, type FlyChip, type OpsState } from '../../engine/ops/index';
 import type { Design, Sourced } from '../../engine/types';
 import { SPEED_OF_LIGHT } from '../../engine/constants';
 import { BookCall } from '../components/ops/BookCall';
-import { BlackoutPanel, CommandQueue, ExtensionDecision, NoticeToast, OpsSummary, SafeModePanel } from '../components/ops/OpsPanels';
+import { BlackoutPanel, CommandQueue, ExtensionDecision, NoticeToast, SafeModePanel } from '../components/ops/OpsPanels';
 import { PowerDial } from '../components/ops/PowerDial';
 import { CrtMap } from '../components/fly/CrtMap';
 import { DangerCard, type CardView, type ChipView, type ChoiceView } from '../components/fly/DangerCard';
@@ -76,7 +76,7 @@ export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome,
   const map = useMemo(() => (ev ? flightMap(design, ev) : undefined), [design, ev]);
   const ghost = useMemo(() => (ev ? ghostFor(design, ev) : undefined), [design, ev]);
   const over = state !== undefined && (state.status === 'complete' || state.status === 'lost' || state.status === 'not-launched');
-  const debrief = useMemo(() => (state && over ? operationsDebrief(state) : undefined), [state, over]);
+  const debrief = over;
   const ringPhase = useCycle(RING_MS, !!ops.transit && !still);
 
   const tiles = state && view ? flyTiles(state, view) : undefined;
@@ -450,8 +450,12 @@ export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome,
         </div>
       )}
       {debrief && (
-        <div className="fly-drawer wide">
-          <OpsSummary debrief={debrief} destName={dest.name} onExit={() => onDone(state)} onRestart={ops.restart} />
+        <div className="fly-end" role="dialog" aria-label="Mission over">
+          <span className="fly-end-k">{state.status === 'lost' ? 'CONTACT LOST' : state.status === 'not-launched' ? 'NOT LAUNCHED' : 'PRIME MISSION COMPLETE'}</span>
+          <span className="fly-end-v">{state.status === 'lost' ? 'THE ROBOT WENT SILENT.' : 'THE TELETYPE IS PRINTING YOUR REPORT.'}</span>
+          <button type="button" className="sd-cta" onClick={() => onDone(state)}>
+            SEE MISSION REPORT ▸
+          </button>
         </div>
       )}
       {ops.notice && <NoticeToast notice={ops.notice} onClose={ops.dismissNotice} />}

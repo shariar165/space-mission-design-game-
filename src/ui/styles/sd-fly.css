@@ -229,3 +229,18 @@
 .fly-eq-v { font: 400 18px/1.15 var(--sd-crt-font); color: var(--sd-amber); }
 .fly-eq ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font: 400 12px/1.3 var(--sd-mono); }
 .fly-eq li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: center; }
+
+/* Mission over: hand over to the Mission Report */
+.fly-end { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 6; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 22px 34px; background: rgba(5, 12, 7, 0.92); border: 1px solid var(--sd-crt-mid); border-radius: 8px; box-shadow: 0 0 30px rgba(140, 255, 158, 0.15); text-align: center; }
+.fly-end-k { font: 400 40px/1 var(--sd-crt-font); color: var(--sd-amber); text-shadow: var(--sd-glow-amber); }
+.fly-end-v { font: 400 22px/1.1 var(--sd-crt-font); color: var(--sd-crt-hi); }
+
+/* The console's panels inside Fly & Survive drawers: laid out by the drawer, painted in the Signal Delay palette. */
+.fly .ops-panel, .fly .ops-ext, .fly .ops-summary { background: var(--sd-panel); border: 1px solid var(--sd-line); border-radius: 8px; box-shadow: var(--sd-shadow-card); color: var(--sd-ink-2); font-family: var(--sd-body); }
+.fly-drawer > .ops-panel, .fly-drawer > .ops-ext, .fly-drawer > .ops-summary, .fly-drawer > section { position: static; inset: auto; width: auto; max-height: none; }
+.fly .ops-panel-title, .fly .ops-ext h2, .fly .ops-summary h2 { font-family: var(--sd-display); letter-spacing: 0.04em; color: var(--sd-ink); }
+.fly .ops-label { font-family: var(--sd-mono); color: var(--sd-ink-3); }
+.fly .ops-blackout { border-color: var(--sd-red); }
+.fly .ops-cmd, .fly .ops-warnbox { background: var(--sd-chassis); border-color: var(--sd-line); }
+.fly .btn, .fly .ops-close { font-family: var(--sd-mono); }
+.fly .cta { background: var(--sd-amber); color: var(--sd-paper-ink); border-radius: 5px; box-shadow: 0 4px 0 var(--sd-amber-edge); font-family: var(--sd-display); letter-spacing: 0.08em; }

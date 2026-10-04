@@ -7,12 +7,13 @@ import { evaluateDesign } from '../engine/index';
 import { operationsDebrief, type OpsState } from '../engine/ops/index';
 import type { Design, DestinationId } from '../engine/types';
 import { TopBar, type Mode, type Step } from './components/TopBar';
-import { levelById, loadProgress, saveProgress, shelfOf, withStars, type Level, type Progress } from './levels';
+import { levelById, loadProgress, nextLevel, saveProgress, shelfOf, withStars, type Level, type Progress } from './levels';
 import { BuildBay } from './screens/BuildBay';
 import { Pack } from './screens/Pack';
 import { shelfFor } from '../engine/pack';
 import { FlyAndSurvive } from './screens/FlyAndSurvive';
 import { LevelMap } from './screens/LevelMap';
+import { MissionReport } from './screens/MissionReport';
 import { RescueCaseView, RescueSelect } from './screens/Rescue';
 import type { RescueCaseId } from '../engine/rescue';
 import { defaultMissionName, starterDesign, today } from './starters';
@@ -61,7 +62,7 @@ export function App() {
   /** The craft being flown, pinned at launch (a mode switch only changes what is shown). */
   const [flyDesign, setFlyDesign] = useState<Design>();
   /** The finished mission, for the Mission Report. */
-  const [, setFlown] = useState<OpsState>();
+  const [flown, setFlown] = useState<OpsState>();
 
   const cadetMode = mode === 'cadet';
   const level = levelById(cadet.levelId);
@@ -124,13 +125,20 @@ export function App() {
   const finish = (s: OpsState) => {
     if (cadetMode) award(operationsDebrief(s).stars);
     setFlown(s);
-    setSeed(fixedSeed ?? newSeed());
-    setStep(cadetMode ? 'map' : 'build');
+    setStep('report');
   };
+
+  /** Fly again: back to packing (Cadet) or the Build Bay (Engineer), with a new seed. */
+  const flyAgain = () => {
+    setSeed(fixedSeed ?? newSeed());
+    setFlown(undefined);
+    setStep('build');
+  };
+  const next = level && cadetMode && (progress[level.id] ?? 0) >= 1 ? nextLevel(level.id) : undefined;
 
   return (
     <div className={`app${step === 'build' && !cadetMode ? ' fixed' : ''}${cadetMode ? ' is-cadet' : ''}${step === 'fly' ? ' is-fly' : ''}`}>
-      {step !== 'fly' && !(step === 'build' && cadetMode) && (
+      {step !== 'fly' && step !== 'report' && !(step === 'build' && cadetMode) && (
         <TopBar
           step={step}
           mode={mode}
@@ -186,6 +194,22 @@ export function App() {
           missionName={missionName}
           onHome={() => setStep(cadetMode ? 'map' : 'build')}
           onDone={finish}
+        />
+      )}
+      {step === 'report' && flown && flyDesign && (
+        <MissionReport
+          state={flown}
+          design={flyDesign}
+          mode={mode}
+          onMode={changeMode}
+          missionName={missionName}
+          {...(next ? { next: { title: next.title, onPlay: () => playLevel(next) } } : {})}
+          onFlyAgain={flyAgain}
+          onHome={() => {
+            setFlown(undefined);
+            setStep(cadetMode ? 'map' : 'build');
+          }}
+          homeLabel={cadetMode ? 'MISSION MAP' : 'BUILD BAY'}
         />
       )}
     </div>
