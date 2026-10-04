@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { buildCadetDesign, CADET_STEPS, defaultChoices, type CadetChoices, type CadetStep } from '../engine/cadet';
 import type { CrisisCard, CrisisOption } from '../engine/crisis';
 import { crisisOrders, evaluateDesign, previewCrisis, simulateMission, standingOrderPolicy, type SimulationResult } from '../engine/index';
+import { opsAvailable } from '../engine/ops/console';
 import type { Design, DestinationId } from '../engine/types';
 import { LevelBanner, LevelGoal } from './components/LevelCards';
 import { TopBar, type Mode, type Step } from './components/TopBar';
@@ -16,6 +17,7 @@ import { CrisisScreen } from './screens/CrisisScreen';
 import { Debrief } from './screens/Debrief';
 import { Flight } from './screens/Flight';
 import { LevelMap } from './screens/LevelMap';
+import { OpsConsole } from './screens/OpsConsole';
 import { RescueCaseView, RescueSelect } from './screens/Rescue';
 import type { RescueCaseId } from '../engine/rescue';
 import { defaultMissionName, starterDesign, today } from './starters';
@@ -67,6 +69,8 @@ export function App() {
   const [flightCrisis, setFlightCrisis] = useState<{ card: CrisisCard; options: CrisisOption[] }>();
   const [progress, setProgress] = useState<Progress>(loadProgress);
   const [rescueId, setRescueId] = useState<RescueCaseId>();
+  /** The craft flown in Operations, pinned when the console opens (a mode switch only changes the layer). */
+  const [opsDesign, setOpsDesign] = useState<Design>();
 
   const cadetMode = mode === 'cadet';
   const level = levelById(cadet.levelId);
@@ -76,6 +80,8 @@ export function App() {
   const ev = useMemo(() => evaluateDesign(active), [active]);
   const preview = useMemo(() => (step === 'crisis' ? previewCrisis(active, seed) : undefined), [step, active, seed]);
   const withOrders = level?.orders ?? true;
+  /** Mission operations: from the Mars level on in Cadet (light delay is its lesson), any flyable design in Engineer. */
+  const canOperate = opsAvailable(active, ev) && (!cadetMode || (level?.orders ?? true));
   const orderList = useMemo(() => (cadetMode && withOrders ? crisisOrders(cadetDesign) : []), [cadetMode, withOrders, cadetDesign]);
 
   useEffect(() => {
@@ -230,8 +236,19 @@ export function App() {
             seedFromUrl={fixedSeed !== undefined}
             onRetry={retry}
             onEngineer={() => changeMode('engineer')}
+            {...(canOperate
+              ? {
+                  onOps: () => {
+                    setOpsDesign(active);
+                    setStep('ops');
+                  },
+                }
+              : {})}
           />
         </>
+      )}
+      {step === 'ops' && opsDesign && (
+        <OpsConsole design={opsDesign} seed={seed} engineer={mode === 'engineer'} missionName={missionName} onExit={() => setStep(sim ? 'debrief' : 'build')} />
       )}
     </div>
   );

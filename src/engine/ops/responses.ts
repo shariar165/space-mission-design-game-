@@ -17,17 +17,24 @@ export interface Spare {
 export const isFree = (o: HazardOption): boolean =>
   !o.cost.deltaV_ms?.value && !o.cost.budget_M?.value && !o.cost.scienceDays?.value && o.requires?.powerMargin === undefined && !o.oneTime;
 
-/** Options the spare margins can pay for. A zero cost is always payable (decision #24), so the free option stays. */
-export function affordableResponses(options: HazardOption[], spare: Spare, oneTimeUsed: string[] = []): HazardOption[] {
+/** What keeps a response from being offered: a margin it cannot pay for, or a one-time option already used. */
+export type ResponseBlocker = 'one-time' | 'deltaV' | 'budget' | 'scienceDays' | 'power';
+
+/** Why an option cannot be paid for now (empty: it can). A zero cost is always payable (decision #24). */
+export function optionBlockers(o: HazardOption, spare: Spare, oneTimeUsed: string[] = []): ResponseBlocker[] {
   const payable = (cost: number, have: number) => cost <= 0 || cost <= have;
-  return options.filter(
-    (o) =>
-      !(o.oneTime && oneTimeUsed.includes(o.id)) &&
-      payable(o.cost.deltaV_ms?.value ?? 0, spare.deltaV_ms) &&
-      payable(o.cost.budget_M?.value ?? 0, spare.budget_M) &&
-      payable(o.cost.scienceDays?.value ?? 0, spare.scienceDays) &&
-      (o.requires?.powerMargin === undefined || o.requires.powerMargin.value <= spare.powerMargin),
-  );
+  const out: ResponseBlocker[] = [];
+  if (o.oneTime && oneTimeUsed.includes(o.id)) out.push('one-time');
+  if (!payable(o.cost.deltaV_ms?.value ?? 0, spare.deltaV_ms)) out.push('deltaV');
+  if (!payable(o.cost.budget_M?.value ?? 0, spare.budget_M)) out.push('budget');
+  if (!payable(o.cost.scienceDays?.value ?? 0, spare.scienceDays)) out.push('scienceDays');
+  if (o.requires?.powerMargin !== undefined && o.requires.powerMargin.value > spare.powerMargin) out.push('power');
+  return out;
+}
+
+/** Options the spare margins can pay for, so the free option always stays. */
+export function affordableResponses(options: HazardOption[], spare: Spare, oneTimeUsed: string[] = []): HazardOption[] {
+  return options.filter((o) => optionBlockers(o, spare, oneTimeUsed).length === 0);
 }
 
 /** The safe choice: the lowest failure chance. */

@@ -126,20 +126,32 @@ export function flightFrames(
   if (arrival <= opts.endDay) days.add(arrival);
   if (opts.crisisDay !== undefined && opts.crisisDay <= opts.endDay) days.add(opts.crisisDay);
   const last = tl[tl.length - 1]!.phase;
-  return [...days]
-    .sort((a, b2) => a - b2)
-    .map((day) => {
-      const s = signalDelay(design, day, ev);
-      return {
-        day,
-        phase: phaseOnDay(tl, day) ?? last,
-        craft: craftPosition(design, day, ev),
-        earth: b.earth(day),
-        dest: b.dest(day),
-        earthDistance_m: s.distance_m,
-        oneWay_s: s.oneWay_s,
-      };
-    });
+  return [...days].sort((a, b2) => a - b2).map((day) => frameAt(design, ev, tl, b, last, day));
+}
+
+function frameAt(design: Design, ev: FullEvaluation, tl: PhaseWindow[], b: ReturnType<typeof bodies>, last: Phase, day: number): FlightFrame {
+  const s = signalDelay(design, day, ev);
+  return {
+    day,
+    phase: phaseOnDay(tl, day) ?? last,
+    craft: craftPosition(design, day, ev),
+    earth: b.earth(day),
+    dest: b.dest(day),
+    earthDistance_m: s.distance_m,
+    oneWay_s: s.oneWay_s,
+  };
+}
+
+/** One frame on any mission day (fractional), for the Operations Console's live map. */
+export function frameOnDay(design: Design, day: number, ev: FullEvaluation = evaluateDesign(design)): FlightFrame {
+  const tl = missionTimeline(ev);
+  return frameAt(design, ev, tl, bodies(design, ev), tl[tl.length - 1]!.phase, day);
+}
+
+/** The craft's path flown so far: n + 1 points from launch to the day (or to arrival, after it). */
+export function trailTo(design: Design, day: number, ev: FullEvaluation = evaluateDesign(design), n = 48): XY[] {
+  const end = Math.max(0, Math.min(day, ev.trajectory.flightDays));
+  return Array.from({ length: n + 1 }, (_, i) => craftPosition(design, (end * i) / n, ev));
 }
 
 export interface FlightMapGeometry {

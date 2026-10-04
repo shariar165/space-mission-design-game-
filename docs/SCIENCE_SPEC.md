@@ -703,6 +703,24 @@ The UI (`src/ui/`, React + Vite) follows the Claude Design mockups for Build Bay
     - It is turned about the Sun to start beside the player, which keeps its shape and Sun distances, and is labelled so.
     - Other destinations have no ghost until a sourced preset exists (rule 5).
 
+**Operations Console (both modes).** Built from the Claude Design mockups `Operations Console.dc.html`, `Ops Console Desktop.dc.html` and `Ops Console Mobile.dc.html` (copies in `docs/design/`). It follows rule 1: every number comes from `consoleView`, `powerPlanPreview` and `dsnOptions` (`src/engine/ops/console.ts`). Cadet reads sentences; Engineer adds the mission elapsed time, distances, the Sun–Earth–probe angle, each gauge's equation and the ⓘ of its inputs.
+
+16. **Console.** Opened from the Debrief ("Run mission operations"): in Cadet from the Mars level on (light delay is its lesson), in Engineer for any design that can launch. It flies the same craft, pinned when the console opens, with the Debrief's seed.
+    - The layout has a clock row (day, phase, status chip, one-way light time, Pause / 1× / 10× / 100× = 0 / 1 / 10 / 100 mission days a real minute, "Next event").
+    - The map reuses the flight map, with the real-mission ghost and light pulses along the Earth–craft line. Resources (power today, fuel, recorder, budget reserve) use rule 3 statuses.
+    - The Upcoming strip shows the next 60 days (game rule): conjunctions and eclipse seasons as bands; planned burns (not daily upkeep), phases, marked passes and the first bookable day as points.
+    - "Next event" stops at commands arriving, phases, planned burns, conjunction warnings and edges, eclipse seasons, science resuming and the end of the prime mission. It never stops at a hazard Earth has not seen yet (the clock stops by itself when one becomes known).
+    - Keyboard: Space pause, 1/2/3 speed, N next event, Esc closes a side panel.
+17. **Hazard alert.** The clock auto-pauses when a decision opens. The alert shows the hazard, its real history with the "to verify" badge (from `isGameEstimate`), and **every** response of the hazard type. The ones the margins could not pay for when Earth learned of it are shown disabled, with what is missing (`optionBlockers`). Each card shows its costs and a five-segment risk bar (failure-chance bounds 0.5 / 1 / 3 / 10%, game rule). The craft's fallback (standing order or fault protection) is tagged.
+    - Send queues the response once the team has reacted, then the command crosses space with a live countdown (time runs fast until it arrives). The result card shows the outcome when it lands.
+    - "Let the craft decide" leaves the hazard to the fallback at the deadline. During a conjunction nothing can be sent, so the alert says so and the clock may run.
+18. **Commands and calls home.** The power plan is a dial with two handles (science duty, heater share) and a radio switch. `powerPlanPreview` gives today's margin, the battery's depth of discharge in the coming eclipse season against the 30% limit, photos per day and a cold warning. Sending it is a command with light delay.
+    - "Book a call home" offers the small (34 m) or big (70 m) dish for one pass, with the data, photos and the extra aperture fee. It is ground-side (no light delay) but booked a lead time ahead; a refused day names the first free day.
+    - The command queue shows commands in flight (countdown, progress) and the latest carried out or too late. It warns 14 days (game rule) before a conjunction.
+19. **Blackout and safe mode.** In a conjunction the console shows "Radio blackout · day x of n", the day contact returns, and "Skip ahead". Send buttons are disabled. Safe mode shows the instruments off and the day science resumes: the engine resumes it by itself, so there is no "Recover" button.
+20. **Extension and Ops debrief.** At the end of the prime mission the console offers End / +1 yr / +3 yr cards from the extension decision, with the reasons a blocked one cannot be flown. The Ops debrief shows the prime score and stars from `operationsDebrief`, with the extension reported separately.
+    - **Not shown, because the engine does not model it:** a failure chance for an extension, DSN station names (DSS-xx), a "send all at the next pass" queue (each command leaves at once and pays the light delay), and the Bangla text (rule 7).
+
 ## Decision log
 
 | # | Date | Decision |
@@ -746,3 +764,7 @@ The UI (`src/ui/`, React + Vite) follows the Claude Design mockups for Build Bay
 | 37 | Oct 4, 2026 | **Stars and the Ops debrief score power on the worst day** (the Power meter), not on the last science day, so the band is judged on the margin the player sizes and sees. |
 | 38 | Oct 4, 2026 | **Moon rideshare:** LCROSS's secondary slot on LRO's Atlas V 401 (June 18, 2009). 1000 kg fuelled (NTRS 20100028203); LRO 1,850 kg (NASA Science). The limit is min(slot, m_LV(C3) − m_primary), and the price is a mass-proportional share (game rule). The user first chose "capacity − LRO", then switched to the sourced slot once the measured margins showed it alone puts Moon crafts in the band (16–41% vs 71–80%). No smaller rocket is invented. |
 | 39 | Oct 4, 2026 | **Fact sheets:** Venus, Jupiter and Moon values are copied from Internet Archive copies (Sept. 28 – Oct. 3, 2026) of the NSSDC fact sheets, because the live site refused connections; each source says so. The Moon pole stays flagged (not on the Moon fact sheet). |
+| 40 | Oct 4, 2026 | **Operations Console in both modes** (UI rules 16–20), from the Claude Design mockups. Cadet opens it from the Mars level on; Engineer opens it for any design that can launch. The view model is engine code (`ops/console.ts`) with display game rules: a 60-day Upcoming window, a 14-day conjunction warning, risk-bar bounds of 0.5 / 1 / 3 / 10% and an 8-event feed. |
+| 41 | Oct 4, 2026 | **Power dial = two handles + a radio switch.** The mockup's radio slice would need a radio power level the engine does not model, so the power plan keeps the radio on/off and no physics was added. |
+| 42 | Oct 4, 2026 | **Safe mode resumes by itself** (`pausedUntil`); the mockup's "Recover" button is replaced by the day science resumes. |
+| 43 | Oct 4, 2026 | **Ops sessions resume:** the action log and mission time are kept in the browser, and `replayOperations(design, opts, actions, until)` rebuilds the mission to that time. |

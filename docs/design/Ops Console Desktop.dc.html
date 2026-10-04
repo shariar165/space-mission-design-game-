@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0;background:#0A1430;font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}a{color:#FF9F57}a:hover{color:#FFB880}</style>
+</helmet>
+<div data-screen-label="Ops Console · Desktop" style="--bg:#0A1430;--panel:#0E1B3B;--panel2:#13244A;--line:rgba(143,186,255,0.14);--line2:rgba(143,186,255,0.28);--grid:rgba(120,170,255,0.10);--grid2:rgba(120,170,255,0.045);--ink:#EAF0FA;--ink2:#A9B8D6;--ink3:#8193B8;--bp:#8EC5FF;--acc:#FF9F57;--accInk:#1C1006;--ok:#3CD3C1;--warn:#F2C744;--bad:#FF6B8A;--mars:#D9714E;width:1440px;height:960px;background:var(--bg);color:var(--ink);font-family:Inter,sans-serif;display:grid;grid-template-rows:64px 68px minmax(0,1fr) 176px;position:relative;overflow:hidden">
+
+<header style="display:flex;align-items:center;gap:20px;padding:0 20px;border-bottom:1px solid var(--line);background:var(--panel)">
+<div style="display:flex;align-items:center;gap:12px;min-width:250px">
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="5" style="fill:var(--bp)"></circle><ellipse cx="16" cy="16" rx="14" ry="7" transform="rotate(-25 16 16)" style="stroke:var(--bp)" stroke-width="1.5"></ellipse><rect x="25" y="6" width="5" height="5" transform="rotate(45 27.5 8.5)" style="fill:var(--acc)"></rect></svg>
+<div style="display:flex;flex-direction:column;gap:2px"><div style="font:600 15px/1 'Space Grotesk',sans-serif">Mission Operations</div><div style="font:500 10.5px/1 'JetBrains Mono',monospace;color:var(--ink2);letter-spacing:0.06em">RED ATMOSPHERE-1 · MARS ORBITER</div></div>
+</div>
+<nav style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px">
+<div style="display:flex;align-items:center;gap:8px;height:36px;padding:0 12px 0 6px;color:var(--ink2)"><span style="width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:rgba(60,211,193,0.16);color:var(--ok)"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2.5 6.2l2.2 2.2L9.5 3.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><span style="font:500 13px/1 'Space Grotesk',sans-serif">Mission</span></div>
+<span style="width:20px;height:1px;background:var(--line2)"></span>
+<div style="display:flex;align-items:center;gap:8px;height:36px;padding:0 12px 0 6px;color:var(--ink2)"><span style="width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:rgba(60,211,193,0.16);color:var(--ok)"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2.5 6.2l2.2 2.2L9.5 3.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><span style="font:500 13px/1 'Space Grotesk',sans-serif">Build</span></div>
+<span style="width:20px;height:1px;background:var(--line2)"></span>
+<div style="display:flex;align-items:center;gap:8px;height:36px;padding:0 12px 0 6px;color:var(--ink2)"><span style="width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:rgba(60,211,193,0.16);color:var(--ok)"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2.5 6.2l2.2 2.2L9.5 3.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><span style="font:500 13px/1 'Space Grotesk',sans-serif">Window</span></div>
+<span style="width:20px;height:1px;background:var(--line2)"></span>
+<div style="display:flex;align-items:center;gap:8px;height:36px;padding:0 16px 0 6px;border-radius:999px;background:rgba(255,159,87,0.14);border:1px solid rgba(255,159,87,0.45)"><span style="width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:var(--acc);color:var(--accInk);font:600 12px/1 'JetBrains Mono',monospace">4</span><span style="font:600 13px/1 'Space Grotesk',sans-serif">Operate</span></div>
+<span style="width:20px;height:1px;background:var(--line2)"></span>
+<div style="display:flex;align-items:center;gap:8px;height:36px;padding:0 12px 0 6px;color:var(--ink3)"><span style="width:24px;height:24px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line2);font:500 12px/1 'JetBrains Mono',monospace">5</span><span style="font:500 13px/1 'Space Grotesk',sans-serif">Debrief</span></div>
+</nav>
+<div style="display:flex;align-items:center;gap:10px;min-width:250px;justify-content:flex-end">
+<div style="display:flex;padding:3px;border-radius:999px;border:1px solid var(--line2)"><span style="height:30px;padding:0 12px;border-radius:999px;display:grid;place-items:center;background:var(--panel2);font:600 12px/1 Inter,sans-serif;box-shadow:inset 0 0 0 1px var(--line2)">EN</span><span style="height:30px;padding:0 12px;border-radius:999px;display:grid;place-items:center;color:var(--ink2);font:500 13px/1 'Hind Siliguri',sans-serif">বাংলা</span></div>
+<div style="display:flex;padding:3px;border-radius:999px;border:1px solid var(--line2)">
+<button onClick="{{ setCadet }}" style="height:30px;padding:0 12px;border-radius:999px;border:none;background:{{ mCadet.bg }};box-shadow:{{ mCadet.sh }};color:{{ mCadet.c }};font:600 12px/1 Inter,sans-serif;cursor:pointer">Cadet</button>
+<button onClick="{{ setEngineer }}" style="height:30px;padding:0 12px;border-radius:999px;border:none;background:{{ mEng.bg }};box-shadow:{{ mEng.sh }};color:{{ mEng.c }};font:600 12px/1 Inter,sans-serif;cursor:pointer">Engineer</button>
+</div>
+<span style="width:36px;height:36px;border-radius:50%;border:1px solid var(--line2);display:grid;place-items:center"><svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="none" style="stroke:var(--ink2)" stroke-width="1.5"></circle><path d="M8 2a6 6 0 0 1 0 12z" style="fill:var(--ink2)"></path></svg></span>
+</div>
+</header>
+
+<div style="display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:24px;padding:0 20px;border-bottom:1px solid var(--line);background:var(--bg)">
+<div style="display:flex;align-items:center;gap:16px;min-width:0">
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;align-items:baseline;gap:10px"><span style="font:600 28px/1 'Space Grotesk',sans-serif;letter-spacing:-0.01em">Day {{ d.day }}</span><span style="font:500 16px/1 'Space Grotesk',sans-serif;color:var(--ink2)">· {{ d.phase }}</span></div>
+<sc-if value="{{ cadet }}" hint-placeholder-val="{{ true }}"><div style="font:13px/1 Inter,sans-serif;color:var(--ink3)">{{ d.sub }}</div></sc-if>
+<sc-if value="{{ eng }}" hint-placeholder-val="{{ false }}"><div style="font:500 11px/1 'JetBrains Mono',monospace;color:var(--ink3);letter-spacing:0.04em">{{ d.met }}</div></sc-if>
+</div>
+<span style="display:inline-flex;align-items:center;gap:7px;height:28px;padding:0 10px;border-radius:7px;font:600 10.5px/1 'JetBrains Mono',monospace;letter-spacing:0.06em;color:{{ chip.c }};background:{{ chip.bg }};border:1px solid {{ chip.bd }}"><span style="width:7px;height:7px;border-radius:50%;background:{{ chip.c }}"></span>{{ d.chip }}</span>
+</div>
+<div style="display:flex;align-items:center;gap:14px;padding:9px 16px;border-radius:14px;border:1px solid var(--line);background:var(--panel)">
+<sc-if value="{{ radioOn }}" hint-placeholder-val="{{ true }}"><span style="color:var(--bp);display:grid"><svg width="22" height="22" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="11" r="1.8" fill="currentColor"></circle><path d="M6.5 7.5a5 5 0 0 0 0 7M13.5 7.5a5 5 0 0 1 0 7M4 5a8.5 8.5 0 0 0 0 12M16 5a8.5 8.5 0 0 1 0 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></svg></span></sc-if>
+<sc-if value="{{ radioOff }}" hint-placeholder-val="{{ false }}"><span style="color:var(--bad);display:grid"><svg width="22" height="22" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="11" r="1.8" fill="currentColor"></circle><path d="M6.5 7.5a5 5 0 0 0 0 7M13.5 7.5a5 5 0 0 1 0 7M4 5a8.5 8.5 0 0 0 0 12M16 5a8.5 8.5 0 0 1 0 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.5"></path><path d="M3 3l14 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg></span></sc-if>
+<div style="display:flex;flex-direction:column;gap:5px"><span style="font:500 10px/1 'JetBrains Mono',monospace;color:var(--ink3);letter-spacing:0.1em">SIGNAL DELAY · ONE WAY</span><span style="font:500 19px/1 'JetBrains Mono',monospace">{{ d.owlt }}</span></div>
+<sc-if value="{{ cadet }}" hint-placeholder-val="{{ true }}"><span style="max-width:210px;font:13px/1.35 Inter,sans-serif;color:var(--ink2)">{{ d.signalC }}</span></sc-if>
+<sc-if value="{{ eng }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:5px;padding-left:14px;border-left:1px solid var(--line);font:500 11.5px/1 'JetBrains Mono',monospace;color:var(--ink2)"><span>Δ⊕ {{ d.range }}</span><span>{{ d.sep }} · r☉ {{ d.sunR }}</span></div></sc-if>
+</div>
+<div style="display:flex;align-items:center;gap:12px;justify-content:flex-end">
+<sc-if value="{{ locked }}" hint-placeholder-val="{{ false }}"><span style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><span style="font:600 10.5px/1 'JetBrains Mono',monospace;letter-spacing:0.08em;color:var(--warn)">AUTO-PAUSED</span><span style="font:12.5px/1 Inter,sans-serif;color:var(--ink2)">Time stops while you decide</span></span></sc-if>
+<div style="display:flex;padding:3px;border-radius:999px;border:1px solid var(--line2);background:var(--panel);opacity:{{ speedOp }}">
+<sc-for list="{{ speeds }}" as="s" hint-placeholder-count="4">
+<button onClick="{{ s.set }}" title="{{ s.title }}" style="min-width:54px;height:38px;padding:0 12px;border:none;border-radius:999px;background:{{ s.bg }};box-shadow:{{ s.sh }};color:{{ s.c }};font:600 13px/1 'JetBrains Mono',monospace;display:grid;place-items:center;cursor:{{ s.cur }}">
+<sc-if value="{{ s.isPause }}" hint-placeholder-val="{{ false }}"><svg width="12" height="12" viewBox="0 0 12 12"><rect x="2" y="1.5" width="3" height="9" rx="1" fill="currentColor"></rect><rect x="7" y="1.5" width="3" height="9" rx="1" fill="currentColor"></rect></svg></sc-if>
+<sc-if value="{{ s.isRate }}" hint-placeholder-val="{{ true }}"><span>{{ s.l }}</span></sc-if>
+</button>
+</sc-for>
+</div>
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:minmax(0,1fr) 368px;min-height:0">
+<main style="position:relative;min-width:0;overflow:hidden;background:var(--bg);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px),linear-gradient(var(--grid2) 1px,transparent 1px),linear-gradient(90deg,var(--grid2) 1px,transparent 1px);background-size:120px 120px,120px 120px,24px 24px,24px 24px;background-position:-1px -1px">
+<div style="position:absolute;inset:0;opacity:{{ mapOp }}">
+<svg viewBox="0 0 1080 690" width="100%" height="100%" style="position:absolute;inset:0" fill="none">
+<g transform="translate(0 -18)">
+<circle cx="520" cy="330" r="259" style="stroke:var(--mars)" stroke-width="1" opacity="0.55"></circle>
+<circle cx="520" cy="330" r="170" style="stroke:var(--bp)" stroke-width="1" opacity="0.45"></circle>
+<circle cx="520" cy="330" r="36" style="fill:var(--warn)" opacity="0.07"></circle>
+<circle cx="520" cy="330" r="22" style="fill:var(--warn)" opacity="0.14"></circle>
+<circle cx="520" cy="330" r="12" style="fill:var(--warn)"></circle>
+<text x="520" y="366" text-anchor="middle" style="fill:var(--ink2)" font-family="Inter, sans-serif" font-size="12">Sun</text>
+<text x="394" y="206" text-anchor="end" style="fill:var(--bp)" opacity="0.8" font-family="JetBrains Mono, monospace" font-size="10" letter-spacing="1">EARTH ORBIT</text>
+<text x="316" y="158" text-anchor="end" style="fill:var(--mars)" font-family="JetBrains Mono, monospace" font-size="10" letter-spacing="1">MARS ORBIT</text>
+</g>
+</svg>
+<sc-if value="{{ mapCruise }}" hint-placeholder-val="{{ true }}">
+<svg viewBox="0 0 1080 690" width="100%" height="100%" style="position:absolute;inset:0" fill="none">
+<g transform="translate(0 -18)">
+<path d="M367.2 404.5 A214.5 209.9 -26 0 0 752.8 216.5" style="stroke:var(--bp)" stroke-width="1.5" stroke-dasharray="2 5" stroke-linecap="round" opacity="0.6"></path>
+<path d="M372.8 415 A214.5 209.9 -30 0 0 763.1 364.2" style="stroke:var(--acc)" stroke-width="2.25"></path>
+<path d="M763.1 364.2 A214.5 209.9 -30 0 0 744.4 200.5" style="stroke:var(--acc)" stroke-width="1.5" stroke-dasharray="6 6" opacity="0.65"></path>
+<circle cx="372.8" cy="415" r="4" style="fill:var(--bg);stroke:var(--acc)" stroke-width="1.5"></circle>
+<text x="362" y="436" text-anchor="end" style="fill:var(--ink3)" font-family="JetBrains Mono, monospace" font-size="10" letter-spacing="1">LAUNCH · DAY 0</text>
+<circle cx="744.4" cy="200.5" r="7" style="stroke:var(--acc)" stroke-width="1.2" stroke-dasharray="2 2"></circle>
+<path d="M733 200.5h-6M755.8 200.5h6M744.4 189v-6M744.4 212v6" style="stroke:var(--acc)" stroke-width="1.2"></path>
+<text x="766" y="196" style="fill:var(--ink2)" font-family="JetBrains Mono, monospace" font-size="10" letter-spacing="1">MARS ARRIVAL · DAY 307</text>
+<line x1="602.6" y1="181.4" x2="763.1" y2="364.2" style="stroke:var(--ink2)" stroke-width="1" stroke-dasharray="3 4" opacity="0.6"></line>
+<circle cx="602.6" cy="181.4" r="13" style="fill:var(--bp)" opacity="0.15"></circle>
+<circle cx="602.6" cy="181.4" r="7" style="fill:var(--bp)"></circle>
+<text x="618" y="175" style="fill:var(--ink)" font-family="Space Grotesk, sans-serif" font-size="14" font-weight="600">Earth</text>
+<circle cx="765.3" cy="413" r="9" style="fill:var(--mars)"></circle>
+<text x="784" y="432" style="fill:var(--ink)" font-family="Space Grotesk, sans-serif" font-size="14" font-weight="600">Mars</text>
+<rect x="755.1" y="376" width="10" height="10" transform="rotate(45 760.1 381)" style="fill:var(--bg);stroke:var(--bp)" stroke-width="1.5"></rect>
+<text x="784" y="398" style="fill:var(--bp)" font-family="Inter, sans-serif" font-size="12.5">MAVEN (real)</text>
+</g>
+</svg>
+</sc-if>
+<sc-if value="{{ craftNormal }}" hint-placeholder-val="{{ true }}">
+<svg viewBox="0 0 1080 690" width="100%" height="100%" style="position:absolute;inset:0" fill="none"><g transform="translate(0 -18)"><g transform="translate(763.1 364.2)"><circle r="17" style="stroke:var(--acc)" stroke-width="1" opacity="0.55"></circle><circle r="10" style="fill:var(--acc)" opacity="0.2"></circle><path d="M0 -6L6 0L0 6L-6 0Z" style="fill:var(--acc)"></path><path d="M-9 0h-6M9 0h6" style="stroke:var(--acc)" stroke-width="2.5"></path></g><text x="784" y="369" style="fill:var(--acc)" font-family="Space Grotesk, sans-serif" font-size="14" font-weight="600">You</text></g></svg>
+</sc-if>
+<sc-if value="{{ craftSafe }}" hint-placeholder-val="{{ false }}">
+<svg viewBox="0 0 1080 690" width="100%" height="100%" style="position:absolute;inset:0" fill="none"><g transform="translate(0 -18)"><g transform="translate(763.1 364.2)"><circle r="17" style="stroke:var(--ink3)" stroke-width="1.2" stroke-dasharray="3 3"></circle><path d="M0 -6L6 0L0 6L-6 0Z" style="fill:var(--ink3)"></path><path d="M-9 0h-6M9 0h6" style="stroke:var(--ink3)" stroke-width="2.5"></path></g><text x="784" y="369" style="fill:var(--ink2)" font-family="Space Grotesk, sans-serif" font-size="14" font-weight="600">You · safe mode</text></g></svg>
+</sc-if>
+<sc-if value="{{ mapConjQ }}" hint-placeholder-val="{{ false }}">
+<svg viewBox="0 0 1080 690" width="100%" height="100%" style="position:absolute;inset:0" fill="none">
+<g transform="translate(0 -18)">
+<path d="M372.8 415 A214.5 209.9 -30 0 0 744.4 200.5" style="stroke:var(--acc)" stroke-width="1.5" opacity="0.35"></path>
+<line x1="496.3" y1="498.3" x2="528" y2="71.1" style="stroke:var(--warn)" stroke-width="1" stroke-dasharray="3 4" opacity="0.8"></line>
+<circle cx="496.3" cy="498.3" r="13" style="fill:var(--bp)" opacity="0.15"></circle><circle cx="496.3" cy="498.3" r="7" style="fill:var(--bp)"></circle>
+<text x="478" y="503" text-anchor="end" style="fill:var(--ink)" font-family="Space Grotesk, sans-serif" font-size="14" font-weight="600">Earth</text>
+<circle cx="528" cy="71.1" r="9" style="fill:var(--mars)"></circle><circle cx="528" cy="71.1" r="16" style="stroke:var(--acc)" stroke-width="1" stroke-dasharray="2 2"></circle><path d="M544 67L548 71.1L544 75.2L540 71.1Z" style="fill:var(--acc)"></path>
+<text x="556" y="68" style="fill:var(--ink)" font-family="Space Grotesk, sans-serif" font-size="14" font-weight="600">Mars</text>
+<text x="556" y="84" style="fill:var(--acc)" font-family="Inter, sans-serif" font-size="12.5">You, in orbit</text>
+<text x="544" y="296" style="fill:var(--warn)" font-family="Inter, sans-serif" font-size="12.5">The Sun is drifting into the signal path</text>
+</g>
+</svg>
+</sc-if>
+<sc-if value="{{ mapConjB }}" hint-placeholder-val="{{ false }}">
+<svg viewBox="0 0 1080 690" width="100%" height="100%" style="position:absolute;inset:0" fill="none">
+<g transform="translate(0 -18)">
+<path d="M372.8 415 A214.5 209.9 -30 0 0 744.4 200.5" style="stroke:var(--acc)" stroke-width="1.5" opacity="0.3"></path>
+<line x1="534.2" y1="499.4" x2="497.4" y2="72" style="stroke:var(--bad)" stroke-width="1.2" stroke-dasharray="3 5"></line>
+<circle cx="534.2" cy="499.4" r="7" style="fill:var(--bp)"></circle>
+<text x="552" y="504" style="fill:var(--ink)" font-family="Space Grotesk, sans-serif" font-size="14" font-weight="600">Earth</text>
+<circle cx="497.4" cy="72" r="9" style="fill:var(--mars)"></circle><circle cx="497.4" cy="72" r="16" style="stroke:var(--ink3)" stroke-width="1" stroke-dasharray="2 2"></circle><path d="M513.4 68L517.4 72L513.4 76L509.4 72Z" style="fill:var(--acc)"></path>
+<text x="526" y="68" style="fill:var(--ink)" font-family="Space Grotesk, sans-serif" font-size="14" font-weight="600">Mars</text>
+<text x="526" y="84" style="fill:var(--ink2)" font-family="Inter, sans-serif" font-size="12.5">You, out of reach</text>
+<circle cx="514" cy="262" r="17" style="fill:var(--bg);stroke:var(--bad)" stroke-width="1.5"></circle>
+<g transform="translate(504 252)" style="stroke:var(--bad)" stroke-width="1.5" stroke-linecap="round"><path d="M6.5 7.5a5 5 0 0 0 0 7M13.5 7.5a5 5 0 0 1 0 7" opacity="0.6"></path><circle cx="10" cy="11" r="1.6" style="fill:var(--bad)" stroke="none"></circle><path d="M3 3l14 15"></path></g>
+</g>
+</svg>
+</sc-if>
+<sc-if value="{{ mapExt }}" hint-placeholder-val="{{ false }}">
+<svg viewBox="0 0 1080 690" width="100%" height="100%" style="position:absolute;inset:0" fill="none">
+<g transform="translate(0 -18)">
+<path d="M372.8 415 A214.5 209.9 -30 0 0 744.4 200.5" style="stroke:var(--acc)" stroke-width="1.5" opacity="0.35"></path>
+<line x1="369.5" y1="251" x2="325.4" y2="500.9" style="stroke:var(--ink2)" stroke-width="1" stroke-dasharray="3 4" opacity="0.6"></line>
+<circle cx="369.5" cy="251" r="7" style="fill:var(--bp)"></circle>
+<circle cx="325.4" cy="500.9" r="9" style="fill:var(--mars)"></circle><path d="M341.4 496.9L345.4 500.9L341.4 504.9L337.4 500.9Z" style="fill:var(--acc)"></path>
+</g>
+</svg>
+</sc-if>
+<sc-if value="{{ engCruise }}" hint-placeholder-val="{{ false }}">
+<svg viewBox="0 0 1080 690" width="100%" height="100%" style="position:absolute;inset:0" fill="none">
+<g transform="translate(0 -18)" font-family="JetBrains Mono, monospace" font-size="10.5">
+<text x="784" y="352" style="fill:var(--ink2)">r 1.444 AU · ν 142°</text>
+<text x="784" y="412" style="fill:var(--ink3)">NASA ref. trajectory · same day</text>
+<text x="784" y="446" style="fill:var(--ink3)">r 1.524 AU</text>
+<text x="618" y="190" style="fill:var(--ink3)">r 1.000 AU</text>
+<path d="M520 330L763.1 364.2" style="stroke:var(--ink3)" stroke-width="0.8" stroke-dasharray="1 3"></path>
+</g>
+</svg>
+</sc-if>
+<sc-if value="{{ engConj }}" hint-placeholder-val="{{ false }}">
+<svg viewBox="0 0 1080 690" width="100%" height="100%" style="position:absolute;inset:0" fill="none">
+<g transform="translate(0 -18)" font-family="JetBrains Mono, monospace" font-size="10.5">
+<path d="M496.3 498.3L520 330" style="stroke:var(--warn)" stroke-width="0.8"></path>
+<text x="512" y="452" style="fill:var(--warn)">{{ d.sep }}</text>
+<text x="512" y="466" style="fill:var(--ink3)">blackout below 2.0°</text>
+</g>
+</svg>
+</sc-if>
+{{ pulseSvg }}
+<sc-if value="{{ showPill }}" hint-placeholder-val="{{ true }}">
+<div style="position:absolute;left:{{ pill.x }};top:{{ pill.y }};transform:translate(-50%,-50%);display:flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:999px;background:var(--panel);border:1px solid var(--line2);font:500 11.5px/1 'JetBrains Mono',monospace;white-space:nowrap"><span style="width:6px;height:6px;border-radius:50%;background:var(--bp)"></span>{{ pill.t }}</div>
+</sc-if>
+</div>
+
+<sc-if value="{{ showTitle }}" hint-placeholder-val="{{ true }}">
+<div style="position:absolute;top:20px;left:24px;display:flex;flex-direction:column;gap:6px">
+<div style="font:500 11px/1 'JetBrains Mono',monospace;color:var(--ink2);letter-spacing:0.08em">MAP · TOP-DOWN · TO SCALE</div>
+<div style="font:600 24px/1.1 'Space Grotesk',sans-serif;letter-spacing:-0.01em">{{ d.mapTitle }}</div>
+<sc-if value="{{ eng }}" hint-placeholder-val="{{ false }}"><div style="display:flex;align-items:center;gap:8px;font:500 11px/1 'JetBrains Mono',monospace;color:var(--ink3)"><span style="width:168px;height:6px;border:1px solid var(--ink3);border-top:none"></span>1 AU</div></sc-if>
+</div>
+</sc-if>
+<sc-if value="{{ showLegend }}" hint-placeholder-val="{{ true }}">
+<div style="position:absolute;top:20px;right:20px;display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-radius:12px;background:rgba(14,27,59,0.88);border:1px solid var(--line);font:12px/1 Inter,sans-serif;color:var(--ink2)">
+<span style="display:flex;align-items:center;gap:8px"><span style="width:20px;border-top:2px solid var(--acc)"></span>Your path</span>
+<span style="display:flex;align-items:center;gap:8px"><span style="width:20px;border-top:2px dashed var(--acc);opacity:0.7"></span>Still to fly</span>
+<span style="display:flex;align-items:center;gap:8px"><span style="width:20px;border-top:2px dotted var(--bp)"></span>Real MAVEN path</span>
+<span style="display:flex;align-items:center;gap:8px"><span style="width:8px;height:8px;margin:0 6px;border-radius:50%;background:var(--bp)"></span>Signal travelling</span>
+</div>
+</sc-if>
+
+<sc-if value="{{ isHazard }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;left:20px;top:16px;bottom:16px;width:568px;display:flex;flex-direction:column;border-radius:20px;background:var(--panel);border:1.5px solid var(--bad);box-shadow:0 30px 80px rgba(0,0,0,0.6);overflow:hidden">
+<div style="display:flex;align-items:center;gap:10px;padding:12px 18px;background:rgba(255,107,138,0.12);border-bottom:1px solid rgba(255,107,138,0.35);color:var(--bad)">
+<svg width="14" height="14" viewBox="0 0 14 14"><path d="M4.6 1h4.8L13 4.6v4.8L9.4 13H4.6L1 9.4V4.6z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path><path d="M7 4v3.6M7 9.8v.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>
+<span style="font:600 11px/1 'JetBrains Mono',monospace;letter-spacing:0.1em">HAZARD · SPACE WEATHER</span>
+<span style="margin-left:auto;font:500 11px/1 'JetBrains Mono',monospace;color:var(--ink2)">DAY 214 · 06:42</span>
+</div>
+<sc-if value="{{ hz.choose }}" hint-placeholder-val="{{ true }}">
+<div style="flex:1;min-height:0;overflow:hidden;padding:18px 20px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="font:600 26px/1.15 'Space Grotesk',sans-serif;letter-spacing:-0.01em">Solar storm! Electronics may reset.</div>
+<div style="font:15px/1.45 Inter,sans-serif;color:var(--ink2)">A burst of fast particles from the Sun reaches your craft in about 18 hours.</div>
+<sc-if value="{{ eng }}" hint-placeholder-val="{{ false }}"><div style="font:500 11.5px/1.6 'JetBrains Mono',monospace;color:var(--bp)">CME → S3 radiation storm forecast · ≥10 MeV protons ≥ 1,000 pfu · ETA T+18 h <span style="color:var(--ink3)">ⓘ NOAA SWPC scale</span></div></sc-if>
+</div>
+<div style="display:flex;gap:12px;padding:12px 14px;border-radius:12px;border:1px dashed var(--line2);background:rgba(142,197,255,0.06)">
+<svg width="18" height="18" viewBox="0 0 18 18" style="flex:none;margin-top:1px" fill="none"><path d="M3 2.5h9l3 3v10H3z" style="stroke:var(--bp)" stroke-width="1.4" stroke-linejoin="round"></path><path d="M6 8h6M6 11h6" style="stroke:var(--bp)" stroke-width="1.4" stroke-linecap="round"></path></svg>
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;align-items:center;gap:8px"><span style="font:600 10.5px/1 'JetBrains Mono',monospace;letter-spacing:0.1em;color:var(--bp)">REAL HISTORY</span><span style="height:18px;padding:0 6px;border-radius:4px;display:inline-grid;place-items:center;font:600 9.5px/1 'JetBrains Mono',monospace;letter-spacing:0.06em;color:var(--warn);border:1px dashed var(--warn)">TO VERIFY</span></div>
+<div style="font:13.5px/1.5 Inter,sans-serif">In October 2003 a huge solar storm reached Mars. NASA's Mars Odyssey went into safe mode, and its radiation instrument never worked again.</div>
+</div>
+</div>
+<div style="font:600 10.5px/1 'JetBrains Mono',monospace;letter-spacing:0.1em;color:var(--ink3)">CHOOSE A RESPONSE</div>
+<sc-for list="{{ resp }}" as="r" hint-placeholder-count="3">
+<button onClick="{{ r.pick }}" style="text-align:left;padding:12px 14px;border-radius:14px;border:{{ r.bd }};background:{{ r.bg }};opacity:{{ r.op }};color:var(--ink);display:grid;grid-template-columns:minmax(0,1fr) 112px;gap:6px 14px;cursor:{{ r.cur }};font-family:Inter,sans-serif">
+<div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+<div style="display:flex;align-items:center;gap:8px"><span style="width:18px;height:18px;border-radius:50%;border:1.5px solid {{ r.dot }};display:grid;place-items:center"><span style="width:8px;height:8px;border-radius:50%;background:{{ r.dotFill }}"></span></span><span style="font:600 15px/1.2 'Space Grotesk',sans-serif">{{ r.title }}</span></div>
+<div style="font:13px/1.4 Inter,sans-serif;color:var(--ink2)">{{ r.line }}</div>
+<div style="display:flex;flex-wrap:wrap;gap:6px">
+<sc-for list="{{ r.chips }}" as="c" hint-placeholder-count="2">
+<span style="display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 8px;border-radius:6px;background:var(--bg);border:1px solid var(--line2);font:500 12px/1 Inter,sans-serif;color:var(--ink)">
+<sc-if value="{{ c.isCam }}" hint-placeholder-val="{{ false }}"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" style="color:var(--bp)"><rect x="1.5" y="4.5" width="13" height="9" rx="2" stroke="currentColor" stroke-width="1.5"></rect><circle cx="8" cy="9" r="2.4" stroke="currentColor" stroke-width="1.5"></circle><path d="M5.5 4.5l1-2h3l1 2" stroke="currentColor" stroke-width="1.5"></path></svg></sc-if>
+<sc-if value="{{ c.isCoin }}" hint-placeholder-val="{{ false }}"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" style="color:var(--warn)"><circle cx="8" cy="8" r="6.2" stroke="currentColor" stroke-width="1.5"></circle><circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.5"></circle></svg></sc-if>
+<sc-if value="{{ c.isFuel }}" hint-placeholder-val="{{ false }}"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" style="color:var(--acc)"><path d="M8 1.8S3.5 7.2 3.5 10a4.5 4.5 0 0 0 9 0C12.5 7.2 8 1.8 8 1.8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path></svg></sc-if>
+<sc-if value="{{ c.isBatt }}" hint-placeholder-val="{{ false }}"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" style="color:var(--ok)"><rect x="1.5" y="4.5" width="11.5" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5"></rect><path d="M14.5 7v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path><rect x="3.5" y="6.5" width="4" height="3" fill="currentColor"></rect></svg></sc-if>
+{{ c.t }}</span>
+</sc-for>
+</div>
+<sc-if value="{{ r.disabled }}" hint-placeholder-val="{{ false }}"><div style="display:flex;align-items:center;gap:6px;font:600 12.5px/1.3 Inter,sans-serif;color:var(--bad)"><svg width="12" height="12" viewBox="0 0 14 14" style="flex:none"><path d="M4.6 1h4.8L13 4.6v4.8L9.4 13H4.6L1 9.4V4.6z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path><path d="M5 5l4 4M9 5l-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>{{ r.why }}</div></sc-if>
+<sc-if value="{{ eng }}" hint-placeholder-val="{{ false }}"><div style="font:500 11px/1.5 'JetBrains Mono',monospace;color:var(--bp)">{{ r.eng }}</div></sc-if>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px;align-items:stretch;justify-content:center">
+<span style="font:600 10px/1 'JetBrains Mono',monospace;letter-spacing:0.08em;color:var(--ink3)">RISK</span>
+<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:3px"><sc-for list="{{ r.seg }}" as="sg" hint-placeholder-count="5"><span style="height:10px;border-radius:2px;background:{{ sg.bg }}"></span></sc-for></div>
+<span style="font:600 11px/1 'JetBrains Mono',monospace;color:{{ r.riskC }}">{{ r.riskL }}</span>
+</div>
+</button>
+</sc-for>
+</div>
+<div style="display:flex;align-items:center;gap:14px;padding:14px 20px;border-top:1px solid var(--line);background:var(--panel2)">
+<div style="flex:1;font:13px/1.4 Inter,sans-serif;color:var(--ink2)">Your command reaches the craft <b style="font-family:'JetBrains Mono',monospace;font-weight:500;color:var(--ink)">11 m 54 s</b> after you send it.</div>
+<button onClick="{{ send }}" style="height:52px;padding:0 24px;border-radius:16px;border:none;background:var(--acc);color:var(--accInk);font:600 16px/1 'Space Grotesk',sans-serif;display:flex;align-items:center;gap:10px;cursor:pointer;box-shadow:0 4px 0 #C4682A"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>Send command</button>
+</div>
+</sc-if>
+<sc-if value="{{ hz.transit }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;padding:28px 24px;display:flex;flex-direction:column;gap:22px">
+<div style="display:flex;flex-direction:column;gap:8px"><div style="font:600 11px/1 'JetBrains Mono',monospace;letter-spacing:0.1em;color:var(--acc)">COMMAND ON ITS WAY</div><div style="font:600 26px/1.15 'Space Grotesk',sans-serif">{{ hz.cmdTitle }}</div><div style="font:15px/1.5 Inter,sans-serif;color:var(--ink2)">Your craft doesn't know yet. The message is crossing 214 million km at the speed of light.</div></div>
+<div style="padding:22px;border-radius:16px;background:var(--bg);border:1px solid var(--line2);display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;align-items:baseline;justify-content:space-between"><span style="font:13px/1 Inter,sans-serif;color:var(--ink2)">Arrives at the craft in</span><span style="font:500 44px/1 'JetBrains Mono',monospace;color:var(--acc)">{{ hz.left }}</span></div>
+<div style="display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:12px">
+<span style="display:flex;align-items:center;gap:6px;font:600 12px/1 Inter,sans-serif"><span style="width:10px;height:10px;border-radius:50%;background:var(--bp)"></span>Earth</span>
+<div style="position:relative;height:6px;border-radius:3px;background:rgba(143,186,255,0.15)"><div style="position:absolute;left:0;top:0;bottom:0;width:{{ hz.pct }};border-radius:3px;background:var(--acc)"></div><div style="position:absolute;left:{{ hz.pct }};top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:var(--acc);box-shadow:0 0 0 5px rgba(255,159,87,0.25)"></div></div>
+<span style="display:flex;align-items:center;gap:6px;font:600 12px/1 Inter,sans-serif"><span style="width:10px;height:10px;transform:rotate(45deg);background:var(--acc)"></span>Craft</span>
+</div>
+<sc-if value="{{ eng }}" hint-placeholder-val="{{ false }}"><div style="font:500 11.5px/1.7 'JetBrains Mono',monospace;color:var(--ink2)"><div style="color:var(--bp)">t = Δ / c = 2.141×10⁸ km / 299,792 km/s = 714 s</div><div>CMD SAFE_ENTER · seq #4471 · uplink 2 kbps · DSS-35</div></div></sc-if>
+</div>
+<div style="font:13.5px/1.5 Inter,sans-serif;color:var(--ink3)">Time is running at 30× while you wait. Nothing else needs you right now.</div>
+</div>
+</sc-if>
+<sc-if value="{{ hz.result }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;padding:28px 24px;display:flex;flex-direction:column;gap:20px">
+<span style="align-self:flex-start;display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:7px;font:600 11px/1 'JetBrains Mono',monospace;letter-spacing:0.06em;color:var(--ok);background:rgba(60,211,193,0.12);border:1px solid rgba(60,211,193,0.35)"><svg width="13" height="13" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M4 7.2l2 2 4-4.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>COMMAND RECEIVED</span>
+<div style="font:600 28px/1.15 'Space Grotesk',sans-serif">The storm passed. Your craft is fine.</div>
+<div style="font:15px/1.55 Inter,sans-serif;color:var(--ink2)">Safe mode kept the computer from resetting. You missed 2 days of photos and spent 60 coins on extra calls home.</div>
+<sc-if value="{{ eng }}" hint-placeholder-val="{{ false }}"><div style="padding:12px 14px;border:1px dashed var(--line2);border-radius:10px;font:500 11.5px/1.7 'JetBrains Mono',monospace;color:var(--ink2)"><div>peak flux 1,840 pfu · SEU count 0 · C&amp;DH side A nominal</div><div>science gap 48.0 h · ops −60 coins · Δv unchanged</div></div></sc-if>
+<button onClick="{{ resume }}" style="align-self:flex-start;height:52px;padding:0 24px;border-radius:16px;border:none;background:var(--acc);color:var(--accInk);font:600 16px/1 'Space Grotesk',sans-serif;cursor:pointer;box-shadow:0 4px 0 #C4682A">Resume mission</button>
+</div>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ isQueue }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;right:20px;top:16px;bottom:108px;width:472px;display:flex;flex-direction:column;border-radius:20px;background:var(--panel);border:1px solid var(--line2);box-shadow:0 30px 80px rgba(0,0,0,0.5);overflow:hidden">
+<div style="padding:16px 18px 12px;display:flex;align-items:baseline;justify-content:space-between"><div style="font:600 19px/1.2 'Space Grotesk',sans-serif">Command queue</div><div style="font:500 11px/1 'JetBrains Mono',monospace;color:var(--ink3)">1 ON ITS WAY · 3 WAITING</div></div>
+<div style="margin:0 14px;padding:12px 14px;border-radius:12px;border:1.5px solid var(--warn);background:rgba(242,199,68,0.08);display:flex;gap:10px">
+<svg width="18" height="18" viewBox="0 0 16 16" fill="none" style="flex:none;color:var(--warn);margin-top:1px"><circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.5"></circle><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3 3l1.4 1.4M11.6 11.6L13 13M3 13l1.4-1.4M11.6 4.4L13 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></svg>
+<div style="display:flex;flex-direction:column;gap:4px"><div style="font:600 14.5px/1.35 Inter,sans-serif">Solar conjunction in 6 days — queue your commands now.</div><div style="font:13px/1.4 Inter,sans-serif;color:var(--ink2)">Then the Sun blocks the radio for 14 days. Your craft runs on what you've sent.</div>
+<sc-if value="{{ eng }}" hint-placeholder-val="{{ false }}"><div style="font:500 11px/1.5 'JetBrains Mono',monospace;color:var(--warn)">SEP &lt; 2.0° · Day 424 → 438 · last uplink DSS-26 Day 423</div></sc-if></div>
+</div>
+<div style="flex:1;min-height:0;overflow:hidden;padding:12px 14px;display:flex;flex-direction:column;gap:8px">
+<div style="padding:12px 14px;border-radius:14px;border:1.5px solid var(--acc);background:rgba(255,159,87,0.08);display:flex;flex-direction:column;gap:9px">
+<div style="display:flex;align-items:center;gap:8px"><span style="font:600 10px/1 'JetBrains Mono',monospace;letter-spacing:0.08em;color:var(--acc)">ON ITS WAY</span><span style="margin-left:auto;font:500 11px/1 'JetBrains Mono',monospace;color:var(--ink3)">sent 8 min ago</span></div>
+<div style="font:600 15px/1.25 'Space Grotesk',sans-serif">Point the camera at the dawn side</div>
+<div style="display:flex;align-items:baseline;justify-content:space-between"><span style="font:13px/1 Inter,sans-serif;color:var(--ink2)">Arrives at the craft in</span><span style="font:500 22px/1 'JetBrains Mono',monospace;color:var(--acc)">{{ q.left }}</span></div>
+<div style="position:relative;height:5px;border-radius:3px;background:rgba(143,186,255,0.15)"><div style="position:absolute;left:0;top:0;bottom:0;width:{{ q.pct }};border-radius:3px;background:var(--acc)"></div></div>
+<sc-if value="{{ eng }}" hint-placeholder-val="{{ false }}"><div style="font:500 11px/1.4 'JetBrains Mono',monospace;color:var(--ink3)">CMD PNT_TGT dawn_limb · OWLT 20 m 58 s · 0.4 kB</div></sc-if>
+</div>
+<sc-for list="{{ qItems }}" as="it" hint-placeholder-count="3">
+<div style="padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:var(--panel2);display:grid;grid-template-columns:16px minmax(0,1fr) auto;gap:12px;align-items:center">
+<svg width="10" height="16" viewBox="0 0 10 16" style="color:var(--ink3)"><g fill="currentColor"><circle cx="3" cy="3" r="1.3"></circle><circle cx="7" cy="3" r="1.3"></circle><circle cx="3" cy="8" r="1.3"></circle><circle cx="7" cy="8" r="1.3"></circle><circle cx="3" cy="13" r="1.3"></circle><circle cx="7" cy="13" r="1.3"></circle></g></svg>
+<div style="display:flex;flex-direction:column;gap:5px;min-width:0"><div style="font:600 14px/1.25 'Space Grotesk',sans-serif">{{ it.t }}</div><div style="font:12.5px/1.3 Inter,sans-serif;color:var(--ink2)">{{ it.s }}</div><sc-if value="{{ eng }}" hint-placeholder-val="{{ false }}"><div style="font:500 11px/1.3 'JetBrains Mono',monospace;color:var(--ink3)">{{ it.e }}</div></sc-if></div>
+<span style="width:32px;height:32px;border-radius:50%;border:1px solid var(--line2);display:grid;place-items:center;color:var(--ink2);font:14px/1 Inter,sans-serif">×</span>
+</div>
+</sc-for>
+</div>
+<div style="display:flex;gap:8px;padding:12px 14px;border-top:1px solid var(--line);background:var(--panel2)">
+<button style="height:48px;padding:0 16px;border-radius:14px;border:1.5px solid var(--line2);background:transparent;color:var(--ink);font:600 14px/1 'Space Grotesk',sans-serif;cursor:pointer">+ Add command</button>
+<button style="flex:1;height:48px;border-radius:14px;border:none;background:var(--acc);color:var(--accInk);font:600 15px/1 'Space Grotesk',sans-serif;cursor:pointer;box-shadow:0 3px 0 #C4682A">Send all at next pass · Day 419</button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isBlackout }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;right:24px;top:50%;transform:translateY(-62%);width:440px;padding:24px;border-radius:20px;background:var(--panel);border:1.5px solid var(--bad);box-shadow:0 30px 80px rgba(0,0,0,0.5);display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:12px"><span style="width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:rgba(255,107,138,0.12);color:var(--bad)"><svg width="24" height="24" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="11" r="1.8" fill="currentColor"></circle><path d="M6.5 7.5a5 5 0 0 0 0 7M13.5 7.5a5 5 0 0 1 0 7M4 5a8.5 8.5 0 0 0 0 12M16 5a8.5 8.5 0 0 1 0 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.5"></path><path d="M3 3l14 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg></span><span style="font:600 11px/1 'JetBrains Mono',monospace;letter-spacing:0.1em;color:var(--bad)">RADIO BLACKOUT · DAY 8 OF 14</span></div>
+<div style="font:600 24px/1.2 'Space Grotesk',sans-serif;text-wrap:balance">Sun between Earth and craft — no contact for 14 days</div>
+<div style="font:14.5px/1.5 Inter,sans-serif;color:var(--ink2)">Your craft is flying on the plan you sent. Contact returns on <b style="color:var(--ink)">Day 438</b>, in 7 days.</div>
+<div style="display:grid;grid-template-columns:repeat(14,1fr);gap:3px"><sc-for list="{{ boDays }}" as="bd" hint-placeholder-count="14"><span style="height:8px;border-radius:2px;background:{{ bd.bg }}"></span></sc-for></div>
+<sc-if value="{{ eng }}" hint-placeholder-val="{{ false }}"><div style="font:500 11.5px/1.6 'JetBrains Mono',monospace;color:var(--ink2);padding:10px 12px;border:1px dashed var(--line2);border-radius:10px"><div>SEP 0.1° · plasma scintillation &gt; link margin</div><div>onboard seq c14_conj · 41 of 96 cmds executed</div></div></sc-if>
+<button style="height:52px;border-radius:16px;border:1.5px solid var(--line2);background:var(--panel2);color:var(--ink);font:600 15px/1 'Space Grotesk',sans-serif;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer"><svg width="14" height="14" viewBox="0 0 16 16"><path d="M2 3l6 5-6 5zM8 3l6 5-6 5z" fill="currentColor"></path></svg>Skip ahead to Day 438</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ isSafe }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;left:24px;top:24px;width:460px;padding:24px;border-radius:20px;background:var(--panel);border:1.5px solid var(--warn);box-shadow:0 30px 80px rgba(0,0,0,0.5);display:flex;flex-direction:column;gap:14px">
+<span style="align-self:flex-start;display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:7px;font:600 11px/1 'JetBrains Mono',monospace;letter-spacing:0.06em;color:var(--warn);background:rgba(242,199,68,0.12);border:1px solid rgba(242,199,68,0.4)"><svg width="12" height="12" viewBox="0 0 14 14"><path d="M7 1.5l6 10.5H1z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path><path d="M7 5.5v3M7 10.3v.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>SAFE MODE</span>
+<div style="font:600 26px/1.15 'Space Grotesk',sans-serif">Your craft protected itself.</div>
+<div style="font:15px/1.5 Inter,sans-serif;color:var(--ink2)">Its computer reset during the storm. Now it is facing the Sun, instruments off, waiting for you.</div>
+<div style="display:flex;flex-wrap:wrap;gap:6px">
+<span style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:7px;border:1px solid var(--line2);font:500 12.5px/1 Inter,sans-serif;color:var(--ink3)"><span style="width:7px;height:7px;border-radius:50%;border:1.5px solid var(--ink3)"></span>Spectrograph off</span>
+<span style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:7px;border:1px solid var(--line2);font:500 12.5px/1 Inter,sans-serif;color:var(--ink3)"><span style="width:7px;height:7px;border-radius:50%;border:1.5px solid var(--ink3)"></span>Magnetometers off</span>
+<span style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:7px;border:1px solid var(--line2);font:500 12.5px/1 Inter,sans-serif;color:var(--ink3)"><span style="width:7px;height:7px;border-radius:50%;border:1.5px solid var(--ink3)"></span>Camera off</span>
+<span style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:7px;border:1px solid rgba(60,211,193,0.4);font:500 12.5px/1 Inter,sans-serif;color:var(--ok)"><span style="width:7px;height:7px;border-radius:50%;background:var(--ok)"></span>Beacon on</span>
+</div>
+<sc-if value="{{ eng }}" hint-placeholder-val="{{ false }}"><div style="font:500 11.5px/1.65 'JetBrains Mono',monospace;color:var(--ink2);padding:10px 12px;border:1px dashed var(--line2);border-radius:10px"><div>trigger: SEU · C&amp;DH side A → swapped to side B</div><div>attitude: sun-point · beacon tone 10 bps · HGA stowed</div><div>recovery: 6 cmds · est. 2 passes · −120 coins</div></div></sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ isExt }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;background:rgba(10,20,48,0.72)"></div>
+<div style="position:absolute;left:40px;right:40px;top:28px;bottom:28px;display:flex;flex-direction:column;gap:18px">
+<div style="display:flex;flex-direction:column;gap:8px;align-items:center;text-align:center">
+<div style="font:600 11px/1 'JetBrains Mono',monospace;letter-spacing:0.12em;color:var(--acc)">MISSION DECISION · DAY 672</div>
+<div style="font:600 34px/1.1 'Space Grotesk',sans-serif;letter-spacing:-0.02em">Your prime mission is complete. What now?</div>
+<div style="font:15px/1.4 Inter,sans-serif;color:var(--ink2)">365 days of science in Mars orbit. Your craft still works.</div>
+</div>
+<div style="flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;gap:16px">
+<div style="padding:22px;border-radius:20px;background:var(--panel);border:1.5px solid var(--line2);display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:12px"><span style="width:48px;height:48px;border-radius:14px;display:grid;place-items:center;background:rgba(142,197,255,0.12);color:var(--bp)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="9" r="6" stroke="currentColor" stroke-width="1.6"></circle><path d="M8.5 14l-2 8 5.5-3 5.5 3-2-8" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path></svg></span><div style="font:600 22px/1.15 'Space Grotesk',sans-serif">Retire with honour</div></div>
+<div style="font:14.5px/1.5 Inter,sans-serif;color:var(--ink2)">Bank everything you've learned. Your score is locked in and nothing can go wrong.</div>
+<div style="display:flex;flex-direction:column;gap:10px;margin-top:auto">
+<div style="display:grid;grid-template-columns:110px minmax(0,1fr) 64px;align-items:center;gap:10px;font:13px/1 Inter,sans-serif"><span style="color:var(--ink2)">Science</span><div style="height:10px;border-radius:5px;background:rgba(143,186,255,0.12)"><div style="width:58%;height:100%;border-radius:5px;background:var(--bp)"></div></div><span style="font-family:'JetBrains Mono',monospace;text-align:right">1.0×</span></div>
+<div style="display:grid;grid-template-columns:110px minmax(0,1fr) 64px;align-items:center;gap:10px;font:13px/1 Inter,sans-serif"><span style="color:var(--ink2)">Failure risk</span><div style="height:10px;border-radius:5px;background:rgba(143,186,255,0.12)"></div><span style="font-family:'JetBrains Mono',monospace;text-align:right;color:var(--ok)">none</span></div>
+</div>
+<sc-if value="{{ eng }}" hint-placeholder-val="{{ false }}"><div style="font:500 11.5px/1.65 'JetBrains Mono',monospace;color:var(--ink2);padding:10px 12px;border:1px dashed var(--line2);border-radius:10px"><div>total downlink 1.27 TB · final score 7,840</div><div>end of mission: passivate · 26 kg prop vented</div></div></sc-if>
+<button style="height:54px;border-radius:16px;border:1.5px solid var(--line2);background:var(--panel2);color:var(--ink);font:600 16px/1 'Space Grotesk',sans-serif;cursor:pointer">Retire Red Atmosphere-1</button>
+</div>
+<div style="padding:22px;border-radius:20px;background:var(--panel);border:1.5px solid var(--acc);display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:12px"><span style="width:48px;height:48px;border-radius:14px;display:grid;place-items:center;background:rgba(255,159,87,0.14);color:var(--acc)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 18L12 6l8 12" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path><path d="M12 6V2M9 4l3-2 3 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg></span><div style="font:600 22px/1.15 'Space Grotesk',sans-serif">Extend 2 more years</div></div>
+<div style="font:14.5px/1.5 Inter,sans-serif;color:var(--ink2)">Keep flying for much more science. But parts are ageing, and fuel is low.</div>
+<div style="display:flex;flex-direction:column;gap:10px;margin-top:auto">
+<div style="display:grid;grid-template-columns:110px minmax(0,1fr) 64px;align-items:center;gap:10px;font:13px/1 Inter,sans-serif"><span style="color:var(--ink2)">Science</span><div style="height:10px;border-radius:5px;background:rgba(143,186,255,0.12);display:flex;overflow:hidden"><div style="width:58%;height:100%;background:var(--bp)"></div><div style="width:37%;height:100%;background:repeating-linear-gradient(135deg,var(--bp) 0 3px,rgba(142,197,255,0.35) 3px 6px)"></div></div><span style="font-family:'JetBrains Mono',monospace;text-align:right">1.6×</span></div>
+<div style="display:grid;grid-template-columns:110px minmax(0,1fr) 64px;align-items:center;gap:10px;font:13px/1 Inter,sans-serif"><span style="color:var(--ink2)">Failure risk</span><div style="height:10px;border-radius:5px;background:linear-gradient(90deg,var(--ok),var(--warn) 50%,var(--bad));opacity:0.9;position:relative"><span style="position:absolute;left:23%;top:-4px;bottom:-4px;width:2px;background:var(--ink)"></span></div><span style="font-family:'JetBrains Mono',monospace;text-align:right;color:var(--warn)">1 in 4</span></div>
+<div style="display:flex;align-items:center;gap:8px;font:13px/1.4 Inter,sans-serif;color:var(--warn)"><svg width="13" height="13" viewBox="0 0 14 14" style="flex:none"><path d="M7 1.5l6 10.5H1z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path><path d="M7 5.5v3M7 10.3v.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>Fuel lasts about 1½ years of orbit trims — not the full 2.</div>
+</div>
+<sc-if value="{{ eng }}" hint-placeholder-val="{{ false }}"><div style="font:500 11.5px/1.65 'JetBrains Mono',monospace;color:var(--ink2);padding:10px 12px;border:1px dashed var(--line2);border-radius:10px"><div style="color:var(--bp)">P_fail = 1 − e^(−λt) = 1 − e^(−0.13 × 2) = 23%</div><div>science +803 GB (1.1 GB/d × 730 d)</div><div>prop 26 kg ÷ 18 kg/yr = 1.44 yr · funding +2,900 coins</div></div></sc-if>
+<button style="height:54px;border-radius:16px;border:none;background:var(--acc);color:var(--accInk);font:600 16px/1 'Space Grotesk',sans-serif;cursor:pointer;box-shadow:0 4px 0 #C4682A">Extend the mission</button>
+</div>
+</div>
+<div style="align-self:center;display:flex;align-items:center;gap:10px;padding:10px 16px;border-radius:12px;border:1px dashed var(--line2);background:var(--panel)"><span style="font:600 10.5px/1 'JetBrains Mono',monospace;letter-spacing:0.1em;color:var(--bp)">REAL HISTORY</span><span style="font:14px/1.3 Inter,sans-serif">MAVEN was planned as a 1-year science mission. It kept working for about 11 years.</span><span style="height:18px;padding:0 6px;border-radius:4px;display:inline-grid;place-items:center;font:600 9.5px/1 'JetBrains Mono',monospace;color:var(--warn);border:1px dashed var(--warn)">TO VERIFY</span></div>
+</div>
+</sc-if>
+
+<sc-if value="{{ showDock }}" hint-placeholder-val="{{ true }}">
+<div style="position:absolute;left:20px;right:20px;bottom:16px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px">
+<sc-for list="{{ dock }}" as="k" hint-placeholder-count="3">
+<button style="height:76px;padding:0 16px;border-radius:18px;border:{{ k.bd }};background:{{ k.bg }};color:var(--ink);opacity:{{ k.op }};display:flex;align-items:center;gap:14px;text-align:left;cursor:{{ k.cur }};box-shadow:0 10px 30px rgba(0,0,0,0.3)">
+<span style="flex:none;width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:rgba(255,159,87,0.14);color:var(--acc)">
+<sc-if value="{{ k.isPower }}" hint-placeholder-val="{{ false }}"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="8.5" stroke="currentColor" stroke-width="1.6"></circle><path d="M11 11V2.5M11 11l7.4 4.2M11 11l-7.4 4.2" stroke="currentColor" stroke-width="1.6"></path></svg></sc-if>
+<sc-if value="{{ k.isCall }}" hint-placeholder-val="{{ false }}"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M3 8q8 9 16 0z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path><path d="M11 12.5V19M7 19h8M11 9.5l4-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg></sc-if>
+<sc-if value="{{ k.isQueue }}" hint-placeholder-val="{{ false }}"><svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 6h10M4 11h10M4 16h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path><path d="M16 14l4 2.5-4 2.5z" fill="currentColor"></path></svg></sc-if>
+</span>
+<span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:5px"><span style="font:600 16px/1.1 'Space Grotesk',sans-serif">{{ k.t }}</span><span style="font:13px/1.25 Inter,sans-serif;color:var(--ink2)">{{ k.s }}</span><sc-if value="{{ eng }}" hint-placeholder-val="{{ false }}"><span style="font:500 11px/1 'JetBrains Mono',monospace;color:var(--bp)">{{ k.e }}</span></sc-if></span>
+<sc-if value="{{ k.hasBadge }}" hint-placeholder-val="{{ false }}"><span style="min-width:26px;height:26px;padding:0 8px;border-radius:999px;display:grid;place-items:center;background:var(--acc);color:var(--accInk);font:600 12px/1 'JetBrains Mono',monospace">{{ k.badge }}</span></sc-if>
+</button>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{ isSafe }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;left:20px;right:20px;bottom:16px;display:flex;justify-content:center">
+<button style="min-width:520px;height:80px;padding:0 28px;border-radius:20px;border:none;background:var(--acc);color:var(--accInk);display:flex;align-items:center;justify-content:center;gap:14px;cursor:pointer;box-shadow:0 5px 0 #C4682A,0 20px 40px rgba(0,0,0,0.4)">
+<svg width="22" height="22" viewBox="0 0 20 20"><path d="M4 10a6 6 0 1 0 2-4.5M4 3v3h3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+<span style="display:flex;flex-direction:column;align-items:flex-start;gap:5px"><span style="font:600 20px/1 'Space Grotesk',sans-serif">Recover</span><span style="font:500 13px/1 Inter,sans-serif;opacity:0.8">Wake-up commands arrive in 11 m 56 s</span></span>
+</button>
+</div>
+</sc-if>
+</main>
+
+<aside style="border-left:1px solid var(--line);background:var(--panel);min-height:0;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;justify-content:space-between;align-items:baseline;padding:2px 2px 2px"><div style="font:600 17px/1.2 'Space Grotesk',sans-serif">Resources</div><div style="font:500 11px/1 'JetBrains Mono',monospace;color:var(--ink3)">TODAY</div></div>
+<sc-for list="{{ gauges }}" as="g" hint-placeholder-count="4">
+<div style="padding:13px 14px;border-radius:14px;background:var(--panel2);border:1px solid {{ g.bd }};display:flex;flex-direction:column;gap:9px">
+<div style="display:flex;align-items:center;gap:8px">
+<span style="font:600 14px/1 'Space Grotesk',sans-serif">{{ g.name }}</span>
+<sc-if value="{{ eng }}" hint-placeholder-val="{{ false }}"><span title="{{ g.src }}" style="width:18px;height:18px;border-radius:50%;border:1px solid var(--line2);color:var(--ink2);font:600 10px/1 'JetBrains Mono',monospace;display:inline-grid;place-items:center">i</span></sc-if>
+<span style="margin-left:auto;display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 7px;border-radius:6px;font:600 10.5px/1 'JetBrains Mono',monospace;letter-spacing:0.04em;color:{{ g.c }};background:{{ g.cbg }};border:1px solid {{ g.cbd }}">
+<sc-if value="{{ g.ok }}" hint-placeholder-val="{{ true }}"><svg width="12" height="12" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="none" stroke="currentColor" stroke-width="1.5"></circle><path d="M4 7.2l2 2 4-4.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg></sc-if>
+<sc-if value="{{ g.warn }}" hint-placeholder-val="{{ false }}"><svg width="12" height="12" viewBox="0 0 14 14"><path d="M7 1.5l6 10.5H1z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path><path d="M7 5.5v3M7 10.3v.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg></sc-if>
+<sc-if value="{{ g.bad }}" hint-placeholder-val="{{ false }}"><svg width="12" height="12" viewBox="0 0 14 14"><path d="M4.6 1h4.8L13 4.6v4.8L9.4 13H4.6L1 9.4V4.6z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path><path d="M5 5l4 4M9 5l-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg></sc-if>
+{{ g.statusL }}</span>
+</div>
+<div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px"><span style="font:500 24px/1 'JetBrains Mono',monospace">{{ g.big }}</span><span style="font:12.5px/1.2 Inter,sans-serif;color:var(--ink3);text-align:right">{{ g.bigSub }}</span></div>
+<sc-if value="{{ g.isBatt }}" hint-placeholder-val="{{ false }}"><div style="display:flex;align-items:center;gap:3px"><div style="flex:1;height:24px;border:1.5px solid var(--ink2);border-radius:6px;padding:2px;box-sizing:border-box"><div style="height:100%;width:{{ g.fill }};border-radius:3px;background:{{ g.c }}"></div></div><div style="width:4px;height:10px;border-radius:0 2px 2px 0;background:var(--ink2)"></div></div></sc-if>
+<sc-if value="{{ g.isBar }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:5px"><div style="position:relative;height:24px;border:1.5px solid var(--ink2);border-radius:12px;padding:2px;box-sizing:border-box"><div style="height:100%;width:{{ g.fill }};border-radius:9px;background:{{ g.c }}"></div><div style="position:absolute;left:{{ g.mark }};top:-5px;bottom:-5px;width:2px;background:var(--ink)"></div></div><div style="font:500 10.5px/1 'JetBrains Mono',monospace;color:var(--ink3);padding-left:{{ g.markPad }}">{{ g.markL }}</div></div></sc-if>
+<sc-if value="{{ g.isCells }}" hint-placeholder-val="{{ false }}"><div style="display:grid;grid-template-columns:repeat(10,1fr);gap:3px"><sc-for list="{{ g.cells }}" as="cl" hint-placeholder-count="10"><span style="height:20px;border-radius:3px;background:{{ cl.bg }};border:1px solid {{ cl.bd }}"></span></sc-for></div></sc-if>
+<sc-if value="{{ cadet }}" hint-placeholder-val="{{ true }}"><div style="font:13px/1.4 Inter,sans-serif;color:{{ g.lineC }}">{{ g.line }}</div></sc-if>
+<sc-if value="{{ eng }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:4px"><sc-for list="{{ g.rows }}" as="rw" hint-placeholder-count="2"><div style="display:flex;justify-content:space-between;gap:8px;font:500 11.5px/1.3 'JetBrains Mono',monospace"><span style="color:var(--ink3)">{{ rw.k }}</span><span>{{ rw.v }}</span></div></sc-for><div style="margin-top:3px;padding:7px 9px;border:1px dashed var(--line2);border-radius:8px;font:500 11px/1.45 'JetBrains Mono',monospace;color:var(--bp)">{{ g.eq }}</div></div></sc-if>
+</div>
+</sc-for>
+</aside>
+</div>
+
+<footer style="border-top:1px solid var(--line);background:var(--panel);padding:12px 24px 10px;display:flex;flex-direction:column;gap:8px;min-width:0">
+<div style="display:flex;align-items:center;gap:14px">
+<span style="font:600 15px/1 'Space Grotesk',sans-serif">Upcoming</span>
+<span style="font:500 11px/1 'JetBrains Mono',monospace;color:var(--ink3);letter-spacing:0.06em">NEXT 60 DAYS · DAY {{ tl.from }} → {{ tl.to }}</span>
+<span style="margin-left:auto;display:flex;gap:14px;font:12px/1 Inter,sans-serif;color:var(--ink2)">
+<span style="display:flex;align-items:center;gap:6px"><span style="width:18px;height:18px;border-radius:50%;display:grid;place-items:center;background:rgba(142,197,255,0.14);color:var(--bp)"><svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M2 6q6 7 12 0z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path><path d="M8 9.5V14M5 14h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg></span>Call home booked</span>
+<span style="display:flex;align-items:center;gap:6px"><span style="width:18px;height:18px;border-radius:50%;border:1px dashed var(--ink3)"></span>Open slot</span>
+<span style="display:flex;align-items:center;gap:6px"><span style="width:18px;height:18px;border-radius:50%;display:grid;place-items:center;background:rgba(255,159,87,0.14);color:var(--acc)"><svg width="11" height="11" viewBox="0 0 16 16" fill="none"><path d="M5.5 1.5h5v5l1.5 3h-8l1.5-3z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path><path d="M6.5 11.5L8 15l1.5-3.5" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path></svg></span>Engine burn</span>
+<span style="display:flex;align-items:center;gap:6px"><span style="width:18px;height:12px;border-radius:3px;background:repeating-linear-gradient(135deg,rgba(242,199,68,0.55) 0 3px,rgba(242,199,68,0.15) 3px 6px)"></span>Radio blackout</span>
+<span style="display:flex;align-items:center;gap:6px"><span style="width:18px;height:12px;border-radius:3px;background:rgba(142,197,255,0.22)"></span>Eclipse season</span>
+</span>
+</div>
+<div style="display:flex;gap:14px;min-width:0">
+<div style="position:relative;flex:1;min-width:0;height:120px">
+<div style="position:absolute;left:0;right:0;top:100px;height:1px;background:var(--line2)"></div>
+<sc-for list="{{ tl.bands }}" as="b" hint-placeholder-count="1">
+<div style="position:absolute;left:{{ b.left }};width:{{ b.w }};top:0;height:100px;border-radius:6px 6px 0 0;background:{{ b.bg }};border-top:2px solid {{ b.c }};box-sizing:border-box;padding:4px 8px;overflow:hidden"><div style="display:flex;align-items:baseline;gap:8px;white-space:nowrap;overflow:hidden"><span style="font:600 12px/1.1 Inter,sans-serif;color:{{ b.c }}">{{ b.l }}</span><sc-if value="{{ eng }}" hint-placeholder-val="{{ false }}"><span style="font:500 10.5px/1 'JetBrains Mono',monospace;color:var(--ink2);overflow:hidden;text-overflow:ellipsis">{{ b.e }}</span></sc-if></div></div>
+</sc-for>
+<sc-for list="{{ tl.ticks }}" as="t" hint-placeholder-count="12">
+<div style="position:absolute;left:{{ t.left }};top:96px;display:flex;flex-direction:column;align-items:center;transform:translateX(-50%);gap:4px"><span style="width:1px;height:9px;background:var(--line2)"></span><span style="font:500 10.5px/1 'JetBrains Mono',monospace;color:var(--ink3);white-space:nowrap">{{ t.l }}</span></div>
+</sc-for>
+<sc-for list="{{ tl.events }}" as="e" hint-placeholder-count="10">
+<div title="{{ e.l }}" style="position:absolute;left:{{ e.left }};top:{{ e.top }};display:flex;align-items:flex-start;gap:6px;transform:translateX(-11px)">
+<div style="display:flex;flex-direction:column;align-items:center">
+<span style="width:22px;height:22px;box-sizing:border-box;border-radius:50%;display:grid;place-items:center;background:{{ e.bg }};border:{{ e.bd }};color:{{ e.c }}">
+<sc-if value="{{ e.isDsn }}" hint-placeholder-val="{{ true }}"><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 6q6 7 12 0z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path><path d="M8 9.5V14M5 14h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg></sc-if>
+<sc-if value="{{ e.isBurn }}" hint-placeholder-val="{{ false }}"><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M5.5 1.5h5v5l1.5 3h-8l1.5-3z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path><path d="M6.5 11.5L8 15l1.5-3.5" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path></svg></sc-if>
+<sc-if value="{{ e.isOpen }}" hint-placeholder-val="{{ false }}"><span style="font:500 14px/1 Inter,sans-serif">+</span></sc-if>
+</span>
+<span style="width:1px;height:{{ e.stem }};background:{{ e.stemC }}"></span>
+</div>
+<sc-if value="{{ e.showL }}" hint-placeholder-val="{{ true }}"><div style="display:flex;flex-direction:column;gap:2px;padding-top:1px"><span style="font:600 12px/1.1 Inter,sans-serif;color:{{ e.lc }};white-space:nowrap">{{ e.l }}</span><sc-if value="{{ eng }}" hint-placeholder-val="{{ false }}"><span style="font:500 10px/1 'JetBrains Mono',monospace;color:var(--ink3);white-space:nowrap">{{ e.e }}</span></sc-if></div></sc-if>
+</div>
+</sc-for>
+<div style="position:absolute;left:0;top:0;height:106px;width:2px;background:var(--acc)"></div>
+<span style="position:absolute;left:5px;top:104px;font:600 9.5px/1 'JetBrains Mono',monospace;letter-spacing:0.08em;color:var(--acc)">NOW</span>
+</div>
+<sc-if value="{{ tl.hasOff }}" hint-placeholder-val="{{ false }}">
+<div style="flex:none;width:200px;height:100px;padding:12px 14px;border-radius:14px;border:1px dashed rgba(255,159,87,0.5);background:rgba(255,159,87,0.06);display:flex;flex-direction:column;gap:6px;box-sizing:border-box">
+<div style="display:flex;align-items:center;gap:6px;color:var(--acc);font:600 10.5px/1 'JetBrains Mono',monospace;letter-spacing:0.06em"><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M5.5 1.5h5v5l1.5 3h-8l1.5-3z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path><path d="M6.5 11.5L8 15l1.5-3.5" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path></svg>{{ tl.offTag }}</div>
+<div style="font:600 14px/1.2 'Space Grotesk',sans-serif">{{ tl.offT }}</div>
+<div style="font:12px/1 Inter,sans-serif;color:var(--ink2)">{{ tl.offS }}</div>
+</div>
+</sc-if>
+</div>
+</footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:960},&quot;state&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;normal&quot;,&quot;hazard&quot;,&quot;queue&quot;,&quot;blackout&quot;,&quot;safe&quot;,&quot;extension&quot;],&quot;default&quot;:&quot;normal&quot;,&quot;tsType&quot;:&quot;'normal'|'hazard'|'queue'|'blackout'|'safe'|'extension'&quot;},&quot;mode&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;cadet&quot;,&quot;engineer&quot;],&quot;default&quot;:&quot;cadet&quot;,&quot;tsType&quot;:&quot;'cadet'|'engineer'&quot;},&quot;hazardStage&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;choose&quot;,&quot;transit&quot;,&quot;result&quot;],&quot;default&quot;:&quot;choose&quot;,&quot;tsType&quot;:&quot;'choose'|'transit'|'result'&quot;}}">
+const OK = { c: 'var(--ok)', cbg: 'rgba(60,211,193,0.12)', cbd: 'rgba(60,211,193,0.35)', bd: 'var(--line)', statusL: 'OK', ok: true, warn: false, bad: false, lineC: 'var(--ink2)' };
+const WARN = { c: 'var(--warn)', cbg: 'rgba(242,199,68,0.12)', cbd: 'rgba(242,199,68,0.4)', bd: 'rgba(242,199,68,0.45)', statusL: 'WARNING', ok: false, warn: true, bad: false, lineC: 'var(--ink)' };
+const BAD = { c: 'var(--bad)', cbg: 'rgba(255,107,138,0.12)', cbd: 'rgba(255,107,138,0.45)', bd: 'var(--bad)', statusL: 'OVER LIMIT', ok: false, warn: false, bad: true, lineC: 'var(--ink)' };
+const TONE = { ok: OK, warn: WARN, bad: BAD };
+
+const CRUISE_D = { phase: 'Cruise', mapTitle: 'Earth → Mars cruise', range: '1.431 AU · 214.1 M km', sep: 'SEP 70.4°', sunR: '1.444 AU', owlt: '11 m 54 s', signalC: 'A message takes about 12 minutes to reach your craft.' };
+const D = {
+  normal: { ...CRUISE_D, day: '214', sub: '93 days until you reach Mars', met: 'MET 214 d 06:42:10 · 1× = 1 day/min', chip: 'ALL SYSTEMS GO', tone: 'ok', speed: '10' },
+  hazard: { ...CRUISE_D, day: '214', sub: 'Decision needed', met: 'MET 214 d 06:42:10', chip: 'HAZARD · DECISION', tone: 'bad', speed: 'pause' },
+  safe: { ...CRUISE_D, day: '215', sub: 'Craft is in safe mode', met: 'MET 215 d 02:18:44', chip: 'SAFE MODE', tone: 'warn', speed: 'pause', owlt: '11 m 56 s', range: '1.437 AU · 215.0 M km', sep: 'SEP 70.6°', sunR: '1.447 AU', signalC: 'Your craft is calling home with a slow beacon tone.' },
+  queue: { day: '418', phase: 'Science orbit', mapTitle: 'In orbit around Mars', sub: 'Solar conjunction in 6 days', met: 'MET 418 d 14:05:31', chip: 'CONJUNCTION IN 6 DAYS', tone: 'warn', speed: '1', owlt: '20 m 58 s', range: '2.520 AU · 377.0 M km', sep: 'SEP 3.8°', sunR: '1.524 AU', signalC: 'A message takes about 21 minutes. Soon the Sun will block it.' },
+  blackout: { day: '431', phase: 'Science orbit', mapTitle: 'In orbit around Mars', sub: 'Blackout · day 8 of 14', met: 'MET 431 d 09:12:02', chip: 'NO CONTACT', tone: 'bad', speed: '100', owlt: '—', range: '2.524 AU · 377.6 M km', sep: 'SEP 0.1°', sunR: '1.524 AU', signalC: 'No signal. The Sun is between Earth and your craft.' },
+  extension: { day: '672', phase: 'End of prime mission', mapTitle: 'In orbit around Mars', sub: 'One year of science complete', met: 'MET 672 d 00:00:00', chip: 'DECISION', tone: 'warn', speed: 'pause', owlt: '12 m 25 s', range: '1.493 AU · 223.4 M km', sep: 'SEP 72.3°', sunR: '1.524 AU', signalC: 'A message takes about 12 minutes to reach your craft.' }
+};
+
+const g = (o) => ({ ...TONE[o.tone], ...o, rows: (o.rows || []).map(([k, v]) => ({ k, v })) });
+const cells = (n, tone) => Array.from({ length: 10 }, (_, i) => i < n ? { bg: tone === 'warn' ? 'var(--warn)' : 'var(--bp)', bd: 'transparent' } : { bg: 'transparent', bd: 'var(--line2)' });
+
+function gauges(s) {
+  const cruise = s === 'normal' || s === 'hazard' || s === 'safe';
+  const batt = s === 'safe'
+    ? g({ name: 'Battery', isBatt: true, tone: 'ok', big: '81%', bigSub: 'charging', fill: '81%', line: 'Panels face the Sun. Charging back up.', rows: [['Charge', '1,458 / 1,800 Wh'], ['Load (safe)', '520 W']], eq: 'P = 2,850 × (1 / 1.447)² = 1,361 W', src: 'Inverse-square · TSIS-1 1,361 W/m²' })
+    : cruise
+    ? g({ name: 'Battery', isBatt: true, tone: 'ok', big: '96%', bigSub: 'power today', fill: '96%', line: 'Full sunshine. No eclipses on the way to Mars.', rows: [['Charge', '1,728 / 1,800 Wh'], ['Array / load', '1,367 / 1,200 W']], eq: 'P = P₀ (1 AU / r)² = 2,850 × (1 / 1.444)²', src: 'Inverse-square · TSIS-1 1,361 W/m²' })
+    : g({ name: 'Battery', isBatt: true, tone: 'ok', big: s === 'extension' ? '94%' : s === 'blackout' ? '88%' : '91%', bigSub: 'power today', fill: s === 'extension' ? '94%' : s === 'blackout' ? '88%' : '91%', line: 'Healthy. Recharges after every trip through Mars\u2019 shadow.', rows: [['Array / load', '1,227 / 1,100 W'], ['Min charge / orbit', '57%']], eq: 'P = 2,850 × (1 / 1.524)² = 1,227 W', src: 'Inverse-square · TSIS-1 1,361 W/m²' });
+  const fuel = cruise
+    ? g({ name: 'Fuel tank', isBar: true, tone: 'warn', big: '88%', bigSub: 'full', fill: '87.6%', mark: '84.9%', markPad: '58%', markL: '▲ needed to reach orbit', line: 'Enough to brake into Mars orbit — with only a thin cushion left.', rows: [['Δv have / need', '1,356 / 1,300 m/s'], ['Spare', '56 m/s ≈ 32 kg · 4.3%']], eq: 'Δv = 230 s · g₀ · ln(2,306 / 1,264)', src: 'Tsiolkovsky rocket equation' })
+    : s === 'extension'
+    ? g({ name: 'Fuel tank', isBar: true, tone: 'warn', big: '26 kg', bigSub: 'left', fill: '2.2%', mark: '3%', markPad: '0%', markL: '▲ needed for 2 more years', line: 'About 1½ years of small orbit trims left.', rows: [['Trim use', '18 kg / yr'], ['Lasts', '1.44 yr']], eq: 't = 26 kg ÷ 18 kg/yr', src: 'Game model · orbit maintenance' })
+    : g({ name: 'Fuel tank', isBar: true, tone: 'ok', big: s === 'blackout' ? '38 kg' : '39 kg', bigSub: 'left', fill: '3.3%', mark: '1.1%', markPad: '0%', markL: '▲ needed to end of prime mission', line: 'Nearly empty, as planned. Enough for 2 years of orbit trims.', rows: [['Trim use', '18 kg / yr'], ['Lasts', '2.1 yr']], eq: 't = 38 kg ÷ 18 kg/yr', src: 'Game model · orbit maintenance' });
+  const data = {
+    normal: g({ name: 'Photos waiting', isCells: true, cells: cells(6), tone: 'ok', big: '60%', bigSub: 'of memory', line: 'About 960 photos waiting to go home.', rows: [['Recorder', '9.6 / 16.0 GB'], ['34 m · 70 m pass', '1.12 · 4.74 GB']], eq: 'R = 550 kbps · (1.52 / 1.43)² · (D / 34 m)²', src: 'Link budget, game model' }),
+    safe: g({ name: 'Photos waiting', isCells: true, cells: cells(6), tone: 'ok', big: '61%', bigSub: 'of memory', line: 'No new photos while instruments are off.', rows: [['Recorder', '9.8 / 16.0 GB'], ['Fill rate', '0.0 GB/day']], eq: 'R = 550 kbps · (1.52 / 1.44)²', src: 'Link budget, game model' }),
+    queue: g({ name: 'Photos waiting', isCells: true, cells: cells(5), tone: 'ok', big: '46%', bigSub: 'of memory', line: 'About 740 photos waiting. Send what you can before the blackout.', rows: [['Recorder', '7.4 / 16.0 GB'], ['34 m · 70 m pass', '0.36 · 1.53 GB']], eq: 'R = 550 kbps · (1.52 / 2.52)² · (D / 34 m)²', src: 'Link budget, game model' }),
+    blackout: g({ name: 'Photos waiting', isCells: true, cells: cells(9, 'warn'), tone: 'warn', big: '87%', bigSub: 'of memory', line: 'Memory is full in about 4 days. Turn science down in the Power plan.', rows: [['Recorder', '13.9 / 16.0 GB'], ['Full in', '4.2 d at 0.5 GB/d']], eq: 't = (16.0 − 13.9) GB ÷ 0.5 GB/d', src: 'Game model' }),
+    extension: g({ name: 'Photos waiting', isCells: true, cells: cells(2), tone: 'ok', big: '19%', bigSub: 'of memory', line: 'Almost everything is home.', rows: [['Recorder', '3.1 / 16.0 GB'], ['Downlinked', '1.27 TB total']], eq: 'R = 550 kbps · (1.52 / 1.49)²', src: 'Link budget, game model' })
+  };
+  data.hazard = data.normal;
+  const coins = {
+    normal: g({ name: 'Ops budget', isBar: true, tone: 'ok', big: '2,400', bigSub: 'coins', fill: '66.7%', mark: '50.9%', markPad: '30%', markL: '▲ reserved for daily ops', line: 'Covers daily operations, plus about 14 small-dish calls.', rows: [['Daily ops', '4 coins/day × 458 d'], ['Spare', '568 coins']], eq: 'spare = 2,400 − 4 × (672 − 214)', src: 'Game economy' }),
+    safe: g({ name: 'Ops budget', isBar: true, tone: 'ok', big: '2,396', bigSub: 'coins', fill: '66.6%', mark: '50.8%', markPad: '30%', markL: '▲ reserved for daily ops', line: 'Recovery will cost about 120 coins of extra calls.', rows: [['Daily ops', '4 coins/day × 457 d'], ['Spare', '568 coins']], eq: 'spare = 2,396 − 4 × (672 − 215)', src: 'Game economy' }),
+    queue: g({ name: 'Ops budget', isBar: true, tone: 'ok', big: '1,520', bigSub: 'coins', fill: '42.2%', mark: '28.2%', markPad: '14%', markL: '▲ reserved for daily ops', line: 'Covers daily operations, plus about 12 small-dish calls.', rows: [['Daily ops', '4 coins/day × 254 d'], ['Spare', '504 coins']], eq: 'spare = 1,520 − 4 × (672 − 418)', src: 'Game economy' }),
+    blackout: g({ name: 'Ops budget', isBar: true, tone: 'ok', big: '1,468', bigSub: 'coins', fill: '40.8%', mark: '26.8%', markPad: '12%', markL: '▲ reserved for daily ops', line: 'No calls possible, so no coins spent on them.', rows: [['Daily ops', '4 coins/day × 241 d'], ['Spare', '504 coins']], eq: 'spare = 1,468 − 4 × (672 − 431)', src: 'Game economy' }),
+    extension: g({ name: 'Ops budget', isBar: true, tone: 'warn', big: '380', bigSub: 'coins', fill: '10.6%', mark: '0%', markPad: '0%', markL: 'prime-mission funding ends today', line: 'Prime mission money is nearly spent. Extending brings new funding.', rows: [['Extension grant', '+2,900 coins'], ['2-yr ops', '4 × 730 = 2,920']], eq: '380 + 2,900 − 2,920 = 360 spare', src: 'Game economy' })
+  };
+  coins.hazard = coins.normal;
+  return [batt, fuel, data[s], coins[s]];
+}
+
+const EV = {
+  cruise: { bands: [], events: [
+    ['dsn', 215, 'Small dish', 'DSS-35 · 34 m · 4 h'], ['dsn70', 218, 'Big dish', 'DSS-14 · 70 m · 4 h'], ['dsn', 222, 'Small dish', 'DSS-55 · 34 m'], ['open', 225, 'Open slot', 'book 34 / 70 m'],
+    ['dsn', 229, 'Small dish', 'DSS-26 · 34 m'], ['burn', 232, 'Course fix', 'TCM-4 · ≤32 m/s'], ['dsn', 236, 'Small dish', 'DSS-36 · 34 m'], ['open', 240, 'Open slot', 'book 34 / 70 m'],
+    ['dsn70', 243, 'Big dish', 'DSS-63 · 70 m'], ['dsn', 250, 'Small dish', 'DSS-34 · 34 m'], ['open', 254, 'Open slot', 'book 34 / 70 m'], ['dsn', 257, 'Small dish', 'DSS-55 · 34 m'], ['burn', 266, 'Course fix', 'TCM-5 · ≤32 m/s']
+  ], off: { tag: 'ORBIT INSERTION', t: 'Day 307', s: 'in 93 days · the big burn' } },
+  orbit: { bands: [['conj', 424, 438, 'Solar conjunction · no radio', 'SEP < 2° · 14 d'], ['ecl', 446, 999, 'Eclipse season', 'shadow ≤ 51 min / orbit']], events: [
+    ['dsn', 419, 'Small dish', 'DSS-34 · 34 m'], ['dsn70', 421, 'Big dish', 'DSS-63 · 70 m'], ['dsn', 423, 'Last call', 'DSS-26 · 34 m'], ['dsn', 439, 'First call back', 'DSS-35 · 34 m'], ['dsn70', 441, 'Big dish', 'DSS-14 · 70 m'],
+    ['burn', 452, 'Orbit trim', 'OTM-7 · 0.9 kg'], ['dsn', 458, 'Small dish', 'DSS-55'], ['dsn70', 466, 'Big dish', 'DSS-43 · 70 m'], ['dsn', 473, 'Small dish', 'DSS-26'], ['dsn', 482, 'Small dish', 'DSS-36']
+  ], off: null },
+  ext: { bands: [['ecl', 705, 740, 'Eclipse season', 'shadow ≤ 48 min / orbit']], events: [
+    ['dsn', 673, 'Small dish', 'DSS-34 · 34 m'], ['dsn', 680, 'Small dish', 'DSS-55'], ['burn', 688, 'Orbit trim', 'OTM-12 · 0.8 kg'], ['dsn70', 694, 'Big dish', 'DSS-14 · 70 m'], ['dsn', 701, 'Small dish', 'DSS-26'], ['open', 712, 'Open slot', 'book 34 / 70 m'], ['dsn', 722, 'Small dish', 'DSS-35']
+  ], off: null }
+};
+
+function timeline(set, d0, s, eng) {
+  const span = 60, pos = (d) => ((d - d0) / span * 100).toFixed(2) + '%';
+  const ticks = [];
+  for (let d = Math.ceil(d0 / 5) * 5; d <= d0 + span; d += 5) if (d > d0 + 1) ticks.push({ left: pos(d), l: 'Day ' + d });
+  const bands = set.bands.filter(b => b[2] > d0 && b[1] < d0 + span).map(([k, a, z, l, e]) => {
+    const a2 = Math.max(a, d0), z2 = Math.min(z, d0 + span);
+    const live = s === 'blackout' && k === 'conj';
+    return { left: pos(a2), w: ((z2 - a2) / span * 100).toFixed(2) + '%', l: live ? 'Blackout · 7 days left' : l, e,
+      c: k === 'conj' ? 'var(--warn)' : 'var(--bp)', bg: k === 'conj' ? 'repeating-linear-gradient(135deg,rgba(242,199,68,0.22) 0 6px,rgba(242,199,68,0.06) 6px 12px)' : 'rgba(142,197,255,0.10)' };
+  });
+  const ribPx = set.off ? 1178 : 1392, ends = [-1e9, -1e9, -1e9], tops = [22, 48, 74];
+  const events = set.events.filter(e => e[1] >= d0 && e[1] < d0 + span - 3).map(([k, d, l, e]) => {
+    const x = (d - d0) / span * ribPx - 11;
+    const w = 30 + Math.max(l.length * 6.6, eng ? e.length * 6.1 : 0);
+    let lane = ends.findIndex(end => end + 10 <= x), showL = true;
+    if (lane < 0) { showL = false; lane = ends.indexOf(Math.min(...ends)); }
+    ends[lane] = x + (showL ? w : 24);
+    const top = tops[lane];
+    const isDsn = k === 'dsn' || k === 'dsn70', big = k === 'dsn70', open = k === 'open', burn = k === 'burn';
+    return { left: pos(d), top: top + 'px', stem: (100 - top - 22) + 'px', l, e, showL, isDsn, isBurn: burn, isOpen: open,
+      bg: open ? 'var(--panel)' : burn ? 'rgba(255,159,87,0.16)' : big ? 'var(--bp)' : 'rgba(142,197,255,0.16)',
+      bd: open ? '1px dashed var(--ink3)' : 'none', c: open ? 'var(--ink3)' : burn ? 'var(--acc)' : big ? 'var(--bg)' : 'var(--bp)',
+      lc: open ? 'var(--ink3)' : 'var(--ink)', stemC: open ? 'var(--line2)' : burn ? 'rgba(255,159,87,0.5)' : 'rgba(142,197,255,0.4)' };
+  });
+  return { from: d0, to: d0 + span, ticks, bands, events, hasOff: !!set.off, offTag: set.off?.tag, offT: set.off?.t, offS: set.off?.s };
+}
+
+const RESP = [
+  { id: 'a', title: 'Go to safe mode now', line: 'Switch the instruments off and wait it out, facing the Sun.', cC: [['cam', '2 days of photos'], ['coin', '60']], cE: [['cam', '−48 h science'], ['coin', '−60'], ['batt', '±0 Wh']], risk: 1, riskL: 'LOW', eng: 'P(reset) ≈ 3% · recovery 48 h · CMD SAFE_ENTER' },
+  { id: 'b', title: 'Keep the science running', line: 'Measure the storm up close. Your computer might reset.', cC: [['cam', 'none, if it works']], cE: [['cam', '+0.6 GB storm data']], risk: 4, riskL: 'HIGH', eng: 'P(reset) ≈ 35% · if reset: unplanned safe mode, ~4 d lost' },
+  { id: 'c', title: 'Hide behind the fuel tanks', line: 'Turn the craft so the tanks block the particles.', cC: [['fuel', 'a big gulp of fuel']], cE: [['fuel', '−38 kg']], risk: 1, riskL: 'LOW', disabled: true, why: 'Not enough fuel — your margin is used up.', eng: 'RCS attitude hold 48 h = 38 kg · spare after MOI reserve 32 kg' }
+];
+const TOTAL = 714;
+const fmt = (s) => String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(Math.floor(s % 60)).padStart(2, '0');
+
+class Component extends DCLogic {
+  state = { mode: this.props.mode ?? 'cadet', speed: null, sel: 'a', stage: this.props.hazardStage ?? 'choose', left: 452, fast: false, qLeft: 760 };
+  componentDidMount() { this.iv = setInterval(() => this.tick(), 1000); }
+  componentWillUnmount() { clearInterval(this.iv); }
+  componentDidUpdate(p) {
+    if (p.mode !== this.props.mode) this.setState({ mode: this.props.mode ?? 'cadet' });
+    if (p.hazardStage !== this.props.hazardStage) this.setState({ stage: this.props.hazardStage ?? 'choose', left: 452, fast: false });
+    if (p.state !== this.props.state) this.setState({ speed: null });
+  }
+  tick() {
+    const s = this.props.state ?? 'normal';
+    if (s === 'hazard' && this.state.stage === 'transit') {
+      const n = this.state.left - (this.state.fast ? 30 : 1);
+      this.setState(n <= 0 ? { stage: 'result', left: 0 } : { left: n });
+    }
+    if (s === 'queue') this.setState(st => ({ qLeft: st.qLeft <= 1 ? 760 : st.qLeft - 1 }));
+  }
+  pulse(d, color, dur) {
+    const h = React.createElement;
+    return h('svg', { viewBox: '0 0 1080 690', width: '100%', height: '100%', style: { position: 'absolute', inset: 0, pointerEvents: 'none' } },
+      h('g', { transform: 'translate(0 -18)' }, [0, 1, 2].map(i => h('circle', { key: i, r: i === 0 ? 5 : 3.2 - i * 0.6, fill: color, opacity: i === 0 ? 1 : 0.5 - i * 0.12 },
+        h('animateMotion', { dur: dur + 's', begin: i === 0 ? '0s' : '-' + (dur - i * 0.14).toFixed(2) + 's', repeatCount: 'indefinite', path: d })))));
+  }
+  renderVals() {
+    const s = this.props.state ?? 'normal';
+    const d = D[s] || D.normal;
+    const eng = this.state.mode === 'engineer';
+    const stage = this.state.stage;
+    const locked = (s === 'hazard' && stage !== 'result') || s === 'safe' || s === 'extension';
+    const sp = locked ? 'pause' : (this.state.speed ?? d.speed);
+    const tone = TONE[d.tone];
+    const on = { bg: 'var(--panel2)', sh: 'inset 0 0 0 1px var(--line2)', c: 'var(--ink)' }, off = { bg: 'transparent', sh: 'none', c: 'var(--ink2)' };
+    const speeds = [['pause', 'Pause'], ['1', '1×'], ['10', '10×'], ['100', '100×']].map(([k, l]) => ({
+      ...(sp === k ? { bg: k === 'pause' && locked ? 'rgba(242,199,68,0.18)' : 'var(--acc)', sh: 'none', c: k === 'pause' && locked ? 'var(--warn)' : 'var(--accInk)' } : off),
+      l, title: l, isPause: k === 'pause', isRate: k !== 'pause', cur: locked ? 'not-allowed' : 'pointer', set: () => { if (!locked) this.setState({ speed: k }); }
+    }));
+    const cruise = s === 'normal' || s === 'hazard' || s === 'safe';
+    let pulseSvg = null;
+    if (s === 'normal') pulseSvg = this.pulse('M763.1 364.2L602.6 181.4', '#8EC5FF', 3);
+    if (s === 'hazard' && stage === 'transit') pulseSvg = this.pulse('M602.6 181.4L763.1 364.2', '#FF9F57', 2.4);
+    if (s === 'safe') pulseSvg = this.pulse('M763.1 364.2L602.6 181.4', '#8193B8', 5);
+    if (s === 'queue') pulseSvg = this.pulse('M496.3 498.3L528 71.1', '#FF9F57', 4);
+    if (s === 'extension') pulseSvg = this.pulse('M325.4 500.9L369.5 251', '#8EC5FF', 3);
+    const pills = { cruise: { x: '63%', y: '37%' }, queue: { x: '58%', y: '22%' }, extension: { x: '33%', y: '52%' } };
+    const pill = cruise ? pills.cruise : pills[s];
+    const pillT = eng ? 'OWLT ' + d.owlt : (s === 'queue' ? 'Signal · about 21 min' : 'Signal · about 12 min');
+    const resp = RESP.map(r => {
+      const sel = this.state.sel === r.id && !r.disabled;
+      const lv = r.risk >= 4 ? 'var(--bad)' : r.risk >= 3 ? 'var(--warn)' : 'var(--ok)';
+      return { ...r, chips: (eng ? r.cE : r.cC).map(([k, t]) => ({ t, isCam: k === 'cam', isCoin: k === 'coin', isFuel: k === 'fuel', isBatt: k === 'batt' })),
+        bd: sel ? '1.5px solid var(--acc)' : '1px solid var(--line2)', bg: sel ? 'rgba(255,159,87,0.09)' : r.disabled ? 'transparent' : 'var(--panel2)',
+        op: r.disabled ? 0.55 : 1, cur: r.disabled ? 'not-allowed' : 'pointer', dot: sel ? 'var(--acc)' : 'var(--ink3)', dotFill: sel ? 'var(--acc)' : 'transparent',
+        seg: [1, 2, 3, 4, 5].map(i => ({ bg: i <= r.risk ? lv : 'rgba(143,186,255,0.15)' })), riskC: lv,
+        pick: () => { if (!r.disabled) this.setState({ sel: r.id }); } };
+    });
+    const pick = RESP.find(r => r.id === this.state.sel) || RESP[0];
+    const left = Math.max(0, this.state.left);
+    const dockBase = [
+      { isPower: true, t: 'Power plan', s: 'Science · Heaters · Radio', e: s === 'blackout' ? '450 / 270 / 180 W' : '405 / 270 / 225 W' },
+      { isCall: true, t: 'Book a call home', s: s === 'queue' ? 'Last chance: Day 423' : s === 'extension' ? 'Next: Day 673 · small dish' : 'Next: tomorrow · small dish', e: s === 'queue' ? '200 kbps @ 34 m' : '621 kbps @ 34 m · 2.63 Mbps @ 70 m' },
+      { isQueue: true, t: 'Command queue', s: s === 'queue' ? '1 on its way · 3 waiting' : '2 waiting for the next call', e: 'OWLT ' + d.owlt, hasBadge: true, badge: s === 'queue' ? '4' : '2' }
+    ];
+    const dock = dockBase.map((k, i) => {
+      const dis = s === 'blackout' && i > 0, act = s === 'queue' && i === 2;
+      return { ...k, s: dis ? (i === 1 ? 'No contact until Day 438' : 'Locked until contact returns') : k.s, op: dis ? 0.45 : 1, cur: dis ? 'not-allowed' : 'pointer',
+        bd: act ? '1.5px solid var(--acc)' : '1px solid var(--line2)', bg: act ? 'rgba(255,159,87,0.12)' : 'rgba(19,36,74,0.94)' };
+    });
+    const set = cruise ? EV.cruise : s === 'extension' ? EV.ext : EV.orbit;
+    return {
+      eng, cadet: !eng, d, locked,
+      mCadet: eng ? off : on, mEng: eng ? on : off,
+      setCadet: () => this.setState({ mode: 'cadet' }), setEngineer: () => this.setState({ mode: 'engineer' }),
+      chip: { c: tone.c, bg: tone.cbg, bd: tone.cbd },
+      radioOn: s !== 'blackout', radioOff: s === 'blackout',
+      speeds, speedOp: locked ? 0.6 : 1,
+      mapOp: s === 'blackout' ? 0.45 : s === 'extension' ? 0.5 : s === 'hazard' && stage === 'choose' ? 0.75 : 1,
+      mapCruise: cruise, craftNormal: s === 'normal' || s === 'hazard', craftSafe: s === 'safe',
+      mapConjQ: s === 'queue', mapConjB: s === 'blackout', mapExt: s === 'extension',
+      engCruise: eng && cruise, engConj: eng && (s === 'queue' || s === 'blackout'),
+      pulseSvg, showPill: !!pill && s !== 'blackout', pill: { ...(pill || {}), t: pillT },
+      showTitle: s === 'normal' || s === 'queue' || s === 'blackout', showLegend: s === 'normal',
+      isHazard: s === 'hazard', isQueue: s === 'queue', isBlackout: s === 'blackout', isSafe: s === 'safe', isExt: s === 'extension',
+      hz: { choose: stage === 'choose', transit: stage === 'transit', result: stage === 'result', left: fmt(left), pct: ((1 - left / TOTAL) * 100).toFixed(1) + '%', cmdTitle: pick.title },
+      resp,
+      send: () => this.setState({ stage: 'transit', left: TOTAL, fast: true }),
+      resume: () => this.setState({ stage: 'choose', left: TOTAL, fast: false }),
+      q: { left: fmt(this.state.qLeft), pct: ((1 - this.state.qLeft / 1258) * 100).toFixed(1) + '%' },
+      qItems: [
+        { t: 'Run the 14-day autopilot plan', s: 'Sends at next call · Day 419 · small dish', e: 'SEQ c14_conj.sasf · 412 kB · 96 cmds' },
+        { t: 'Slow the science while the radio is out', s: 'Keeps the memory from filling up', e: 'SCI_RATE 0.5 GB/d · SSR guard 90%' },
+        { t: 'Save photos, send after the blackout', s: 'Sends Day 419', e: 'DL_HOLD until Day 439 · DSS-35' }
+      ],
+      boDays: Array.from({ length: 14 }, (_, i) => ({ bg: i < 7 ? 'var(--bad)' : i === 7 ? 'rgba(255,107,138,0.55)' : 'rgba(143,186,255,0.15)' })),
+      showDock: s === 'normal' || s === 'queue' || s === 'blackout', dock,
+      gauges: gauges(s),
+      tl: timeline(set, +d.day, s, eng)
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -49,10 +49,13 @@ src/engine/
   cadet.ts        Cadet guided build: sizing by bisection, 2–3 cards per step, chips, gauges, testFlight()
   flightMap.ts    craft position, signal delay and countdown, flight frames, map geometry, ghostFor()
   rescue.ts       Rescue History cases (Mars Climate Orbiter), clues, consequence, stars
+  ops/            Mission operations: day-by-day clock, hazards, commands with light delay, DSN, extension;
+                  console.ts is the Operations Console view model (consoleView, powerPlanPreview, dsnOptions)
 src/ui/           React UI: App.tsx, screens/ (Engineer: BuildBay, CrisisScreen, Debrief; Cadet: LevelMap,
-                  CadetBuild, Flight, Rescue), components/, levels.ts (Cadet levels and saved stars),
-                  cadetWords.ts (Cadet wording), format.ts (unit display only), meters.ts, starters.ts
-                  styles/app.css (shared + Engineer), styles/cadet.css (Cadet, 1440 and 390 layouts)
+                  CadetBuild, Flight, Rescue; both: OpsConsole), components/ (ops/ for the console),
+                  levels.ts (Cadet levels and saved stars), cadetWords.ts and opsWords.ts (wording),
+                  useOpsSession.ts (console clock), format.ts (unit display only), meters.ts, starters.ts
+                  styles/app.css (shared + Engineer), styles/cadet.css (Cadet), styles/ops.css (console; 1440 and 390 layouts)
 src/data/         destinations, orbitalElements, launchVehicles, parts, missions, crisisCards, lessons,
                   rescueCases (all values Sourced)
 tests/            physics.test.ts, validation.test.ts, dataAudit.test.ts, engineApi.test.ts, uiGuards.test.ts,
@@ -64,6 +67,7 @@ All modules in the spec's build order are built.
 
 - **Cadet:** Level map → guided build (Science, Power, Radio, Fuel, Rocket, then standing orders from Mars on) → Test Flight → Launch → Flight map with Mission Control on the crisis day → Debrief with the level result. Rescue History opens from the map.
 - **Engineer:** Build Bay → one crisis card → Debrief. The Mission and Window screens come next.
+- **Operations Console (both modes, spec UI rules 16–20):** from the Debrief, "Run mission operations" flies the same craft day by day: hazard alerts with light-delayed commands, the power plan, calls home on the 34 m or 70 m dish, conjunction blackouts, safe mode, then the extension decision and the Ops debrief (prime stars kept separate). Cadet opens it from the Mars level on.
 
 ## Additions to the spec interfaces
 

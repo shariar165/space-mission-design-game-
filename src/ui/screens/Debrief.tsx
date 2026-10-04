@@ -46,9 +46,11 @@ interface Props {
   seedFromUrl: boolean;
   onRetry: () => void;
   onEngineer: () => void;
+  /** Fly the same craft day by day in the Operations Console (when the design can fly it). */
+  onOps?: () => void;
 }
 
-export function Debrief({ design, ev, sim, missionName, engineer, seed, seedFromUrl, onRetry, onEngineer }: Props) {
+export function Debrief({ design, ev, sim, missionName, engineer, seed, seedFromUrl, onRetry, onEngineer, onOps }: Props) {
   const dest = DESTINATIONS[design.destination];
   const cmp = useMemo(() => compareWithRealMission(design, ev), [design, ev]);
   const orbiter = dest.missionType === 'orbiter';
@@ -140,6 +142,15 @@ export function Debrief({ design, ev, sim, missionName, engineer, seed, seedFrom
               </svg>
               Retry with this build
             </button>
+            {onOps && (
+              <button className="btn ops-go" onClick={onOps}>
+                <svg width="18" height="18" viewBox="0 0 20 20" aria-hidden="true">
+                  <circle cx="10" cy="11" r="1.8" fill="currentColor" />
+                  <path d="M6.5 7.5a5 5 0 0 0 0 7M13.5 7.5a5 5 0 0 1 0 7M4 5a8.5 8.5 0 0 0 0 12M16 5a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+                Run mission operations
+              </button>
+            )}
             {!engineer && (
               <button className="btn ghost" onClick={onEngineer}>
                 <span className="mono" style={{ color: 'var(--bp)', fontSize: 13 }}>

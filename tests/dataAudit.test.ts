@@ -23,6 +23,7 @@ import { ACCEPTABLE_MISSION_RISK, BASE_RISK, MARGIN_RISK_FACTOR_AT_ZERO } from '
 import { BUDGET_ZERO_AT_OVERRUN, MARGIN_BAND, SCORE_GRADES, WEIGHTS } from '../src/engine/scoring';
 import type { Sourced } from '../src/engine/types';
 import { RISK_RUNS, RISK_SEED } from '../src/engine/ops/riskEstimate';
+import { CONSOLE_RULES } from '../src/engine/ops/console';
 
 interface Entry {
   path: string;
@@ -87,6 +88,7 @@ const ENGINE_VALUES: Record<string, Record<string, Sourced<unknown>>> = {
   'cadet.ts': { PHOTO_FRAME_Mbit, COIN_FRACTION },
   'rescue.ts': { LBF_TO_N, RESCUE_MAX_STARS },
   'ops/riskEstimate.ts': { RISK_RUNS, RISK_SEED },
+  'ops/console.ts CONSOLE_RULES': CONSOLE_RULES,
 };
 
 const all: Entry[] = [];
