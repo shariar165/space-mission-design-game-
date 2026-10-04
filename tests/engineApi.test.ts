@@ -620,19 +620,19 @@ describe('Signal delay on the crisis day', () => {
     expect(pos[1]).toBeCloseTo(path[32]![1], -3);
   });
 
-  it('Moon: 384,000 km → 1.28 s one way', () => {
+  it('Moon: 384,400 km (NSSDC semimajor axis) → 1.28 s one way', () => {
     const m = cadet.buildCadetDesign(cadetBase('moon'), cadet.defaultChoices(cadetBase('moon')));
     const em = evaluateDesign(m);
-    expect(signalDelay(m, Math.round(em.trajectory.flightDays) + 10, em).oneWay_s).toBeCloseTo(384_000_000 / 299_792_458, 6);
+    expect(signalDelay(m, Math.round(em.trajectory.flightDays) + 10, em).oneWay_s).toBeCloseTo(384_400_000 / 299_792_458, 6);
   });
 
   it('Moon cruise follows the transfer in time (Kepler), not in angle: half-way in time is already far out', () => {
     const m = cadet.buildCadetDesign(cadetBase('moon'), cadet.defaultChoices(cadetBase('moon')));
     const em = evaluateDesign(m);
-    // Half-ellipse from r1 = R_E + 185 km = 6,563.1 km to r2 = 384,000 km: a = (r1 + r2)/2, e = (r2 − r1)/(r2 + r1) ≈ 0.966.
+    // Half-ellipse from r1 = R_E + 185 km = 6,563.1 km to r2 = 384,400 km: a = (r1 + r2)/2, e = (r2 − r1)/(r2 + r1) ≈ 0.966.
     // Half the flight time → M = π/2; E − e sin E = π/2 → E ≈ 2.316 rad; r = a(1 − e cos E) ≈ 330,000 km.
     const r1 = 6_563_100;
-    const r2 = 384_000_000;
+    const r2 = 384_400_000;
     const a = (r1 + r2) / 2;
     const e = (r2 - r1) / (r2 + r1);
     let E = Math.PI / 2;
@@ -687,12 +687,12 @@ describe('Flight map geometry', () => {
     expect(m.extent_m / AU).toBeLessThan(2);
     for (const p of [...m.earthOrbit, ...m.destOrbit, ...m.path]) expect(Math.max(Math.abs(p[0]), Math.abs(p[1]))).toBeLessThanOrEqual(m.extent_m);
   });
-  it('Moon: Earth-centred frame, the Moon on a circle of 384,000 km', () => {
+  it('Moon: Earth-centred frame, the Moon on a circle of 384,400 km', () => {
     const b = cadetBase('moon');
     const d = cadet.buildCadetDesign(b, cadet.defaultChoices(b));
     const m = flightMap(d);
     expect(m.frame).toBe('earth');
-    for (const p of m.destOrbit) expect(Math.hypot(p[0], p[1])).toBeCloseTo(384_000_000, -1);
+    for (const p of m.destOrbit) expect(Math.hypot(p[0], p[1])).toBeCloseTo(384_400_000, -1);
   });
   it('frames carry the one-way light time t = d / c', () => {
     const b = cadetBase('mars');

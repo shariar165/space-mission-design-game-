@@ -143,10 +143,10 @@ describe('ephemeris', () => {
     expect(r.max / C.AU_M).toBeCloseTo(1.3559, 3);
   });
 
-  it('Moon is Earth-centred: Sun distance = Earth’s, Earth distance = 0.384 million km', () => {
+  it('Moon is Earth-centred: Sun distance = Earth’s, Earth distance = 0.3844 million km (NSSDC)', () => {
     const jd = E.julianDate('2009-06-23');
     expect(E.sunDistance('moon', jd)).toBe(E.sunDistance('earth', jd));
-    expect(E.earthDistance('moon', jd) / MKM).toBeCloseTo(0.384, 6);
+    expect(E.earthDistance('moon', jd) / MKM).toBeCloseTo(0.3844, 6);
   });
 
   it('synodic period S = 1/|1/T_E − 1/T_p| matches the Destinations table', () => {

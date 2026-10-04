@@ -121,7 +121,7 @@ const OPEN_ITEMS = [
   'Comms reference link: MRO (DESCANSO Article 12) gives rate, distance, transmitter power and HGA size, but not the ground station for its 500 kbps figure (34 m inferred). Find a published link that names the station.',
   'Replace each engine Isp with a named flight engine and its published Isp.',
   'LRO (Moon, 2009): wet mass, dry mass, lunar orbit insertion Δv, power and data rate from the NASA LRO mission page.',
-  'Copy Venus, Moon and Jupiter values from each body\'s NASA fact sheet; Bennu values from the JPL Small-Body Database (SBDB already gives a = 1.12639 au, period 436.65 d, diameter 0.48444 km, GM 4.8904e-9 km³/s²).',
+  'Venus, Moon and Jupiter fact-sheet values were copied on Oct 4, 2026 from Internet Archive copies of the NSSDC fact sheets (Sept. 28 – Oct. 3, 2026), because nssdc.gsfc.nasa.gov refused connections: re-check them against the live site when it is back. Bennu values still come from the JPL Small-Body Database (SBDB gives a = 1.12639 au, period 436.65 d, diameter 0.48444 km, GM 4.8904e-9 km³/s²).',
   'μ☉: confirm on the NASA Sun Fact Sheet.',
   'MMRTG power decay over the mission is not modelled yet (fact sheet gives launch power only).',
   'Crisis cards: check the real-history text on each card against NASA LLIS or the official failure report and put that link on the card.',
@@ -129,7 +129,7 @@ const OPEN_ITEMS = [
   'Part costs: candidate sources are NASA\'s Cost Estimating Handbook and NASA instrument cost models.',
   'Mission operations: check each hazard\'s real-history text (hazards.json) against the NASA mission page or LLIS and replace "to verify".',
   'Mission operations: source the hazard rates (debris, reaction-wheel Weibull, memory upsets), response costs and failure chances; and the Jupiter radiation model against Juno\'s vault design.',
-  'Venus, Jupiter and Moon pole orientation: copy from the NSSDC fact sheets (unreachable during sourcing).',
+  'Moon pole orientation: the NSSDC Moon fact sheet does not list it; verify the IAU WGCCRE values (Archinal et al. 2018) against a NASA source. Venus and Jupiter poles are now from their fact sheets.',
   'DSN aperture fee: find the current-year base rate (FY09 $1057/h is used, not inflated).',
 ];
 
