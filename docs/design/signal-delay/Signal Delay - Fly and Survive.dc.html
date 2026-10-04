@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&amp;family=B612:wght@400;700&amp;family=B612+Mono:wght@400;700&amp;family=VT323&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#0b0c09;color:#cbbf9f}a{color:#ffb547}a:hover{color:#ffd28a}</style>
+</helmet>
+
+<section id="fly" data-screen-label="01 Fly and Survive" style="padding:56px 64px 80px;display:flex;flex-direction:column;gap:28px">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap;max-width:1900px">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="font:400 14px/1 'B612 Mono',monospace;letter-spacing:.2em;color:#8a8270">SIGNAL DELAY · SCREEN 01 OF 06</div>
+      <h1 style="margin:0;font:800 56px/1 'Big Shoulders Display',sans-serif;color:#efe6cf;letter-spacing:.02em">FLY &amp; SURVIVE</h1>
+      <p style="margin:0;max-width:640px;font:400 16px/1.5 'B612',sans-serif;color:#a49b84;text-wrap:pretty">The robot cruises on its own. Danger cards pause time. You pick, the order flies to the robot at light speed, and you wait to hear back.</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-end">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <span style="font:400 12px/1 'B612 Mono',monospace;letter-spacing:.16em;color:#8a8270">JUMP TO</span>
+        <sc-for list="{{ jumps }}" as="j" hint-placeholder-count="4">
+          <button onClick="{{ j.go }}" style="cursor:pointer;padding:9px 14px;border-radius:4px;border:1px solid {{ j.bd }};background:{{ j.bg }};color:{{ j.fg }};font:700 12px/1 'B612 Mono',monospace;letter-spacing:.08em;white-space:nowrap">{{ j.label }}</button>
+        </sc-for>
+      </div>
+      <div style="font:400 12px/1 'B612 Mono',monospace;color:#6f685a">Live: time runs, cards fire on their day. Keys ← → choose on desktop. Drag the card on mobile.</div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:56px;align-items:flex-start;flex-wrap:wrap">
+    <!-- DESKTOP -->
+    <div id="1a" style="display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;gap:10px;align-items:center"><span style="padding:4px 9px;border-radius:3px;background:#ffb547;color:#1b1a16;font:700 13px/1 'B612 Mono',monospace">1a</span><span style="font:400 13px/1 'B612 Mono',monospace;color:#8a8270;letter-spacing:.1em;white-space:nowrap">DESKTOP · 1440 × 900</span></div>
+      <div style="width:1440px;height:900px;box-sizing:border-box;padding:18px;background:#1c1e18;border-radius:10px;box-shadow:0 30px 80px rgba(0,0,0,.55),inset 0 1px 0 #34372e;display:grid;grid-template-rows:76px minmax(0,1fr) 168px;gap:14px;position:relative;overflow:hidden">
+
+        <!-- top: 4 icons only -->
+        <div style="display:grid;grid-template-columns:240px minmax(0,1fr) 240px;align-items:center;gap:16px">
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <div style="font:900 30px/1 'Big Shoulders Display',sans-serif;color:#efe6cf;letter-spacing:.06em">SIGNAL DELAY</div>
+            <div style="font:400 11px/1 'B612 Mono',monospace;color:#8a8270;letter-spacing:.18em">ORBITER-1 · TO MARS</div>
+          </div>
+          <div style="display:flex;justify-content:center;gap:14px">
+            <sc-for list="{{ res }}" as="r" hint-placeholder-count="4">
+              <div title="{{ r.name }}" style="position:relative;display:flex;align-items:center;gap:12px;padding:10px 16px 10px 10px;background:#23251f;border:1px solid #3a3d33;border-radius:6px;box-shadow:inset 0 1px 0 #3e4137,0 2px 0 #121410">
+                <div style="width:46px;height:46px;border-radius:4px;background:#050c07;display:grid;place-items:center;box-shadow:inset 0 0 10px #000">
+                  <dc-import name="SDIcon" icon="{{ r.icon }}" size="26" color="{{ r.col }}" hint-size="26px,26px"></dc-import>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:7px">
+                  <div style="display:flex;gap:4px">
+                    <sc-for list="{{ r.segs }}" as="g" hint-placeholder-count="5"><span style="width:16px;height:14px;border-radius:2px;background:{{ g.bg }};box-shadow:{{ g.sh }}"></span></sc-for>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;gap:10px;font:700 11px/1 'B612 Mono',monospace;letter-spacing:.14em;color:#cbbf9f"><span>{{ r.name }}</span><sc-if value="{{ eng }}" hint-placeholder-val="{{ false }}"><span style="color:#47c96b;letter-spacing:0;font-weight:400">{{ r.eng }}</span></sc-if></div>
+                </div>
+                <sc-if value="{{ r.hasDelta }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:-10px;right:-8px;padding:4px 7px;border-radius:3px;background:{{ r.deltaCol }};color:#1b1a16;font:700 13px/1 'B612 Mono',monospace">{{ r.delta }}</span></sc-if>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;justify-content:flex-end;align-items:center;gap:10px">
+            <span style="font:700 11px/1 'B612 Mono',monospace;letter-spacing:.14em;color:{{ cadetLbl }}">CADET</span>
+            <button onClick="{{ toggleMode }}" title="Engineer mode shows numbers and sources" style="cursor:pointer;position:relative;width:62px;height:32px;border-radius:16px;border:1px solid #4a4d42;background:#0f100c;box-shadow:inset 0 2px 6px #000;padding:0">
+              <span style="position:absolute;top:3px;left:{{ leverLeft }};width:26px;height:26px;border-radius:50%;background:linear-gradient(#d9d4c4,#8f8a7b);box-shadow:0 2px 3px #000"></span>
+            </button>
+            <span style="font:700 11px/1 'B612 Mono',monospace;letter-spacing:.14em;color:{{ engLbl }}">ENGINEER</span>
+          </div>
+        </div>
+
+        <!-- CRT map -->
+        <div style="position:relative;border-radius:22px;border:10px solid #2c2f27;background:#050c07;box-shadow:inset 0 0 60px rgba(0,0,0,.9),0 0 0 1px #3a3d33;overflow:hidden">
+          <svg viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid meet" style="position:absolute;inset:0;width:100%;height:100%">
+            <line x1="0" y1="300" x2="1000" y2="300" stroke="#0f2a18" stroke-width="1"></line>
+            <line x1="500" y1="0" x2="500" y2="600" stroke="#0f2a18" stroke-width="1"></line>
+            <circle cx="500" cy="300" r="150" fill="none" stroke="#1f5a32" stroke-width="1.5" stroke-dasharray="3 6"></circle>
+            <circle cx="500" cy="300" r="230" fill="none" stroke="#1f5a32" stroke-width="1.5" stroke-dasharray="3 6"></circle>
+            <sc-if value="{{ showGhost }}" hint-placeholder-val="{{ true }}">
+              <path d="{{ ghostD }}" fill="none" stroke="#8cff9e" stroke-opacity="0.45" stroke-width="3" stroke-dasharray="0.1 10" stroke-linecap="round"></path>
+              <text x="{{ ghostLbl.x }}" y="{{ ghostLbl.y }}" fill="#47c96b" font-family="VT323, monospace" font-size="18">MAVEN 2014 · REAL</text>
+            </sc-if>
+            <path d="{{ aheadD }}" fill="none" stroke="#ffb547" stroke-opacity="0.35" stroke-width="2" stroke-dasharray="7 7"></path>
+            <path d="{{ flownD }}" fill="none" stroke="#ffb547" stroke-width="4" stroke-linecap="round"></path>
+            <circle cx="500" cy="300" r="44" fill="#ffc94a" opacity="0.1"></circle>
+            <circle cx="500" cy="300" r="30" fill="#ff9a2e"></circle>
+            <circle cx="500" cy="300" r="23" fill="#ffc94a"></circle>
+            <g transform="{{ earthT }}">
+              <circle r="14" fill="#3a86d8"></circle>
+              <path d="M-9 -4 q4 -7 10 -4 q2 5 -4 7 q-4 1 -6 -3z M2 5 q5 -1 7 3 q-3 4 -8 2z" fill="#5cc46e"></path>
+              <text y="34" text-anchor="middle" fill="#8cff9e" font-family="VT323, monospace" font-size="20">EARTH</text>
+            </g>
+            <g transform="{{ marsT }}">
+              <circle r="12" fill="#d6603a"></circle>
+              <circle cx="-4" cy="-2" r="3.5" fill="#9e3a1f"></circle><circle cx="4" cy="5" r="2.2" fill="#9e3a1f"></circle>
+              <path d="M-6 -10 q6 -4 12 0 z" fill="#f4eee0"></path>
+              <text y="32" text-anchor="middle" fill="#8cff9e" font-family="VT323, monospace" font-size="20">MARS</text>
+            </g>
+            <sc-if value="{{ isTransit }}" hint-placeholder-val="{{ false }}">
+              <line x1="{{ e0x }}" y1="{{ e0y }}" x2="{{ c0x }}" y2="{{ c0y }}" stroke="#ffb547" stroke-opacity="0.4" stroke-width="1.5" stroke-dasharray="2 6"></line>
+              <circle cx="{{ px }}" cy="{{ py }}" r="{{ ringR }}" fill="none" stroke="#ffb547" stroke-opacity="{{ ringO }}" stroke-width="2"></circle>
+              <circle cx="{{ px }}" cy="{{ py }}" r="7" fill="#ffd28a"></circle>
+            </sc-if>
+            <g transform="{{ craftT }}">
+              <rect x="-27" y="-6" width="17" height="12" fill="#3a6fd8" stroke="#bcd3ff" stroke-width="1.2"></rect>
+              <rect x="10" y="-6" width="17" height="12" fill="#3a6fd8" stroke="#bcd3ff" stroke-width="1.2"></rect>
+              <rect x="-8" y="-8" width="16" height="16" rx="2" fill="#f2c94c" stroke="#8a6a12" stroke-width="1.2"></rect>
+              <path d="M-7 -8 q7 -10 14 0 z" fill="#efe6cf"></path>
+              <text y="-22" text-anchor="middle" fill="#ffb547" font-family="VT323, monospace" font-size="22">YOU</text>
+            </g>
+          </svg>
+          <div style="position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.22) 0 1px,transparent 1px 3px)"></div>
+
+          <div style="position:absolute;left:22px;top:18px;max-width:560px;font:400 26px/1.15 'VT323',monospace;color:#8cff9e;text-shadow:0 0 8px rgba(140,255,158,.55)">&gt; {{ logText }}<span style="opacity:{{ cursorO }}">█</span></div>
+          <div style="position:absolute;left:22px;bottom:16px;display:flex;gap:22px;font:400 20px/1 'VT323',monospace;color:#47c96b">
+            <span style="display:flex;align-items:center;gap:8px"><span style="width:28px;height:4px;background:#ffb547;border-radius:2px"></span>YOUR PATH</span>
+            <sc-if value="{{ showGhost }}" hint-placeholder-val="{{ true }}"><span style="display:flex;align-items:center;gap:8px"><span style="width:28px;height:0;border-top:4px dotted #8cff9e;opacity:.6"></span>REAL NASA PATH</span></sc-if>
+          </div>
+          <sc-if value="{{ eng }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute;right:22px;top:18px;display:flex;flex-direction:column;gap:6px;align-items:flex-end;font:400 20px/1.1 'VT323',monospace;color:#47c96b;text-align:right;white-space:nowrap">
+              <span>SUN DIST  r = {{ rSun }} AU</span>
+              <span>EARTH DIST d = {{ dEarth }} AU</span>
+              <span style="color:#ffb547">LIGHT TIME t = d / c = {{ ltFmt }}</span>
+              <span style="color:#1f9a4a;font-size:16px">c = 299,792 km/s · 1 AU = 499.0 light-s</span>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isTransit }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute;left:50%;top:70px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;padding:16px 30px;background:rgba(5,12,7,.82);border:1px solid #1f5a32;border-radius:6px">
+              <span style="font:400 22px/1 'VT323',monospace;color:#47c96b;letter-spacing:.08em">ORDER “{{ chLabel }}” IS ON ITS WAY</span>
+              <span style="font:400 22px/1 'VT323',monospace;color:#8cff9e">SIGNAL REACHES ROBOT IN</span>
+              <span style="font:400 96px/0.9 'VT323',monospace;color:#ffb547;text-shadow:0 0 18px rgba(255,181,71,.6)">{{ countdown }}</span>
+              <span style="font:400 18px/1 'VT323',monospace;color:#1f9a4a">NOTHING YOU CAN DO NOW BUT WAIT</span>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isResult }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute;right:24px;bottom:24px;width:560px;box-sizing:border-box;padding:20px 24px;background:rgba(5,12,7,.92);border:1px solid #47c96b;border-radius:6px;box-shadow:0 0 30px rgba(140,255,158,.15);display:flex;flex-direction:column;gap:14px">
+              <div style="display:flex;justify-content:space-between;font:400 18px/1 'VT323',monospace;color:#47c96b;letter-spacing:.08em"><span>INCOMING · FROM ORBITER-1</span><span>DAY {{ dayInt }}</span></div>
+              <div style="min-height:120px;white-space:pre-wrap;font:400 30px/1.1 'VT323',monospace;color:#8cff9e;text-shadow:0 0 8px rgba(140,255,158,.55)">{{ resultText }}<span style="opacity:{{ cursorO }}">█</span></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+                <div style="display:flex;gap:8px">
+                  <sc-for list="{{ fxChips }}" as="f" hint-placeholder-count="2">
+                    <span style="display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:4px;border:1px solid {{ f.col }};font:400 22px/1 'VT323',monospace;color:{{ f.col }}"><dc-import name="SDIcon" icon="{{ f.icon }}" size="18" color="{{ f.col }}" hint-size="18px,18px"></dc-import>{{ f.v }}</span>
+                  </sc-for>
+                </div>
+                <button onClick="{{ cont }}" style="cursor:pointer;padding:14px 22px;border-radius:5px;border:none;border-bottom:4px solid #9a6514;background:#ffb547;color:#1b1a16;font:800 22px/1 'Big Shoulders Display',sans-serif;letter-spacing:.08em">CONTINUE ▸</button>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isCard }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute;inset:0;background:rgba(3,6,4,.72);display:flex;align-items:center;justify-content:center;gap:22px">
+              <button onClick="{{ pickL }}" style="cursor:pointer;width:270px;padding:20px;box-sizing:border-box;text-align:left;border-radius:8px;border:2px solid #4a4d42;border-bottom-width:6px;background:#23251f;display:flex;flex-direction:column;gap:12px" style-hover="border-color:#ffb547;background:#2b2d25">
+                <span style="font:400 22px/1 'VT323',monospace;color:#47c96b">◂ SWIPE LEFT / ← KEY</span>
+                <span style="font:800 36px/0.95 'Big Shoulders Display',sans-serif;color:#efe6cf;letter-spacing:.03em">{{ cA.label }}</span>
+                <span style="font:400 16px/1.35 'B612',sans-serif;color:#cbbf9f">{{ cA.sub }}</span>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  <sc-for list="{{ cA.chips }}" as="k" hint-placeholder-count="1"><span style="display:flex;align-items:center;gap:6px;padding:6px 9px;border-radius:4px;border:1.5px {{ k.bs }} {{ k.col }};font:400 22px/1 'VT323',monospace;color:{{ k.col }}"><dc-import name="SDIcon" icon="{{ k.icon }}" size="18" color="{{ k.col }}" hint-size="18px,18px"></dc-import>{{ k.v }}</span></sc-for>
+                </div>
+                <sc-if value="{{ eng }}" hint-placeholder-val="{{ false }}"><span style="font:400 12px/1.4 'B612 Mono',monospace;color:#47c96b">{{ cA.eng }}</span></sc-if>
+              </button>
+
+              <div style="width:480px;border-radius:10px;background:#efe6cf;box-shadow:0 24px 60px rgba(0,0,0,.6);overflow:hidden;display:flex;flex-direction:column">
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:#d8432b">
+                  <span style="display:flex;align-items:center;gap:10px;font:700 13px/1 'B612 Mono',monospace;letter-spacing:.18em;color:#efe6cf"><dc-import name="SDIcon" icon="{{ card.icon }}" size="22" color="#efe6cf" hint-size="22px,22px"></dc-import>DANGER CARD</span>
+                  <span style="font:700 13px/1 'B612 Mono',monospace;letter-spacing:.14em;color:#efe6cf">DAY {{ dayInt }}</span>
+                </div>
+                <div style="padding:22px 26px 24px;display:flex;flex-direction:column;gap:16px">
+                  <div style="font:900 64px/0.9 'Big Shoulders Display',sans-serif;color:#1b1a16;letter-spacing:.01em">{{ card.title }}</div>
+                  <div style="font:400 20px/1.4 'B612',sans-serif;color:#1b1a16;text-wrap:pretty">{{ card.line }}</div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                    <div style="padding:10px 12px;border-radius:5px;background:#1b1a16;display:flex;flex-direction:column;gap:4px"><span style="font:700 10px/1 'B612 Mono',monospace;letter-spacing:.16em;color:#a49b84">DANGER ARRIVES</span><span style="font:400 26px/1 'VT323',monospace;color:#ff8a6d">{{ card.hits }}</span></div>
+                    <div style="padding:10px 12px;border-radius:5px;background:#1b1a16;display:flex;flex-direction:column;gap:4px"><span style="font:700 10px/1 'B612 Mono',monospace;letter-spacing:.16em;color:#a49b84">YOUR ORDER TAKES</span><span style="font:400 26px/1 'VT323',monospace;color:#ffb547">{{ ltWords }}</span></div>
+                  </div>
+                  <div style="padding-top:14px;border-top:2px dashed #c4b897;display:flex;flex-direction:column;gap:6px">
+                    <span style="font:700 11px/1 'B612 Mono',monospace;letter-spacing:.18em;color:#b23a22">REAL HISTORY</span>
+                    <span style="font:400 16px/1.45 'B612',sans-serif;color:#3a372e;text-wrap:pretty">{{ card.history }}</span>
+                    <sc-if value="{{ eng }}" hint-placeholder-val="{{ false }}"><span style="font:400 11px/1.4 'B612 Mono',monospace;color:#7a715c">SOURCE · {{ card.source }}</span></sc-if>
+                  </div>
+                </div>
+              </div>
+
+              <button onClick="{{ pickR }}" style="cursor:pointer;width:270px;padding:20px;box-sizing:border-box;text-align:left;border-radius:8px;border:2px solid #4a4d42;border-bottom-width:6px;background:#23251f;display:flex;flex-direction:column;gap:12px" style-hover="border-color:#ffb547;background:#2b2d25">
+                <span style="font:400 22px/1 'VT323',monospace;color:#47c96b;text-align:right;width:100%">→ KEY / SWIPE RIGHT ▸</span>
+                <span style="font:800 36px/0.95 'Big Shoulders Display',sans-serif;color:#efe6cf;letter-spacing:.03em">{{ cB.label }}</span>
+                <span style="font:400 16px/1.35 'B612',sans-serif;color:#cbbf9f">{{ cB.sub }}</span>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  <sc-for list="{{ cB.chips }}" as="k" hint-placeholder-count="2"><span style="display:flex;align-items:center;gap:6px;padding:6px 9px;border-radius:4px;border:1.5px {{ k.bs }} {{ k.col }};font:400 22px/1 'VT323',monospace;color:{{ k.col }}"><dc-import name="SDIcon" icon="{{ k.icon }}" size="18" color="{{ k.col }}" hint-size="18px,18px"></dc-import>{{ k.v }}</span></sc-for>
+                </div>
+                <sc-if value="{{ eng }}" hint-placeholder-val="{{ false }}"><span style="font:400 12px/1.4 'B612 Mono',monospace;color:#47c96b">{{ cB.eng }}</span></sc-if>
+              </button>
+            </div>
+          </sc-if>
+        </div>
+
+        <!-- bottom: clock + ribbon -->
+        <div style="display:grid;grid-template-columns:330px minmax(0,1fr);gap:14px">
+          <div style="background:#23251f;border:1px solid #3a3d33;border-radius:8px;padding:14px 18px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:inset 0 1px 0 #3e4137">
+            <div style="display:flex;align-items:baseline;gap:12px;padding:6px 12px;background:#050c07;border-radius:4px;box-shadow:inset 0 0 10px #000">
+              <span style="font:400 24px/1 'VT323',monospace;color:#47c96b">DAY</span>
+              <span style="font:400 64px/0.9 'VT323',monospace;color:#8cff9e;text-shadow:0 0 12px rgba(140,255,158,.6)">{{ dayPad }}</span>
+              <span style="margin-left:auto;font:400 20px/1 'VT323',monospace;color:#ffb547;text-align:right">{{ arrival }}</span>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+              <sc-for list="{{ speeds }}" as="sp" hint-placeholder-count="4">
+                <button onClick="{{ sp.go }}" style="cursor:pointer;height:44px;border-radius:5px;border:1px solid #121410;border-bottom:4px solid {{ sp.edge }};background:{{ sp.bg }};color:{{ sp.fg }};box-shadow:{{ sp.glow }};font:800 20px/1 'Big Shoulders Display',sans-serif;letter-spacing:.04em">{{ sp.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+          <div style="position:relative;background:#23251f;border:1px solid #3a3d33;border-radius:8px;padding:14px 20px;box-shadow:inset 0 1px 0 #3e4137;overflow:hidden">
+            <div style="display:flex;justify-content:space-between;font:700 11px/1 'B612 Mono',monospace;letter-spacing:.16em;color:#cbbf9f"><span>COMING UP · YOU CAN SEE THESE ONES COMING</span><span style="color:#8a8270">NEXT 5 MONTHS</span></div>
+            <div style="position:absolute;left:20px;right:20px;top:36px;bottom:14px;background:#050c07;border-radius:4px;box-shadow:inset 0 0 10px #000">
+              <div style="position:absolute;left:0;right:0;bottom:22px;height:2px;background:#1f5a32"></div>
+              <sc-for list="{{ ticks }}" as="t" hint-placeholder-count="5">
+                <div style="position:absolute;left:{{ t.left }}%;bottom:0;display:flex;flex-direction:column;align-items:center;transform:translateX(-50%)"><span style="width:1px;height:10px;background:#1f5a32"></span><span style="font:400 16px/1 'VT323',monospace;color:#1f9a4a;padding:2px 0 4px">{{ t.txt }}</span></div>
+              </sc-for>
+              <div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:#ffb547;box-shadow:0 0 8px #ffb547"></div>
+              <span style="position:absolute;left:8px;bottom:4px;font:400 16px/1 'VT323',monospace;color:#ffb547">NOW</span>
+              <sc-for list="{{ ribbon }}" as="ev" hint-placeholder-count="3">
+                <div style="position:absolute;left:{{ ev.left }}%;top:{{ ev.top }}px;display:flex;flex-direction:{{ ev.dir }};align-items:center;gap:8px;transform:{{ ev.tx }};text-align:{{ ev.ta }}">
+                  <span style="width:28px;height:28px;border-radius:4px;border:1.5px solid {{ ev.col }};display:grid;place-items:center;background:#0a1a0f"><dc-import name="SDIcon" icon="{{ ev.icon }}" size="17" color="{{ ev.col }}" hint-size="17px,17px"></dc-import></span>
+                  <span style="display:flex;flex-direction:column;gap:2px;white-space:nowrap"><span style="font:400 20px/1 'VT323',monospace;color:{{ ev.col }}">{{ ev.label }}</span><span style="font:400 16px/1 'VT323',monospace;color:#1f9a4a">{{ ev.when }}</span></span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MOBILE -->
+    <div id="1b" style="display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;gap:10px;align-items:center"><span style="padding:4px 9px;border-radius:3px;background:#ffb547;color:#1b1a16;font:700 13px/1 'B612 Mono',monospace">1b</span><span style="font:400 13px/1 'B612 Mono',monospace;color:#8a8270;letter-spacing:.1em;white-space:nowrap">MOBILE · 390 × 844</span></div>
+      <div style="width:390px;height:844px;box-sizing:border-box;padding:12px 10px 14px;background:#1c1e18;border-radius:34px;box-shadow:0 30px 80px rgba(0,0,0,.55),0 0 0 8px #0f100c;display:grid;grid-template-rows:30px 70px minmax(0,1fr) 168px;gap:10px;position:relative;overflow:hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:0 14px;font:700 12px/1 'B612 Mono',monospace;color:#8a8270"><span>9:41</span><span style="font:900 16px/1 'Big Shoulders Display',sans-serif;color:#efe6cf;letter-spacing:.08em">SIGNAL DELAY</span><button onClick="{{ toggleMode }}" style="cursor:pointer;padding:5px 8px;border-radius:4px;border:1px solid #4a4d42;background:#0f100c;color:{{ engLbl }};font:700 10px/1 'B612 Mono',monospace;letter-spacing:.1em">ENG</button></div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
+          <sc-for list="{{ res }}" as="r" hint-placeholder-count="4">
+            <div style="position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:#23251f;border:1px solid #3a3d33;border-radius:6px">
+              <dc-import name="SDIcon" icon="{{ r.icon }}" size="22" color="{{ r.col }}" hint-size="22px,22px"></dc-import>
+              <div style="display:flex;gap:2px"><sc-for list="{{ r.segs }}" as="g" hint-placeholder-count="5"><span style="width:11px;height:8px;border-radius:1px;background:{{ g.bg }};box-shadow:{{ g.sh }}"></span></sc-for></div>
+              <sc-if value="{{ eng }}" hint-placeholder-val="{{ false }}"><span style="font:400 13px/1 'VT323',monospace;color:#47c96b">{{ r.eng }}</span></sc-if>
+              <sc-if value="{{ r.hasDelta }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:-6px;right:-4px;padding:3px 5px;border-radius:3px;background:{{ r.deltaCol }};color:#1b1a16;font:700 11px/1 'B612 Mono',monospace">{{ r.delta }}</span></sc-if>
+            </div>
+          </sc-for>
+        </div>
+        <div style="position:relative;border-radius:16px;border:6px solid #2c2f27;background:#050c07;box-shadow:inset 0 0 40px rgba(0,0,0,.9);overflow:hidden">
+          <svg viewBox="250 50 500 500" preserveAspectRatio="xMidYMid meet" style="position:absolute;inset:0;width:100%;height:100%">
+            <circle cx="500" cy="300" r="150" fill="none" stroke="#1f5a32" stroke-width="2" stroke-dasharray="4 7"></circle>
+            <circle cx="500" cy="300" r="230" fill="none" stroke="#1f5a32" stroke-width="2" stroke-dasharray="4 7"></circle>
+            <sc-if value="{{ showGhost }}" hint-placeholder-val="{{ true }}"><path d="{{ ghostD }}" fill="none" stroke="#8cff9e" stroke-opacity="0.45" stroke-width="4" stroke-dasharray="0.1 12" stroke-linecap="round"></path></sc-if>
+            <path d="{{ aheadD }}" fill="none" stroke="#ffb547" stroke-opacity="0.35" stroke-width="3" stroke-dasharray="8 8"></path>
+            <path d="{{ flownD }}" fill="none" stroke="#ffb547" stroke-width="5" stroke-linecap="round"></path>
+            <circle cx="500" cy="300" r="34" fill="#ff9a2e"></circle><circle cx="500" cy="300" r="26" fill="#ffc94a"></circle>
+            <g transform="{{ earthT }}"><circle r="17" fill="#3a86d8"></circle><path d="M-11 -5 q5 -8 12 -5 q2 6 -5 8 q-5 1 -7 -3z M2 6 q6 -1 8 4 q-4 5 -9 2z" fill="#5cc46e"></path><text y="40" text-anchor="middle" fill="#8cff9e" font-family="VT323, monospace" font-size="26">EARTH</text></g>
+            <g transform="{{ marsT }}"><circle r="15" fill="#d6603a"></circle><circle cx="-5" cy="-2" r="4" fill="#9e3a1f"></circle><path d="M-7 -12 q7 -5 14 0 z" fill="#f4eee0"></path><text y="38" text-anchor="middle" fill="#8cff9e" font-family="VT323, monospace" font-size="26">MARS</text></g>
+            <sc-if value="{{ isTransit }}" hint-placeholder-val="{{ false }}">
+              <line x1="{{ e0x }}" y1="{{ e0y }}" x2="{{ c0x }}" y2="{{ c0y }}" stroke="#ffb547" stroke-opacity="0.4" stroke-width="2" stroke-dasharray="3 7"></line>
+              <circle cx="{{ px }}" cy="{{ py }}" r="{{ ringR }}" fill="none" stroke="#ffb547" stroke-opacity="{{ ringO }}" stroke-width="3"></circle>
+              <circle cx="{{ px }}" cy="{{ py }}" r="9" fill="#ffd28a"></circle>
+            </sc-if>
+            <g transform="{{ craftTm }}">
+              <rect x="-27" y="-6" width="17" height="12" fill="#3a6fd8" stroke="#bcd3ff" stroke-width="1.2"></rect>
+              <rect x="10" y="-6" width="17" height="12" fill="#3a6fd8" stroke="#bcd3ff" stroke-width="1.2"></rect>
+              <rect x="-8" y="-8" width="16" height="16" rx="2" fill="#f2c94c" stroke="#8a6a12" stroke-width="1.2"></rect>
+              <path d="M-7 -8 q7 -10 14 0 z" fill="#efe6cf"></path>
+              <text y="-20" text-anchor="middle" fill="#ffb547" font-family="VT323, monospace" font-size="20">YOU</text>
+            </g>
+          </svg>
+          <div style="position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.22) 0 1px,transparent 1px 3px)"></div>
+          <div style="position:absolute;left:14px;right:14px;top:12px;font:400 22px/1.1 'VT323',monospace;color:#8cff9e;text-shadow:0 0 8px rgba(140,255,158,.55)">&gt; {{ logText }}<span style="opacity:{{ cursorO }}">█</span></div>
+          <sc-if value="{{ eng }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;left:14px;bottom:10px;font:400 17px/1.1 'VT323',monospace;color:#ffb547">t = d / c = {{ dEarth }} AU / c = {{ ltFmt }}</div></sc-if>
+          <sc-if value="{{ isTransit }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute;left:50%;bottom:16px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 22px;background:rgba(5,12,7,.85);border:1px solid #1f5a32;border-radius:6px;white-space:nowrap">
+              <span style="font:400 18px/1 'VT323',monospace;color:#8cff9e">ORDER REACHES ROBOT IN</span>
+              <span style="font:400 64px/0.9 'VT323',monospace;color:#ffb547;text-shadow:0 0 14px rgba(255,181,71,.6)">{{ countdown }}</span>
+            </div>
+          </sc-if>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:stretch">
+            <div style="display:flex;align-items:baseline;gap:8px;padding:6px 10px;background:#050c07;border-radius:5px;box-shadow:inset 0 0 8px #000"><span style="font:400 18px/1 'VT323',monospace;color:#47c96b">DAY</span><span style="font:400 40px/0.9 'VT323',monospace;color:#8cff9e;text-shadow:0 0 10px rgba(140,255,158,.6)">{{ dayPad }}</span></div>
+            <div style="display:flex;gap:5px">
+              <sc-for list="{{ speeds }}" as="sp" hint-placeholder-count="4"><button onClick="{{ sp.go }}" style="cursor:pointer;width:46px;height:46px;border-radius:5px;border:1px solid #121410;border-bottom:4px solid {{ sp.edge }};background:{{ sp.bg }};color:{{ sp.fg }};box-shadow:{{ sp.glow }};font:800 17px/1 'Big Shoulders Display',sans-serif">{{ sp.label }}</button></sc-for>
+            </div>
+          </div>
+          <div style="position:relative;flex:1;background:#050c07;border-radius:6px;box-shadow:inset 0 0 8px #000;overflow:hidden">
+            <span style="position:absolute;left:10px;top:7px;font:700 9px/1 'B612 Mono',monospace;letter-spacing:.16em;color:#8a8270">COMING UP</span>
+            <div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:#ffb547"></div>
+            <div style="position:absolute;left:0;right:0;bottom:20px;height:2px;background:#1f5a32"></div>
+            <sc-for list="{{ ticks }}" as="t" hint-placeholder-count="5"><span style="position:absolute;left:{{ t.left }}%;bottom:3px;transform:translateX(-50%);font:400 14px/1 'VT323',monospace;color:#1f9a4a">{{ t.short }}</span></sc-for>
+            <sc-for list="{{ ribbon }}" as="ev" hint-placeholder-count="3">
+              <div style="position:absolute;left:{{ ev.leftM }}%;top:{{ ev.topM }}px;transform:{{ ev.txm }};display:flex;flex-direction:{{ ev.dir }};align-items:center;gap:5px">
+                <span style="width:24px;height:24px;border-radius:4px;border:1.5px solid {{ ev.col }};display:grid;place-items:center;background:#0a1a0f"><dc-import name="SDIcon" icon="{{ ev.icon }}" size="15" color="{{ ev.col }}" hint-size="15px,15px"></dc-import></span>
+                <sc-if value="{{ ev.showLbl }}" hint-placeholder-val="{{ true }}"><span style="font:400 16px/1 'VT323',monospace;color:{{ ev.col }};white-space:nowrap">{{ ev.short }}</span></sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <sc-if value="{{ isCard }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;left:0;right:0;top:120px;bottom:0;background:rgba(3,6,4,.85);display:flex;flex-direction:column;align-items:center;gap:14px;padding:6px 18px 20px;box-sizing:border-box">
+            <div onPointerDown="{{ dragDown }}" onPointerMove="{{ dragMove }}" onPointerUp="{{ dragUp }}" onPointerCancel="{{ dragUp }}" style="touch-action:none;cursor:grab;user-select:none;width:330px;border-radius:12px;background:#efe6cf;box-shadow:0 20px 50px rgba(0,0,0,.6);overflow:hidden;transform:translateX({{ dragX }}px) rotate({{ dragRot }}deg)">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#d8432b"><span style="display:flex;align-items:center;gap:8px;font:700 11px/1 'B612 Mono',monospace;letter-spacing:.16em;color:#efe6cf"><dc-import name="SDIcon" icon="{{ card.icon }}" size="18" color="#efe6cf" hint-size="18px,18px"></dc-import>DANGER CARD</span><span style="font:700 11px/1 'B612 Mono',monospace;color:#efe6cf">DAY {{ dayInt }}</span></div>
+              <div style="padding:16px 18px 18px;display:flex;flex-direction:column;gap:12px">
+                <div style="font:900 50px/0.9 'Big Shoulders Display',sans-serif;color:#1b1a16">{{ card.title }}</div>
+                <div style="font:400 17px/1.4 'B612',sans-serif;color:#1b1a16;text-wrap:pretty">{{ card.line }}</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                  <div style="padding:8px 10px;border-radius:5px;background:#1b1a16;display:flex;flex-direction:column;gap:3px"><span style="font:700 9px/1 'B612 Mono',monospace;letter-spacing:.14em;color:#a49b84">DANGER ARRIVES</span><span style="font:400 20px/1 'VT323',monospace;color:#ff8a6d">{{ card.hits }}</span></div>
+                  <div style="padding:8px 10px;border-radius:5px;background:#1b1a16;display:flex;flex-direction:column;gap:3px"><span style="font:700 9px/1 'B612 Mono',monospace;letter-spacing:.14em;color:#a49b84">ORDER TAKES</span><span style="font:400 20px/1 'VT323',monospace;color:#ffb547">{{ ltWords }}</span></div>
+                </div>
+                <div style="padding-top:10px;border-top:2px dashed #c4b897;display:flex;flex-direction:column;gap:5px"><span style="font:700 10px/1 'B612 Mono',monospace;letter-spacing:.16em;color:#b23a22">REAL HISTORY</span><span style="font:400 14px/1.4 'B612',sans-serif;color:#3a372e">{{ card.history }}</span><sc-if value="{{ eng }}" hint-placeholder-val="{{ false }}"><span style="font:400 10px/1.4 'B612 Mono',monospace;color:#7a715c">SOURCE · {{ card.source }}</span></sc-if></div>
+              </div>
+            </div>
+            <div style="width:100%;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <button onClick="{{ pickL }}" style="cursor:pointer;text-align:left;padding:12px;border-radius:8px;border:2px solid {{ lHot }};border-bottom-width:5px;background:#23251f;display:flex;flex-direction:column;gap:8px">
+                <span style="font:400 18px/1 'VT323',monospace;color:#47c96b">◂ SWIPE LEFT</span>
+                <span style="font:800 24px/0.95 'Big Shoulders Display',sans-serif;color:#efe6cf">{{ cA.label }}</span>
+                <div style="display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ cA.chips }}" as="k" hint-placeholder-count="1"><span style="display:flex;align-items:center;gap:4px;padding:4px 6px;border-radius:4px;border:1.5px {{ k.bs }} {{ k.col }};font:400 18px/1 'VT323',monospace;color:{{ k.col }}"><dc-import name="SDIcon" icon="{{ k.icon }}" size="14" color="{{ k.col }}" hint-size="14px,14px"></dc-import>{{ k.v }}</span></sc-for></div>
+              </button>
+              <button onClick="{{ pickR }}" style="cursor:pointer;text-align:right;padding:12px;border-radius:8px;border:2px solid {{ rHot }};border-bottom-width:5px;background:#23251f;display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+                <span style="font:400 18px/1 'VT323',monospace;color:#47c96b">SWIPE RIGHT ▸</span>
+                <span style="font:800 24px/0.95 'Big Shoulders Display',sans-serif;color:#efe6cf">{{ cB.label }}</span>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><sc-for list="{{ cB.chips }}" as="k" hint-placeholder-count="2"><span style="display:flex;align-items:center;gap:4px;padding:4px 6px;border-radius:4px;border:1.5px {{ k.bs }} {{ k.col }};font:400 18px/1 'VT323',monospace;color:{{ k.col }}"><dc-import name="SDIcon" icon="{{ k.icon }}" size="14" color="{{ k.col }}" hint-size="14px,14px"></dc-import>{{ k.v }}</span></sc-for></div>
+              </button>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isResult }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;left:10px;right:10px;bottom:14px;padding:16px;box-sizing:border-box;background:#050c07;border:1px solid #47c96b;border-radius:14px;box-shadow:0 -10px 40px rgba(0,0,0,.7);display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;justify-content:space-between;font:400 16px/1 'VT323',monospace;color:#47c96b"><span>INCOMING · ORBITER-1</span><span>DAY {{ dayInt }}</span></div>
+            <div style="min-height:104px;white-space:pre-wrap;font:400 25px/1.1 'VT323',monospace;color:#8cff9e;text-shadow:0 0 8px rgba(140,255,158,.55)">{{ resultText }}<span style="opacity:{{ cursorO }}">█</span></div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ fxChips }}" as="f" hint-placeholder-count="2"><span style="display:flex;align-items:center;gap:5px;padding:5px 8px;border-radius:4px;border:1px solid {{ f.col }};font:400 20px/1 'VT323',monospace;color:{{ f.col }}"><dc-import name="SDIcon" icon="{{ f.icon }}" size="16" color="{{ f.col }}" hint-size="16px,16px"></dc-import>{{ f.v }}</span></sc-for></div>
+            <button onClick="{{ cont }}" style="cursor:pointer;height:52px;border-radius:6px;border:none;border-bottom:4px solid #9a6514;background:#ffb547;color:#1b1a16;font:800 22px/1 'Big Shoulders Display',sans-serif;letter-spacing:.08em">CONTINUE ▸</button>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;showGhost&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Map&quot;},&quot;typeSpeed&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;slow&quot;,&quot;normal&quot;,&quot;fast&quot;],&quot;default&quot;:&quot;normal&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Teletype&quot;},&quot;startMode&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;cadet&quot;,&quot;engineer&quot;],&quot;default&quot;:&quot;cadet&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Mode&quot;}}">
+const T=307,CX=500,CY=300,RE=150,RM=230,TH0=200*Math.PI/180,WE=2*Math.PI/365.25,WM=2*Math.PI/687,WIN=150;
+const YOU={a:190,e:40/190,th:TH0},GHOST={a:193,e:43/193,th:TH0+0.08};
+function kep(t,e){if(t>=1)return Math.PI;const M=Math.PI*t;let E=M;for(let i=0;i<10;i++)E-=(E-e*Math.sin(E)-M)/(1-e*Math.cos(E));return 2*Math.atan(Math.sqrt((1+e)/(1-e))*Math.tan(E/2));}
+const P=(r,th)=>[CX+r*Math.cos(th),CY-r*Math.sin(th)];
+const xfer=(t,o)=>{const nu=kep(Math.max(0,Math.min(1,t)),o.e);return P(o.a*(1-o.e*o.e)/(1+o.e*Math.cos(nu)),o.th+nu);};
+function path(o,t0,t1,n){let s='';for(let i=0;i<=n;i++){const p=xfer(t0+(t1-t0)*i/n,o);s+=(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1);}return s;}
+const earth=d=>P(RE,TH0+WE*d), mars=d=>P(RM,TH0+Math.PI-WM*(T-d));
+function craft(d){if(d<=T)return xfer(d/T,YOU);const m=mars(d),a=(d-T)*2.2;return [m[0]+26*Math.cos(a),m[1]-26*Math.sin(a)];}
+const GHOST_D=path(GHOST,0,1,80);
+const BASE={power:4,fuel:4,data:2,sys:5};
+const EVENTS=[
+ {id:'storm',day:214,card:true,surprise:true,icon:'storm',title:'SOLAR STORM',line:'A blast of particles from the Sun is heading your way.',hits:'IN 30 HOURS',
+  history:'Oct 2003: a storm like this fried the radiation sensor on NASA’s Mars Odyssey. It never worked again.',source:'NASA JPL · Mars Odyssey MARIE instrument, 28 Oct 2003 (to verify)',
+  choices:[{label:'SHIELD UP',sub:'Switch science off. Wait it out.',costs:[{i:'data',v:'−1'}],eng:'Instruments → SAFE · ≈2 d science lost (−0.8 Gb)',fx:{data:-1},result:['STORM PASSED.','ALL INSTRUMENTS SAFE.','YOU MISSED 2 DAYS OF SCIENCE.']},
+           {label:'KEEP WORKING',sub:'Leave science on. Catch the storm on camera.',costs:[{i:'data',v:'+1'},{i:'sys',v:'−2?',risk:true}],eng:'P(upset) ≈ 0.35 · storm data +0.8 Gb',fx:{data:1,sys:-1},result:['STORM HIT AT 04:10.','STAR TRACKER BLINDED 6 HOURS.','REBOOT OK. SOME DAMAGE.','STORM DATA SENT HOME.']}]},
+ {id:'tcm',day:248,icon:'burn',label:'Course fix',short:'FIX',log:'COURSE FIX BURN DONE. ON TARGET FOR MARS.'},
+ {id:'moi',day:307,card:true,icon:'orbit',label:'Arrive at Mars',short:'MARS',title:'ARRIVE AT MARS',line:'Fire the engine to get caught by Mars, or fly past it forever.',hits:'BURN IN 6 HOURS',
+  history:'Sep 2014: NASA’s MAVEN fired its engines for 33 minutes. Earth heard it worked 12 minutes later.',source:'NASA · MAVEN orbit insertion, 21 Sep 2014 (to verify)',
+  choices:[{label:'SAFE ORBIT',sub:'Long burn. Wide, easy orbit.',costs:[{i:'fuel',v:'−2'}],eng:'Δv ≈ 1.2 km/s · capture margin high',fx:{fuel:-2},result:['ENGINE FIRED 34 MIN.','CAUGHT BY MARS.','WIDE ORBIT. ALL SAFE.']},
+           {label:'TIGHT ORBIT',sub:'Short burn. Skim the air to slow down.',costs:[{i:'fuel',v:'−1'},{i:'sys',v:'−1?',risk:true}],eng:'Δv ≈ 0.8 km/s + aerobraking passes',fx:{fuel:-1,sys:-1},result:['ENGINE FIRED 22 MIN.','AIR DRAG DID THE REST.','HEAT PANELS SCORCHED.','CLOSE ORBIT. MORE SCIENCE.']}]},
+ {id:'ecl',day:352,card:true,icon:'eclipse',label:'Eclipse season',short:'DARK',title:'ECLIPSE SEASON',line:'Mars will block the Sun for 40 minutes every orbit. No sun, no power.',hits:'IN 2 DAYS',
+  history:'Every Mars orbiter plans for this. The batteries must last through the dark.',source:'NASA · MAVEN eclipse seasons (to verify)',
+  choices:[{label:'SAVE POWER',sub:'Turn the heaters down. Shiver.',costs:[{i:'sys',v:'−1?',risk:true}],eng:'Heater duty 40% · battery DoD 22%',fx:{sys:-1},result:['ECLIPSES DONE.','IT GOT COLD. ONE PART CRACKED.','POWER STILL HEALTHY.']},
+           {label:'USE BATTERY',sub:'Keep everything warm.',costs:[{i:'power',v:'−2'}],eng:'Heater duty 100% · battery DoD 48%',fx:{power:-2},result:['ECLIPSES DONE.','ROBOT STAYED WARM.','BATTERY WORN DOWN.']}]},
+ {id:'dust',day:380,icon:'dust',label:'Dust storm season',short:'DUST',log:'DUST STORM SEASON STARTS. MARS AIR IS SWELLING.'},
+ {id:'conj',day:424,card:true,icon:'conj',label:'Sun blocks radio',short:'SUN',title:'SUN IN THE WAY',line:'The Sun will sit between you and Earth for 2 weeks. No calls home.',hits:'IN 3 DAYS',
+  history:'About every 26 months, NASA stops sending commands to Mars for roughly two weeks.',source:'NASA · Mars solar conjunction command pause (to verify)',
+  choices:[{label:'LOCK IT DOWN',sub:'Send a simple 2-week plan.',costs:[{i:'data',v:'−1'}],eng:'Command moratorium · 14 d autonomous',fx:{data:-1},result:['SUN MOVED ASIDE.','ROBOT KEPT ITSELF SAFE.','LIGHT SCIENCE ONLY.']},
+           {label:'BIG PLAN',sub:'Upload a busy 2-week plan.',costs:[{i:'data',v:'+2'},{i:'sys',v:'−2?',risk:true}],eng:'Corrupt-uplink risk at SEP < 2°',fx:{data:2,sys:-1},result:['SUN MOVED ASIDE.','ONE ORDER ARRIVED GARBLED.','ROBOT HID IN SAFE MODE.','STILL GOT GOOD DATA.']}]}
+];
+const STORM=EVENTS[0];
+const ICON_OF={power:'power',fuel:'fuel',data:'data',sys:'sys'};
+const RES=[{k:'power',name:'POWER',u:v=>v*290+' Wh'},{k:'fuel',name:'FUEL',u:v=>v*328+' kg'},{k:'data',name:'DATA',u:v=>(v*0.8).toFixed(1)+' Gb'},{k:'sys',name:'SYSTEMS',u:v=>v+'/5'}];
+const clamp=v=>Math.max(0,Math.min(5,v));
+const applyFx=(r,fx)=>{const o={...r};Object.entries(fx).forEach(([k,v])=>o[k]=clamp(o[k]+v));return o;};
+const mmss=x=>{const t=Math.max(0,Math.round(x));return String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');};
+const TYPE={slow:18,normal:34,fast:70};
+
+class Component extends DCLogic {
+  state={day:200,speed:10,phase:'cruise',mode:'cadet',ev:null,ch:null,tp:0,typed:0,logT:0,log:'CRUISING TO MARS. ALL QUIET.',res:{...BASE},fired:{},dragX:0,flash:{},blink:true,jump:'live'};
+  componentDidMount(){
+    if(this.props.startMode==='engineer')this.setState({mode:'eng'});
+    this.last=performance.now();
+    this.iv=setInterval(()=>this.tick(),33);
+    this.kd=e=>{if(this.state.phase!=='card')return;if(e.key==='ArrowLeft')this.choose(0);if(e.key==='ArrowRight')this.choose(1);};
+    window.addEventListener('keydown',this.kd);
+  }
+  componentWillUnmount(){clearInterval(this.iv);window.removeEventListener('keydown',this.kd);}
+  tick(){
+    const now=performance.now(),dt=Math.min(.1,(now-this.last)/1000);this.last=now;
+    const s=this.state,cps=TYPE[this.props.typeSpeed]||34,u={logT:s.logT+dt*cps,blink:Math.floor(now/450)%2===0};
+    if(s.phase==='cruise'&&s.speed>0){
+      let nd=s.day+s.speed*dt;const fired={...s.fired};
+      for(const ev of EVENTS){if(fired[ev.id]||ev.day<=s.day||ev.day>nd)continue;fired[ev.id]=1;
+        if(ev.card){nd=ev.day;u.phase='card';u.ev=ev;u.log='DANGER AHEAD: '+ev.title+'.';u.logT=0;break;}
+        u.log=ev.log;u.logT=0;}
+      if(nd>=470&&!u.phase){nd=470;u.speed=0;u.log='FIRST YEAR AT MARS COMPLETE.';u.logT=0;}
+      u.day=nd;u.fired=fired;
+    }
+    if(s.phase==='transit'){u.tp=s.tp+dt/5.5;if(u.tp>=1){u.tp=1;u.phase='result';u.typed=0;u.res=applyFx(s.res,s.ch.fx);u.flash=s.ch.fx;u.log='SIGNAL RECEIVED.';u.logT=0;}}
+    if(s.phase==='result')u.typed=s.typed+dt*cps;
+    this.setState(u);
+  }
+  choose(i){const ev=this.state.ev;if(!ev)return;const ch=ev.choices[i];this.setState({phase:'transit',ch,tp:0,dragX:0,log:'ORDER SENT: '+ch.label+'.',logT:0});}
+  cont(){this.setState({phase:'cruise',ev:null,ch:null,flash:{},log:'BACK TO CRUISING.',logT:0,jump:'live'});}
+  jumpTo(k){
+    const b={fired:{storm:1},dragX:0,flash:{},logT:99,jump:k};
+    if(k==='cruise')this.setState({...b,day:232,phase:'cruise',ev:null,ch:null,speed:1,res:{...BASE},log:'COURSE CHECK OK. ALL QUIET.'});
+    if(k==='card')this.setState({...b,day:214,phase:'card',ev:STORM,ch:null,speed:10,res:{...BASE},log:'DANGER AHEAD: SOLAR STORM.'});
+    if(k==='transit')this.setState({...b,day:214,phase:'transit',ev:STORM,ch:STORM.choices[0],tp:.3,res:{...BASE},log:'ORDER SENT: SHIELD UP.'});
+    if(k==='result')this.setState({...b,day:214,phase:'result',ev:STORM,ch:STORM.choices[1],tp:1,typed:0,res:applyFx(BASE,STORM.choices[1].fx),flash:STORM.choices[1].fx,log:'SIGNAL RECEIVED.'});
+  }
+  chipsOf(c,eng){return c.costs.map(k=>({icon:ICON_OF[k.i],v:eng||!k.risk?k.v:k.v.replace('?','')+' RISK',col:k.risk?'#ffb547':(k.v[0]==='+'?'#8cff9e':'#ff8a6d'),bs:k.risk?'dashed':'solid'}));}
+  renderVals(){
+    const s=this.state,eng=s.mode==='eng',d=s.day;
+    const e=earth(d),m=mars(d),c=craft(d);
+    const lt=Math.hypot(e[0]-c[0],e[1]-c[1])/150*499;
+    const px=e[0]+(c[0]-e[0])*s.tp,py=e[1]+(c[1]-e[1])*s.tp,ring=(performance.now()/700)%1;
+    const res=RES.map(r=>{const v=s.res[r.k],low=v<=1&&r.k!=='data',col=low?'#ff5a3d':'#8cff9e',fl=s.flash[r.k];
+      return {name:r.name,icon:ICON_OF[r.k],eng:r.u(v),col,hasDelta:!!fl,delta:fl?(fl>0?'+'+fl:'−'+Math.abs(fl)):'',deltaCol:fl>0?'#8cff9e':'#ffb547',
+        segs:[0,1,2,3,4].map(i=>({bg:i<v?col:'#14281b',sh:i<v?'0 0 8px '+col:'none'}))};});
+    const vis=EVENTS.filter(ev=>!ev.surprise&&ev.day>d&&ev.day<=d+WIN);
+    const ribbon=vis.map((ev,i)=>({icon:ev.icon,label:ev.label.toUpperCase(),short:ev.short,left:(ev.day-d)/WIN*100,top:i%2?44:10,topM:i%2?44:20,showLbl:true,leftM:Math.min((ev.day-d)/WIN*100,92),dir:(ev.day-d)/WIN>.72?'row-reverse':'row',ta:(ev.day-d)/WIN>.72?'right':'left',tx:(ev.day-d)/WIN>.72?'translateX(calc(-100% + 14px))':'translateX(-14px)',txm:(ev.day-d)/WIN>.72?'translateX(calc(-100% + 12px))':'translateX(-12px)',
+      col:ev.card?'#ffb547':'#8cff9e',when:eng?'DAY '+ev.day+' · T−'+Math.ceil(ev.day-d)+' d':'IN '+Math.ceil(ev.day-d)+' DAYS'}));
+    const ticks=[30,60,90,120].map(n=>({left:n/WIN*100,txt:eng?'DAY '+Math.round(d+n):(n/30)+(n===30?' MONTH':' MONTHS'),short:(n/30)+'MO'}));
+    const card=s.ev||STORM,cA=card.choices[0],cB=card.choices[1];
+    const ch=s.ch||STORM.choices[0];
+    const rt=('> '+ch.result.join('\n> '));
+    const fxChips=Object.entries(ch.fx).map(([k,v])=>({icon:ICON_OF[k],v:(v>0?'+':'−')+Math.abs(v),col:v>0?'#8cff9e':'#ffb547'}));
+    const sp=[[0,'II'],[1,'1×'],[10,'10×'],[100,'100×']];
+    const J=[['live','LIVE'],['cruise','CRUISE'],['card','DANGER CARD'],['transit','SIGNAL IN FLIGHT'],['result','RESULT ARRIVES']];
+    const ltMin=Math.round(lt/60);
+    return {
+      eng,showGhost:this.props.showGhost??true,
+      jumps:J.map(([k,l])=>{const on=s.jump===k;return {label:l,go:()=>k==='live'?this.setState({jump:'live',day:200,speed:10,phase:'cruise',ev:null,ch:null,fired:{},res:{...BASE},flash:{},log:'CRUISING TO MARS. ALL QUIET.',logT:0}):this.jumpTo(k),bg:on?'#ffb547':'#1c1e18',fg:on?'#1b1a16':'#cbbf9f',bd:on?'#ffb547':'#3a3d33'};}),
+      res,ribbon,ticks,
+      toggleMode:()=>this.setState({mode:eng?'cadet':'eng'}),leverLeft:eng?'32px':'3px',cadetLbl:eng?'#6f685a':'#ffb547',engLbl:eng?'#ffb547':'#6f685a',
+      ghostD:GHOST_D,ghostLbl:{x:640,y:510},
+      flownD:path(YOU,0,Math.min(d,T)/T,60),aheadD:d<T?path(YOU,d/T,1,40):'M0 0',
+      earthT:`translate(${e[0].toFixed(1)} ${e[1].toFixed(1)})`,marsT:`translate(${m[0].toFixed(1)} ${m[1].toFixed(1)})`,
+      craftT:`translate(${c[0].toFixed(1)} ${c[1].toFixed(1)}) scale(1.3)`,craftTm:`translate(${c[0].toFixed(1)} ${c[1].toFixed(1)}) scale(1.5)`,
+      e0x:e[0],e0y:e[1],c0x:c[0],c0y:c[1],px,py,ringR:8+ring*22,ringO:(1-ring)*.8,
+      rSun:(Math.hypot(c[0]-CX,c[1]-CY)/150).toFixed(2),dEarth:(lt/499).toFixed(2),ltFmt:mmss(lt),
+      ltWords:ltMin+' MINUTES',
+      countdown:mmss(lt*(1-s.tp)),chLabel:ch.label,
+      logText:s.log.slice(0,Math.floor(s.logT)),cursorO:s.blink?1:0,
+      resultText:rt.slice(0,Math.floor(s.typed)),fxChips,cont:()=>this.cont(),
+      isCard:s.phase==='card',isTransit:s.phase==='transit',isResult:s.phase==='result',
+      card,cA:{...cA,chips:this.chipsOf(cA,eng)},cB:{...cB,chips:this.chipsOf(cB,eng)},
+      pickL:()=>this.choose(0),pickR:()=>this.choose(1),
+      dayInt:Math.floor(d),dayPad:String(Math.floor(d)).padStart(3,'0'),
+      arrival:d<T?'MARS IN '+Math.ceil(T-d)+' DAYS':'IN ORBIT AT MARS',
+      speeds:sp.map(([v,l])=>{const on=s.speed===v;return {label:l,go:()=>this.setState({speed:v}),bg:on?'#ffb547':'#3a3d33',fg:on?'#1b1a16':'#cbbf9f',edge:on?'#9a6514':'#1a1b16',glow:on?'0 0 14px rgba(255,181,71,.5)':'none'};}),
+      dragX:s.dragX,dragRot:s.dragX/18,lHot:s.dragX<-40?'#ffb547':'#4a4d42',rHot:s.dragX>40?'#ffb547':'#4a4d42',
+      dragDown:e=>{this.dx0=e.clientX;this.drag=true;try{e.currentTarget.setPointerCapture(e.pointerId);}catch(_){}} ,
+      dragMove:e=>{if(this.drag)this.setState({dragX:e.clientX-this.dx0});},
+      dragUp:()=>{if(!this.drag)return;this.drag=false;const x=this.state.dragX;if(x<-90)this.choose(0);else if(x>90)this.choose(1);else this.setState({dragX:0});}
+    };
+  }
+}
+</script>
+</body>
+</html>

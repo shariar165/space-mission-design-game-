@@ -1,23 +1,19 @@
 // App state: the player's Design and the current step. The engine is called here and in the screens;
-// the UI never computes a number itself.
-// Cadet: Level map → guided build (→ orders) → Flight with Mission Control → Debrief → next level.
-// Engineer: Build Bay → crisis card → Debrief, unchanged.
+// the UI never computes a number itself. One flight model everywhere (the Mission operations engine):
+// Cadet: Level map → build → Fly & Survive → Mission Report → next level.
+// Engineer: Build Bay → Fly & Survive → Mission Report (with Engineer details).
 import { useEffect, useMemo, useState } from 'react';
 import { buildCadetDesign, CADET_STEPS, defaultChoices, type CadetChoices, type CadetStep } from '../engine/cadet';
-import type { CrisisCard, CrisisOption } from '../engine/crisis';
-import { crisisOrders, evaluateDesign, previewCrisis, simulateMission, standingOrderPolicy, type SimulationResult } from '../engine/index';
-import { opsAvailable } from '../engine/ops/console';
+import { crisisOrders, evaluateDesign } from '../engine/index';
+import { operationsDebrief, type OpsState } from '../engine/ops/index';
 import type { Design, DestinationId } from '../engine/types';
-import { LevelBanner, LevelGoal } from './components/LevelCards';
+import { LevelGoal } from './components/LevelCards';
 import { TopBar, type Mode, type Step } from './components/TopBar';
 import { levelById, loadProgress, saveProgress, withStars, type Level, type Progress } from './levels';
 import { BuildBay } from './screens/BuildBay';
 import { CadetBuild } from './screens/CadetBuild';
-import { CrisisScreen } from './screens/CrisisScreen';
-import { Debrief } from './screens/Debrief';
-import { Flight } from './screens/Flight';
+import { FlyAndSurvive } from './screens/FlyAndSurvive';
 import { LevelMap } from './screens/LevelMap';
-import { OpsConsole } from './screens/OpsConsole';
 import { RescueCaseView, RescueSelect } from './screens/Rescue';
 import type { RescueCaseId } from '../engine/rescue';
 import { defaultMissionName, starterDesign, today } from './starters';
@@ -63,14 +59,14 @@ export function App() {
   const [step, setStep] = useState<Step>(() => (mode === 'cadet' ? 'map' : 'build'));
   const [fixedSeed] = useState(urlSeed);
   const [seed, setSeed] = useState(() => fixedSeed ?? newSeed());
-  const [sim, setSim] = useState<SimulationResult>();
   /** Standing orders (crisis card id → option id) the Cadet craft follows on its own. */
   const [orders, setOrders] = useState<Record<string, string>>({});
-  const [flightCrisis, setFlightCrisis] = useState<{ card: CrisisCard; options: CrisisOption[] }>();
   const [progress, setProgress] = useState<Progress>(loadProgress);
   const [rescueId, setRescueId] = useState<RescueCaseId>();
-  /** The craft flown in Operations, pinned when the console opens (a mode switch only changes the layer). */
-  const [opsDesign, setOpsDesign] = useState<Design>();
+  /** The craft being flown, pinned at launch (a mode switch only changes what is shown). */
+  const [flyDesign, setFlyDesign] = useState<Design>();
+  /** The finished mission, for the Mission Report. */
+  const [, setFlown] = useState<OpsState>();
 
   const cadetMode = mode === 'cadet';
   const level = levelById(cadet.levelId);
@@ -78,10 +74,7 @@ export function App() {
   /** The design being built and flown: Cadet derives it from the cards, Engineer edits it directly. */
   const active = cadetMode ? cadetDesign : design;
   const ev = useMemo(() => evaluateDesign(active), [active]);
-  const preview = useMemo(() => (step === 'crisis' ? previewCrisis(active, seed) : undefined), [step, active, seed]);
   const withOrders = level?.orders ?? true;
-  /** Mission operations: from the Mars level on in Cadet (light delay is its lesson), any flyable design in Engineer. */
-  const canOperate = opsAvailable(active, ev) && (!cadetMode || (level?.orders ?? true));
   const orderList = useMemo(() => (cadetMode && withOrders ? crisisOrders(cadetDesign) : []), [cadetMode, withOrders, cadetDesign]);
 
   useEffect(() => {
@@ -108,12 +101,12 @@ export function App() {
   const changeMode = (m: Mode) => {
     if (m === mode) return;
     // Carry the craft across: Engineer starts from the Cadet build; Cadet re-reads the Engineer design as a free build.
+    // In flight or on the report only the layer changes.
     if (m === 'engineer') {
       setDesign(cadetDesign);
-      if (step === 'map' || step === 'rescue' || step === 'flight') setStep('build');
-    } else {
+      if (step === 'map' || step === 'rescue') setStep('build');
+    } else if (step !== 'fly' && step !== 'report') {
       setCadet(cadetStart(design));
-      if (step === 'crisis') setStep('build');
     }
     setMode(m);
   };
@@ -123,46 +116,43 @@ export function App() {
     setCadet(cadetStart(s, l.id));
     setMissionName(defaultMissionName(l.destination));
     setOrders({});
-    setSim(undefined);
+    setFlown(undefined);
     setStep('build');
   };
 
   const award = (stars: number) => level && setProgress((p) => withStars(p, level.id, stars));
 
-  const fly = (optionId: string) => {
-    setSim(simulateMission(active, { seed, crisisPolicy: () => optionId }));
-    setStep('debrief');
-  };
-
   const chooseCard = (s: CadetStep, id: string) => setCadet((c) => ({ ...c, choices: { ...c.choices, [s]: id } }));
 
-  /** Cadet launch: the craft flies with its standing orders; the Flight screen replays the result. */
-  const launchCadet = () => {
+  /** Launch: Fly & Survive flies the pinned craft with this seed. */
+  const launch = () => {
     if (ev.blockers.length) return;
-    const p = previewCrisis(active, seed);
-    setFlightCrisis(p && { card: p.card, options: p.options });
-    setSim(simulateMission(active, { seed, crisisPolicy: standingOrderPolicy(orders) }));
-    setStep('flight');
+    setFlyDesign(active);
+    setFlown(undefined);
+    setStep('fly');
   };
 
-  const retry = () => {
+  const finish = (s: OpsState) => {
+    if (cadetMode) award(operationsDebrief(s).stars);
+    setFlown(s);
     setSeed(fixedSeed ?? newSeed());
-    setSim(undefined);
-    setStep('build');
+    setStep(cadetMode ? 'map' : 'build');
   };
 
   return (
-    <div className={`app${step === 'build' && !cadetMode ? ' fixed' : ''}${cadetMode ? ' is-cadet' : ''}`}>
-      <TopBar
-        step={step}
-        mode={mode}
-        onMode={changeMode}
-        missionName={missionName}
-        onMissionName={setMissionName}
-        destination={active.destination}
-        onDestination={changeDestination}
-        onMap={() => setStep('map')}
-      />
+    <div className={`app${step === 'build' && !cadetMode ? ' fixed' : ''}${cadetMode ? ' is-cadet' : ''}${step === 'fly' ? ' is-fly' : ''}`}>
+      {step !== 'fly' && (
+        <TopBar
+          step={step}
+          mode={mode}
+          onMode={changeMode}
+          missionName={missionName}
+          onMissionName={setMissionName}
+          destination={active.destination}
+          onDestination={changeDestination}
+          onMap={() => setStep('map')}
+        />
+      )}
       {cadetMode && step === 'map' && (
         <LevelMap
           progress={progress}
@@ -194,7 +184,7 @@ export function App() {
           stepIdx={cadet.stepIdx}
           onChoose={chooseCard}
           onStep={(i) => setCadet((c) => ({ ...c, stepIdx: i }))}
-          onLaunch={launchCadet}
+          onLaunch={launch}
           orders={withOrders ? { list: orderList, chosen: orders, onChoose: (cardId, optionId) => setOrders((o) => ({ ...o, [cardId]: optionId })) } : undefined}
           goal={level && <LevelGoal level={level} stars={progress[level.id] ?? 0} onMap={() => setStep('map')} />}
           onTestFlight={(result) => {
@@ -203,52 +193,17 @@ export function App() {
           }}
         />
       )}
-      {step === 'flight' && sim && (
-        <Flight
-          design={active}
-          ev={ev}
-          sim={sim}
-          crisis={flightCrisis}
+      {step === 'build' && !cadetMode && <BuildBay design={design} ev={ev} engineer onChange={setDesign} onLaunch={launch} />}
+      {step === 'fly' && flyDesign && (
+        <FlyAndSurvive
+          design={flyDesign}
+          seed={seed}
+          mode={mode}
+          onMode={changeMode}
           missionName={missionName}
-          onDone={() => {
-            award(sim.stars);
-            setStep('debrief');
-          }}
+          onHome={() => setStep(cadetMode ? 'map' : 'build')}
+          onDone={finish}
         />
-      )}
-      {step === 'build' && !cadetMode && (
-        <BuildBay design={design} ev={ev} engineer={mode === 'engineer'} onChange={setDesign} onLaunch={() => ev.blockers.length === 0 && setStep('crisis')} />
-      )}
-      {step === 'crisis' && preview && <CrisisScreen preview={preview} ev={ev} design={active} seed={seed} onChoose={fly} />}
-      {step === 'crisis' && !preview && (
-        <BuildBay design={active} ev={ev} engineer={mode === 'engineer'} onChange={setDesign} onLaunch={() => undefined} />
-      )}
-      {step === 'debrief' && sim && (
-        <>
-          {cadetMode && level && <LevelBanner level={level} stars={sim.stars} onPlay={playLevel} onMap={() => setStep('map')} onRetry={retry} />}
-          <Debrief
-            design={active}
-            ev={ev}
-            sim={sim}
-            missionName={missionName}
-            engineer={mode === 'engineer'}
-            seed={seed}
-            seedFromUrl={fixedSeed !== undefined}
-            onRetry={retry}
-            onEngineer={() => changeMode('engineer')}
-            {...(canOperate
-              ? {
-                  onOps: () => {
-                    setOpsDesign(active);
-                    setStep('ops');
-                  },
-                }
-              : {})}
-          />
-        </>
-      )}
-      {step === 'ops' && opsDesign && (
-        <OpsConsole design={opsDesign} seed={seed} engineer={mode === 'engineer'} missionName={missionName} onExit={() => setStep(sim ? 'debrief' : 'build')} />
       )}
     </div>
   );

@@ -360,4 +360,6 @@ export function operationsDebrief(s: OpsState): OpsDebrief {
 export { defaultBooking, defaultPowerPlan, prepareOps, primeScienceFraction };
 export { consoleView, dsnOptions, nextEventT, opsAvailable, powerPlanPreview, CONSOLE_RULES } from './console';
 export type * from './console';
+export { comingUp, eclipseCard, flyCard, flyTiles, FLY_RULES, outcomeIn_s, segmentsFromFraction, segmentsFromMargin, systemsHealth } from './fly';
+export type * from './fly';
 export type * from './types';

@@ -218,3 +218,11 @@ export function ghostFor(design: Design, ev: FullEvaluation = evaluateDesign(des
     at: (day) => positionAt(path, day / flightDays),
   };
 }
+
+/** The path still to fly: n + 1 points from the craft today to the arrival point (empty once arrived). */
+export function pathAhead(design: Design, day: number, ev: FullEvaluation = evaluateDesign(design), n = 40): XY[] {
+  const end = ev.trajectory.flightDays;
+  if (day >= end) return [];
+  const from = Math.max(0, day);
+  return Array.from({ length: n + 1 }, (_, i) => craftPosition(design, from + ((end - from) * i) / n, ev));
+}

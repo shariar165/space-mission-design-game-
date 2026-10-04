@@ -27,6 +27,8 @@ export const OPS_SPEEDS = [0, 1, 10, 100] as const;
 export type OpsSpeed = (typeof OPS_SPEEDS)[number];
 /** A command's trip across space plays in this many steps (about six seconds). */
 export const TRANSIT_STEPS = 24;
+/** The team's reaction time before the order leaves Earth plays in this many steps (one and a half seconds). */
+export const TEAM_STEPS = 6;
 
 /** The clock stops by itself when one of these happens, so the player never misses it. */
 const PAUSE_ON = new Set<OpsEventCode>(['decision-open', 'conjunction-start', 'safe-mode', 'craft-lost', 'response-outcome', 'prime-complete', 'mission-complete', 'launch-failed']);
@@ -65,8 +67,22 @@ function save(s: Saved | undefined) {
 export interface Transit {
   hazardId: string;
   optionId: string;
+  /** Mission time the order was chosen, leaves Earth (after the team has reacted) and reaches the craft. */
+  chosenAt: number;
+  departsAt: number;
   arrivesAt: number;
-  step: number;
+  /** After the order lands: when its outcome is known (the danger strikes), if that is later. */
+  resolveAt?: number;
+}
+
+/** The outcome after an order lands plays in this many steps. */
+export const OUTCOME_STEPS = 8;
+
+/** The next stop of a transit: the team's reaction in TEAM_STEPS steps, then the light-time trip in TRANSIT_STEPS. */
+function transitStop(tr: Transit, t: number): number {
+  if (t < tr.departsAt - 1e-12) return Math.min(tr.departsAt, t + Math.max(1e-6, (tr.departsAt - tr.chosenAt) / TEAM_STEPS));
+  if (t < tr.arrivesAt - 1e-12 || tr.resolveAt === undefined) return Math.min(tr.arrivesAt, t + Math.max(1e-6, (tr.arrivesAt - tr.departsAt) / TRANSIT_STEPS));
+  return Math.min(tr.resolveAt, t + Math.max(1e-6, (tr.resolveAt - tr.arrivesAt) / OUTCOME_STEPS));
 }
 
 export type Notice = { kind: 'refused'; reason: NonNullable<CommandReceipt['reason']>; retryAfterDay?: number } | { kind: 'booked'; day: number; dish: 34 | 70 } | { kind: 'sent' };
@@ -158,11 +174,17 @@ export function useOpsSession(design: Design, seed: number): OpsSession {
       const s = stateRef.current;
       if (!s || s.status !== 'flying') return;
       if (transit) {
-        const next = advanceOperations(s, { until: Math.min(transit.arrivesAt, s.t + transit.step) });
+        const next = advanceOperations(s, { until: transitStop(transit, s.t) });
         apply(next, s);
-        if (next.t >= transit.arrivesAt - 1e-12 || next.status !== 'flying' || next.newDecisions.length) {
+        const rec = next.hazards.find((h) => h.id === transit.hazardId);
+        const outcomeLanded = next.events.slice(s.events.length).some((e) => e.code === 'response-outcome' && e.values.hazardId === transit.hazardId);
+        const arrived = next.t >= transit.arrivesAt - 1e-12;
+        if (next.status !== 'flying' || next.newDecisions.length || outcomeLanded || (arrived && (!rec || rec.outcomeDone || rec.resolveAt === undefined))) {
           setTransit(undefined);
           setResult((r) => r ?? { hazardId: transit.hazardId, optionId: transit.optionId });
+        } else if (arrived && transit.resolveAt === undefined && rec?.resolveAt !== undefined) {
+          // The order landed before the danger struck: keep time running until the outcome is known.
+          setTransit({ ...transit, resolveAt: rec.resolveAt });
         }
         return;
       }
@@ -190,8 +212,7 @@ export function useOpsSession(design: Design, seed: number): OpsSession {
     setState(r.state);
     if (!r.receipt.accepted) return refuse(r.receipt);
     setNotice(undefined);
-    const arrivesAt = r.receipt.arrivesAt!;
-    setTransit({ hazardId: a.hazardId, optionId, arrivesAt, step: Math.max(1e-6, (arrivesAt - s.t) / TRANSIT_STEPS) });
+    setTransit({ hazardId: a.hazardId, optionId, chosenAt: s.t, departsAt: r.receipt.sentAt, arrivesAt: r.receipt.arrivesAt! });
   };
 
   const sendPlan = (plan: PowerPlan) => {

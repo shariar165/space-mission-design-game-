@@ -24,6 +24,7 @@ import { BUDGET_ZERO_AT_OVERRUN, MARGIN_BAND, SCORE_GRADES, WEIGHTS } from '../s
 import type { Sourced } from '../src/engine/types';
 import { RISK_RUNS, RISK_SEED } from '../src/engine/ops/riskEstimate';
 import { CONSOLE_RULES } from '../src/engine/ops/console';
+import { FLY_RULES } from '../src/engine/ops/fly';
 
 interface Entry {
   path: string;
@@ -89,6 +90,7 @@ const ENGINE_VALUES: Record<string, Record<string, Sourced<unknown>>> = {
   'rescue.ts': { LBF_TO_N, RESCUE_MAX_STARS },
   'ops/riskEstimate.ts': { RISK_RUNS, RISK_SEED },
   'ops/console.ts CONSOLE_RULES': CONSOLE_RULES,
+  'ops/fly.ts FLY_RULES': FLY_RULES,
 };
 
 const all: Entry[] = [];

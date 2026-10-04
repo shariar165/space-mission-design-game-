@@ -2,7 +2,7 @@ import { DESTINATIONS } from '../../engine/data';
 import type { DestinationId } from '../../engine/types';
 import { Check, Logo } from './icons';
 
-export type Step = 'map' | 'rescue' | 'build' | 'crisis' | 'flight' | 'debrief' | 'ops';
+export type Step = 'map' | 'rescue' | 'build' | 'fly' | 'report';
 export type Mode = 'cadet' | 'engineer';
 
 interface StepDef {
@@ -14,18 +14,15 @@ interface StepDef {
 const ENGINEER_STEPS: StepDef[] = [
   { id: 'mission', label: 'Mission' },
   { id: 'build', label: 'Build', ours: ['build'] },
-  { id: 'window', label: 'Window' },
-  { id: 'flight', label: 'Flight', ours: ['crisis', 'flight'] },
-  { id: 'debrief', label: 'Debrief', ours: ['debrief'] },
-  { id: 'ops', label: 'Operate', ours: ['ops'] },
+  { id: 'fly', label: 'Fly', ours: ['fly'] },
+  { id: 'report', label: 'Report', ours: ['report'] },
 ];
 
 const CADET_STEPS: StepDef[] = [
   { id: 'map', label: 'Map', ours: ['map', 'rescue'] },
   { id: 'build', label: 'Build', ours: ['build'] },
-  { id: 'flight', label: 'Flight', ours: ['flight', 'crisis'] },
-  { id: 'debrief', label: 'Debrief', ours: ['debrief'] },
-  { id: 'ops', label: 'Operate', ours: ['ops'] },
+  { id: 'fly', label: 'Fly', ours: ['fly'] },
+  { id: 'report', label: 'Report', ours: ['report'] },
 ];
 
 interface Props {

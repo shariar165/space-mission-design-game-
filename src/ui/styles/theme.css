@@ -1,0 +1,206 @@
+/* Signal Delay design tokens, extracted from the Claude Design mockups (docs/design/signal-delay/*.dc.html).
+   Retro mission control: olive chassis, CRT-green screens with scanlines, amber keys, cream danger cards. */
+:root {
+  /* Chassis and panels */
+  --sd-room: #0b0c09;
+  --sd-room-2: #0d0e0b;
+  --sd-chassis: #1c1e18;
+  --sd-panel: #23251f;
+  --sd-panel-hover: #2b2d25;
+  --sd-bezel: #2c2f27;
+  --sd-line: #3a3d33;
+  --sd-line-2: #4a4d42;
+  --sd-deep: #121410;
+  --sd-deeper: #0f100c;
+  --sd-dark-key: #1a1b16;
+  --sd-inset-hi: #3e4137;
+  --sd-frame-hi: #34372e;
+
+  /* CRT phosphor */
+  --sd-crt: #050c07;
+  --sd-crt-chip: #0a1a0f;
+  --sd-crt-grid: #0f2a18;
+  --sd-crt-off: #14281b;
+  --sd-crt-line: #1f5a32;
+  --sd-crt-dim: #1f9a4a;
+  --sd-crt-mid: #47c96b;
+  --sd-crt-hi: #8cff9e;
+
+  /* Amber keys and signals */
+  --sd-amber: #ffb547;
+  --sd-amber-hi: #ffd28a;
+  --sd-amber-edge: #9a6514;
+  --sd-amber-ink: #3a2a0a;
+
+  /* Paper (danger cards, report, notebook) */
+  --sd-paper: #efe6cf;
+  --sd-paper-2: #fbf6e8;
+  --sd-paper-3: #e8e0cc;
+  --sd-paper-line: #c4b897;
+  --sd-paper-ink: #1b1a16;
+  --sd-paper-ink-2: #3a372e;
+  --sd-paper-mute: #7a715c;
+
+  /* Reds */
+  --sd-red: #d8432b;
+  --sd-red-edge: #7a1f10;
+  --sd-red-ink: #b23a22;
+  --sd-coral: #ff8a6d;
+  --sd-alarm: #ff5a3d;
+
+  /* Status stamps */
+  --sd-ok: #2f8a4a;
+  --sd-soso: #c27a12;
+  --sd-soso-2: #a8781e;
+  --sd-bad: #c2361d;
+  --sd-bad-2: #8a2a1a;
+  --sd-gold: #d8a21c;
+
+  /* Ink ramp on the dark chassis */
+  --sd-ink: #efe6cf;
+  --sd-ink-2: #cbbf9f;
+  --sd-ink-3: #a49b84;
+  --sd-ink-4: #8a8270;
+  --sd-ink-5: #6f685a;
+  --sd-ink-6: #4a4d42;
+
+  /* Sky */
+  --sd-sun: #ff9a2e;
+  --sd-sun-core: #ffc94a;
+  --sd-earth: #3a86d8;
+  --sd-land: #5cc46e;
+  --sd-mars: #d6603a;
+  --sd-mars-dark: #9e3a1f;
+  --sd-ice: #f4eee0;
+  --sd-panel-blue: #3a6fd8;
+  --sd-panel-edge: #bcd3ff;
+  --sd-bus-gold: #f2c94c;
+  --sd-bus-edge: #8a6a12;
+  --sd-comic: #16182a;
+
+  /* Part palette (Pack) */
+  --sd-part-brain: #b9a6e6;
+  --sd-part-drive: #9fb49a;
+  --sd-part-guard: #e0673f;
+  --sd-part-power: #f2c94c;
+  --sd-part-science: #6fa8e8;
+
+  /* Type */
+  --sd-display: 'Big Shoulders Display', 'Arial Narrow', sans-serif;
+  --sd-body: 'B612', system-ui, sans-serif;
+  --sd-mono: 'B612 Mono', ui-monospace, monospace;
+  --sd-crt-font: 'VT323', ui-monospace, monospace;
+
+  /* Radii */
+  --sd-r-1: 2px;
+  --sd-r-2: 3px;
+  --sd-r-3: 4px;
+  --sd-r-4: 5px;
+  --sd-r-5: 6px;
+  --sd-r-6: 8px;
+  --sd-r-7: 10px;
+  --sd-r-8: 12px;
+  --sd-r-crt: 22px;
+  --sd-r-phone: 34px;
+
+  /* Spacing */
+  --sd-s-1: 4px;
+  --sd-s-2: 6px;
+  --sd-s-3: 8px;
+  --sd-s-4: 10px;
+  --sd-s-5: 12px;
+  --sd-s-6: 14px;
+  --sd-s-7: 18px;
+  --sd-s-8: 22px;
+  --sd-s-9: 28px;
+  --sd-s-10: 56px;
+
+  /* Shadows and glows */
+  --sd-shadow-frame: 0 30px 80px rgba(0, 0, 0, 0.55);
+  --sd-shadow-card: 0 24px 60px rgba(0, 0, 0, 0.6);
+  --sd-inset: inset 0 1px 0 var(--sd-inset-hi);
+  --sd-key-edge: 0 2px 0 var(--sd-deep);
+  --sd-crt-inset: inset 0 0 60px rgba(0, 0, 0, 0.9);
+  --sd-well: inset 0 0 10px #000;
+  --sd-glow-green: 0 0 8px rgba(140, 255, 158, 0.55);
+  --sd-glow-amber: 0 0 14px rgba(255, 181, 71, 0.5);
+  --sd-scanlines: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.22) 0 1px, transparent 1px 3px);
+}
+
+/* ---- Base ---- */
+html, body, #root { margin: 0; min-height: 100%; }
+body { background: var(--sd-room); color: var(--sd-ink-2); font-family: var(--sd-body); -webkit-font-smoothing: antialiased; }
+.sd { font-family: var(--sd-body); color: var(--sd-ink-2); }
+:where(.sd) button { font: inherit; color: inherit; }
+:where(.sd) a { color: var(--sd-amber); text-decoration: none; }
+:where(.sd) a:hover { color: var(--sd-amber-hi); }
+.sd :focus-visible { outline: 2px solid var(--sd-amber); outline-offset: 2px; }
+
+/* ---- Shared pieces ---- */
+.sd-label { font: 700 11px/1 var(--sd-mono); letter-spacing: 0.16em; color: var(--sd-ink-2); text-transform: uppercase; }
+.sd-label.dim { color: var(--sd-ink-4); }
+.sd-crt-text { font-family: var(--sd-crt-font); color: var(--sd-crt-hi); text-shadow: var(--sd-glow-green); }
+.sd-cursor { display: inline-block; }
+.sd-cursor.off { opacity: 0; }
+
+/* Brand block */
+.sd-brand { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.sd-brand-name { font: 900 30px/1 var(--sd-display); color: var(--sd-ink); letter-spacing: 0.06em; white-space: nowrap; background: none; border: 0; padding: 0; text-align: left; cursor: pointer; }
+.sd-brand-sub { font: 400 11px/1 var(--sd-mono); color: var(--sd-ink-4); letter-spacing: 0.18em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Cadet / Engineer lever */
+.sd-lever { display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
+.sd-lever-word { font: 700 11px/1 var(--sd-mono); letter-spacing: 0.14em; color: var(--sd-ink-5); }
+.sd-lever-word.on { color: var(--sd-amber); }
+.sd-lever-switch { cursor: pointer; position: relative; width: 62px; height: 32px; border-radius: 16px; border: 1px solid var(--sd-line-2); background: var(--sd-deeper); box-shadow: inset 0 2px 6px #000; padding: 0; flex: none; }
+.sd-lever-knob { position: absolute; top: 3px; left: 3px; width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(#d9d4c4, #8f8a7b); box-shadow: 0 2px 3px #000; transition: left 0.18s ease; }
+.sd-lever-switch[aria-checked='true'] .sd-lever-knob { left: 32px; }
+.sd-lever-short { display: none; cursor: pointer; padding: 5px 8px; border-radius: 4px; border: 1px solid var(--sd-line-2); background: var(--sd-deeper); color: var(--sd-ink-5); font: 700 10px/1 var(--sd-mono); letter-spacing: 0.1em; }
+.sd-lever-short[aria-pressed='true'] { color: var(--sd-amber); }
+
+/* Keys */
+.sd-key { cursor: pointer; border-radius: 5px; border: 1px solid var(--sd-deep); border-bottom: 4px solid var(--sd-dark-key); background: var(--sd-line); color: var(--sd-ink-2); font: 800 20px/1 var(--sd-display); letter-spacing: 0.04em; }
+.sd-key[aria-pressed='true'] { background: var(--sd-amber); color: var(--sd-paper-ink); border-bottom-color: var(--sd-amber-edge); box-shadow: 0 0 14px rgba(255, 181, 71, 0.5); }
+.sd-key:disabled { cursor: not-allowed; opacity: 0.5; }
+.sd-cta { cursor: pointer; padding: 14px 22px; border-radius: 5px; border: none; border-bottom: 4px solid var(--sd-amber-edge); background: var(--sd-amber); color: var(--sd-paper-ink); font: 800 22px/1 var(--sd-display); letter-spacing: 0.08em; white-space: nowrap; }
+.sd-cta:disabled { cursor: not-allowed; background: var(--sd-line); color: var(--sd-ink-5); border-bottom-color: var(--sd-dark-key); }
+.sd-cta.red { background: var(--sd-red); color: var(--sd-paper); border-bottom-color: var(--sd-red-edge); }
+.sd-ghost-btn { cursor: pointer; padding: 9px 14px; border-radius: 4px; border: 1px solid var(--sd-line); background: var(--sd-chassis); color: var(--sd-ink-2); font: 700 12px/1 var(--sd-mono); letter-spacing: 0.08em; white-space: nowrap; }
+.sd-ghost-btn:hover { border-color: var(--sd-amber); }
+.sd-ghost-btn[aria-pressed='true'] { background: var(--sd-amber); border-color: var(--sd-amber); color: var(--sd-paper-ink); }
+
+/* CRT screen */
+.sd-crt { position: relative; border-radius: var(--sd-r-crt); border: 10px solid var(--sd-bezel); background: var(--sd-crt); box-shadow: var(--sd-crt-inset), 0 0 0 1px var(--sd-line); overflow: hidden; }
+.sd-crt::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: var(--sd-scanlines); }
+.sd-well { background: var(--sd-crt); border-radius: 4px; box-shadow: var(--sd-well); }
+
+/* Segment bars */
+.sd-segs { display: flex; gap: 4px; }
+.sd-seg { width: 16px; height: 14px; border-radius: 2px; background: var(--sd-crt-off); }
+.sd-seg.on { background: var(--seg-col, var(--sd-crt-hi)); box-shadow: 0 0 8px var(--seg-col, var(--sd-crt-hi)); }
+
+/* Chips on choice cards */
+.sd-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 9px; border-radius: 4px; border: 1.5px solid currentColor; font: 400 22px/1 var(--sd-crt-font); white-space: nowrap; }
+.sd-chip.cost { color: var(--sd-coral); }
+.sd-chip.gain { color: var(--sd-crt-hi); }
+.sd-chip.risk { color: var(--sd-amber); border-style: dashed; }
+.sd-chip.info { color: var(--sd-crt-mid); }
+
+/* Paper card */
+.sd-paper { background: var(--sd-paper); color: var(--sd-paper-ink); }
+.sd-history { padding-top: 14px; border-top: 2px dashed var(--sd-paper-line); display: flex; flex-direction: column; gap: 6px; }
+.sd-history-k { font: 700 11px/1 var(--sd-mono); letter-spacing: 0.18em; color: var(--sd-red-ink); display: flex; align-items: center; gap: 8px; }
+.sd-history-v { font: 400 16px/1.45 var(--sd-body); color: var(--sd-paper-ink-2); text-wrap: pretty; }
+.sd-source { font: 400 11px/1.4 var(--sd-mono); color: var(--sd-paper-mute); }
+.sd-verify { padding: 2px 5px; border: 1px solid var(--sd-red-ink); border-radius: 2px; font: 700 9px/1 var(--sd-mono); letter-spacing: 0.12em; color: var(--sd-red-ink); }
+
+/* Loading */
+.sd-loading { min-height: 100vh; display: grid; place-items: center; background: var(--sd-chassis); }
+.sd-loading p { font: 400 26px/1.2 var(--sd-crt-font); color: var(--sd-crt-hi); text-shadow: var(--sd-glow-green); }
+
+@media (prefers-reduced-motion: reduce) {
+  .sd *, .sd *::before, .sd *::after { animation-duration: 0.001s !important; transition-duration: 0.001s !important; }
+}
+
+.sd-cursor { animation: sd-blink 0.9s steps(1) infinite; }
+@keyframes sd-blink { 50% { opacity: 0; } }

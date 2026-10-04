@@ -12,9 +12,11 @@
     "test:watch": "vitest",
     "test:validation": "vitest run tests/validation.test.ts",
     "typecheck": "tsc --noEmit",
-    "todo-data": "vitest run tests/dataAudit.test.ts"
+    "todo-data": "vitest run tests/dataAudit.test.ts",
+    "shots": "playwright test"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/react": "^16.3.3",
     "@testing-library/user-event": "^14.6.7",
