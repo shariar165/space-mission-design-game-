@@ -1,6 +1,6 @@
 // How each engine Meter is shown: title, what "used / limit" mean, and the Cadet one-liner.
 // Every number is read from evaluateDesign()'s output; this file only chooses words and units.
-import type { MeterKey } from '../engine/compare';
+import type { PanelKey } from '../engine/compare';
 import { GAME_RULES } from '../engine/constants';
 import { DESTINATIONS, LAUNCH_VEHICLES } from '../engine/data';
 import type { FullEvaluation } from '../engine/index';
@@ -17,7 +17,7 @@ export interface MeterView {
   say: string;
 }
 
-export const METER_TITLES: Record<MeterKey, string> = {
+export const METER_TITLES: Record<PanelKey, string> = {
   mass: 'Mass',
   power: 'Power',
   deltaV: 'Δv',
@@ -28,7 +28,7 @@ export const METER_TITLES: Record<MeterKey, string> = {
 
 const perDay = (b: number) => `${f.bits(b)}/day`;
 
-export function meterView(key: MeterKey, m: Meter, ev: FullEvaluation, design: Design): MeterView {
+export function meterView(key: PanelKey, m: Meter, ev: FullEvaluation, design: Design): MeterView {
   const dest = DESTINATIONS[design.destination];
   const lv = LAUNCH_VEHICLES[design.launchVehicleId];
   const lvName = lv?.name ?? design.launchVehicleId;
@@ -47,17 +47,21 @@ export function meterView(key: MeterKey, m: Meter, ev: FullEvaluation, design: D
     case 'power': {
       const rtg = design.power.type === 'rtg';
       const sun = dest.sunlightVsEarth.value;
+      const w = ev.details.power.worstDay;
+      const when = `on mission day ${f.num(w.day)} (${f.isoDate(w.date)})`;
       return {
         title: 'Power',
-        sub: 'needed vs made',
+        sub: 'worst day: needed vs made',
         used: f.num(m.used),
         limit: f.watts(m.limit),
         say:
           m.status === 'over'
-            ? `Short by ${f.watts(-m.headroom)} on arrival at ${dest.name}.`
-            : rtg
-              ? `RTGs make the same power at any distance from the Sun.`
-              : `At ${dest.name} your panels get ${f.pct(sun, 1)} of the sunlight they get at Earth.`,
+            ? `Short by ${f.watts(-m.headroom)} ${when}.`
+            : w.eclipseFraction > 0
+              ? `The weakest day is ${when}, in an eclipse season: in shadow ${f.pct(w.eclipseFraction, 0)} of the day.`
+              : rtg
+                ? `RTGs make the same power at any distance from the Sun. The weakest day is ${when}.`
+                : `At ${dest.name} your panels get ${f.pct(sun, 1)} of the sunlight they get at Earth. The weakest day is ${when}.`,
       };
     }
     case 'deltaV':
@@ -101,14 +105,17 @@ export function meterView(key: MeterKey, m: Meter, ev: FullEvaluation, design: D
             : `${f.money(m.headroom)} under the cap. Launch and operations are paid separately.`,
       };
     }
-    case 'risk':
+    case 'risk': {
+      const runs = m.inputs.runs?.value ?? 0;
+      const lost = m.inputs.lostRuns?.value ?? 0;
       return {
         title: 'Risk',
         sub: 'chance of losing the mission',
         used: f.pct(m.used),
         limit: `${f.pct(m.limit, 0)} max`,
-        say: `A ${f.pct(m.used, 0)} chance of losing the mission, from launch to the end of science.`,
+        say: `Lost in ${f.num(lost)} of ${f.num(runs)} simulated missions, flown day by day from launch to the end of science (± ${f.pct(m.inputs.standardError?.value ?? 0)}).`,
       };
+    }
   }
 }
 
@@ -119,6 +126,22 @@ export function barGeometry(m: Meter): { fill: number; limitAt: number } {
 }
 
 /** One sentence for a meter in WARNING, used in the blockers panel. */
-export function warningText(key: MeterKey, m: Meter): string {
+export function warningText(key: PanelKey, m: Meter): string {
   return `${METER_TITLES[key]} margin is only ${f.signedPct(m.margin)}. You can fly, but you are below the ${f.pct(GAME_RULES.marginWarning.value, 0)} safety margin.`;
+}
+
+/**
+ * Cadet gauge drawing (layout only). A supply gauge (battery, fuel tank) fills to supply ÷ need; a demand
+ * gauge (coin jar) fills to cost ÷ cap. Both span 0 … 1.6 × the line, so the line sits at 1 / 1.6.
+ */
+export function gaugeGeometry(ratio: number, kind: 'supply' | 'demand'): { level: number; line: number } {
+  const span = 1.6;
+  const x = kind === 'supply' ? (ratio > 0 ? 1 / ratio : Infinity) : ratio;
+  return { level: Math.max(0, Math.min(1, (Number.isFinite(x) ? x : span) / span)), line: 1 / span };
+}
+
+/** Balance-beam tilt in degrees (layout only): level when the craft is light, tipping to the limit, past it when over. */
+export function scaleTilt(ratio: number): number {
+  const r = Number.isFinite(ratio) ? ratio : 2;
+  return Math.max(-14, Math.min(14, (r - 0.7) * 28));
 }

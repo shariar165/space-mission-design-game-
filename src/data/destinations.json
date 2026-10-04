@@ -12,32 +12,32 @@
       "isGameEstimate": false
     },
     "earthDistance_1e6km": {
-      "value": 0.384,
+      "value": 0.3844,
       "unit": "10⁶ km",
-      "source": "Spec: Destinations table (0.384 from Earth); copy from NASA Moon Fact Sheet",
+      "source": "NASA NSSDC Moon Fact Sheet (last updated 11 January 2024): semimajor axis 0.3844 × 10⁶ km. Read from the Internet Archive copy of 2026-10-03 because nssdc.gsfc.nasa.gov refused connections on Oct 4, 2026",
       "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html",
-      "isGameEstimate": true
+      "isGameEstimate": false
     },
     "orbitPeriod_days": {
-      "value": 27.3,
+      "value": 27.3217,
       "unit": "days (around Earth)",
-      "source": "Spec: Destinations table; copy from NASA Moon Fact Sheet",
+      "source": "NASA NSSDC Moon Fact Sheet (last updated 11 January 2024): revolution period 27.3217 days. Read from the Internet Archive copy of 2026-10-03 because nssdc.gsfc.nasa.gov refused connections on Oct 4, 2026",
       "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html",
-      "isGameEstimate": true
+      "isGameEstimate": false
     },
     "gm_km3s2": {
       "value": 4902.8,
       "unit": "km³/s²",
-      "source": "Spec: Destinations table (approx.); copy from NASA Moon Fact Sheet",
+      "source": "NASA NSSDC Moon Fact Sheet (last updated 11 January 2024): GM 0.00490 × 10⁶ km³/s² (3 significant figures; 4902.8 agrees). Read from the Internet Archive copy of 2026-10-03 because nssdc.gsfc.nasa.gov refused connections on Oct 4, 2026",
       "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html",
-      "isGameEstimate": true
+      "isGameEstimate": false
     },
     "radius_km": {
       "value": 1738.1,
       "unit": "km",
-      "source": "Spec: Destinations table (approx.); copy from NASA Moon Fact Sheet",
+      "source": "NASA NSSDC Moon Fact Sheet (last updated 11 January 2024): equatorial radius 1738.1 km. Read from the Internet Archive copy of 2026-10-03 because nssdc.gsfc.nasa.gov refused connections on Oct 4, 2026",
       "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html",
-      "isGameEstimate": true
+      "isGameEstimate": false
     },
     "sunlightVsEarth": {
       "value": 1.0,
@@ -45,6 +45,8 @@
       "source": "Spec: Destinations table",
       "isGameEstimate": false
     },
+    "poleRA_deg": {"value": [269.9949, 0.0031], "unit": "deg, deg per Julian century (J2000 equatorial, T from J2000)", "source": "IAU WGCCRE mean lunar pole (Archinal et al. 2018), right ascension; to verify", "isGameEstimate": true},
+    "poleDec_deg": {"value": [66.5392, 0.013], "unit": "deg, deg per Julian century (J2000 equatorial, T from J2000)", "source": "IAU WGCCRE mean lunar pole (Archinal et al. 2018), declination; to verify", "isGameEstimate": true},
     "notes": []
   },
   "venus": {
@@ -75,23 +77,26 @@
     "gm_km3s2": {
       "value": 324859,
       "unit": "km³/s²",
-      "source": "Spec: Destinations table (approx.); copy from NASA Venus Fact Sheet",
+      "source": "NASA NSSDC Venus Fact Sheet (last updated 11 January 2024): GM 0.32486 × 10⁶ km³/s² (5 significant figures; 324859 agrees). Read from the Internet Archive copy of 2026-09-30 because nssdc.gsfc.nasa.gov refused connections on Oct 4, 2026",
       "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/venusfact.html",
-      "isGameEstimate": true
+      "isGameEstimate": false
     },
     "radius_km": {
       "value": 6051.8,
       "unit": "km",
-      "source": "Spec: Destinations table (approx.); copy from NASA Venus Fact Sheet",
+      "source": "NASA NSSDC Venus Fact Sheet (last updated 11 January 2024): equatorial radius 6051.8 km. Read from the Internet Archive copy of 2026-09-30 because nssdc.gsfc.nasa.gov refused connections on Oct 4, 2026",
       "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/venusfact.html",
-      "isGameEstimate": true
+      "isGameEstimate": false
     },
     "sunlightVsEarth": {
-      "value": 1.91,
+      "value": 1.911,
       "unit": "fraction of 1 AU sunlight",
-      "source": "Spec: Destinations table (~191%)",
-      "isGameEstimate": true
+      "source": "NASA NSSDC Venus Fact Sheet (last updated 11 January 2024): solar irradiance 2601.3 W/m² vs Earth 1361.0, ratio 1.911. Read from the Internet Archive copy of 2026-09-30 because nssdc.gsfc.nasa.gov refused connections on Oct 4, 2026",
+      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/venusfact.html",
+      "isGameEstimate": false
     },
+    "poleRA_deg": { "value": [272.76,  0], "unit": "deg, deg per Julian century (J2000 equatorial, T from J2000)", "source": "NASA NSSDC Venus Fact Sheet (last updated 11 January 2024): north pole of rotation, right ascension 272.76° (J2000). Read from the Internet Archive copy of 2026-09-30 because nssdc.gsfc.nasa.gov refused connections on Oct 4, 2026", "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/venusfact.html", "isGameEstimate": false },
+    "poleDec_deg": { "value": [67.16,  0], "unit": "deg, deg per Julian century (J2000 equatorial, T from J2000)", "source": "NASA NSSDC Venus Fact Sheet (last updated 11 January 2024): north pole of rotation, declination 67.16° (J2000). Read from the Internet Archive copy of 2026-09-30 because nssdc.gsfc.nasa.gov refused connections on Oct 4, 2026", "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/venusfact.html", "isGameEstimate": false },
     "notes": []
   },
   "mars": {
@@ -169,6 +174,8 @@
       "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html",
       "isGameEstimate": false
     },
+    "poleRA_deg": {"value": [317.681, -0.106], "unit": "deg, deg per Julian century (J2000 equatorial, T from J2000)", "source": "NASA Mars Fact Sheet: right ascension of the north pole of rotation, 317.681 − 0.106T", "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html", "isGameEstimate": false},
+    "poleDec_deg": {"value": [52.887, -0.061], "unit": "deg, deg per Julian century (J2000 equatorial, T from J2000)", "source": "NASA Mars Fact Sheet: declination of the north pole of rotation, 52.887 − 0.061T", "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html", "isGameEstimate": false},
     "notes": []
   },
   "bennu": {
@@ -297,22 +304,33 @@
     "gm_km3s2": {
       "value": 126686534,
       "unit": "km³/s²",
-      "source": "Spec: Destinations table (approx.); copy from NASA Jupiter Fact Sheet",
+      "source": "NASA NSSDC Jupiter Fact Sheet (last updated 2 October 2024): GM 126.687 × 10⁶ km³/s² (6 significant figures; 126686534 agrees). Read from the Internet Archive copy of 2026-09-28 because nssdc.gsfc.nasa.gov refused connections on Oct 4, 2026",
       "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/jupiterfact.html",
-      "isGameEstimate": true
+      "isGameEstimate": false
     },
     "radius_km": {
       "value": 71492,
       "unit": "km",
-      "source": "Spec: Destinations table (approx.); copy from NASA Jupiter Fact Sheet",
+      "source": "NASA NSSDC Jupiter Fact Sheet (last updated 2 October 2024): equatorial radius (1 bar level) 71,492 km. Read from the Internet Archive copy of 2026-09-28 because nssdc.gsfc.nasa.gov refused connections on Oct 4, 2026",
       "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/jupiterfact.html",
-      "isGameEstimate": true
+      "isGameEstimate": false
     },
     "sunlightVsEarth": {
       "value": 0.037,
       "unit": "fraction of 1 AU sunlight",
-      "source": "Spec: Destinations table (~3.7%)",
-      "isGameEstimate": true
+      "source": "NASA NSSDC Jupiter Fact Sheet (last updated 2 October 2024): solar irradiance 50.26 W/m² vs Earth 1361.0, ratio 0.037. Read from the Internet Archive copy of 2026-09-28 because nssdc.gsfc.nasa.gov refused connections on Oct 4, 2026",
+      "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/jupiterfact.html",
+      "isGameEstimate": false
+    },
+    "poleRA_deg": { "value": [268.057,  -0.006], "unit": "deg, deg per Julian century (J2000 equatorial, T from J2000)", "source": "NASA NSSDC Jupiter Fact Sheet (last updated 2 October 2024): north pole of rotation, right ascension 268.057 − 0.006T (T in Julian centuries from J2000). Read from the Internet Archive copy of 2026-09-28 because nssdc.gsfc.nasa.gov refused connections on Oct 4, 2026", "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/jupiterfact.html", "isGameEstimate": false },
+    "poleDec_deg": { "value": [64.495,  0.002], "unit": "deg, deg per Julian century (J2000 equatorial, T from J2000)", "source": "NASA NSSDC Jupiter Fact Sheet (last updated 2 October 2024): north pole of rotation, declination 64.495 + 0.002T. Read from the Internet Archive copy of 2026-09-28 because nssdc.gsfc.nasa.gov refused connections on Oct 4, 2026", "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/jupiterfact.html", "isGameEstimate": false },
+    "radiation": {
+      "doseRateRef_radPerHour": {"value": 200, "unit": "rad/h behind the vault", "source": "Game estimate, to verify against NASA source (Juno radiation vault design): dose rate at the reference radius", "isGameEstimate": true},
+      "refRadius_radii": {"value": 1, "unit": "Jupiter radii", "source": "Game estimate, to verify against NASA source (Juno radiation vault design): reference radius", "isGameEstimate": true},
+      "exponent": {"value": 3, "unit": "k", "source": "Game estimate, to verify against NASA source (Juno radiation vault design): fall-off of dose rate with distance", "isGameEstimate": true},
+      "beltOuter_radii": {"value": 4, "unit": "Jupiter radii", "source": "Game estimate, to verify against NASA source (Juno radiation vault design): outer edge of the radiation belts in the model", "isGameEstimate": true},
+      "tolerance_rad": {"value": 25000, "unit": "rad", "source": "Game estimate, to verify against NASA source (Juno radiation vault design): total dose the vaulted electronics are built for", "isGameEstimate": true},
+      "lossRateAfterTolerance_perDay": {"value": 0.01, "unit": "per day", "source": "Game estimate, to verify against NASA source (Juno radiation vault design): chance per day of losing the electronics beyond the tolerance", "isGameEstimate": true}
     },
     "notes": [
       "Very hard: a direct transfer needs C3 ≈ 77 km²/s², which almost no launch vehicle can give a useful payload. Real Jupiter missions use gravity assists, which the game does not model."

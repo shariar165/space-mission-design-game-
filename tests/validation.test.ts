@@ -12,6 +12,15 @@ import { missionPreset, presetDesign } from '../src/engine/missions';
 import { dataRate, REFERENCE_LINK } from '../src/engine/comms';
 import { propellantBurned } from '../src/engine/propulsion';
 import { bestArrival, bestLaunchWindow, hohmann, lambertTransfer, orbitPeriod } from '../src/engine/trajectory';
+import { julianDate } from '../src/engine/ephemeris';
+import { OPERATIONS } from '../src/engine/data';
+import { runOperations } from '../src/engine/ops/index';
+import { bodyConjunctions, perihelionJd, solarLongitude } from '../src/engine/ops/predictable';
+import { prepareOps } from '../src/engine/ops/timeline';
+import { opsRiskEstimate } from '../src/engine/ops/riskEstimate';
+import { riskMeter } from '../src/engine/risk';
+import { buildCadetDesign, defaultChoices, stepOptionIds } from '../src/engine/cadet';
+import { starterDesign } from '../src/ui/starters';
 
 const TOLERANCE = 0.1;
 
@@ -245,6 +254,74 @@ describe('OSIRIS-REx (Bennu, 2016) — arXiv 1702.06981', () => {
     info(M, 'Best direct arrival from the real launch date (for comparison)', `${best.arrivalDate} (${best.flightDays} d) / C3 ${best.c3_km2s2.toFixed(2)} km²/s²`, `${pub.launchC3_km2s2!.value} km²/s² (with flyby)`);
     info(M, 'Blockers on the NASA route', ev.blockers.join(' · ') || 'none');
     expect(best.flightDays).toBeLessThan(ev.trajectory.flightDays);
+  });
+});
+
+// ---------------------------------------------------------------------------
+describe('Mission operations — Mars conjunctions, Ls, loss rate', () => {
+  const M = 'Mars (ops)';
+  // Published command moratoria (JPL news). The engine's least Sun–Earth–Mars angle must fall within ±2 days of
+  // each window's middle; the 2015 window ("within two degrees") must also match in length.
+  const MORATORIA = [
+    { year: 2015, open: '2015-06-07', close: '2015-06-21' },
+    { year: 2017, open: '2017-07-22', close: '2017-08-01' },
+    { year: 2019, open: '2019-08-28', close: '2019-09-07' },
+  ];
+
+  it('conjunction centres match the published moratoria (±2 days)', () => {
+    for (const m of MORATORIA) {
+      const open = julianDate(m.open);
+      const close = julianDate(m.close);
+      const [w] = bodyConjunctions('mars', open - 30, close + 30);
+      const mid = (open + close) / 2;
+      const off = w!.minJd - mid;
+      const ok = flag(M, `${m.year} conjunction: least Sun–Earth–Mars angle vs moratorium middle (±2 d)`, Math.abs(off) <= 2,
+        `${off >= 0 ? '+' : ''}${off.toFixed(1)} d (least angle ${w!.minAngle_deg.toFixed(2)}°)`, `${m.open} – ${m.close}`, '2° threshold (JPL 2015)');
+      expect(ok).toBe(true);
+    }
+  });
+
+  it('the 2015 window at 2° matches the published length (±2 days)', () => {
+    const [w] = bodyConjunctions('mars', julianDate('2015-05-01'), julianDate('2015-07-31'));
+    const len = w!.endJd - w!.startJd;
+    const published = julianDate('2015-06-21') - julianDate('2015-06-07');
+    const ok = flag(M, '2015 window length at 2°', Math.abs(len - published) <= 2, `${len.toFixed(1)} d`, `${published} d (June 7–21)`);
+    expect(ok).toBe(true);
+  });
+
+  it('Mars perihelion Ls from the IAU pole and the ephemeris vs Mars24 (±2°)', () => {
+    const jd = perihelionJd('mars', julianDate('2022-06-21'));
+    const yr = 2000 + (jd - 2451545) / 365.25;
+    const published = OPERATIONS.marsDust.perihelionLs_deg.value + OPERATIONS.marsDust.perihelionLsRate_degPerYear.value * (yr - 2000);
+    const ls = solarLongitude('mars', jd);
+    const ok = flag(M, 'Ls at perihelion (2022)', Math.abs(ls - published) <= 2, `${ls.toFixed(2)}°`, `${published.toFixed(2)}° (Mars24)`, 'Mars pole: NASA fact sheet');
+    expect(ok).toBe(true);
+  });
+
+  it('info: the Risk meter (Ops Monte Carlo) vs the single-card flight’s phase formula', () => {
+    const maven = presetDesign('maven');
+    const e = opsRiskEstimate(maven);
+    const formula = riskMeter(evaluateDesign(maven).details.phaseRisks).used;
+    info('MAVEN (ops)', `Risk meter: prime-mission loss rate over ${e.tally.runs} seeded Ops runs (safest responses, seed ${e.seed}) vs the single-card flight's phase formula`,
+      `${(100 * e.meter.used).toFixed(1)}% ± ${(100 * e.stdErr).toFixed(1)}`, `${(100 * formula).toFixed(1)}% (phase formula)`, 'hazard rates and response failure chances');
+    expect(e.tally.lost).toBeLessThan(e.tally.runs);
+  }, 120_000);
+});
+
+describe('Moon rideshare (LRO 2009, the LCROSS secondary slot)', () => {
+  it('info: Moon Cadet crafts in the 1000 kg secondary slot vs a whole Atlas V 401', () => {
+    const base = starterDesign('moon', '2026-10-04');
+    const margins = (rocket: string) =>
+      stepOptionIds('moon', 'science').flatMap((science) =>
+        ['lean', 'balanced', 'roomy'].map((fuel) => evaluateDesign(buildCadetDesign(base, { ...defaultChoices(base), science, fuel, rocket })).meters.mass.margin),
+      );
+    const fmt = (m: number[]) => `${(100 * Math.min(...m)).toFixed(0)}–${(100 * Math.max(...m)).toFixed(0)}%`;
+    const inBand = (m: number[]) => m.filter((x) => x >= 0.1 && x <= 0.3).length;
+    const ride = margins('lro-lcross-2009');
+    const whole = margins('atlas-v-401');
+    info('Moon (Cadet)', `Mass margin of the 9 science × fuel cards: shared ride (1000 kg slot, NTRS 20100028203) vs whole Atlas V 401`,
+      `${fmt(ride)} (${inBand(ride)} of 9 in the 10–30% band)`, `${fmt(whole)} (${inBand(whole)} of 9 in band)`, 'Atlas V curve (placeholder), part masses');
+    expect(inBand(ride)).toBeGreaterThan(0);
   });
 });
 

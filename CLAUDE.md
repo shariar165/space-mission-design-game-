@@ -23,7 +23,8 @@ export PATH="$PWD/.venv/Scripts:$PATH"  # Git Bash
 | --- | --- |
 | Dev server (the game) | `npm run dev` → http://localhost:5173 |
 | Production build | `npm run build` (typecheck + `vite build` into `dist/`) |
-| All tests | `npm test` (`vitest run`) |
+| All tests | `npm test` (`vitest run`; includes the jsdom component tests in `tests/ui/`) |
+| Component tests only | `npx vitest run tests/ui` |
 | One file | `npx vitest run tests/physics.test.ts` |
 | One test by name | `npx vitest run tests/physics.test.ts -t "Lambert"` |
 | Validation only (rewrites `docs/VALIDATION_RESULTS.md`) | `npm run test:validation` |
@@ -46,29 +47,44 @@ There is no lint step.
 
 - **The UI never computes a number.** It calls the engine and only formats units (`src/ui/format.ts`). Need a new on-screen number? Add it to the engine (with a test in `tests/engineApi.test.ts`), not the UI. `tests/uiGuards.test.ts` fails on digits in JSX text or "number + unit" in UI strings, and on any React/DOM import in `src/engine`.
 - Engineer mode shows each `Meter.equation` and every `Meter.inputs` entry; ⓘ (`SourceInfo`) shows the `Sourced<T>` record, with a "game estimate" badge when `isGameEstimate`.
-- UI entry points: `evaluateDesign`, `previewCrisis` + `simulateMission` (crisis card → Debrief), `monteCarloMission`, `designDelta` and `compareWithRealMission` (`compare.ts`), `bestLaunchWindow` (starter dates).
+- UI entry points: `evaluateDesign`, `useOpsRisk` (`riskRunner.ts` → `opsRisk.worker.ts` → `riskBatch` / `riskEstimateFromTally`), `previewCrisis` + `simulateMission` (crisis card → Debrief), `monteCarloMission`, `designDelta` and `compareWithRealMission` (`compare.ts`), `bestLaunchWindow` (starter dates).
+- **Two modes.** Engineer mode (Build Bay → crisis card → Debrief) must stay as it is. Cadet mode (the default) is the guided game in spec UI rules 9–15:
+  - Level map → `CadetBuild` (one decision per screen) → Flight with Mission Control → Debrief, plus Rescue History.
+  - Its numbers come from `cadet.ts` (`cadetOptions`, `buildCadetDesign`, `cadetGauges`, `testFlight`), `flightMap.ts` (`flightFrames`, `flightMap`, `signalDelay`, `countdown`, `ghostFor`), `rescue.ts`, and `crisisOrders` + `standingOrderPolicy` (`index.ts`).
+  - Cadet words live in `src/ui/cadetWords.ts`; levels and saved stars in `src/ui/levels.ts`.
+- **Component tests** (`tests/ui/*.test.tsx`) start with `// @vitest-environment jsdom` and import `./setup` (cleanup, empty storage, `openMarsLevel`). With fake timers, advance time in small slices: each animation step schedules the next.
 - English only for now; the language toggle is hidden. Design references: `docs/design/`.
 
 ## Architecture
 
 **Data flow.** `src/data/*.json` (Sourced values) → `src/engine/data.ts` (typed casts plus `lookup()`) → physics modules → `src/engine/index.ts` (and `compare.ts`), which the UI calls.
 
-**`index.ts`** has four entry points (`previewCrisis` shows the crisis card a seed will draw, before `simulateMission` flies it):
+**`index.ts`** has four main entry points (`previewCrisis` shows the crisis card a seed will draw, before `simulateMission` flies it):
 - `evaluateDesign(design)` runs the whole pipeline:
   1. Trajectory: Lambert between the design's dates, a fixed route, or an Earth-centred transfer for the Moon.
-  2. Power at the arrival date and at the end of science, from the ephemeris Sun distance.
-  3. Batteries sized for the eclipse in the science orbit.
+  2. Power on every day of the prime mission, eclipses included (`powerProfile.ts`, shared with Ops); the Power meter is the worst day.
+  3. Batteries sized for the worst-case eclipse at the heaviest science load, within a 30% depth of discharge.
   4. Mass: the concept roll-up with 30% growth, or `asFlownDryMass_kg` for real missions.
   5. Δv budget against rocket-equation capability.
-  6. Launch capacity read off the payload(C3) curve.
-  7. Comms, cost, and phase risks.
+  6. Launch capacity read off the payload(C3) curve, or the secondary slot on a rideshare (`rideshares.json`).
+  7. Comms, cost, and phase risks (the single-card flight's model only).
 
-  It returns six `Meter`s (`used / limit / margin / status / equation / inputs`), plain-language `blockers`, non-blocking `notes`, and `details` (the numbers the simulation and Debrief need).
+  It returns five `Meter`s (no Risk: that one is the Ops Monte Carlo in `ops/riskEstimate.ts`, run by the UI in a Web Worker via `src/ui/riskRunner.ts`) (`used / limit / margin / status / equation / inputs`), plain-language `blockers`, non-blocking `notes`, and `details` (the numbers the simulation and Debrief need).
 - `simulateMission(design, {seed, rng, crisisPolicy})` flies one mission:
   - It draws one crisis card, whose day falls inside its phase.
   - It offers only the options the spare margins can pay for.
   - It rolls each phase, downlinks science day by day using the ephemeris distance, then scores the mission, awards stars and builds the next-star hint.
 - `monteCarloMission` runs `simulateMission` many times (default 1,000) from one seeded generator.
+
+**Mission operations (`src/engine/ops/`, engine only, no UI yet; spec "Mission operations").**
+- Entry points in `ops/index.ts`:
+  - `startOperations`, `advanceOperations` (stops at each new decision), `sendCommand`, `decide`, `bookDsn`;
+  - `runOperations` (headless, with a policy), `replayOperations` (seed + action log);
+  - `operationsDebrief`, `operationsForecast`.
+- `timeline.ts` `prepareOps(design)` precomputes the fixed day-by-day environment: distances, light time, Sun–Earth–probe angle, eclipses, power, link rates and dose. The clock then runs in days, split part-way through a day when a command arrives.
+- **Determinism:** each hazard has its own seeded stream (`subRng`), and every random number is drawn at the start (Poisson thinning). Tests rely on the same seed giving the same mission, and on decisions never reshuffling later draws. `rng: () => 0.999999` means no bad luck.
+- **Separate from the prime score:** in Ops the hazards replace the generic cruise and science base rates. The extension is reported separately and never changes the prime score.
+- Data: `operations.json` (parameters) and `hazards.json` (hazards, responses, real history marked "to verify").
 
 **Module responsibilities that span files:**
 - **Margins → risk → score.** `meter.ts` sets status: below 0 is over, below 10% is a warning.

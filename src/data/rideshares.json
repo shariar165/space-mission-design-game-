@@ -1,0 +1,24 @@
+{
+  "lro-lcross-2009": {
+    "name": "Shared ride with LRO",
+    "vehicleId": "atlas-v-401",
+    "destination": "moon",
+    "primary": "Lunar Reconnaissance Orbiter (LRO)",
+    "precedent": "LCROSS, the secondary payload on LRO's Atlas V 401 (AV-020), launched June 18, 2009 from Cape Canaveral SLC-41",
+    "precedentUrl": "https://science.nasa.gov/mission/lcross/",
+    "secondarySlot_kg": {
+      "value": 1000,
+      "unit": "kg, fuelled",
+      "source": "NASA NTRS 20100028203 — D. Andrews (LCROSS project manager), \"LCROSS: A High-Return, Small Satellite Mission\": the LRO secondary payload \"could weigh no more than 1000 kg (fuelled)\" (the 1000 kg mass budget allotted to the secondary payload)",
+      "url": "https://ntrs.nasa.gov/citations/20100028203",
+      "isGameEstimate": false
+    },
+    "primaryMass_kg": {
+      "value": 1850,
+      "unit": "kg",
+      "source": "NASA Science: LRO mission details (spacecraft mass 4,000 pounds, 1,850 kilograms; Atlas V 401 AV-020, June 18, 2009). NSSDC lists about 1,846 kg",
+      "url": "https://science.nasa.gov/mission/lro/about/",
+      "isGameEstimate": false
+    }
+  }
+}

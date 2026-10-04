@@ -2,11 +2,21 @@
 // Hand calculations are in the comments, as in physics.test.ts.
 import { describe, expect, it } from 'vitest';
 import { compareWithRealMission, designDelta, METER_KEYS, REAL_MISSION_FOR } from '../src/engine/compare';
-import { evaluateDesign, MONTE_CARLO_SEED, monteCarloMission, previewCrisis, simulateMission } from '../src/engine/index';
+import { crisisOrders, evaluateDesign, MONTE_CARLO_SEED, monteCarloMission, previewCrisis, simulateMission, standingOrderPolicy } from '../src/engine/index';
+import { applicableCards, availableOptions, safestOption } from '../src/engine/crisis';
+import { earthDistance, julianDate } from '../src/engine/ephemeris';
+import { countdown, craftPosition, flightFrames, flightMap, ghostFor, signalDelay } from '../src/engine/flightMap';
 import { presetDesign } from '../src/engine/missions';
 import { MAX_SCORE, nextStar, nextStarHint, SCORE_GRADES, scoreGrade } from '../src/engine/scoring';
 import { bestLaunchWindow, lambertTransfer } from '../src/engine/trajectory';
 import type { Design } from '../src/engine/types';
+import * as cadet from '../src/engine/cadet';
+import { COST_CAPS } from '../src/engine/massCost';
+import { LAUNCH_VEHICLES as LVS, RIDESHARES } from '../src/engine/data';
+import { withLauncher } from '../src/engine/designEdits';
+import { starterDesign } from '../src/ui/starters';
+import { inspectClue, rescueCase, rescueConsequence, rescueStars } from '../src/engine/rescue';
+import { mergeTallies, opsRiskEstimate, riskBatch, riskEnvironment, riskEstimateFromTally, RISK_RUNS, RISK_SEED, runSeed } from '../src/engine/ops/riskEstimate';
 
 const maven = presetDesign('maven');
 const ev = evaluateDesign(maven);
@@ -254,8 +264,9 @@ describe('bestLaunchWindow', () => {
 
 describe('limits that are game estimates are labelled at the meter', () => {
   it('risk limit is the 20% acceptable mission risk, a game estimate', () => {
-    expect(ev.meters.risk.limitSource?.value).toBe(0.2);
-    expect(ev.meters.risk.limitSource?.isGameEstimate).toBe(true);
+    const m = riskEstimateFromTally({ runs: 10, lost: 1, lostByPhase: { cruise: 1 } }, RISK_SEED.value, 10).meter;
+    expect(m.limitSource?.value).toBe(0.2);
+    expect(m.limitSource?.isGameEstimate).toBe(true);
   });
   it('cost limit is the NASA Discovery cap ($500M FY2019), not an estimate', () => {
     expect(ev.meters.cost.limitSource?.value).toBe(500);
@@ -288,5 +299,782 @@ describe('Monte Carlo is reproducible', () => {
     const b = monteCarloMission(maven, { runs: 200 });
     expect(a).toEqual(b);
     expect(a.seed).toBe(MONTE_CARLO_SEED);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Cadet mode: guided build choices, metaphor gauges and the Test Flight (cadet.ts).
+
+const FROM = '2026-10-04';
+const cadetBase = (d: Design['destination']) => starterDesign(d, FROM);
+
+describe('Cadet sizing: sizeKnob', () => {
+  const mars = cadetBase('mars');
+  it('worst power margin = the Power meter (the worst day of the mission, end of science and eclipses included)', () => {
+    const e = evaluateDesign(mars);
+    const end = e.details.power.atEndOfScience;
+    expect(cadet.worstPowerMargin(e)).toBe(e.meters.power.margin);
+    expect(cadet.worstPowerMargin(e)).toBeLessThanOrEqual((end.available_W - end.required_W) / end.required_W + 1e-12);
+  });
+
+  it('the battery gauge warns when the worst power day is in an eclipse season', () => {
+    const polar: Design = { ...mars, scienceOrbit: { periapsis_km: 400, apoapsis_km: 400, inclination_deg: 90 } };
+    for (const d of [mars, polar]) {
+      const e = evaluateDesign(d);
+      const w = cadet.cadetGauges(e).power.eclipse;
+      const seasons = e.details.power.eclipseSeasons;
+      expect(w.seasons).toBe(seasons.length);
+      expect(w.warn).toBe(seasons.length > 0 && e.details.power.worstDay.eclipseFraction > 0);
+      expect(w.worstMargin).toBe(e.meters.power.margin);
+      expect(w.sunlitMargin).toBeGreaterThanOrEqual(w.worstMargin);
+      if (seasons.length) expect(w.first).toEqual({ startDate: seasons[0]!.startDate, endDate: seasons[0]!.endDate });
+    }
+    // a low polar orbit at Mars spends about a third of some days in shadow: that is the weakest day
+    expect(cadet.cadetGauges(evaluateDesign(polar)).power.eclipse.warn).toBe(true);
+  });
+  it('the smallest array that reaches a 25% power margin (one input step smaller misses it)', () => {
+    const d = cadet.sizeKnob(mars, 'arrayArea', 0.25);
+    const area = d.power.arrayArea_m2!;
+    expect(cadet.worstPowerMargin(evaluateDesign(d))).toBeGreaterThanOrEqual(0.25);
+    const smaller = { ...d, power: { ...d.power, arrayArea_m2: area - cadet.KNOB_STEP.arrayArea } };
+    expect(cadet.worstPowerMargin(evaluateDesign(smaller))).toBeLessThan(0.25);
+  });
+  it('the least propellant that reaches a 10% Δv margin', () => {
+    const d = cadet.sizeKnob(mars, 'propellant', 0.1);
+    expect(evaluateDesign(d).meters.deltaV.margin).toBeGreaterThanOrEqual(0.1);
+    const less = { ...d, propellant_kg: d.propellant_kg - cadet.KNOB_STEP.propellant };
+    expect(evaluateDesign(less).meters.deltaV.margin).toBeLessThan(0.1);
+  });
+  it('RTGs come in whole units: the fewest that reach the margin', () => {
+    const d = cadet.sizeKnob({ ...mars, power: { type: 'rtg', rtgCount: 1 } }, 'rtgCount', 0.25);
+    expect(Number.isInteger(d.power.rtgCount)).toBe(true);
+    expect(cadet.worstPowerMargin(evaluateDesign(d))).toBeGreaterThanOrEqual(0.25);
+    expect(cadet.worstPowerMargin(evaluateDesign({ ...d, power: { type: 'rtg', rtgCount: d.power.rtgCount! - 1 } }))).toBeLessThan(0.25);
+  });
+});
+
+describe('Cadet guided build: options per step', () => {
+  const base = cadetBase('mars');
+  const choices = cadet.defaultChoices(base);
+
+  it('five steps, in the order the player sees them', () => {
+    expect(cadet.CADET_STEPS).toEqual(['science', 'power', 'radio', 'fuel', 'rocket']);
+  });
+
+  it('every step offers 2–3 cards and exactly one is chosen', () => {
+    for (const step of cadet.CADET_STEPS) {
+      const opts = cadet.cadetOptions(base, choices, step);
+      expect(opts.length).toBeGreaterThanOrEqual(2);
+      expect(opts.length).toBeLessThanOrEqual(3);
+      expect(opts.filter((o) => o.chosen)).toHaveLength(1);
+    }
+  });
+
+  it('power cards: lean solar ≈ 10% margin, balanced solar ≈ 25%, RTG reaches 25%', () => {
+    const opts = cadet.cadetOptions(base, choices, 'power');
+    const m = (id: string) => cadet.worstPowerMargin(evaluateDesign(opts.find((o) => o.id === id)!.design));
+    expect(m('solar-lean')).toBeGreaterThanOrEqual(cadet.CADET_TIERS.lean.value);
+    expect(m('solar-lean')).toBeLessThan(cadet.CADET_TIERS.balanced.value);
+    expect(m('solar-balanced')).toBeGreaterThanOrEqual(cadet.CADET_TIERS.balanced.value);
+    expect(m('rtg')).toBeGreaterThanOrEqual(cadet.CADET_TIERS.balanced.value);
+  });
+
+  it('fuel cards set the Δv margin to the lean / balanced / roomy tiers', () => {
+    const opts = cadet.cadetOptions(base, choices, 'fuel');
+    for (const tier of ['lean', 'balanced', 'roomy'] as const) {
+      const margin = evaluateDesign(opts.find((o) => o.id === tier)!.design).meters.deltaV.margin;
+      expect(margin).toBeGreaterThanOrEqual(cadet.CADET_TIERS[tier].value);
+      expect(margin).toBeLessThan(cadet.CADET_TIERS[tier].value + 0.02); // within a few kg of propellant
+    }
+  });
+
+  it('radio cards are the 1 m, 2 m (MAVEN) and 3 m (MRO) dishes; a bigger dish sends more photos', () => {
+    const opts = cadet.cadetOptions(base, choices, 'radio');
+    expect(opts.map((o) => o.design.comms.dishDiameter_m)).toEqual([1, 2, 3]);
+    const sent = opts.map((o) => o.chips.photosSent);
+    expect(sent[0]!).toBeLessThanOrEqual(sent[1]!);
+    expect(sent[1]!).toBeLessThanOrEqual(sent[2]!);
+  });
+
+  it('rocket cards are every launch vehicle in the catalogue', () => {
+    expect(cadet.cadetOptions(base, choices, 'rocket').map((o) => o.id)).toEqual(Object.keys(LVS));
+  });
+
+  it('changing power re-sizes the fuel for the new mass, so the Δv tier still holds', () => {
+    const rtg = cadet.buildCadetDesign(base, { ...choices, power: 'rtg' });
+    const solar = cadet.buildCadetDesign(base, choices);
+    expect(rtg.propellant_kg).not.toBe(solar.propellant_kg);
+    expect(evaluateDesign(rtg).meters.deltaV.margin).toBeGreaterThanOrEqual(cadet.CADET_TIERS.balanced.value);
+  });
+
+  it('the default cadet build flies to the Moon, Venus, Mars and Bennu; Jupiter cannot leave Earth', () => {
+    for (const d of ['moon', 'venus', 'mars', 'bennu'] as const) {
+      const b = cadetBase(d);
+      expect(evaluateDesign(cadet.buildCadetDesign(b, cadet.defaultChoices(b))).blockers, d).toEqual([]);
+    }
+    const j = cadetBase('jupiter');
+    const ev = evaluateDesign(cadet.buildCadetDesign(j, cadet.defaultChoices(j)));
+    expect(ev.meters.mass.status).toBe('over');
+    expect(ev.blockers.some((b) => /cannot reach C3/.test(b))).toBe(true);
+  });
+});
+
+describe('Cadet chips (absolute: what the part on this card weighs, makes and costs)', () => {
+  const base = cadetBase('mars');
+  const choices = cadet.defaultChoices(base);
+  const coin = cadet.COIN_FRACTION.value * COST_CAPS.discovery.value; // 0.05 × $500M = $25M per coin
+
+  it('power card: generation + battery mass, power made, coins = ceil(cost / $25M)', () => {
+    const o = cadet.cadetOptions(base, choices, 'power').find((x) => x.id === 'solar-balanced')!;
+    const e = evaluateDesign(o.design);
+    expect(o.chips.mass_kg).toBeCloseTo(e.details.massBreakdown.powerGeneration + e.details.massBreakdown.battery, 9);
+    expect(o.chips.powerMade_W).toBeCloseTo(e.details.power.available_W, 9);
+    expect(o.chips.cost_M).toBeCloseTo(e.details.costBreakdown.power, 9);
+    expect(o.chips.coins).toBe(Math.ceil(e.details.costBreakdown.power / coin));
+  });
+
+  it('coins: $0 → 0, $1M → 1, $25M → 1, $26M → 2 (Discovery cap)', () => {
+    expect(cadet.coins(0, COST_CAPS.discovery.value)).toBe(0);
+    expect(cadet.coins(1, COST_CAPS.discovery.value)).toBe(1);
+    expect(cadet.coins(25, COST_CAPS.discovery.value)).toBe(1);
+    expect(cadet.coins(26, COST_CAPS.discovery.value)).toBe(2);
+  });
+
+  it('science card: instrument mass, power used and photos taken per day', () => {
+    const o = cadet.cadetOptions(base, choices, 'science').find((x) => x.id === 'snapshot')!;
+    // camera only: 15 kg, 20 W, 2,000 Mbit/day ÷ 8.388608 Mbit per photo = 238.4 photos/day
+    expect(o.chips.mass_kg).toBe(15);
+    expect(o.chips.powerUsed_W).toBe(20);
+    expect(o.chips.photosTaken).toBeCloseTo(2000 / 8.388608, 6);
+  });
+
+  it('fuel card: propellant + tanks mass, and spare propellant beyond what the trip needs', () => {
+    const o = cadet.cadetOptions(base, choices, 'fuel').find((x) => x.id === 'roomy')!;
+    const e = evaluateDesign(o.design);
+    expect(o.chips.mass_kg).toBeCloseTo(e.details.propellant_kg + e.details.massBreakdown.tanks, 9);
+    // spare = m_prop − m_dry(e^(Δv_req/(Isp g₀)) − 1)
+    const need = e.details.dryMass_kg * (Math.exp(e.details.deltaVRequired_ms / (e.details.isp_s * 9.80665)) - 1);
+    expect(o.chips.spareFuel_kg).toBeCloseTo(e.details.propellant_kg - need, 6);
+    expect(o.chips.spareFuel_kg).toBeGreaterThan(0);
+  });
+
+  it('rocket card: how much it lifts on this trip, and its flight record', () => {
+    const o = cadet.cadetOptions(base, choices, 'rocket').find((x) => x.id === 'atlas-v-401')!;
+    expect(o.chips.lift_kg).toBeCloseTo(evaluateDesign(o.design).details.launchCapacity_kg, 9);
+    expect(o.chips.flights).toBe(LVS['atlas-v-401']!.flights.value);
+    expect(o.chips.successes).toBe(LVS['atlas-v-401']!.successes.value);
+  });
+
+  it('a card that would turn a gauge red says which one', () => {
+    for (const o of cadet.cadetOptions(base, choices, 'rocket')) {
+      const e = evaluateDesign(o.design);
+      expect(o.redGauges.includes('weight')).toBe(e.meters.mass.status === 'over');
+    }
+  });
+});
+
+describe('Cadet gauges (metaphors over the meters)', () => {
+  it('each gauge carries its meter status and demand ÷ supply', () => {
+    const e = evaluateDesign(maven);
+    const g = cadet.cadetGauges(e);
+    const pairs = { weight: 'mass', power: 'power', fuel: 'deltaV', photos: 'data', budget: 'cost' } as const;
+    for (const [gk, mk] of Object.entries(pairs)) {
+      const gauge = g[gk as keyof typeof pairs];
+      expect(gauge.status).toBe(e.meters[mk].status);
+      expect(gauge.meter).toBe(mk);
+      expect(gauge.ratio).toBeCloseTo(e.meters[mk].used / e.meters[mk].limit, 12);
+    }
+  });
+  it('photos: taken = produced ÷ frame, sent = min(produced, downlinked) ÷ frame', () => {
+    const e = evaluateDesign(maven);
+    const g = cadet.cadetGauges(e);
+    const frame = cadet.PHOTO_FRAME_Mbit.value * 1e6;
+    expect(g.photos.taken).toBeCloseTo(e.details.data.producedPerDay_bits / frame, 9);
+    expect(g.photos.sent).toBeCloseTo(Math.min(e.details.data.producedPerDay_bits, e.details.data.downlinkedPerDayAtArrival_bits) / frame, 9);
+  });
+});
+
+describe('Test Flight (where the mission would fail, before launch)', () => {
+  const base = cadetBase('mars');
+  const good = cadet.buildCadetDesign(base, cadet.defaultChoices(base));
+
+  it('a balanced design passes every checkpoint; checkpoints follow the mission timeline', () => {
+    const t = cadet.testFlight(good);
+    expect(t.checkpoints.map((c) => c.phase)).toEqual(['launch', 'cruise', 'arrival', 'science']);
+    expect(t.firstFail).toBeUndefined();
+    expect(t.checkpoints.every((c) => c.status === 'pass')).toBe(true);
+    expect(t.checkpoints[2]!.startDay).toBe(Math.round(evaluateDesign(good).trajectory.flightDays));
+  });
+  it('too heavy for the rocket → fails at launch', () => {
+    const t = cadet.testFlight({ ...good, propellant_kg: 20000 });
+    expect(t.firstFail).toBe('launch');
+    expect(t.checkpoints[0]!.reasons).toContain('too-heavy');
+  });
+  it('too little power → fails in cruise', () => {
+    const t = cadet.testFlight({ ...good, power: { type: 'solar', arrayArea_m2: 1 } });
+    expect(t.firstFail).toBe('cruise');
+    expect(t.checkpoints[1]!.reasons).toContain('no-power');
+  });
+  it('too little fuel → fails at arrival', () => {
+    const t = cadet.testFlight({ ...good, propellant_kg: 100 });
+    expect(t.firstFail).toBe('arrival');
+    expect(t.checkpoints[2]!.reasons).toContain('no-fuel');
+  });
+  it('an ion engine cannot brake into orbit → fails at arrival', () => {
+    const t = cadet.testFlight({ ...good, engineId: 'ion-xenon' });
+    expect(t.checkpoints[2]!.reasons).toContain('engine-cannot-capture');
+  });
+  it('a thin Δv margin is shaky at arrival (risk factor > 1)', () => {
+    const t = cadet.testFlight(cadet.sizeKnob(good, 'propellant', 0.03));
+    expect(t.checkpoints[2]!.status).toBe('shaky');
+    expect(t.checkpoints[2]!.reasons).toContain('low-fuel');
+  });
+  it('a sample-return mission has a return checkpoint; loss chances come from the seeded Monte Carlo', () => {
+    const b = cadetBase('bennu');
+    const d = cadet.buildCadetDesign(b, cadet.defaultChoices(b));
+    const t = cadet.testFlight(d, { runs: 200 });
+    expect(t.checkpoints.map((c) => c.phase)).toContain('return');
+    const mc = monteCarloMission(d, { runs: 200, seed: MONTE_CARLO_SEED });
+    for (const c of t.checkpoints) expect(c.lossChance).toBeCloseTo((mc.failuresByPhase[c.phase] ?? 0) / 200, 12);
+    expect(t.successRate).toBe(mc.successRate);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Light-delay Mission Control: standing orders, signal delay and flight frames.
+
+describe('Standing orders (the craft acts on orders queued before launch)', () => {
+  const base = cadetBase('mars');
+  const good = cadet.buildCadetDesign(base, cadet.defaultChoices(base));
+
+  it('crisisOrders lists every card this mission can meet, with the options the spare margins can pay for', () => {
+    const o = crisisOrders(good);
+    const e = evaluateDesign(good);
+    expect(o.map((c) => c.card.id).sort()).toEqual(applicableCards('orbiter', false).map((c) => c.id).sort());
+    for (const c of o) {
+      const avail = availableOptions(c.card, {
+        deltaV_ms: e.details.deltaVCapability_ms - e.details.deltaVRequired_ms,
+        budget_M: e.details.cost.cap_M - e.details.cost.development_M,
+        powerMargin: e.meters.power.margin,
+      });
+      expect(c.available.map((x) => x.id)).toEqual(avail.map((x) => x.id));
+      expect(c.defaultOptionId).toBe(safestOption(avail).id);
+    }
+  });
+
+  it('a Δv option shows the propellant it burns: rocket equation at the craft mass in that phase', () => {
+    const nav = crisisOrders(good).find((c) => c.card.id === 'unit-mismatch')!;
+    const opt = nav.available.find((x) => x.id === 'nav-check')!;
+    const e = evaluateDesign(good);
+    // cruise: wet mass; m = m₀(1 − e^(−Δv/(Isp g₀))), Δv = 15 m/s
+    expect(nav.fuel_kg['nav-check']).toBeCloseTo(e.details.wetMass_kg * (1 - Math.exp(-opt.cost.deltaV_ms!.value / (e.details.isp_s * 9.80665))), 9);
+    expect(nav.fuel_kg['trust-plan']).toBe(0);
+  });
+
+  it('the policy flies the queued option for whichever card is drawn', () => {
+    let checked = 0;
+    for (let seed = 1; seed <= 40; seed++) {
+      const p = previewCrisis(good, seed)!;
+      const pick = p.options[p.options.length - 1]!.id; // the riskier, free option
+      const sim = simulateMission(good, { seed, crisisPolicy: standingOrderPolicy({ [p.card.id]: pick }) });
+      expect(sim.crisis!.optionId).toBe(pick);
+      checked++;
+    }
+    expect(checked).toBe(40);
+  });
+
+  it('no order (or one the margins cannot pay for) → the craft takes the safest available option', () => {
+    const p = previewCrisis(good, 7)!;
+    const sim = simulateMission(good, { seed: 7, crisisPolicy: standingOrderPolicy({ [p.card.id]: 'not-an-option' }) });
+    expect(sim.crisis!.optionId).toBe(safestOption(p.options).id);
+    expect(simulateMission(good, { seed: 7, crisisPolicy: standingOrderPolicy({}) }).crisis!.optionId).toBe(safestOption(p.options).id);
+  });
+});
+
+describe('Signal delay on the crisis day', () => {
+  const base = cadetBase('mars');
+  const good = cadet.buildCadetDesign(base, cadet.defaultChoices(base));
+  const e = evaluateDesign(good);
+  const jd0 = julianDate(e.details.launchDate);
+
+  it('at the destination: one-way light time from the ephemeris Earth distance (t = d / c)', () => {
+    const day = Math.round(e.trajectory.flightDays) + 30;
+    const s = signalDelay(good, day, e);
+    expect(s.distance_m).toBeCloseTo(earthDistance('mars', jd0 + day), 0);
+    expect(s.oneWay_s).toBeCloseTo(s.distance_m / 299_792_458, 9);
+    // a command sent when the news arrives reaches the craft one more trip later
+    expect(s.roundTrip_s).toBeCloseTo(2 * s.oneWay_s, 9);
+  });
+
+  it('on launch day the craft is at Earth: no delay', () => {
+    expect(signalDelay(good, 0, e).distance_m).toBeLessThan(1e3);
+  });
+
+  it('in cruise the craft is part-way along its transfer: farther than launch, nearer than the start of science', () => {
+    const mid = signalDelay(good, e.trajectory.flightDays / 2, e).distance_m;
+    expect(mid).toBeGreaterThan(1e9);
+    const pos = craftPosition(good, e.trajectory.flightDays / 2, e);
+    const path = e.trajectory.path;
+    // half the flight time = half-way along the time-sampled path (64 steps → point 32)
+    expect(pos[0]).toBeCloseTo(path[32]![0], -3);
+    expect(pos[1]).toBeCloseTo(path[32]![1], -3);
+  });
+
+  it('Moon: 384,400 km (NSSDC semimajor axis) → 1.28 s one way', () => {
+    const m = cadet.buildCadetDesign(cadetBase('moon'), cadet.defaultChoices(cadetBase('moon')));
+    const em = evaluateDesign(m);
+    expect(signalDelay(m, Math.round(em.trajectory.flightDays) + 10, em).oneWay_s).toBeCloseTo(384_400_000 / 299_792_458, 6);
+  });
+
+  it('Moon cruise follows the transfer in time (Kepler), not in angle: half-way in time is already far out', () => {
+    const m = cadet.buildCadetDesign(cadetBase('moon'), cadet.defaultChoices(cadetBase('moon')));
+    const em = evaluateDesign(m);
+    // Half-ellipse from r1 = R_E + 185 km = 6,563.1 km to r2 = 384,400 km: a = (r1 + r2)/2, e = (r2 − r1)/(r2 + r1) ≈ 0.966.
+    // Half the flight time → M = π/2; E − e sin E = π/2 → E ≈ 2.316 rad; r = a(1 − e cos E) ≈ 330,000 km.
+    const r1 = 6_563_100;
+    const r2 = 384_400_000;
+    const a = (r1 + r2) / 2;
+    const e = (r2 - r1) / (r2 + r1);
+    let E = Math.PI / 2;
+    for (let k = 0; k < 50; k++) E -= (E - e * Math.sin(E) - Math.PI / 2) / (1 - e * Math.cos(E));
+    const p = craftPosition(m, em.trajectory.flightDays / 2, em);
+    expect(Math.hypot(p[0], p[1])).toBeCloseTo(a * (1 - e * Math.cos(E)), -3);
+    expect(Math.hypot(p[0], p[1])).toBeGreaterThan(300_000_000);
+    // and it starts at the parking orbit and ends at the Moon's distance
+    expect(Math.hypot(...craftPosition(m, 0.001, em))).toBeCloseTo(r1, -5); // 86 s after injection: a few tens of km higher
+    expect(Math.hypot(...craftPosition(m, em.trajectory.flightDays * 0.9999, em))).toBeCloseTo(r2, -5);
+  });
+
+  it('countdown: 760 s one way, a quarter of the way there → 570 s left; never below zero', () => {
+    expect(countdown(760, 0.25)).toBe(570);
+    expect(countdown(760, 1.5)).toBe(0);
+    expect(countdown(760, 0)).toBe(760);
+  });
+});
+
+describe('Flight frames (what the Flight screen animates)', () => {
+  const base = cadetBase('mars');
+  const good = cadet.buildCadetDesign(base, cadet.defaultChoices(base));
+  const e = evaluateDesign(good);
+
+  it('runs from launch to the end day, with the crisis day as an exact frame', () => {
+    const fr = flightFrames(good, { endDay: 700, crisisDay: 214, frames: 60 }, e);
+    expect(fr[0]!.day).toBe(0);
+    expect(fr[fr.length - 1]!.day).toBe(700);
+    expect(fr.some((x) => x.day === 214)).toBe(true);
+    for (let i = 1; i < fr.length; i++) expect(fr[i]!.day).toBeGreaterThanOrEqual(fr[i - 1]!.day);
+  });
+  it('each frame carries its phase and the Earth distance from the same signal model', () => {
+    const fr = flightFrames(good, { endDay: 700, frames: 40 }, e);
+    for (const x of fr) {
+      expect(x.earthDistance_m).toBeCloseTo(signalDelay(good, x.day, e).distance_m, 0);
+    }
+    expect(fr[0]!.phase).toBe('launch');
+    expect(fr.find((x) => x.day > e.trajectory.flightDays + 1)!.phase).toBe('science');
+  });
+});
+
+describe('Flight map geometry', () => {
+  it('Mars: heliocentric frame; the orbits and the path fit inside the extent (Mars aphelion ≈ 1.666 AU)', () => {
+    const b = cadetBase('mars');
+    const d = cadet.buildCadetDesign(b, cadet.defaultChoices(b));
+    const e = evaluateDesign(d);
+    const m = flightMap(d, e);
+    const AU = 149_597_870_700;
+    expect(m.frame).toBe('sun');
+    expect(m.path).toEqual(e.trajectory.path);
+    expect(m.extent_m / AU).toBeGreaterThan(1.666);
+    expect(m.extent_m / AU).toBeLessThan(2);
+    for (const p of [...m.earthOrbit, ...m.destOrbit, ...m.path]) expect(Math.max(Math.abs(p[0]), Math.abs(p[1]))).toBeLessThanOrEqual(m.extent_m);
+  });
+  it('Moon: Earth-centred frame, the Moon on a circle of 384,400 km', () => {
+    const b = cadetBase('moon');
+    const d = cadet.buildCadetDesign(b, cadet.defaultChoices(b));
+    const m = flightMap(d);
+    expect(m.frame).toBe('earth');
+    for (const p of m.destOrbit) expect(Math.hypot(p[0], p[1])).toBeCloseTo(384_400_000, -1);
+  });
+  it('frames carry the one-way light time t = d / c', () => {
+    const b = cadetBase('mars');
+    const d = cadet.buildCadetDesign(b, cadet.defaultChoices(b));
+    for (const x of flightFrames(d, { endDay: 400, frames: 10 })) expect(x.oneWay_s).toBeCloseTo(x.earthDistance_m / 299_792_458, 9);
+  });
+});
+
+describe('Rescue History: Mars Climate Orbiter (rescue.ts)', () => {
+  it('the design sheet is the published MCO: 629 kg = 338 kg dry + 291 kg fuel, Delta II 7425, Dec. 11, 1998', () => {
+    const c = rescueCase('mco');
+    expect(c.facts.launchMass_kg.value).toBe(629);
+    expect(c.facts.dryMass_kg.value + c.facts.propellant_kg.value).toBe(c.facts.launchMass_kg.value);
+    expect(c.facts.launchDate.value).toBe('1998-12-11');
+    expect(c.facts.launchVehicle.value).toBe('Delta II 7425');
+    for (const f of Object.values(c.facts)) expect(f.isGameEstimate).toBe(false);
+  });
+  it('four clues, all from the board report; exactly one is the bug (thruster file units)', () => {
+    const c = rescueCase('mco');
+    expect(c.clues).toHaveLength(4);
+    expect(c.clues.filter((x) => x.isBug).map((x) => x.id)).toEqual(['amd-units']);
+    for (const x of c.clues) expect(x.evidence.url).toBeTruthy();
+  });
+  it('inspectClue judges a clue', () => {
+    expect(inspectClue('mco', 'amd-units').isBug).toBe(true);
+    expect(inspectClue('mco', 'tcm-5').isBug).toBe(false);
+    expect(() => inspectClue('mco', 'nope')).toThrow();
+  });
+  it('consequence: planned 226 km − estimated 57 km = 169 km too low (report: ~170 km); 23 km under the 80 km limit', () => {
+    const k = rescueConsequence('mco');
+    expect(k.missedBy_km).toBe(226 - 57);
+    expect(k.belowSurvivable_km).toBe(80 - 57);
+    expect(k.factor.value).toBeCloseTo(4.4482216152605, 12);
+  });
+  it('stars: three on the first try, one fewer per wrong guess, never fewer than one', () => {
+    expect([1, 2, 3, 4, 9].map(rescueStars)).toEqual([3, 2, 1, 1, 1]);
+  });
+});
+
+describe('Ghost of the real mission on the flight map', () => {
+  const mars = cadet.buildCadetDesign(cadetBase('mars'), cadet.defaultChoices(cadetBase('mars')));
+  const e = evaluateDesign(mars);
+  const real = evaluateDesign(presetDesign('maven'));
+
+  it('only where a sourced real mission exists: Mars (MAVEN) and Bennu (OSIRIS-REx)', () => {
+    expect(ghostFor(mars, e)?.missionId).toBe('maven');
+    const bennu = cadet.buildCadetDesign(cadetBase('bennu'), cadet.defaultChoices(cadetBase('bennu')));
+    expect(ghostFor(bennu)?.missionId).toBe('osiris-rex');
+    for (const d of ['moon', 'venus', 'jupiter'] as const) expect(ghostFor(cadet.buildCadetDesign(cadetBase(d), cadet.defaultChoices(cadetBase(d))))).toBeUndefined();
+  });
+
+  it("MAVEN's real path, turned about the Sun so it starts beside the player: same shape, same Sun distances", () => {
+    const g = ghostFor(mars, e)!;
+    expect(g.path).toHaveLength(real.trajectory.path.length);
+    for (let i = 0; i < g.path.length; i++) {
+      expect(Math.hypot(...g.path[i]!)).toBeCloseTo(Math.hypot(...real.trajectory.path[i]!), -2);
+    }
+    const ang = (p: [number, number]) => Math.atan2(p[1], p[0]);
+    expect(ang(g.path[0]!)).toBeCloseTo(ang(e.trajectory.path[0]!), 9);
+    expect(g.label).toBe('MAVEN (2013–2025)');
+    expect(g.flightDays).toBeCloseTo(real.trajectory.flightDays, 9);
+  });
+
+  it('the ghost craft moves by the real flight time and waits at the destination after arrival', () => {
+    const g = ghostFor(mars, e)!;
+    const half = g.at(g.flightDays / 2);
+    expect(half[0]).toBeCloseTo(g.path[32]![0], -3);
+    expect(g.at(g.flightDays + 100)).toEqual(g.path[g.path.length - 1]);
+    expect(g.at(0)).toEqual(g.path[0]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Mission operations API (spec: "Mission operations"). No UI yet; these are the entry points it will call.
+describe('Mission operations: determinism', () => {
+  const maven = presetDesign('maven');
+
+  it('same seed → same mission (events, ledger, debrief); a different seed → a different mission', async () => {
+    const ops = await import('../src/engine/ops/index');
+    const a = ops.runOperations(maven, { seed: 2013, extension: 'longest' });
+    const b = ops.runOperations(maven, { seed: 2013, extension: 'longest' });
+    expect(b.state.events).toEqual(a.state.events);
+    expect(b.state.ledger).toEqual(a.state.ledger);
+    expect(b.debrief).toEqual(a.debrief);
+    const c = ops.runOperations(maven, { seed: 2014, extension: 'longest' });
+    expect(c.state.hazards.map((h) => h.onset)).not.toEqual(a.state.hazards.map((h) => h.onset));
+  });
+
+  it('a player choice changes the odds, never the draws: storms come at the same times whatever the power plan', async () => {
+    const ops = await import('../src/engine/ops/index');
+    const plan = { ...ops.defaultPowerPlan(ops.prepareOps(maven)), heaters: 0.5 }; // cold every day
+    const a = ops.runOperations(maven, { seed: 5 });
+    const b = ops.runOperations(maven, { seed: 5, plan });
+    expect(b.state.draws).toEqual(a.state.draws);
+    // the storm rate depends only on the date and Sun distance, so its hazards are identical
+    const storms = (s: typeof a.state) => s.hazards.filter((h) => h.type === 'solar-storm' && h.onset < s.env.primeEndDay).map((h) => h.onset);
+    expect(storms(b.state)).toEqual(storms(a.state));
+    expect(b.state.coldDays).toBeGreaterThan(0);
+    expect(a.state.coldDays).toBe(0);
+  });
+
+  it('replaying the seed and the action log rebuilds the same mission (save/load)', async () => {
+    const ops = await import('../src/engine/ops/index');
+    const run = ops.runOperations(maven, { seed: 2013, extension: 'longest' });
+    expect(run.state.actions.length).toBeGreaterThan(1);
+    const replay = ops.replayOperations(maven, { seed: 2013 }, run.state.actions);
+    expect(replay.events).toEqual(run.state.events);
+    expect(replay.ledger).toEqual(run.state.ledger);
+    expect(ops.operationsDebrief(replay)).toEqual(run.debrief);
+  });
+
+  it('functions never change their input state', async () => {
+    const ops = await import('../src/engine/ops/index');
+    const s0 = ops.startOperations(maven, { seed: 3 });
+    const copy = JSON.stringify({ ...s0, env: undefined });
+    ops.advanceOperations(s0, { days: 400 });
+    ops.sendCommand(s0, { kind: 'power-plan', plan: s0.plan });
+    expect(JSON.stringify({ ...s0, env: undefined })).toBe(copy);
+  });
+});
+
+describe('Mission operations: commands and decisions', () => {
+  const maven = presetDesign('maven');
+
+  it('advanceOperations stops when Earth learns of a hazard, and the decision is open at that moment', async () => {
+    const ops = await import('../src/engine/ops/index');
+    const s = ops.advanceOperations(ops.startOperations(maven, { seed: 2013 }));
+    expect(s.status).toBe('flying');
+    expect(s.newDecisions.length).toBeGreaterThan(0);
+    const d = s.decisions.find((x) => x.id === s.newDecisions[0])!;
+    expect(d.openedAt).toBeCloseTo(s.t, 9);
+    // a response can only leave after the team has reacted (4 h)
+    expect(d.earliestSend - d.openedAt).toBeCloseTo(4 / 24, 9);
+  });
+
+  it('a command sent in a conjunction moratorium is refused, with the first day it can be sent', async () => {
+    const ops = await import('../src/engine/ops/index');
+    const env = ops.prepareOps(maven);
+    const w = env.conjunctions[0]!; // MAVEN: June 2015
+    let s = ops.startOperations(maven, { rng: () => 0.999999, env });
+    s = ops.advanceOperations(s, { until: w.startDay + 0.5 });
+    const r = ops.sendCommand(s, { kind: 'power-plan', plan: s.plan });
+    expect(r.receipt.accepted).toBe(false);
+    expect(r.receipt.reason).toBe('conjunction');
+    expect(r.receipt.retryAfterDay).toBe(w.endDay + 1);
+    // no downlink inside the window: data waits in the recorder
+    expect(s.ledger.find((x) => x.day === w.startDay + 0)?.downlinked_bits ?? 0).toBe(0);
+  });
+
+  it('a command takes effect one light time after it is sent', async () => {
+    const ops = await import('../src/engine/ops/index');
+    let s = ops.startOperations(maven, { rng: () => 0.999999 });
+    s = ops.advanceOperations(s, { until: s.env.arrivalDay + 20.25 });
+    const r = ops.sendCommand(s, { kind: 'power-plan', plan: { ...s.plan, radio: false } });
+    expect(r.receipt.accepted).toBe(true);
+    expect((r.receipt.arrivesAt! - r.receipt.sentAt) * 86_400).toBeCloseTo(s.env.days[s.env.arrivalDay + 20]!.oneWay_s, -1);
+    const after = ops.advanceOperations(r.state, { until: r.receipt.arrivesAt! - 1e-6 });
+    expect(after.plan.radio).toBe(true); // not yet
+    expect(ops.advanceOperations(after, { until: r.receipt.arrivesAt! + 1e-6 }).plan.radio).toBe(false);
+  });
+
+  it('when no response arrives in time the craft follows its standing order, else fault protection (the free option)', async () => {
+    const ops = await import('../src/engine/ops/index');
+    const free = ops.runOperations(maven, { seed: 2013, policy: 'default' });
+    const answered = free.state.hazards.filter((h) => h.choice);
+    expect(answered.length).toBeGreaterThan(0);
+    expect(answered.every((h) => h.choice!.by === 'fault-protection')).toBe(true);
+    expect(free.state.events.some((e) => e.code === 'deadline-missed')).toBe(true);
+    const ordered = ops.runOperations(maven, { seed: 2013, policy: 'default', standingOrders: { 'solar-storm': 'shelter' } });
+    const storms = ordered.state.hazards.filter((h) => h.type === 'solar-storm' && h.choice);
+    expect(storms.length).toBeGreaterThan(0);
+    expect(storms.every((h) => h.choice!.by === 'standing-order' && h.choice!.optionId === 'shelter')).toBe(true);
+  });
+
+  it('only responses the margins can pay for are offered; the free one always is, even over budget', async () => {
+    const { affordableResponses, isFree } = await import('../src/engine/ops/responses');
+    const { HAZARDS } = await import('../src/engine/data');
+    const opts = HAZARDS['mars-dust-storm']!.options;
+    const broke = affordableResponses(opts, { deltaV_ms: 5, budget_M: -10, powerMargin: -0.2, scienceDays: 10 });
+    // raise-periapsis needs 10 m/s (> 5), wait-it-out needs 30 science days (> 10): only the free option is left
+    expect(broke.map((o) => o.id)).toEqual(['carry-on']);
+    expect(broke.every(isFree)).toBe(true);
+    const rich = affordableResponses(opts, { deltaV_ms: 100, budget_M: 10, powerMargin: 0.3, scienceDays: 100 });
+    expect(rich.length).toBe(3);
+    // a one-time option cannot be used twice
+    const mem = HAZARDS['memory-corruption']!.options;
+    const used = affordableResponses(mem, { deltaV_ms: 100, budget_M: 10, powerMargin: 0.3, scienceDays: 100 }, ['backup-computer']);
+    expect(used.map((o) => o.id)).not.toContain('backup-computer');
+  });
+
+  it('every decision in a flown mission offered only affordable options, always including a free one', async () => {
+    const ops = await import('../src/engine/ops/index');
+    const { isFree } = await import('../src/engine/ops/responses');
+    for (const seed of [1, 2, 3, 2013]) {
+      const r = ops.runOperations(maven, { seed });
+      for (const d of r.state.decisions.filter((x) => x.kind === 'hazard')) expect(d.hazardOptions!.some(isFree)).toBe(true);
+    }
+  });
+
+  it('DSN bookings need the lead time; a 70 m booking costs the aperture-fee difference and sends more data', async () => {
+    const ops = await import('../src/engine/ops/index');
+    let s = ops.startOperations(maven, { rng: () => 0.999999 });
+    s = ops.advanceOperations(s, { until: s.env.arrivalDay + 10 });
+    const day = Math.floor(s.t);
+    expect(ops.bookDsn(s, day + 2, day + 3, { dish: 70, hours: 8 }).receipt.reason).toBe('lead-time');
+    const booked = ops.bookDsn(s, day + 7, day + 7, { dish: 70, hours: 8 });
+    expect(booked.receipt.accepted).toBe(true);
+    const base = ops.advanceOperations(s, { until: day + 9 });
+    const more = ops.advanceOperations(booked.state, { until: day + 9 });
+    expect(more.dsnExtra_M - base.dsnExtra_M).toBeCloseTo(0.0456624, 9);
+    expect(more.ledger[day + 7]!.downlinked_bits).toBeGreaterThanOrEqual(base.ledger[day + 7]!.downlinked_bits);
+  });
+});
+
+describe('Mission operations: extension and Debrief', () => {
+  const maven = presetDesign('maven');
+
+  it('the extension decision opens only when the prime mission ends', async () => {
+    const ops = await import('../src/engine/ops/index');
+    let s = ops.startOperations(maven, { rng: () => 0.999999 });
+    s = ops.advanceOperations(s, { until: s.env.primeEndDay });
+    expect(s.decisions.some((d) => d.id === 'extension')).toBe(false);
+    s = ops.advanceOperations(s);
+    expect(s.status).toBe('awaiting-extension');
+    expect(s.newDecisions).toContain('extension');
+    expect(s.t).toBe(s.env.primeEndDay + 1);
+  });
+
+  it('an extension the craft cannot pay Δv for is not offered (blockedBy deltaV); ending is always offered', async () => {
+    const { extensionOptions } = await import('../src/engine/ops/extension');
+    const { prepareOps } = await import('../src/engine/ops/timeline');
+    const env = prepareOps(maven);
+    const opts = extensionOptions(env, { deltaVLeft_ms: 1, dose_rad: 0, attitudeOk: true, primeScienceFraction: 0.9, instrumentsLost: [] });
+    expect(opts.find((o) => o.id === 'end')!.blockedBy).toEqual([]);
+    // 1 year of maintenance = 20 m/s per year × 1 = 20 m/s > 1 m/s
+    const one = opts.find((o) => o.years === 1)!;
+    expect(one.deltaVNeeded_ms).toBeCloseTo(20 * (one.days / 365.25), 9);
+    expect(one.blockedBy).toContain('deltaV');
+    const weak = extensionOptions(env, { deltaVLeft_ms: 500, dose_rad: 0, attitudeOk: true, primeScienceFraction: 0.1, instrumentsLost: [] });
+    expect(weak.find((o) => o.years === 1)!.blockedBy).toEqual(['science-review']);
+  });
+
+  it('the extension never changes the prime-mission score or stars (separate report)', async () => {
+    const ops = await import('../src/engine/ops/index');
+    for (const seed of [1, 2013]) {
+      const end = ops.runOperations(maven, { seed, extension: 'end' });
+      const ext = ops.runOperations(maven, { seed, extension: 'longest' });
+      expect(ext.debrief.score).toBeCloseTo(end.debrief.score, 9);
+      expect(ext.debrief.stars).toBe(end.debrief.stars);
+      expect(end.debrief.extension.outcome).toBe('declined');
+      expect(['completed', 'lost']).toContain(ext.debrief.extension.outcome);
+      expect(ext.debrief.extension.downlinked_Gbit).toBeGreaterThan(0);
+    }
+  });
+
+  it('the Debrief score is the open weighted sum of its categories', async () => {
+    const ops = await import('../src/engine/ops/index');
+    const r = ops.runOperations(maven, { seed: 2013 });
+    expect(r.debrief.score).toBeCloseTo(r.debrief.breakdown.reduce((s, b) => s + b.contribution, 0), 9);
+    expect(r.debrief.completed).toBe(true);
+  });
+
+  it('a blocked design never launches', async () => {
+    const ops = await import('../src/engine/ops/index');
+    const r = ops.runOperations({ ...presetDesign('osiris-rex'), trajectoryOption: 'direct' }, { seed: 1 });
+    expect(r.state.status).toBe('not-launched');
+    expect(r.debrief.launched).toBe(false);
+    expect(r.debrief.stars).toBe(0);
+  });
+
+  it('the forecast lists what the player can see coming, as codes with values (never sentences)', async () => {
+    const ops = await import('../src/engine/ops/index');
+    const f = ops.operationsForecast(maven);
+    expect(f.conjunctions[0]!.startDate.slice(0, 7)).toBe('2015-06');
+    expect(f.eclipseSeasons.length).toBeGreaterThan(0);
+    expect(f.dose).toBeUndefined(); // no radiation model at Mars
+    for (const e of f.events) for (const v of Object.values(e.values)) if (typeof v === 'string') expect(v).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    // every event code of a flown mission is plain data too
+    const r = ops.runOperations(maven, { seed: 2013 });
+    for (const e of r.state.events) for (const v of Object.values(e.values)) if (typeof v === 'string') expect(v).not.toMatch(/\s/);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The Risk meter: the Mission operations Monte Carlo (ops/riskEstimate.ts), run in a Web Worker by the UI.
+
+describe('Risk meter from the Mission operations Monte Carlo', () => {
+  it('defaults: 500 runs, seed 2013 (the Engineer Monte Carlo seed), both labelled game rules', () => {
+    expect(RISK_RUNS.value).toBe(500);
+    expect(RISK_SEED.value).toBe(MONTE_CARLO_SEED);
+    expect(RISK_RUNS.isGameEstimate && RISK_SEED.isGameEstimate).toBe(true);
+  });
+
+  it('meter from a tally: used = lost/N, margin = (limit − used)/limit, standard error √(p(1 − p)/N)', () => {
+    // 30 lost of 200: p = 0.15; margin = (0.20 − 0.15)/0.20 = 0.25; σ = √(0.15 × 0.85 / 200) = 0.025249
+    const e = riskEstimateFromTally({ runs: 200, lost: 30, lostByPhase: { science: 30 } }, 7, 500);
+    expect(e.meter.used).toBeCloseTo(0.15, 12);
+    expect(e.meter.margin).toBeCloseTo(0.25, 12);
+    expect(e.meter.status).toBe('ok');
+    expect(e.stdErr).toBeCloseTo(0.025249, 6);
+    expect(e.complete).toBe(false);
+    expect(e.meter.inputs.runs!.value).toBe(200);
+    expect(e.meter.inputs.lostRuns!.value).toBe(30);
+    expect(e.meter.inputs.seed!.value).toBe(7);
+  });
+
+  it('run i always has the same seed, so batches add up to the same tally however they are split', () => {
+    expect(runSeed(2013, 5)).toBe(runSeed(2013, 5));
+    expect(runSeed(2013, 5)).not.toBe(runSeed(2013, 6));
+    const env = riskEnvironment(maven);
+    const whole = riskBatch(maven, env, 2013, 0, 40);
+    const split = mergeTallies(riskBatch(maven, env, 2013, 0, 15), riskBatch(maven, env, 2013, 15, 25));
+    expect(split).toEqual(whole);
+    expect(opsRiskEstimate(maven, { runs: 40, env }).tally).toEqual(whole);
+  }, 60_000);
+
+  it('a design that cannot launch is lost in every run (risk = 100%, over the limit)', () => {
+    const blocked: Design = { ...maven, propellant_kg: 40_000 };
+    expect(evaluateDesign(blocked).blockers.length).toBeGreaterThan(0);
+    const e = opsRiskEstimate(blocked, { runs: 5 });
+    expect(e.tally).toEqual({ runs: 5, lost: 5, lostByPhase: { 'not-launched': 5 } });
+    expect(e.meter.used).toBe(1);
+    expect(e.meter.status).toBe('over');
+    expect(e.complete).toBe(true);
+  }, 60_000);
+});
+
+// ---------------------------------------------------------------------------
+// Rideshare: the Moon's shared launch with LRO (rideshares.json), the LCROSS precedent.
+
+describe('Rideshare (Moon: LRO 2009, the LCROSS secondary slot)', () => {
+  const moon = cadetBase('moon');
+  const ride = RIDESHARES['lro-lcross-2009']!;
+
+  it('is sourced: the NASA-allotted 1000 kg fuelled secondary slot and LRO’s 1,850 kg', () => {
+    expect(ride.secondarySlot_kg.value).toBe(1000);
+    expect(ride.secondarySlot_kg.isGameEstimate).toBe(false);
+    expect(ride.primaryMass_kg.value).toBe(1850);
+    expect(ride.vehicleId).toBe('atlas-v-401');
+  });
+
+  it('the Moon rocket step offers the shared ride; Mars does not', () => {
+    expect(cadet.stepOptionIds('moon', 'rocket')).toContain('lro-lcross-2009');
+    expect(cadet.stepOptionIds('mars', 'rocket')).not.toContain('lro-lcross-2009');
+  });
+
+  it('a shared ride: the slot is the mass limit, the price is the mass share, and the rocket is the shared one', () => {
+    const choices = { ...cadet.defaultChoices(moon), rocket: 'lro-lcross-2009' };
+    const d = cadet.buildCadetDesign(moon, choices);
+    expect(d.rideshareId).toBe('lro-lcross-2009');
+    expect(d.launchVehicleId).toBe('atlas-v-401');
+    const e = evaluateDesign(d);
+    const wet = e.details.wetMass_kg;
+    expect(e.meters.mass.limit).toBe(1000);
+    expect(e.meters.mass.margin).toBeCloseTo((1000 - wet) / 1000, 12);
+    expect(e.details.cost.launch_M).toBeCloseTo((LVS['atlas-v-401']!.price_M.value * wet) / (wet + 1850), 9);
+    expect(e.meters.mass.inputs.secondarySlot).toBe(ride.secondarySlot_kg);
+    const card = cadet.cadetOptions(moon, choices, 'rocket').find((o) => o.id === 'lro-lcross-2009')!;
+    expect(card.chosen).toBe(true);
+    expect(card.chips.lift_kg).toBe(1000);
+    expect(card.chips.shared).toBe(true);
+    expect(card.chips.launchPrice_M).toBeCloseTo(e.details.cost.launch_M, 9);
+  });
+
+  it('choosing a whole rocket again leaves the shared ride', () => {
+    const d = cadet.buildCadetDesign(moon, { ...cadet.defaultChoices(moon), rocket: 'lro-lcross-2009' });
+    expect(withLauncher(d, 'atlas-v-411').rideshareId).toBeUndefined();
+  });
+
+  it('the Moon’s third star: reachable on the shared ride (radar kit, safe fuel), not on a whole Atlas V', () => {
+    const choices = { ...cadet.defaultChoices(moon), science: 'radar', fuel: 'balanced', rocket: 'lro-lcross-2009' };
+    const shared = cadet.buildCadetDesign(moon, choices);
+    const whole = cadet.buildCadetDesign(moon, { ...choices, rocket: 'atlas-v-401' });
+    const noLuck = { seed: 1, rng: () => 0.999999 };
+    expect(simulateMission(shared, noLuck).stars).toBe(3);
+    // on its own rocket the same craft uses a small share of the lift: the mass margin is far above the 30% band
+    expect(evaluateDesign(whole).meters.mass.margin).toBeGreaterThan(0.3);
+    expect(simulateMission(whole, noLuck).stars).toBe(2);
+  });
+
+  it('the ride goes to the Moon only: on a Mars design it is a blocker', () => {
+    const mars = { ...cadetBase('mars'), rideshareId: 'lro-lcross-2009' };
+    expect(evaluateDesign(mars).blockers.some((b) => b.includes('goes to the Moon'))).toBe(true);
   });
 });

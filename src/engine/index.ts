@@ -2,14 +2,15 @@
 // what comes back. Every number is computed here; nothing is hand-typed into the UI.
 import { G0, GAME_RULES, km, mu as muSI, S0 } from './constants';
 import { COMMS_CALIBRATED, dataMeter, dataPerDay_bits, dataRate, lightDelay_s, REFERENCE_LINK } from './comms';
-import { availableOptions, crisisScore, drawCrisis, safestOption, timeline, type CrisisCard, type CrisisOption, type PhaseWindow } from './crisis';
-import { DESTINATIONS, LAUNCH_VEHICLES, lookup, PARTS } from './data';
-import { earthDistance, julianDate, sunDistance } from './ephemeris';
-import { launchMassCheck, launchSuccessProbability, payloadAtC3 } from './launch';
+import { applicableCards, availableOptions, crisisScore, drawCrisis, safestOption, timeline, type CrisisCard, type CrisisOption, type PhaseWindow } from './crisis';
+import { DESTINATIONS, LAUNCH_VEHICLES, lookup, PARTS, RIDESHARES } from './data';
+import { earthDistance, julianDate } from './ephemeris';
+import { launchMassCheck, launchSuccessProbability, payloadAtC3, rideshareMassCheck } from './launch';
 import { componentMasses, costBreakdown, costEvaluation, massRollup, wetMass, type CostBreakdown } from './massCost';
-import { batteryMass, ETA_SYS, heaterPower, longestEclipse_s, powerMeter, rtgPower, solarPower, sunlightFraction } from './power';
+import { ETA_SYS, longestEclipse_s, powerMeter, powerOnDay, solarPower } from './power';
+import { designLoads, eclipseSeasons, powerProfile, worstPowerDay, type EclipseSeasonSummary, type PowerDay, type PowerProfile } from './powerProfile';
 import { deltaVBudget, deltaVCapability, deltaVMeter, engineBlockers, propellantBurned, type DeltaVBudget } from './propulsion';
-import { makeRng, phaseRisks, riskMeter, type Phase, type PhaseRisk } from './risk';
+import { makeRng, phaseRisks, type Phase, type PhaseRisk } from './risk';
 import { budgetScore, marginBandScore, missionSuccessScore, nextStar, scienceGoal_Gbit, scienceScore, stars, totalScore, type Category } from './scoring';
 import { arrivalDeltaV, maxFlightDays, orbitChangeDeltaV, sunDistanceExtremes, transferForDesign } from './trajectory';
 import { sourced, type Design, type Evaluation, type Meter, type Sourced } from './types';
@@ -18,14 +19,30 @@ const derived = (value: number, unit: string, equation: string) => sourced(value
 
 /** Everything evaluateDesign computes, including the extra numbers the simulation and Debrief need. */
 export interface FullEvaluation extends Evaluation {
-  meters: Evaluation['meters'] & { risk: Meter };
   details: Evaluation['details'] & {
     launchDate: string;
     arrivalDate: string;
     deltaVBudget: DeltaVBudget;
+    /**
+     * The single-card flight's phase failure chances (simulateMission). The Risk meter is not this formula: it is
+     * the Mission operations Monte Carlo (ops/riskEstimate.ts), which the UI runs in a Web Worker.
+     */
     phaseRisks: PhaseRisk[];
     launchSuccess: number;
-    power: { available_W: number; required_W: number; atEndOfScience: { available_W: number; required_W: number } };
+    /**
+     * available/required: arrival day in sunlight, every instrument on (the generation figure compared with real
+     * missions). atEndOfScience: the last science day, eclipse included. worstDay: the Power meter's day.
+     */
+    power: {
+      available_W: number;
+      required_W: number;
+      atEndOfScience: { available_W: number; required_W: number };
+      worstDay: PowerDay;
+      /** Lowest margin on a day with no eclipse (the worst day if every day has one). */
+      worstSunlitMargin: number;
+      eclipseSeasons: EclipseSeasonSummary[];
+      battery: PowerProfile['battery'];
+    };
     data: { producedPerDay_bits: number; downlinkedPerDayAtArrival_bits: number };
     cost: { development_M: number; launch_M: number; operations_M: number; cap_M: number };
     /** Development cost of each part group ($M). */
@@ -51,21 +68,6 @@ export interface FullEvaluation extends Evaluation {
     asFlown: boolean;
     sampleReturn: boolean;
   };
-}
-
-function powerAt(design: Design, jd: number, years: number, baseRequired_W: number, heaterBase_W: number) {
-  const rSun = sunDistance(design.destination, jd);
-  const available_W =
-    design.power.type === 'solar'
-      ? solarPower({
-          area_m2: design.power.arrayArea_m2 ?? 0,
-          sunDistance_m: rSun,
-          degradationPerYear: PARTS.power.solarDegradation_perYear.value,
-          years,
-        })
-      : rtgPower(design.power.rtgCount ?? 0);
-  const heaters_W = heaterPower(heaterBase_W, sunlightFraction(rSun));
-  return { rSun, available_W, heaters_W, required_W: baseRequired_W + heaters_W };
 }
 
 export function evaluateDesign(design: Design): FullEvaluation {
@@ -105,25 +107,60 @@ export function evaluateDesign(design: Design): FullEvaluation {
   }
   const jdLaunch = julianDate(launchDate);
   const jdArrival = design.destination === 'moon' ? jdLaunch + transfer.flightDays : julianDate(arrivalDate);
-  const jdEndScience = jdArrival + scienceDays;
 
-  // --- Power (arrival day, and end of science for the end-of-mission margin) ---
+  // --- Power: every day from launch to the end of the prime mission, eclipses included ---
+  // The meter shows the worst day (spec: Power). Mission operations reads the same days (one model).
   const commsDraw_W = design.comms.txPower_W / PARTS.comms.dcToRfEfficiency.value;
-  const baseRequired_W = bus.power_W.value + instruments.reduce((s, i) => s + i.power_W.value, 0) + commsDraw_W + engine.power_W.value;
-  const atArrival = powerAt(design, jdArrival, (jdArrival - jdLaunch) / 365.25, baseRequired_W, bus.heaterBase_W.value);
-  const atEnd = powerAt(design, jdEndScience, (jdEndScience - jdLaunch) / 365.25, baseRequired_W, bus.heaterBase_W.value);
-  const power = powerMeter(atArrival.available_W, atArrival.required_W, {
+  const instruments_W = instruments.reduce((s, i) => s + i.power_W.value, 0);
+  const baseRequired_W = bus.power_W.value + instruments_W + commsDraw_W + engine.power_W.value;
+  const atArrival = powerOnDay(design, jdArrival, (jdArrival - jdLaunch) / 365.25, baseRequired_W, bus.heaterBase_W.value);
+
+  // Orbits: the worst-case eclipse in the science orbit sizes the battery.
+  const scienceOrbit = design.scienceOrbit ?? design.captureOrbit;
+  let worstEclipse_s = 0;
+  let orbitTransfer_ms = 0;
+  if (dest.missionType === 'orbiter') {
+    const R = km(dest.radius_km.value);
+    const mu = muSI(dest.gm_km3s2.value);
+    const sci = { rp: R + km(scienceOrbit.periapsis_km), ra: R + km(scienceOrbit.apoapsis_km) };
+    worstEclipse_s = longestEclipse_s(mu, R, sci.rp, sci.ra);
+    if (design.scienceOrbit) {
+      const cap = { rp: R + km(design.captureOrbit.periapsis_km), ra: R + km(design.captureOrbit.apoapsis_km) };
+      orbitTransfer_ms = orbitChangeDeltaV(mu, cap, sci);
+    }
+  }
+  const profile = powerProfile(
+    { design, jdLaunch, flightDays: transfer.flightDays, path: transfer.path, scienceDays, sampleReturn, loads: designLoads(design) },
+    worstEclipse_s,
+  );
+  const battery_kg = profile.battery.mass_kg;
+  const worst = worstPowerDay(profile);
+  const seasons = eclipseSeasons(profile);
+  const sunlitDays = profile.days.filter((d) => d.day <= profile.primeEndDay && d.eclipseFraction === 0);
+  const worstSunlit = sunlitDays.length ? sunlitDays.reduce((a, b) => (b.margin < a.margin ? b : a)) : worst;
+  // Last science day, eclipse included (the end-of-mission power margin for scoring).
+  const endDay = profile.days.filter((d) => d.phase === 'science').at(-1) ?? worst;
+  const power = powerMeter(worst.available_W, worst.required_W, {
     S0,
-    sunDistance: derived(atArrival.rSun, 'm', 'JPL approximate ephemeris on arrival day'),
+    sunDistance: derived(worst.sunDistance_m, 'm', `craft's distance from the Sun on the worst day (mission day ${worst.day}, ${worst.date})`),
     arrayArea: sourced(design.power.arrayArea_m2 ?? 0, 'm²', 'Player design'),
     etaSys: ETA_SYS,
     degradationPerYear: PARTS.power.solarDegradation_perYear,
+    eclipseFraction: derived(worst.eclipseFraction, 'fraction of the day', 'cylindrical shadow on the science orbit, fixed in inertial space'),
+    longestEclipse: derived(worst.longestEclipse_s, 's', 'longest single eclipse that day'),
+    batteryCapacity: derived(profile.battery.capacity_Wh, 'Wh', 'worst-case eclipse × heaviest science load / depth of discharge'),
+    depthOfDischarge: PARTS.power.batteryMaxDepthOfDischarge,
     busPower: bus.power_W,
-    heaters: derived(atArrival.heaters_W, 'W', 'base × (1 + k(1 − sunlight))'),
+    heaters: derived(worst.heaterNeed_W, 'W', 'base × (1 + k(1 − sunlight))'),
     commsDraw: derived(commsDraw_W, 'W', 'P_t / DC-to-RF efficiency'),
   });
+  power.equation =
+    'Worst day of the mission: P_avail = min(P_gen(1 − f_ecl), E_batt/t_ecl), P_gen = S₀(1 AU/r)²·A·η_sys·(1−d)^t (or RTG count × 110 W); margin = (available − required)/required';
   if (power.status === 'over') {
-    blockers.push(`Not enough power: ${Math.round(atArrival.available_W)} W available, ${Math.round(atArrival.required_W)} W needed.`);
+    blockers.push(`Not enough power on mission day ${worst.day} (${worst.date}): ${Math.round(worst.available_W)} W available, ${Math.round(worst.required_W)} W needed.`);
+  }
+  if (seasons.length && worst.eclipseFraction > 0) {
+    notes.push(`The worst power day falls in an eclipse season: the craft is in shadow ${Math.round(worst.eclipseFraction * 100)}% of that day.`);
   }
 
   let solarPowerRange_W: Evaluation['details']['solarPowerRange_W'];
@@ -134,21 +171,6 @@ export function evaluateDesign(design: Design): FullEvaluation {
       atPerihelion: solarPower({ area_m2: design.power.arrayArea_m2 ?? 0, sunDistance_m: ext.perihelion_m }),
       atAphelion: solarPower({ area_m2: design.power.arrayArea_m2 ?? 0, sunDistance_m: ext.aphelion_m }),
     };
-  }
-
-  // --- Orbits and batteries (longest eclipse in the science orbit) ---
-  const scienceOrbit = design.scienceOrbit ?? design.captureOrbit;
-  let battery_kg = 0;
-  let orbitTransfer_ms = 0;
-  if (dest.missionType === 'orbiter') {
-    const R = km(dest.radius_km.value);
-    const mu = muSI(dest.gm_km3s2.value);
-    const sci = { rp: R + km(scienceOrbit.periapsis_km), ra: R + km(scienceOrbit.apoapsis_km) };
-    battery_kg = batteryMass(longestEclipse_s(mu, R, sci.rp, sci.ra), atArrival.required_W);
-    if (design.scienceOrbit) {
-      const cap = { rp: R + km(design.captureOrbit.periapsis_km), ra: R + km(design.captureOrbit.apoapsis_km) };
-      orbitTransfer_ms = orbitChangeDeltaV(mu, cap, sci);
-    }
   }
 
   // --- Mass ---
@@ -184,11 +206,23 @@ export function evaluateDesign(design: Design): FullEvaluation {
   }
 
   // --- Launch ---
-  const launch = launchMassCheck(lv.payloadCurve.value, transfer.c3_km2s2, wet_kg, {
-    c3: derived(transfer.c3_km2s2, 'km²/s²', 'v∞,dep²'),
-    wetMass: derived(wet_kg, 'kg', 'm_dry + m_prop'),
-  });
+  const ride = design.rideshareId ? lookup(RIDESHARES, design.rideshareId, 'rideshare') : undefined;
+  const launchInputs = { c3: derived(transfer.c3_km2s2, 'km²/s²', 'v∞,dep²'), wetMass: derived(wet_kg, 'kg', 'm_dry + m_prop') };
+  const launch = ride
+    ? rideshareMassCheck(lv.payloadCurve.value, transfer.c3_km2s2, wet_kg, ride.secondarySlot_kg.value, ride.primaryMass_kg.value, {
+        ...launchInputs,
+        secondarySlot: ride.secondarySlot_kg,
+        primaryMass: ride.primaryMass_kg,
+      })
+    : launchMassCheck(lv.payloadCurve.value, transfer.c3_km2s2, wet_kg, launchInputs);
   if (launch.blocker) blockers.push(launch.blocker);
+  if (ride && ride.destination !== design.destination) {
+    blockers.push(`The ${ride.name} goes to the ${DESTINATIONS[ride.destination].name}, not to ${dest.name}.`);
+  }
+  if (ride && ride.vehicleId !== design.launchVehicleId) {
+    blockers.push(`The ${ride.name} flies on the ${lookup(LAUNCH_VEHICLES, ride.vehicleId, 'launch vehicle').name}.`);
+  }
+  if (ride) notes.push(`Shared launch: you fly as the secondary payload beside the ${ride.primary}, as ${ride.precedent}.`);
   if (!payloadAtC3(lv.payloadCurve.value, transfer.c3_km2s2).inRange) {
     notes.push(`C3 = ${transfer.c3_km2s2.toFixed(1)} km²/s² is outside the ${lv.name} performance data; capacity is not interpolated.`);
   }
@@ -208,7 +242,7 @@ export function evaluateDesign(design: Design): FullEvaluation {
   if (produced > downlinked) notes.push('The radio, not the instruments, limits the science return.');
 
   // --- Cost ---
-  const cost = costEvaluation(design);
+  const cost = costEvaluation(design, { wet_kg });
 
   // --- Risk ---
   const risks = phaseRisks({
@@ -221,7 +255,7 @@ export function evaluateDesign(design: Design): FullEvaluation {
   });
 
   return {
-    meters: { mass: launch.meter, power, deltaV, data, cost: cost.meter, risk: riskMeter(risks) },
+    meters: { mass: launch.meter, power, deltaV, data, cost: cost.meter },
     blockers,
     notes,
     trajectory: {
@@ -249,7 +283,11 @@ export function evaluateDesign(design: Design): FullEvaluation {
       power: {
         available_W: atArrival.available_W,
         required_W: atArrival.required_W,
-        atEndOfScience: { available_W: atEnd.available_W, required_W: atEnd.required_W },
+        atEndOfScience: { available_W: endDay.available_W, required_W: endDay.required_W },
+        worstDay: worst,
+        worstSunlitMargin: worstSunlit.margin,
+        eclipseSeasons: seasons,
+        battery: profile.battery,
       },
       data: { producedPerDay_bits: produced, downlinkedPerDayAtArrival_bits: downlinked },
       cost: { development_M: cost.development_M, launch_M: cost.launch_M, operations_M: cost.operations_M, cap_M: cost.meter.limit },
@@ -387,8 +425,8 @@ function setUpCrisis(p: Prepared, rng: () => number): { tl: PhaseWindow[]; drawn
  * Craft mass during a phase (kg): the wet mass until arrival. After arrival, the wet mass minus the propellant
  * burned for the arrival burn, the capture → science orbit change and the trajectory corrections (rocket equation).
  */
-function massInPhase(p: Prepared, phase: Phase): number {
-  const d = p.ev.details;
+export function massInPhase(ev: FullEvaluation, phase: Phase): number {
+  const d = ev.details;
   if (phase === 'launch' || phase === 'cruise') return d.wetMass_kg;
   const b = d.deltaVBudget;
   return d.wetMass_kg - propellantBurned(d.wetMass_kg, b.arrival_ms + b.orbitTransfer_ms + b.trajectoryCorrections_ms, d.isp_s);
@@ -399,7 +437,8 @@ function run(p: Prepared, rng: () => number, policy: CrisisPolicy): SimulationRe
   const d = ev.details;
   let devCost_M = d.cost.development_M;
   const massMargin = ev.meters.mass.margin;
-  const endPowerMargin = (d.power.atEndOfScience.available_W - d.power.atEndOfScience.required_W) / d.power.atEndOfScience.required_W;
+  // Power is scored on the worst day of the mission, eclipses included: the Power meter (spec: Scoring, v0.5).
+  const endPowerMargin = ev.meters.power.margin;
   const jdLaunch = julianDate(d.launchDate);
 
   type FinishInput = Omit<
@@ -431,7 +470,7 @@ function run(p: Prepared, rng: () => number, policy: CrisisPolicy): SimulationRe
       margins: endMargins,
       deltaV: { required_ms: d.deltaVRequired_ms, capability_ms: d.deltaVCapability_ms, isp_s: d.isp_s, dry_kg: d.dryMass_kg, propellant_kg: d.propellant_kg, asFlown: d.asFlown },
       launch: { capacity_kg: d.launchCapacity_kg, wet_kg: d.wetMass_kg },
-      power: { available_W: d.power.atEndOfScience.available_W, required_W: d.power.atEndOfScience.required_W, type: design.power.type, arrayArea_m2: design.power.arrayArea_m2 },
+      power: { available_W: d.power.worstDay.available_W, required_W: d.power.worstDay.required_W, type: design.power.type, arrayArea_m2: design.power.arrayArea_m2 },
     });
     return {
       ...rest,
@@ -539,7 +578,7 @@ function run(p: Prepared, rng: () => number, policy: CrisisPolicy): SimulationRe
       reached: crisisReached,
       badOutcome,
       deltaVSpent_ms,
-      propellantSpent_kg: propellantBurned(massInPhase(p, drawn.phase), deltaVSpent_ms, d.isp_s),
+      propellantSpent_kg: propellantBurned(massInPhase(p.ev, drawn.phase), deltaVSpent_ms, d.isp_s),
       scienceDaysLost: crisisReached ? scienceDaysLost : 0,
       budgetSpent_M: crisisReached || drawn.card.decisionBeforeLaunch ? (chosen.cost.budget_M?.value ?? 0) : 0,
     },
@@ -564,6 +603,49 @@ export function previewCrisis(
   if (p.ev.blockers.length) return undefined;
   const { drawn, options } = setUpCrisis(p, makeRng(seed));
   return { card: drawn.card, day: drawn.day, phase: drawn.phase, options, safestOptionId: safestOption(drawn.card.options).id };
+}
+
+// ---------------------------------------------------------------------------
+// Standing orders (Cadet Mission Control). Signals take minutes to reach the craft, so the player queues
+// what it should do for each crisis before launch, and the craft acts on its own when the crisis comes.
+
+export interface CrisisOrder {
+  card: CrisisCard;
+  /** Options the spare margins can pay for (the free option is always one). */
+  available: CrisisOption[];
+  /** The order the craft follows if the player sets none: the safest available option. */
+  defaultOptionId: string;
+  /** Propellant each option burns (kg): rocket equation at the craft mass in the card's phase (cruise for "any"). */
+  fuel_kg: Record<string, number>;
+}
+
+/** Every crisis card this mission can meet, with what the spare margins can pay for. */
+export function crisisOrders(design: Design): CrisisOrder[] {
+  const ev = evaluateDesign(design);
+  const d = ev.details;
+  const spare = {
+    deltaV_ms: d.deltaVCapability_ms - d.deltaVRequired_ms,
+    budget_M: d.cost.cap_M - d.cost.development_M,
+    powerMargin: ev.meters.power.margin,
+  };
+  return applicableCards(DESTINATIONS[design.destination].missionType, d.sampleReturn).map((card) => {
+    const available = availableOptions(card, spare);
+    const m0 = massInPhase(ev, card.eventPhase === 'any' ? 'cruise' : card.eventPhase);
+    return {
+      card,
+      available,
+      defaultOptionId: safestOption(available).id,
+      fuel_kg: Object.fromEntries(card.options.map((o) => [o.id, propellantBurned(m0, o.cost.deltaV_ms?.value ?? 0, d.isp_s)])),
+    };
+  });
+}
+
+/** A crisis policy from standing orders (card id → option id). A missing or unaffordable order → the safest option. */
+export function standingOrderPolicy(orders: Record<string, string>): CrisisPolicy {
+  return (card, options) => {
+    const id = orders[card.id];
+    return id !== undefined && options.some((o) => o.id === id) ? id : safestOption(options).id;
+  };
 }
 
 /** Fly one mission. Reproducible for a given seed. */

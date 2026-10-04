@@ -1,0 +1,602 @@
+{
+  "solar-storm": {
+    "title": "Solar storm",
+    "destinations": [
+      "moon",
+      "venus",
+      "mars",
+      "bennu",
+      "jupiter"
+    ],
+    "phases": [
+      "cruise",
+      "science",
+      "extended",
+      "return"
+    ],
+    "detectedBy": "earth",
+    "warningLead_days": {
+      "value": 1,
+      "unit": "days",
+      "source": "Game estimate: solar observatories see the eruption about a day before the particles arrive",
+      "isGameEstimate": true
+    },
+    "deadline_days": {
+      "value": 0,
+      "unit": "days after onset",
+      "source": "Game rule: a protective command must reach the craft before the storm arrives",
+      "isGameEstimate": true
+    },
+    "duration_days": {
+      "value": 3,
+      "unit": "days",
+      "source": "Game estimate",
+      "isGameEstimate": true
+    },
+    "realHistory": {
+      "value": "2001 Mars Odyssey: the MARIE radiation instrument stopped working after the large solar storms of October–November 2003.",
+      "unit": "",
+      "source": "Summary from general knowledge; to verify against NASA source",
+      "isGameEstimate": true,
+      "url": "https://science.nasa.gov/mission/mars-odyssey/"
+    },
+    "prompt": "Solar observatories saw a big eruption heading your way. Protect the instruments?",
+    "options": [
+      {
+        "id": "shelter",
+        "label": "Switch the instruments off until the storm passes",
+        "cost": {
+          "scienceDays": {
+            "value": 3,
+            "unit": "days",
+            "source": "Game estimate",
+            "isGameEstimate": true
+          }
+        },
+        "failureChance": {
+          "value": 0.005,
+          "unit": "probability",
+          "source": "Game estimate",
+          "isGameEstimate": true
+        },
+        "failureEffect": "instrument"
+      },
+      {
+        "id": "keep-observing",
+        "label": "Keep observing",
+        "cost": {},
+        "failureChance": {
+          "value": 0.08,
+          "unit": "probability",
+          "source": "Game estimate",
+          "isGameEstimate": true
+        },
+        "failureEffect": "instrument"
+      }
+    ]
+  },
+  "mars-dust-storm": {
+    "title": "Global dust storm",
+    "destinations": [
+      "mars"
+    ],
+    "phases": [
+      "science",
+      "extended"
+    ],
+    "detectedBy": "craft",
+    "warningLead_days": {
+      "value": 0,
+      "unit": "days",
+      "source": "Game rule: the orbiter sees the storm in its own images",
+      "isGameEstimate": true
+    },
+    "deadline_days": {
+      "value": 10,
+      "unit": "days after onset",
+      "source": "Game estimate",
+      "isGameEstimate": true
+    },
+    "duration_days": {
+      "value": 60,
+      "unit": "days",
+      "source": "Game estimate (NASA: bigger storms last weeks to months)",
+      "isGameEstimate": true
+    },
+    "realHistory": {
+      "value": "Mariner 9 reached Mars in November 1971 during a planet-wide dust storm and waited for the dust to clear before mapping. A global storm in 2018 ended the solar-powered Opportunity rover.",
+      "unit": "",
+      "source": "Summary from general knowledge; to verify against NASA source",
+      "isGameEstimate": true,
+      "url": "https://science.nasa.gov/mission/mariner-9/"
+    },
+    "prompt": "Dust is covering the whole planet and the upper atmosphere is swelling. What should the orbiter do?",
+    "options": [
+      {
+        "id": "raise-periapsis",
+        "label": "Raise the low point of the orbit above the swelling air",
+        "cost": {
+          "deltaV_ms": {
+            "value": 10,
+            "unit": "m/s",
+            "source": "Game estimate",
+            "isGameEstimate": true
+          }
+        },
+        "failureChance": {
+          "value": 0.002,
+          "unit": "probability",
+          "source": "Game estimate",
+          "isGameEstimate": true
+        },
+        "failureEffect": "craft"
+      },
+      {
+        "id": "wait-it-out",
+        "label": "Pause mapping until the dust settles",
+        "cost": {
+          "scienceDays": {
+            "value": 30,
+            "unit": "days",
+            "source": "Game estimate",
+            "isGameEstimate": true
+          }
+        },
+        "failureChance": {
+          "value": 0.01,
+          "unit": "probability",
+          "source": "Game estimate",
+          "isGameEstimate": true
+        },
+        "failureEffect": "safe-mode"
+      },
+      {
+        "id": "carry-on",
+        "label": "Carry on as planned",
+        "cost": {},
+        "failureChance": {
+          "value": 0.04,
+          "unit": "probability",
+          "source": "Game estimate",
+          "isGameEstimate": true
+        },
+        "failureEffect": "craft"
+      }
+    ]
+  },
+  "debris": {
+    "title": "Comet dust stream",
+    "destinations": [
+      "moon",
+      "venus",
+      "mars",
+      "jupiter"
+    ],
+    "phases": [
+      "science",
+      "extended"
+    ],
+    "detectedBy": "earth",
+    "warningLead_days": {
+      "value": 300,
+      "unit": "days",
+      "source": "Game estimate (Comet Siding Spring was found about 21 months before it passed Mars)",
+      "isGameEstimate": true
+    },
+    "deadline_days": {
+      "value": 0,
+      "unit": "days after onset",
+      "source": "Game rule: the craft must be protected before the dust arrives",
+      "isGameEstimate": true
+    },
+    "duration_days": {
+      "value": 1,
+      "unit": "days",
+      "source": "Game estimate",
+      "isGameEstimate": true
+    },
+    "realHistory": {
+      "value": "Comet Siding Spring passed close to Mars on Oct. 19, 2014. MAVEN, MRO and Mars Odyssey changed their orbit timing to shelter behind Mars when its dust was expected.",
+      "unit": "",
+      "source": "Summary from general knowledge; to verify against NASA source",
+      "isGameEstimate": true,
+      "url": "https://science.nasa.gov/solar-system/comets/c-2013-a1-siding-spring/"
+    },
+    "prompt": "A comet will pass close by and its dust could hit the craft. How do you protect it?",
+    "options": [
+      {
+        "id": "hide",
+        "label": "Change the orbit timing to hide behind the planet",
+        "cost": {
+          "deltaV_ms": {
+            "value": 3,
+            "unit": "m/s",
+            "source": "Game estimate",
+            "isGameEstimate": true
+          }
+        },
+        "failureChance": {
+          "value": 0.001,
+          "unit": "probability",
+          "source": "Game estimate",
+          "isGameEstimate": true
+        },
+        "failureEffect": "craft"
+      },
+      {
+        "id": "edge-on",
+        "label": "Turn the solar arrays edge-on and close the instruments",
+        "cost": {
+          "scienceDays": {
+            "value": 2,
+            "unit": "days",
+            "source": "Game estimate",
+            "isGameEstimate": true
+          }
+        },
+        "failureChance": {
+          "value": 0.01,
+          "unit": "probability",
+          "source": "Game estimate",
+          "isGameEstimate": true
+        },
+        "failureEffect": "craft"
+      },
+      {
+        "id": "ignore",
+        "label": "Do nothing",
+        "cost": {},
+        "failureChance": {
+          "value": 0.05,
+          "unit": "probability",
+          "source": "Game estimate",
+          "isGameEstimate": true
+        },
+        "failureEffect": "craft"
+      }
+    ]
+  },
+  "reaction-wheel": {
+    "title": "Reaction wheel failure",
+    "destinations": [
+      "moon",
+      "venus",
+      "mars",
+      "bennu",
+      "jupiter"
+    ],
+    "phases": [
+      "cruise",
+      "science",
+      "extended",
+      "return"
+    ],
+    "detectedBy": "craft",
+    "warningLead_days": {
+      "value": 0,
+      "unit": "days",
+      "source": "Game rule: the craft reports the failure",
+      "isGameEstimate": true
+    },
+    "deadline_days": {
+      "value": 5,
+      "unit": "days after onset",
+      "source": "Game estimate",
+      "isGameEstimate": true
+    },
+    "duration_days": {
+      "value": 0,
+      "unit": "days",
+      "source": "Game rule: a failed wheel stays failed",
+      "isGameEstimate": true
+    },
+    "realHistory": {
+      "value": "Kepler lost one reaction wheel in 2012 and a second in 2013. Engineers found a new way to point it using sunlight pressure, which became the K2 mission.",
+      "unit": "",
+      "source": "Summary from general knowledge; to verify against NASA source",
+      "isGameEstimate": true,
+      "url": "https://science.nasa.gov/mission/kepler/"
+    },
+    "prompt": "Too few reaction wheels are left to point the craft. How will it point now?",
+    "options": [
+      {
+        "id": "thrusters",
+        "label": "Point with the thrusters from now on",
+        "cost": {
+          "deltaV_ms": {
+            "value": 20,
+            "unit": "m/s",
+            "source": "Game estimate",
+            "isGameEstimate": true
+          }
+        },
+        "failureChance": {
+          "value": 0.01,
+          "unit": "probability",
+          "source": "Game estimate",
+          "isGameEstimate": true
+        },
+        "failureEffect": "craft"
+      },
+      {
+        "id": "hybrid",
+        "label": "Fly a hybrid mode with the wheels left (new pointing plan)",
+        "cost": {
+          "scienceDays": {
+            "value": 30,
+            "unit": "days",
+            "source": "Game estimate",
+            "isGameEstimate": true
+          }
+        },
+        "requires": {
+          "powerMargin": {
+            "value": 0.05,
+            "unit": "fraction",
+            "source": "Game estimate",
+            "isGameEstimate": true
+          }
+        },
+        "failureChance": {
+          "value": 0.02,
+          "unit": "probability",
+          "source": "Game estimate",
+          "isGameEstimate": true
+        },
+        "failureEffect": "craft"
+      },
+      {
+        "id": "carry-on",
+        "label": "Keep going on the remaining wheels",
+        "cost": {},
+        "failureChance": {
+          "value": 0.1,
+          "unit": "probability",
+          "source": "Game estimate",
+          "isGameEstimate": true
+        },
+        "failureEffect": "craft"
+      }
+    ]
+  },
+  "memory-corruption": {
+    "title": "Computer memory corrupted",
+    "destinations": [
+      "moon",
+      "venus",
+      "mars",
+      "bennu",
+      "jupiter"
+    ],
+    "phases": [
+      "cruise",
+      "science",
+      "extended",
+      "return"
+    ],
+    "detectedBy": "craft",
+    "warningLead_days": {
+      "value": 0,
+      "unit": "days",
+      "source": "Game rule: the craft reports the fault",
+      "isGameEstimate": true
+    },
+    "deadline_days": {
+      "value": 3,
+      "unit": "days after onset",
+      "source": "Game estimate",
+      "isGameEstimate": true
+    },
+    "duration_days": {
+      "value": 0,
+      "unit": "days",
+      "source": "Game rule: one event",
+      "isGameEstimate": true
+    },
+    "realHistory": {
+      "value": "In February 2013 Curiosity's main computer had a memory problem, and the team switched the rover to its backup computer. In 2023–24 a failed memory chip garbled Voyager 1's data until engineers moved the code, with a day-long light-time each way.",
+      "unit": "",
+      "source": "Summary from general knowledge; to verify against NASA source",
+      "isGameEstimate": true,
+      "url": "https://science.nasa.gov/mission/msl-curiosity/"
+    },
+    "prompt": "The flight computer's memory is corrupted. How do you fix it?",
+    "options": [
+      {
+        "id": "backup-computer",
+        "label": "Switch to the backup computer",
+        "cost": {
+          "scienceDays": {
+            "value": 7,
+            "unit": "days",
+            "source": "Game estimate",
+            "isGameEstimate": true
+          }
+        },
+        "requires": {
+          "powerMargin": {
+            "value": 0.02,
+            "unit": "fraction",
+            "source": "Game estimate",
+            "isGameEstimate": true
+          }
+        },
+        "oneTime": true,
+        "failureChance": {
+          "value": 0.01,
+          "unit": "probability",
+          "source": "Game estimate",
+          "isGameEstimate": true
+        },
+        "failureEffect": "craft"
+      },
+      {
+        "id": "patch",
+        "label": "Patch the memory from Earth",
+        "cost": {
+          "scienceDays": {
+            "value": 14,
+            "unit": "days",
+            "source": "Game estimate",
+            "isGameEstimate": true
+          },
+          "budget_M": {
+            "value": 0.5,
+            "unit": "$M",
+            "source": "Game estimate",
+            "isGameEstimate": true
+          }
+        },
+        "failureChance": {
+          "value": 0.02,
+          "unit": "probability",
+          "source": "Game estimate",
+          "isGameEstimate": true
+        },
+        "failureEffect": "stored-data"
+      },
+      {
+        "id": "reboot",
+        "label": "Reboot and keep going",
+        "cost": {},
+        "failureChance": {
+          "value": 0.15,
+          "unit": "probability",
+          "source": "Game estimate",
+          "isGameEstimate": true
+        },
+        "failureEffect": "stored-data"
+      }
+    ]
+  },
+  "insertion-anomaly": {
+    "title": "Arrival burn anomaly",
+    "destinations": [
+      "moon",
+      "venus",
+      "mars",
+      "bennu",
+      "jupiter"
+    ],
+    "phases": [
+      "arrival"
+    ],
+    "detectedBy": "craft",
+    "warningLead_days": {
+      "value": 0,
+      "unit": "days",
+      "source": "Game rule: the craft reports the anomaly",
+      "isGameEstimate": true
+    },
+    "deadline_days": {
+      "value": 3,
+      "unit": "days after onset",
+      "source": "Game estimate",
+      "isGameEstimate": true
+    },
+    "duration_days": {
+      "value": 0,
+      "unit": "days",
+      "source": "Game rule: one event",
+      "isGameEstimate": true
+    },
+    "realHistory": {
+      "value": "In 2016 Juno's main-engine helium valves did not work as expected. NASA kept Juno in its 53-day orbit instead of firing the engine again to reach the planned 14-day orbit.",
+      "unit": "",
+      "source": "Summary from general knowledge; to verify against NASA source",
+      "isGameEstimate": true,
+      "url": "https://science.nasa.gov/mission/juno/"
+    },
+    "prompt": "The arrival burn did not go as planned. What now?",
+    "options": [
+      {
+        "id": "trim-burn",
+        "label": "Fire the thrusters to finish the capture",
+        "cost": {
+          "deltaV_ms": {
+            "value": 50,
+            "unit": "m/s",
+            "source": "Game estimate",
+            "isGameEstimate": true
+          }
+        },
+        "failureChance": {
+          "value": 0.01,
+          "unit": "probability",
+          "source": "Game estimate",
+          "isGameEstimate": true
+        },
+        "failureEffect": "craft"
+      },
+      {
+        "id": "accept-orbit",
+        "label": "Stay in the longer orbit and adapt the science plan",
+        "cost": {
+          "scienceDays": {
+            "value": 90,
+            "unit": "days",
+            "source": "Game estimate",
+            "isGameEstimate": true
+          }
+        },
+        "failureChance": {
+          "value": 0.005,
+          "unit": "probability",
+          "source": "Game estimate",
+          "isGameEstimate": true
+        },
+        "failureEffect": "craft"
+      },
+      {
+        "id": "hold",
+        "label": "Let fault protection hold the craft",
+        "cost": {},
+        "failureChance": {
+          "value": 0.3,
+          "unit": "probability",
+          "source": "Game estimate",
+          "isGameEstimate": true
+        },
+        "failureEffect": "craft"
+      }
+    ]
+  },
+  "radiation-damage": {
+    "title": "Radiation damage",
+    "destinations": [
+      "jupiter"
+    ],
+    "phases": [
+      "science",
+      "extended"
+    ],
+    "detectedBy": "craft",
+    "warningLead_days": {
+      "value": 0,
+      "unit": "days",
+      "source": "Game rule",
+      "isGameEstimate": true
+    },
+    "deadline_days": {
+      "value": 0,
+      "unit": "days after onset",
+      "source": "Game rule: no response is possible",
+      "isGameEstimate": true
+    },
+    "duration_days": {
+      "value": 0,
+      "unit": "days",
+      "source": "Game rule",
+      "isGameEstimate": true
+    },
+    "realHistory": {
+      "value": "Juno carries its electronics in a titanium radiation vault, and its orbits were planned to limit the dose from Jupiter's radiation belts.",
+      "unit": "",
+      "source": "Summary from general knowledge; to verify against NASA source",
+      "isGameEstimate": true,
+      "url": "https://science.nasa.gov/mission/juno/"
+    },
+    "prompt": "The electronics have taken more radiation than they were built for.",
+    "options": []
+  }
+}

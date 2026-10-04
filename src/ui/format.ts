@@ -22,6 +22,9 @@ export function speed(ms: number): string {
 /** Distances in million km. */
 export const millionKm = (m: number) => `${num(m / 1e9, 1)} million km`;
 
+/** A distance for Cadet screens: km below a million km (the Moon), million km beyond. */
+export const distance = (m: number) => (Math.abs(m) < 1e9 ? `${num(m / 1000)} km` : millionKm(m));
+
 /** Light delay in minutes. */
 export const minutes = (s: number) => `${num(s / 60, 1)} min`;
 
@@ -61,6 +64,10 @@ export function sourcedValue(s: Sourced<unknown>): string {
   if (typeof v !== 'number') return Array.isArray(v) ? `${v.length} points` : String(v);
   if (s.unit === 'm' && Math.abs(v) >= 1e7) return millionKm(v);
   if (s.unit === 'fraction' || s.unit === 'probability') return pct(v, Math.abs(v) < 0.01 ? 2 : 1);
+  if (s.unit === 'seed') return `seed ${String(v)}`;
+  // 'fraction of the day', 'fraction per year', 'fraction of 1 AU sunlight' … read as a percentage
+  if (s.unit.startsWith('fraction ')) return `${pct(v, Math.abs(v) < 0.01 ? 2 : 1)} ${s.unit.slice('fraction '.length)}`;
+  if (s.unit === 'runs' || s.unit === 'flights') return `${num(v)} ${s.unit}`;
   const digits = Math.abs(v) >= 100 ? 0 : Math.abs(v) >= 1 ? 2 : 3;
   const unit = s.unit.startsWith('$M') ? 'M' : s.unit;
   if (s.unit.startsWith('$M')) return `$${num(v, digits)}${unit}`;
@@ -86,3 +93,18 @@ export function label(key: string): string {
 
 export const isoDate = (iso: string) =>
   new Date(`${iso.slice(0, 10)}T00:00:00Z`).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' });
+
+/** Coins for a cost (Cadet): one 💰 per coin, ×n after a few. The coin count comes from the engine. */
+export const coins = (n: number) => (n <= 0 ? '—' : n <= 4 ? '💰'.repeat(n) : `💰×${num(n)}`);
+
+/** A countdown in m:ss (or h:mm:ss for long light delays). */
+export function clock(s: number): string {
+  const t = Math.max(0, Math.ceil(s));
+  const h = Math.floor(t / 3600);
+  const m = Math.floor((t % 3600) / 60);
+  const sec = String(t % 60).padStart(2, '0');
+  return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${sec}` : `${m}:${sec}`;
+}
+
+/** Photos per day, rounded down to whole photos. */
+export const photos = (n: number) => num(Math.floor(n));

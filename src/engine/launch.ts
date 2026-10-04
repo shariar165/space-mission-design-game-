@@ -44,3 +44,32 @@ export function launchMassCheck(
 export function launchSuccessProbability(successes: number, flights: number): number {
   return (successes + 1) / (flights + 2);
 }
+
+/**
+ * Rideshare (spec: Launch vehicles › Rideshare): the craft flies as the secondary payload of a real shared
+ * launch. Its limit is the secondary slot, and never more than what the rocket can carry after the primary:
+ * m_max = min(m_slot, m_LV(C3) − m_primary).
+ */
+export function rideshareCapacity(curve: [number, number][], c3: number, slot_kg: number, primary_kg: number): number {
+  return Math.min(slot_kg, Math.max(0, payloadAtC3(curve, c3).mass_kg - primary_kg));
+}
+
+export function rideshareMassCheck(
+  curve: [number, number][],
+  c3: number,
+  mWet_kg: number,
+  slot_kg: number,
+  primary_kg: number,
+  inputs: Record<string, Sourced<number>> = {},
+): { meter: Meter; blocker?: string } {
+  const mMax = rideshareCapacity(curve, c3, slot_kg, primary_kg);
+  const margin = mMax > 0 ? (mMax - mWet_kg) / mMax : -Infinity;
+  const meter = makeMeter(mWet_kg, mMax, margin, 'm_max = min(secondary slot, m_LV(C3) − m_primary); margin = (m_max − m_wet)/m_max', inputs);
+  if (mWet_kg <= mMax) return { meter };
+  return { meter, blocker: `Too heavy by ${Math.round(mWet_kg - mMax)} kg for the shared ride's ${Math.round(mMax)} kg secondary slot` };
+}
+
+/** Game rule: the secondary pays a mass-proportional share of the rocket price, price × m_wet / (m_wet + m_primary). */
+export function rideshareLaunchPrice(price_M: number, mWet_kg: number, primary_kg: number): number {
+  return (price_M * mWet_kg) / (mWet_kg + primary_kg);
+}

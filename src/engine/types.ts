@@ -50,10 +50,16 @@ export interface Design {
   scienceDays?: number;
   /** Planned total lifetime at the target incl. extended mission (≥ scienceDays). Sizes the lifetime Δv reserve. */
   lifetimeDays?: number;
-  /** Science orbit (altitudes, km). Defaults to the capture orbit, i.e. no orbit-change burn. */
-  scienceOrbit?: { periapsis_km: number; apoapsis_km: number };
+  /**
+   * Science orbit (altitudes, km). Defaults to the capture orbit, i.e. no orbit-change burn. The optional
+   * orientation (degrees, measured from the planet's IAU equator and node) is used by Mission operations for
+   * eclipse seasons and the radiation dose; defaults come from operations.json.
+   */
+  scienceOrbit?: { periapsis_km: number; apoapsis_km: number; inclination_deg?: number; raan_deg?: number; argPeriapsis_deg?: number };
   /** 'direct' (default) uses Lambert between the dates; a fixed route uses a published real-mission route. */
   trajectoryOption?: 'direct' | 'nasa-earth-flyby';
+  /** Ride as the secondary payload of a real shared launch (rideshares.json); launchVehicleId is that rocket. */
+  rideshareId?: string;
   /**
    * Real-mission presets only: published, as-built dry mass. The 30% concept growth
    * margin is for concept designs and is not added on top of a flown mass.
@@ -88,8 +94,6 @@ export interface Evaluation {
     deltaV: Meter;
     data: Meter;
     cost: Meter;
-    /** Added when risk.ts is built. */
-    risk?: Meter;
   };
   /** Plain-language reasons the craft cannot launch, e.g. "Too heavy by 120 kg". */
   blockers: string[];

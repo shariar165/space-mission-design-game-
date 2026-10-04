@@ -2,14 +2,27 @@ import { DESTINATIONS } from '../../engine/data';
 import type { DestinationId } from '../../engine/types';
 import { Check, Logo } from './icons';
 
-export type Step = 'build' | 'crisis' | 'debrief';
+export type Step = 'map' | 'rescue' | 'build' | 'crisis' | 'flight' | 'debrief';
 export type Mode = 'cadet' | 'engineer';
 
-const STEPS: { id: string; label: string; ours?: Step[] }[] = [
+interface StepDef {
+  id: string;
+  label: string;
+  ours?: Step[];
+}
+
+const ENGINEER_STEPS: StepDef[] = [
   { id: 'mission', label: 'Mission' },
   { id: 'build', label: 'Build', ours: ['build'] },
   { id: 'window', label: 'Window' },
-  { id: 'flight', label: 'Flight', ours: ['crisis'] },
+  { id: 'flight', label: 'Flight', ours: ['crisis', 'flight'] },
+  { id: 'debrief', label: 'Debrief', ours: ['debrief'] },
+];
+
+const CADET_STEPS: StepDef[] = [
+  { id: 'map', label: 'Map', ours: ['map', 'rescue'] },
+  { id: 'build', label: 'Build', ours: ['build'] },
+  { id: 'flight', label: 'Flight', ours: ['flight', 'crisis'] },
   { id: 'debrief', label: 'Debrief', ours: ['debrief'] },
 ];
 
@@ -21,10 +34,14 @@ interface Props {
   onMissionName: (s: string) => void;
   destination: DestinationId;
   onDestination: (d: DestinationId) => void;
+  /** Cadet: go back to the level map. */
+  onMap?: () => void;
 }
 
-export function TopBar({ step, mode, onMode, missionName, onMissionName, destination, onDestination }: Props) {
-  const currentIdx = STEPS.findIndex((s) => s.ours?.includes(step));
+export function TopBar({ step, mode, onMode, missionName, onMissionName, destination, onDestination, onMap }: Props) {
+  const cadet = mode === 'cadet';
+  const steps = cadet ? CADET_STEPS : ENGINEER_STEPS;
+  const currentIdx = steps.findIndex((s) => s.ours?.includes(step));
   return (
     <header className="topbar">
       <div className="brand">
@@ -33,32 +50,46 @@ export function TopBar({ step, mode, onMode, missionName, onMissionName, destina
           <div className="brand-name">Mission Drafting Table</div>
           <div className="brand-sub">
             <input aria-label="Mission name" value={missionName} size={Math.max(8, missionName.length)} onChange={(e) => onMissionName(e.target.value)} />
-            ·
-            <select aria-label="Destination" value={destination} disabled={step !== 'build'} onChange={(e) => onDestination(e.target.value as DestinationId)}>
-              {(Object.keys(DESTINATIONS) as DestinationId[]).map((d) => (
-                <option key={d} value={d}>
-                  {DESTINATIONS[d].name} {DESTINATIONS[d].missionType} · {DESTINATIONS[d].difficulty}
-                </option>
-              ))}
-            </select>
+            {!cadet && (
+              <>
+                ·
+                <select aria-label="Destination" value={destination} disabled={step !== 'build'} onChange={(e) => onDestination(e.target.value as DestinationId)}>
+                  {(Object.keys(DESTINATIONS) as DestinationId[]).map((d) => (
+                    <option key={d} value={d}>
+                      {DESTINATIONS[d].name} {DESTINATIONS[d].missionType} · {DESTINATIONS[d].difficulty}
+                    </option>
+                  ))}
+                </select>
+              </>
+            )}
+            {cadet && step !== 'map' && step !== 'rescue' && <span>· {DESTINATIONS[destination].name}</span>}
           </div>
         </div>
       </div>
       <nav className="steps" aria-label="Mission steps">
-        {STEPS.map((s, i) => {
+        {steps.map((s, i) => {
           const state = i < currentIdx ? 'done' : i === currentIdx ? 'current' : 'later';
           const built = s.ours !== undefined || s.id === 'mission';
+          const dot = <span className="step-dot">{state === 'done' ? <Check /> : i + 1}</span>;
+          const back = cadet && s.id === 'map' && step !== 'map' && onMap;
           return (
             <span key={s.id} style={{ display: 'contents' }}>
               {i > 0 && <span className="step-link" />}
-              <span
-                className={`step ${state}${!built && state !== 'current' ? ' later' : ''}`}
-                aria-current={state === 'current' ? 'step' : undefined}
-                title={built ? undefined : 'Coming next: this step is not built yet'}
-              >
-                <span className="step-dot">{state === 'done' ? <Check /> : i + 1}</span>
-                {s.label}
-              </span>
+              {back ? (
+                <button type="button" className={`step ${state} step-btn`} onClick={onMap}>
+                  {dot}
+                  {s.label}
+                </button>
+              ) : (
+                <span
+                  className={`step ${state}${!built && state !== 'current' ? ' later' : ''}`}
+                  aria-current={state === 'current' ? 'step' : undefined}
+                  title={built ? undefined : 'Coming next: this step is not built yet'}
+                >
+                  {dot}
+                  {s.label}
+                </span>
+              )}
             </span>
           );
         })}

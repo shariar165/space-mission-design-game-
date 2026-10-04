@@ -1,8 +1,9 @@
 // Spec section: "Power". Solar inverse-square with one calibrated efficiency, RTG, heaters, batteries.
 import { AU_M, S0 } from './constants';
 import { PARTS } from './data';
+import { sunDistance } from './ephemeris';
 import { makeMeter } from './meter';
-import { sourced, type Meter, type Sourced } from './types';
+import { sourced, type Design, type Meter, type Sourced } from './types';
 
 /** η_sys = 0.20, calibrated from MAVEN's 12 m² producing 1,150–1,700 W across the Mars orbit. */
 export const ETA_SYS = sourced(
@@ -92,4 +93,30 @@ export function powerMeter(available_W: number, required_W: number, inputs: Reco
     'P = S₀(1 AU/r)²·A·η_sys·cosθ·(1−d)^t (or RTG count × 110 W); margin = (available − required)/required',
     inputs,
   );
+}
+
+/**
+ * Power on a date: available (solar with degradation since launch, or RTG) and required (base load + heaters,
+ * which rise as sunlight falls). Shared by evaluateDesign and Mission operations, which passes the craft's own Sun
+ * distance in cruise.
+ */
+export function powerOnDay(
+  design: Design,
+  jd: number,
+  years: number,
+  baseRequired_W: number,
+  heaterBase_W: number,
+  rSun = sunDistance(design.destination, jd),
+) {
+  const available_W =
+    design.power.type === 'solar'
+      ? solarPower({
+          area_m2: design.power.arrayArea_m2 ?? 0,
+          sunDistance_m: rSun,
+          degradationPerYear: PARTS.power.solarDegradation_perYear.value,
+          years,
+        })
+      : rtgPower(design.power.rtgCount ?? 0);
+  const heaters_W = heaterPower(heaterBase_W, sunlightFraction(rSun));
+  return { rSun, available_W, heaters_W, required_W: baseRequired_W + heaters_W };
 }

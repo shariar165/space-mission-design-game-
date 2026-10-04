@@ -143,10 +143,10 @@ describe('ephemeris', () => {
     expect(r.max / C.AU_M).toBeCloseTo(1.3559, 3);
   });
 
-  it('Moon is Earth-centred: Sun distance = Earth’s, Earth distance = 0.384 million km', () => {
+  it('Moon is Earth-centred: Sun distance = Earth’s, Earth distance = 0.3844 million km (NSSDC)', () => {
     const jd = E.julianDate('2009-06-23');
     expect(E.sunDistance('moon', jd)).toBe(E.sunDistance('earth', jd));
-    expect(E.earthDistance('moon', jd) / MKM).toBeCloseTo(0.384, 6);
+    expect(E.earthDistance('moon', jd) / MKM).toBeCloseTo(0.3844, 6);
   });
 
   it('synodic period S = 1/|1/T_E − 1/T_p| matches the Destinations table', () => {
@@ -425,6 +425,30 @@ describe('launch', () => {
 });
 
 // ---------------------------------------------------------------------------
+describe('launch: rideshare (secondary payload on a real shared launch)', () => {
+  it('capacity = min(secondary slot, m_LV(C3) − m_primary)', () => {
+    const curve: [number, number][] = [[-2, 4580], [0, 4360]];
+    // C3 = −1: 4580 + (4360 − 4580)(1/2) = 4470 kg; − 1850 primary = 2620 kg; the 1000 kg slot is smaller
+    expect(L.rideshareCapacity(curve, -1, 1000, 1850)).toBe(1000);
+    // with a 4000 kg primary only 470 kg is left, less than the slot
+    expect(L.rideshareCapacity(curve, -1, 1000, 4000)).toBeCloseTo(470, 9);
+    expect(L.rideshareCapacity(curve, -1, 1000, 5000)).toBe(0);
+  });
+
+  it('mass meter on the slot: 646 kg wet in a 1000 kg slot → margin (1000 − 646)/1000 = 35.4%', () => {
+    const r = L.rideshareMassCheck([[-2, 4580], [0, 4360]], -2, 646, 1000, 1850);
+    expect(r.meter.limit).toBe(1000);
+    expect(r.meter.margin).toBeCloseTo(0.354, 12);
+    expect(r.blocker).toBeUndefined();
+    const heavy = L.rideshareMassCheck([[-2, 4580], [0, 4360]], -2, 1100, 1000, 1850);
+    expect(heavy.blocker).toBe("Too heavy by 100 kg for the shared ride's 1000 kg secondary slot");
+  });
+
+  it('price share (game rule): 110 $M × 646 / (646 + 1850) = 28.47 $M', () => {
+    expect(L.rideshareLaunchPrice(110, 646, 1850)).toBeCloseTo(28.4696, 4);
+  });
+});
+
 describe('power', () => {
   const peri = 206.65e9; // Mars perihelion, m (Mars Fact Sheet)
   const aph = 249.26e9; // Mars aphelion, m
@@ -488,6 +512,89 @@ describe('power', () => {
 });
 
 // ---------------------------------------------------------------------------
+describe('power: worst day of the mission, eclipses included (one model with Mission operations)', () => {
+  it('battery capacity = eclipse × load / depth of discharge', async () => {
+    const { batteryCapacity_Wh } = await import('../src/engine/powerProfile');
+    // 2502.7 s × 500 W = 347.6 Wh; / 0.3 depth of discharge = 1158.66 Wh (→ 11.59 kg at 100 Wh/kg)
+    expect(batteryCapacity_Wh(2502.7, 500, 0.3)).toBeCloseTo(1158.66, 1);
+    expect(batteryCapacity_Wh(2502.7, 500, 1)).toBeCloseTo(347.6, 1);
+  });
+
+  const maven = presetDesign('maven');
+  const ev = evaluateDesign(maven);
+
+  it('the Power meter reads the worst day: its margin is the lowest of every prime-mission day', async () => {
+    const { powerProfileFor } = await import('../src/engine/powerProfile');
+    const prof = powerProfileFor(maven, ev);
+    const prime = prof.days.filter((d) => d.day <= prof.primeEndDay);
+    const lowest = Math.min(...prime.map((d) => d.margin));
+    expect(ev.meters.power.margin).toBeCloseTo(lowest, 12);
+    expect(ev.meters.power.limit).toBeCloseTo(ev.details.power.worstDay.available_W, 9);
+    expect(ev.meters.power.used).toBeCloseTo(ev.details.power.worstDay.required_W, 9);
+    // never better than the old arrival-day, sunlit, all-instruments-on figure
+    const arrival = (ev.details.power.available_W - ev.details.power.required_W) / ev.details.power.required_W;
+    expect(ev.meters.power.margin).toBeLessThanOrEqual(arrival + 1e-12);
+  });
+
+  it('cruise has no eclipse: available = generation, and the instruments are off', async () => {
+    const { powerProfileFor } = await import('../src/engine/powerProfile');
+    const prof = powerProfileFor(maven, ev);
+    const cruise = prof.days.filter((d) => d.phase === 'cruise');
+    expect(cruise.length).toBeGreaterThan(100);
+    for (const d of cruise) {
+      expect(d.eclipseFraction).toBe(0);
+      expect(d.available_W).toBe(d.generation_W);
+    }
+    const sci = prof.days.find((d) => d.phase === 'science')!;
+    // the science day draws the instruments too: the MAVEN payload's 120 W (parts.json, game estimate)
+    expect(sci.required_W - sci.heaterNeed_W - (cruise[0]!.required_W - cruise[0]!.heaterNeed_W)).toBeCloseTo(120, 9);
+  });
+
+  it('eclipse days: P_avail = P_gen(1 − f_ecl), because a battery sized within its depth of discharge never limits', async () => {
+    const { powerProfileFor } = await import('../src/engine/powerProfile');
+    const prof = powerProfileFor(maven, ev);
+    const ecl = prof.days.filter((d) => d.eclipseFraction > 0);
+    expect(ecl.length).toBeGreaterThan(0);
+    for (const d of ecl) {
+      expect(d.available_W).toBeCloseTo(d.generation_W * (1 - d.eclipseFraction), 9);
+      // E_batt / t_ecl ≥ load / DoD (t_ecl ≤ the worst case the battery was sized for)
+      expect(prof.battery.capacity_Wh / (d.longestEclipse_s / 3600)).toBeGreaterThanOrEqual(prof.battery.load_W / prof.battery.depthOfDischarge - 1e-6);
+    }
+  });
+
+  it('circular 400 km polar Mars orbit with the Sun in its plane: the eclipse cuts the day by asin(R/r)/π ≈ 35.2%', async () => {
+    const { powerProfileFor } = await import('../src/engine/powerProfile');
+    const d: Design = { ...presetDesign('maven'), scienceOrbit: { periapsis_km: 400, apoapsis_km: 400, inclination_deg: 90 } };
+    const e = evaluateDesign(d);
+    const prof = powerProfileFor(d, e);
+    const deepest = prof.days.reduce((a, b) => (b.eclipseFraction > a.eclipseFraction ? b : a));
+    // asin(3396.2/3796.2)/π = 0.35221; the inertial orbit reaches β ≈ 0 at least once in a Mars year
+    expect(deepest.eclipseFraction).toBeCloseTo(0.35221, 2);
+    expect(deepest.available_W).toBeCloseTo(deepest.generation_W * (1 - deepest.eclipseFraction), 9);
+    expect(e.details.power.worstDay.eclipseFraction).toBeGreaterThan(0.3);
+  });
+
+  it('Mission operations reads the same days: prepareOps available power = the profile, day for day', async () => {
+    const { powerProfileFor } = await import('../src/engine/powerProfile');
+    const { prepareOps } = await import('../src/engine/ops/timeline');
+    const env = prepareOps(maven);
+    const prof = powerProfileFor(maven, ev, env.horizonDay);
+    for (const day of [0, 50, env.arrivalDay, env.arrivalDay + 40, env.primeEndDay, env.horizonDay]) {
+      expect(env.days[day]!.available_W).toBe(prof.days[day]!.available_W);
+      expect(env.days[day]!.eclipseFraction).toBe(prof.days[day]!.eclipseFraction);
+    }
+    expect(env.battery_Wh).toBe(ev.details.power.battery.capacity_Wh);
+  });
+
+  it('the battery is sized for the worst-case eclipse at the heaviest science-day load, within the depth of discharge', () => {
+    const b = ev.details.power.battery;
+    // battery mass = capacity / specific energy (100 Wh/kg)
+    expect(b.mass_kg).toBeCloseTo(b.capacity_Wh / 100, 9);
+    expect(b.capacity_Wh).toBeCloseTo((b.sizedForEclipse_s / 3600) * b.load_W / 0.3, 6);
+    expect(ev.details.massBreakdown.battery).toBe(b.mass_kg);
+  });
+});
+
 describe('comms', () => {
   const ref = CM.REFERENCE_LINK;
   const same = {
@@ -757,6 +864,29 @@ describe('crisis', () => {
     expect(poor.length).toBeGreaterThan(0); // the free option is always there
   });
 
+  it('the free option stays on offer even when a spare margin is negative (over budget is not a blocker)', () => {
+    // Over the cost cap: budget spare −$20M. The free option costs nothing, so it is still offered.
+    for (const card of CR.CRISIS_CARDS) {
+      const broke = CR.availableOptions(card, { deltaV_ms: -10, budget_M: -20, powerMargin: -0.1 });
+      expect(broke.map((o) => o.id), card.id).toEqual(card.options.filter((o) => !o.cost.deltaV_ms && !o.cost.budget_M && !o.requires).map((o) => o.id));
+      expect(broke.length, card.id).toBeGreaterThan(0);
+    }
+  });
+
+  it('an over-budget craft that launches can still meet its crisis (no crash)', () => {
+    const maven = presetDesign('maven');
+    const pricey: Design = {
+      ...maven,
+      busId: 'large-bus',
+      instrumentIds: [...maven.instrumentIds, 'radar', 'camera', 'spectrometer'],
+      power: { type: 'solar', arrayArea_m2: 30 },
+    };
+    const e = evaluateDesign(pricey);
+    expect(e.meters.cost.status).toBe('over');
+    expect(e.blockers).toEqual([]); // it launches
+    for (let seed = 1; seed <= 20; seed++) expect(() => simulateMission(pricey, { seed })).not.toThrow();
+  });
+
   it('crisis handling score: outcome vs risk taken', () => {
     expect(CR.crisisScore(true, false)).toBe(100); // safe choice, good outcome
     expect(CR.crisisScore(false, false)).toBe(70); // risky, got lucky
@@ -898,9 +1028,9 @@ describe('simulateMission', () => {
     expect(r.hint).toMatch(/^Fix this first: /);
   });
 
-  it('Monte Carlo success rate agrees with the risk meter within 3σ (+ crisis chances)', () => {
+  it('the single-card flight Monte Carlo agrees with its own phase formula within 3σ (+ crisis chances)', () => {
     const ev = evaluateDesign(maven);
-    const p = 1 - ev.meters.risk.used;
+    const p = 1 - R.riskMeter(ev.details.phaseRisks).used;
     const mc = monteCarloMission(maven, { runs: 1000, seed: 5 });
     const sigma = Math.sqrt((p * (1 - p)) / 1000);
     // safe crisis choices fail at most 1% of the time, so the MC rate can sit up to ~0.01 below p
@@ -909,10 +1039,381 @@ describe('simulateMission', () => {
     expect(mc.starsHistogram.reduce((a, b) => a + b, 0)).toBe(1000);
   });
 
-  it('evaluateDesign now fills the Risk meter', () => {
+  it('evaluateDesign keeps the flight’s phase risks but no Risk meter: that is the Mission operations Monte Carlo', () => {
     const ev = evaluateDesign(maven);
-    expect(ev.meters.risk.used).toBeGreaterThan(0);
-    expect(ev.meters.risk.used).toBeLessThan(1);
+    expect('risk' in ev.meters).toBe(false);
+    const flight = R.riskMeter(ev.details.phaseRisks).used;
+    expect(flight).toBeGreaterThan(0);
+    expect(flight).toBeLessThan(1);
     expect(ev.details.phaseRisks.map((ph) => ph.phase)).toEqual(['launch', 'cruise', 'arrival', 'science']);
+  });
+});
+
+describe('cadet sizing: smallest value on an input grid (bisection)', () => {
+  it('x² ≥ 2 on a 0.01 grid from 0 → 1.42 (√2 = 1.41421…, rounded up to the grid)', async () => {
+    const { smallestOnGrid } = await import('../src/engine/cadet');
+    expect(smallestOnGrid((x) => x * x, 2, 0, 10, 0.01)).toBeCloseTo(1.42, 10);
+  });
+  it('ln(1 + x) ≥ 10 is out of reach on [0, 100] → undefined', async () => {
+    const { smallestOnGrid } = await import('../src/engine/cadet');
+    expect(smallestOnGrid((x) => Math.log(1 + x), 10, 0, 100, 1)).toBeUndefined();
+  });
+  it('already met at lo → lo', async () => {
+    const { smallestOnGrid } = await import('../src/engine/cadet');
+    expect(smallestOnGrid((x) => x, -1, 0, 10, 1)).toBe(0);
+  });
+});
+
+describe('units: pound-force to newtons (Mars Climate Orbiter)', () => {
+  it('1 lbf = 0.45359237 kg × 9.80665 m/s² = 4.4482216152605 N (exact by definition)', async () => {
+    const { LBF_TO_N } = await import('../src/engine/rescue');
+    expect(LBF_TO_N.value).toBeCloseTo(0.45359237 * 9.80665, 12);
+    expect(LBF_TO_N.value).toBeCloseTo(4.4482216152605, 12);
+  });
+  it('an impulse logged as 1 lbf·s but read as 1 N·s is under-counted by the factor the board found (4.45)', async () => {
+    const { LBF_TO_N, impulseReadAsNewtonSeconds } = await import('../src/engine/rescue');
+    // true impulse 1 lbf·s = 4.448 N·s; navigation reads the bare number "1" as 1 N·s → low by 4.448×
+    expect(impulseReadAsNewtonSeconds(1)).toBe(1);
+    expect(LBF_TO_N.value / impulseReadAsNewtonSeconds(1)).toBeCloseTo(4.45, 2);
+  });
+  it('light time at MCO arrival: 196.2 million km / c = 654.45 s ≈ the press kit 10 min 56 s (656 s; distance rounded)', () => {
+    const t = CM.lightDelay_s(196.2e9);
+    expect(t).toBeCloseTo(654.45, 2);
+    expect(Math.abs(t - 656) / 656).toBeLessThan(0.005);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Mission operations: geometry known in advance and hazard rates (spec: "Mission operations")
+const DEG = Math.PI / 180;
+
+describe('ops: solar conjunction geometry (Mars)', () => {
+  it('the Sun–Earth–probe angle is the angle at Earth between the Sun and the craft', async () => {
+    const { sunEarthProbeAngle } = await import('../src/engine/ops/predictable');
+    // Earth at (1, 0, 0) AU; craft at (1, 1, 0): the craft is 90° from the Sun direction (−x) seen from Earth
+    expect(sunEarthProbeAngle([1, 0, 0], [1, 1, 0])).toBeCloseTo(90, 10);
+    // craft straight behind the Sun at (−1.5, 0, 0): 0°
+    expect(sunEarthProbeAngle([1, 0, 0], [-1.5, 0, 0])).toBeCloseTo(0, 6);
+  });
+
+  it('each 2° window centres on heliocentric opposition (Earth and Mars longitudes 180° apart) within 1 day', async () => {
+    const { bodyConjunctions } = await import('../src/engine/ops/predictable');
+    const ws = bodyConjunctions('mars', E.julianDate('2015-01-01'), E.julianDate('2024-01-01'), 2);
+    expect(ws.length).toBe(5); // 2015, 2017, 2019, 2021, 2023: one per synodic period (~780 days)
+    const lonDiff = (jd: number) => {
+      const m = E.heliocentricPosition('mars', jd);
+      const e = E.heliocentricPosition('earth', jd);
+      const d = (Math.atan2(m[1], m[0]) - Math.atan2(e[1], e[0])) / DEG;
+      return ((d % 360) + 360) % 360;
+    };
+    for (const w of ws) {
+      // the opposition day by bisection on λ_M − λ_E − 180° (λ_M − λ_E falls through 180° as Earth overtakes)
+      let lo = w.minJd - 5;
+      let hi = w.minJd + 5;
+      const fLo = lonDiff(lo) > 180;
+      for (let i = 0; i < 50; i++) {
+        const mid = (lo + hi) / 2;
+        if (lonDiff(mid) > 180 === fLo) lo = mid;
+        else hi = mid;
+      }
+      expect(Math.abs(w.minJd - (lo + hi) / 2)).toBeLessThan(1);
+      expect(w.minAngle_deg).toBeLessThan(2);
+    }
+  });
+
+  it('a 2° window lasts 2ε_th/ε̇: ε ≈ r_M/(r_E + r_M)·φ with φ̇ = n_E − n_M', async () => {
+    const { bodyConjunctions } = await import('../src/engine/ops/predictable');
+    const [w] = bodyConjunctions('mars', E.julianDate('2015-01-01'), E.julianDate('2015-12-31'), 2);
+    const rE = E.sunDistance('earth', w!.minJd);
+    const rM = E.sunDistance('mars', w!.minJd);
+    // n_E = 360/365.256 = 0.98561 °/day, n_M = 360/686.98 = 0.52403 °/day → φ̇ = 0.46158 °/day
+    // (2015: r_M ≈ 1.52 AU, r_E ≈ 1.016 AU → ε̇ ≈ 0.600 × 0.4616 = 0.277 °/day → 2 × 2 / 0.277 ≈ 14.4 days)
+    const phiDot = 360 / C.EARTH_ORBIT_PERIOD.value - 360 / DESTINATIONS.mars.orbitPeriod_days.value;
+    const hand = (2 * 2) / ((rM / (rE + rM)) * phiDot);
+    expect(w!.endJd - w!.startJd).toBeGreaterThan(hand - 1.5);
+    expect(w!.endJd - w!.startJd).toBeLessThan(hand + 1.5);
+  });
+
+  it('inside a window the angle is below the threshold; a day outside each edge it is above', async () => {
+    const { bodyConjunctions, bodySepAngle } = await import('../src/engine/ops/predictable');
+    for (const w of bodyConjunctions('mars', E.julianDate('2017-01-01'), E.julianDate('2017-12-31'), 2)) {
+      for (let jd = w.startJd + 0.01; jd < w.endJd; jd += 0.5) expect(bodySepAngle('mars', jd)).toBeLessThan(2);
+      expect(bodySepAngle('mars', w.startJd - 1)).toBeGreaterThan(2);
+      expect(bodySepAngle('mars', w.endJd + 1)).toBeGreaterThan(2);
+    }
+  });
+});
+
+describe('ops: light delay for commands', () => {
+  it('t_arrive − t_send = d/c, with d the same distance signalDelay gives (transfer path in cruise, Mars after)', async () => {
+    const { commandArrival } = await import('../src/engine/ops/commands');
+    const { prepareOps } = await import('../src/engine/ops/timeline');
+    const { signalDelay } = await import('../src/engine/flightMap');
+    const maven = presetDesign('maven');
+    const env = prepareOps(maven);
+    for (const day of [10, 150, env.arrivalDay + 30, env.primeEndDay - 5]) {
+      const d = env.days[day]!;
+      expect(d.oneWay_s).toBeCloseTo(signalDelay(maven, day, env.ev).oneWay_s, 6);
+      expect((commandArrival(env, day) - day) * 86_400).toBeCloseTo(d.earthDistance_m / 299_792_458, 6);
+    }
+    // Mars at its farthest: 401.4e9 m / 299,792,458 m/s = 1338.93 s
+    expect(CM.lightDelay_s(401.4e9)).toBeCloseTo(1338.93, 1);
+  });
+
+  it('no command takes effect before d/c; once the craft has left Earth, never in under a second', async () => {
+    const { commandArrival, oneWayAt } = await import('../src/engine/ops/commands');
+    const { prepareOps } = await import('../src/engine/ops/timeline');
+    const env = prepareOps(presetDesign('maven'));
+    // on the launch pad d = 0, so a command arrives as it is sent
+    expect(commandArrival(env, 0)).toBe(0);
+    for (let t = 1; t < env.primeEndDay; t += 37.3) {
+      expect(commandArrival(env, t) - t).toBeGreaterThanOrEqual(oneWayAt(env, t) / 86_400 - 1e-12);
+      expect(commandArrival(env, t)).toBeGreaterThan(t + 1 / 86_400);
+    }
+  });
+});
+
+describe('ops: eclipses in the science orbit', () => {
+  const R = 3396.2e3;
+  const muM = 42_828e9;
+  const rp = R + 150e3;
+  const ra = R + 6300e3;
+
+  it('Sun in the orbit plane, shadow centred on apoapsis → the Power section worst case (longestEclipse_s), 0.5%', async () => {
+    const { eclipse, orbitFromVectors } = await import('../src/engine/ops/predictable');
+    // periapsis points at the Sun (P̂ = ŝ), so the shadow axis (−ŝ) passes through apoapsis
+    const o = orbitFromVectors(muM, R, rp, ra, [1, 0, 0], [0, 1, 0]);
+    const ecl = eclipse(o, [1, 0, 0]);
+    const worst = PW.longestEclipse_s(muM, R, rp, ra);
+    expect(Math.abs(ecl.longest_s - worst) / worst).toBeLessThan(0.005);
+    expect(ecl.fraction).toBeCloseTo(ecl.longest_s / o.period_s, 9); // one eclipse per orbit
+  });
+
+  it('orbit normal pointing at the Sun (β = 90°) → never in shadow', async () => {
+    const { eclipse, orbitFromVectors } = await import('../src/engine/ops/predictable');
+    const o = orbitFromVectors(muM, R, rp, ra, [1, 0, 0], [0, 1, 0]);
+    expect(eclipse(o, [0, 0, 1])).toEqual({ fraction: 0, longest_s: 0 });
+  });
+
+  it('circular low orbit with the Sun in plane: shadow fraction = asin(R/r)/π (cylinder geometry)', async () => {
+    const { eclipse, orbitFromVectors } = await import('../src/engine/ops/predictable');
+    const r = R + 400e3;
+    // half-angle of the shadow seen from the centre: asin(3396.2/3796.2) = 1.1065 rad → fraction 0.35221
+    const o = orbitFromVectors(muM, R, r, r, [1, 0, 0], [0, 1, 0]);
+    expect(eclipse(o, [1, 0, 0]).fraction).toBeCloseTo(Math.asin(R / r) / Math.PI, 6);
+  });
+
+  it('a fixed polar orbit at Mars has eclipse seasons whose longest eclipse falls where the Sun crosses the plane (β = 0)', async () => {
+    const { prepareOps } = await import('../src/engine/ops/timeline');
+    const { scienceOrbitGeometry, sunDirection } = await import('../src/engine/ops/predictable');
+    const design: Design = { ...presetDesign('maven'), scienceOrbit: { periapsis_km: 2000, apoapsis_km: 2000, inclination_deg: 90 }, scienceDays: 700 };
+    const env = prepareOps(design);
+    const o = scienceOrbitGeometry(design, env.jdLaunch)!;
+    const h: [number, number, number] = [o.P[1] * o.Q[2] - o.P[2] * o.Q[1], o.P[2] * o.Q[0] - o.P[0] * o.Q[2], o.P[0] * o.Q[1] - o.P[1] * o.Q[0]];
+    const beta = (day: number) => {
+      const s = sunDirection('mars', env.days[day]!.jd);
+      return Math.asin(h[0] * s[0] + h[1] * s[1] + h[2] * s[2]) / DEG;
+    };
+    // a circular orbit at r = R + 2000 km is eclipsed while |β| < asin(R/r) = asin(3396.2/5396.2) = 39.0°
+    const betaStar = Math.asin(R / (R + 2000e3)) / DEG;
+    const full = env.eclipseSeasons.filter((s) => s.startDay > env.arrivalDay + 1 && s.endDay < env.primeEndDay);
+    expect(full.length).toBeGreaterThan(0);
+    for (const s of full) {
+      let best = s.startDay;
+      for (let d = s.startDay; d <= s.endDay; d++) if (Math.abs(beta(d)) < Math.abs(beta(best))) best = d;
+      const longestDay = env.days.slice(s.startDay, s.endDay + 1).reduce((a, b) => (b.longestEclipse_s > a.longestEclipse_s ? b : a));
+      expect(Math.abs(longestDay.day - best)).toBeLessThanOrEqual(3);
+      expect(Math.abs(Math.abs(beta(s.startDay)) - betaStar)).toBeLessThan(1);
+    }
+  });
+});
+
+describe('ops: Mars solar longitude', () => {
+  it('Ls at perihelion ≈ 251.0° + 0.0065°·(yr − 2000) (Mars24), from the IAU pole and the ephemeris, ±2°', async () => {
+    const { perihelionJd, solarLongitude } = await import('../src/engine/ops/predictable');
+    for (const near of ['2001-01-01', '2016-11-01', '2022-06-21']) {
+      const jd = perihelionJd('mars', E.julianDate(near));
+      const yr = 2000 + (jd - 2451545) / 365.25;
+      expect(Math.abs(solarLongitude('mars', jd) - (251.0 + 0.0064891 * (yr - 2000)))).toBeLessThan(2);
+    }
+  });
+
+  it('Ls runs fastest at perihelion: rate ratio = (r_a / r_p)² = (249.26/206.65)² = 1.455 (Kepler second law)', async () => {
+    const { perihelionJd, solarLongitude } = await import('../src/engine/ops/predictable');
+    const peri = perihelionJd('mars', E.julianDate('2022-06-21'));
+    const rate = (jd: number) => (solarLongitude('mars', jd + 1) - solarLongitude('mars', jd) + 360) % 360;
+    const aphelion = peri + DESTINATIONS.mars.orbitPeriod_days.value / 2;
+    expect(rate(peri) / rate(aphelion)).toBeCloseTo((249.26 / 206.65) ** 2, 1);
+  });
+});
+
+describe('ops: hazard rates', () => {
+  it('solar activity is 0 at the published minima and 1 at the maxima, and repeats every 11 years', async () => {
+    const { solarActivity } = await import('../src/engine/ops/random');
+    expect(solarActivity(E.julianDate('2008-12-01'))).toBeCloseTo(0, 12);
+    expect(solarActivity(E.julianDate('2014-04-01'))).toBeCloseTo(1, 12);
+    expect(solarActivity(E.julianDate('2019-12-01'))).toBeCloseTo(0, 12);
+    expect(solarActivity(E.julianDate('2024-10-01'))).toBeCloseTo(1, 12);
+    const L = 11 * 365.25;
+    expect(solarActivity(E.julianDate('2024-10-01') + L)).toBeCloseTo(1, 12);
+    expect(solarActivity(E.julianDate('2014-04-01') - L)).toBeCloseTo(1, 12);
+  });
+
+  it('mean storm rate over a cycle at 1 AU = NOAA S3 + S4 count / cycle length (13 / 4017.75 days)', async () => {
+    const { stormRate_perDay } = await import('../src/engine/ops/random');
+    const L = 11 * 365.25;
+    const jd0 = E.julianDate('2019-12-01');
+    let sum = 0;
+    const n = 20_000;
+    for (let k = 0; k < n; k++) sum += stormRate_perDay(jd0 + ((k + 0.5) * L) / n, C.AU_M);
+    // each (1 ∓ cos)/2 half averages 1/2, so mean λ = λ_max(1 + ρ)/2 = N/L = 13 / 4017.75 = 3.2357e-3 per day
+    expect(sum / n).toBeCloseTo(13 / L, 7);
+  });
+
+  it('storm rate falls as (1 AU / r)²: at 1.524 AU it is 1/1.524² = 0.4306× the rate at 1 AU', async () => {
+    const { stormRate_perDay } = await import('../src/engine/ops/random');
+    const jd = E.julianDate('2024-10-01');
+    expect(stormRate_perDay(jd, 1.524 * C.AU_M) / stormRate_perDay(jd, C.AU_M)).toBeCloseTo(1 / 1.524 ** 2, 10);
+  });
+
+  it('Mars dust: zero outside Ls 180–360°, and one storm per 3 Mars years on average', async () => {
+    const { dustStormRate_perDay, dustSeasonDays } = await import('../src/engine/ops/random');
+    expect(dustStormRate_perDay(90)).toBe(0);
+    expect(dustStormRate_perDay(251)).toBeGreaterThan(0);
+    // southern spring + summer is the short half of the Mars year (the perihelion season)
+    const T = DESTINATIONS.mars.orbitPeriod_days.value;
+    expect(dustSeasonDays()).toBeLessThan(T / 2);
+    expect(dustSeasonDays()).toBeGreaterThan(0.4 * T);
+    // rate × season length = 1/3 storm per Mars year
+    expect(dustStormRate_perDay(251) * dustSeasonDays()).toBeCloseTo(1 / 3, 6);
+  });
+
+  it('reaction wheel hazard: Weibull h(t) = (β/η)(t/η)^(β−1) rises with age (β = 2, η = 15 y)', async () => {
+    const { wheelHazard_perYear } = await import('../src/engine/ops/random');
+    // at t = η: h = β/η = 2/15 = 0.13333 per year; at t = η/2: (2/15)(1/2) = 0.06667
+    expect(wheelHazard_perYear(15)).toBeCloseTo(2 / 15, 12);
+    expect(wheelHazard_perYear(7.5)).toBeCloseTo(1 / 15, 12);
+    expect(wheelHazard_perYear(0)).toBe(0);
+  });
+
+  it('memory upsets rise with a solar storm (×6), the dose rate, and a cold day (×2)', async () => {
+    const { memoryRate_perDay } = await import('../src/engine/ops/random');
+    const base = memoryRate_perDay({ stormActive: false, doseRate_radPerDay: 0, cold: false });
+    // 0.2 per year / 365.25 = 5.4757e-4 per day
+    expect(base).toBeCloseTo(0.2 / 365.25, 12);
+    expect(memoryRate_perDay({ stormActive: true, doseRate_radPerDay: 0, cold: false }) / base).toBeCloseTo(6, 12);
+    expect(memoryRate_perDay({ stormActive: false, doseRate_radPerDay: 0, cold: true }) / base).toBeCloseTo(2, 12);
+  });
+
+  it('orbit-insertion anomaly chance = BASE_RISK.arrival × f(Δv margin): 0.04 at 10%+, 0.08 at 5%', async () => {
+    const { insertionAnomalyChance } = await import('../src/engine/ops/random');
+    // f(5%) = 1 + (3 − 1)(0.10 − 0.05)/0.10 = 2 → 0.04 × 2 = 0.08
+    expect(insertionAnomalyChance(0.2)).toBeCloseTo(0.04, 12);
+    expect(insertionAnomalyChance(0.05)).toBeCloseTo(0.08, 12);
+    expect(insertionAnomalyChance(-0.01)).toBe(1);
+  });
+
+  it('thinning: mean accepted count over 2,000 seeds = ∫λ dt within 3σ (storms over one cycle at 1 AU)', async () => {
+    const { drawCandidates, stormRate_perDay, stormRateMax_perDay, subRng, thin } = await import('../src/engine/ops/random');
+    const L = 11 * 365.25;
+    const jd0 = E.julianDate('2019-12-01');
+    const bound = stormRateMax_perDay();
+    let total = 0;
+    const seeds = 2000;
+    for (let s = 1; s <= seeds; s++) {
+      const c = drawCandidates(subRng(s, 'solar-storm'), bound, L);
+      total += thin(c, (t) => stormRate_perDay(jd0 + t, C.AU_M), bound).length;
+    }
+    // ∫λ dt over a cycle = 13; Poisson σ of the mean = sqrt(13/2000) = 0.0806
+    expect(Math.abs(total / seeds - 13)).toBeLessThan(3 * Math.sqrt(13 / seeds));
+  });
+
+  it('separate streams: the same seed and name repeat; different names differ', async () => {
+    const { subRng } = await import('../src/engine/ops/random');
+    const a = subRng(7, 'solar-storm');
+    const b = subRng(7, 'solar-storm');
+    const c = subRng(7, 'reaction-wheel');
+    const xs = [a(), a(), a()];
+    expect([b(), b(), b()]).toEqual(xs);
+    expect([c(), c(), c()]).not.toEqual(xs);
+  });
+});
+
+describe('ops: Jupiter radiation dose (game estimates)', () => {
+  it('power law: Ḋ(2 r_ref) = Ḋ_ref·2^−k inside the belts, 0 outside', async () => {
+    const { radiationDoseRate_radPerHour } = await import('../src/engine/ops/predictable');
+    const rad = DESTINATIONS.jupiter.radiation!;
+    const RJ = DESTINATIONS.jupiter.radius_km.value * 1000;
+    // at r = 2 R_J with r_ref = 1 R_J, k = 3: 200 × (1/2)³ = 25 rad/h
+    expect(radiationDoseRate_radPerHour('jupiter', 2 * RJ)).toBeCloseTo(rad.doseRateRef_radPerHour.value * 0.5 ** rad.exponent.value, 9);
+    expect(radiationDoseRate_radPerHour('jupiter', 5 * RJ)).toBe(0);
+    expect(radiationDoseRate_radPerHour('mars', 1e6)).toBe(0);
+  });
+
+  it('a circular orbit gives a constant dose rate: 2 R_J → 25 rad/h × 24 = 600 rad/day', async () => {
+    const { orbitDoseRate_radPerDay, orbitFromVectors } = await import('../src/engine/ops/predictable');
+    const RJ = DESTINATIONS.jupiter.radius_km.value * 1000;
+    const o = orbitFromVectors(126_686_534e9, RJ, 2 * RJ, 2 * RJ, [1, 0, 0], [0, 1, 0]);
+    expect(orbitDoseRate_radPerDay('jupiter', o)).toBeCloseTo(600, 6);
+  });
+});
+
+describe('ops: resources', () => {
+  it('fault protection keeps the bus, then heaters, then radio; instruments are shed first', async () => {
+    const { shedLoads } = await import('../src/engine/ops/resources');
+    const want = { bus: 400, heaters: 160, instruments: 120, radio: 286 };
+    // 900 W: bus 400 → heaters 160 → radio 286 (= 846) → instruments get the last 54 W
+    expect(shedLoads(900, want)).toEqual({ bus: 400, heaters: 160, radio: 286, instruments: 54 });
+    // 500 W: bus 400 → heaters 100 → nothing left for radio or instruments
+    expect(shedLoads(500, want)).toEqual({ bus: 400, heaters: 100, radio: 0, instruments: 0 });
+    // 300 W: the bus itself is short (a brownout)
+    expect(shedLoads(300, want)).toEqual({ bus: 300, heaters: 0, radio: 0, instruments: 0 });
+  });
+
+  it('DSN aperture fee AF = R_B[A_W(0.9 + F_C/10)]: 34 m $1691.2/h, 70 m $6764.8/h; a day = (8 + 1) h', async () => {
+    const { apertureFee_perHour, dsnDayCost_M, dsnExtraCost_M } = await import('../src/engine/ops/resources');
+    // 1057 × 1 × (0.9 + 7/10) = 1057 × 1.6 = 1691.2; × 4 = 6764.8
+    expect(apertureFee_perHour(34)).toBeCloseTo(1691.2, 9);
+    expect(apertureFee_perHour(70)).toBeCloseTo(6764.8, 9);
+    // 8 h pass + 1 h set-up and tear-down: 9 × 1691.2 = $15,220.8 = 0.0152208 $M
+    expect(dsnDayCost_M({ dish: 34, hours: 8 })).toBeCloseTo(0.0152208, 12);
+    // upgrade to 70 m: 9 × 6764.8 − 15,220.8 = 60,883.2 − 15,220.8 = $45,662.4
+    expect(dsnExtraCost_M({ dish: 70, hours: 8 }, { dish: 34, hours: 8 })).toBeCloseTo(0.0456624, 12);
+    // fewer hours than the default pass is not a refund
+    expect(dsnExtraCost_M({ dish: 34, hours: 4 }, { dish: 34, hours: 8 })).toBe(0);
+  });
+
+  it('downlink capacity = link rate × booked hours; 70 m / 34 m = 10^(6.31/10) = 4.2756; zero in a conjunction', async () => {
+    const { downlinkCapacity_bitsPerDay } = await import('../src/engine/ops/resources');
+    const { prepareOps } = await import('../src/engine/ops/timeline');
+    const maven = presetDesign('maven');
+    const env = prepareOps(maven);
+    const day = env.days[env.arrivalDay + 40]!;
+    // the same value simulateMission uses for that date: dataPerDay_bits(dataRate(...)) with an 8-hour pass
+    const same = CM.dataPerDay_bits(CM.dataRate({ ...maven.comms, distance_m: E.earthDistance('mars', day.jd) }));
+    expect(downlinkCapacity_bitsPerDay(day, { dish: maven.comms.groundDish_m, hours: 8 })).toBeCloseTo(same, 0);
+    expect(downlinkCapacity_bitsPerDay(day, { dish: 70, hours: 8 }) / downlinkCapacity_bitsPerDay(day, { dish: 34, hours: 8 })).toBeCloseTo(4.2756, 4);
+    const conj = env.days[env.conjunctions[0]!.minDay]!;
+    expect(downlinkCapacity_bitsPerDay(conj, { dish: 70, hours: 8 })).toBe(0);
+  });
+
+  it('the default plan asks for what the Power meter needs (bus + instruments + radio + heaters), within 0.5%', async () => {
+    const { demand, defaultPowerPlan } = await import('../src/engine/ops/resources');
+    const { prepareOps } = await import('../src/engine/ops/timeline');
+    const env = prepareOps(presetDesign('maven'));
+    const d = demand(env, env.days[env.arrivalDay]!, defaultPowerPlan(env), { scienceOn: true });
+    // the meter uses the fractional arrival date; the ledger uses the whole arrival day (heaters move slightly)
+    const need = env.ev.details.power.required_W;
+    expect(Math.abs(d.bus + d.heaters + d.instruments + d.radio - need) / need).toBeLessThan(0.005);
+  });
+
+  it('with no bad luck, the Δv left after the prime mission = capability − (required − lifetime reserve)', async () => {
+    const { runOperations } = await import('../src/engine/ops/index');
+    const maven = presetDesign('maven');
+    const r = runOperations(maven, { rng: () => 0.999999 });
+    const d = evaluateDesign(maven).details;
+    // Δv adds up across burns: Isp g₀ ln(m0/m1) + Isp g₀ ln(m1/m2) = Isp g₀ ln(m0/m2)
+    expect(r.state.hazards).toEqual([]);
+    expect(r.debrief.deltaV.left_ms).toBeCloseTo(d.deltaVCapability_ms - (d.deltaVRequired_ms - d.deltaVBudget.lifetimeReserve_ms), 6);
   });
 });

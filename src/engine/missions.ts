@@ -25,7 +25,7 @@ interface PresetDesign {
   scienceDays?: S<number>;
   missionClass?: S<NonNullable<Design['missionClass']>>;
   lifetimeDays?: S<number>;
-  scienceOrbit?: { periapsis_km: S<number>; apoapsis_km: S<number> };
+  scienceOrbit?: { periapsis_km: S<number>; apoapsis_km: S<number>; inclination_deg?: S<number> };
   trajectoryOption?: S<NonNullable<Design['trajectoryOption']>>;
 }
 
@@ -86,6 +86,7 @@ export function presetDesign(id: MissionId): Design {
   if (d.lifetimeDays) design.lifetimeDays = d.lifetimeDays.value;
   if (d.scienceOrbit) {
     design.scienceOrbit = { periapsis_km: d.scienceOrbit.periapsis_km.value, apoapsis_km: d.scienceOrbit.apoapsis_km.value };
+    if (d.scienceOrbit.inclination_deg) design.scienceOrbit.inclination_deg = d.scienceOrbit.inclination_deg.value;
   }
   if (d.trajectoryOption) design.trajectoryOption = d.trajectoryOption.value;
   return design;

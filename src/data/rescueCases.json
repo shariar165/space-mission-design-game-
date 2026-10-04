@@ -1,0 +1,64 @@
+{
+  "mco": {
+    "title": "Mars Climate Orbiter",
+    "year": "1999",
+    "destination": "mars",
+    "lost": {
+      "value": "Lost on arrival at Mars on Sept. 23, 1999. Ground software used English units while onboard software worked in metric; the error sent the spacecraft too close to Mars.",
+      "unit": "",
+      "source": "NASA Science: Mars Climate Orbiter ('Ground software used English units, while onboard software worked in metric')",
+      "url": "https://science.nasa.gov/mission/mars-climate-orbiter/",
+      "isGameEstimate": false
+    },
+    "facts": {
+      "launchDate": { "value": "1998-12-11", "unit": "UTC date", "source": "NASA/JPL Mars Climate Orbiter Arrival press kit (Sept. 1999), Quick Facts: launch December 11, 1998, 18:45:51 UTC", "url": "https://mars.nasa.gov/internal_resources/812/", "isGameEstimate": false },
+      "launchVehicle": { "value": "Delta II 7425", "unit": "", "source": "NASA/JPL Mars Climate Orbiter Arrival press kit (Sept. 1999), Quick Facts: launch vehicle Delta II Model 7425", "url": "https://mars.nasa.gov/internal_resources/812/", "isGameEstimate": false },
+      "launchMass_kg": { "value": 629, "unit": "kg", "source": "NASA/JPL Mars Climate Orbiter Arrival press kit (Sept. 1999), Quick Facts: 629 kg total", "url": "https://mars.nasa.gov/internal_resources/812/", "isGameEstimate": false },
+      "dryMass_kg": { "value": 338, "unit": "kg", "source": "NASA/JPL Mars Climate Orbiter Arrival press kit (Sept. 1999), Quick Facts: 338-kg spacecraft", "url": "https://mars.nasa.gov/internal_resources/812/", "isGameEstimate": false },
+      "propellant_kg": { "value": 291, "unit": "kg", "source": "NASA/JPL Mars Climate Orbiter Arrival press kit (Sept. 1999), Quick Facts: 291 kg fuel", "url": "https://mars.nasa.gov/internal_resources/812/", "isGameEstimate": false },
+      "powerAtMars_W": { "value": 500, "unit": "W", "source": "NASA/JPL Mars Climate Orbiter Arrival press kit (Sept. 1999), Quick Facts: solar array providing 500 watts at Mars", "url": "https://mars.nasa.gov/internal_resources/812/", "isGameEstimate": false },
+      "mainEngineThrust_N": { "value": 640, "unit": "N", "source": "NASA/JPL Mars Climate Orbiter Arrival press kit (Sept. 1999): 640-newton main engine for orbit insertion", "url": "https://mars.nasa.gov/internal_resources/812/", "isGameEstimate": false },
+      "arrivalDate": { "value": "1999-09-23", "unit": "date", "source": "NASA/JPL Mars Climate Orbiter Arrival press kit (Sept. 1999), Quick Facts: arrival September 23, 1999", "url": "https://mars.nasa.gov/internal_resources/812/", "isGameEstimate": false },
+      "earthDistanceAtArrival_1e6km": { "value": 196.2, "unit": "10⁶ km", "source": "NASA/JPL Mars Climate Orbiter Arrival press kit (Sept. 1999), Quick Facts: Earth-Mars distance at arrival 196.2 million km", "url": "https://mars.nasa.gov/internal_resources/812/", "isGameEstimate": false },
+      "lightTimeAtArrival_s": { "value": 656, "unit": "s", "source": "NASA/JPL Mars Climate Orbiter Arrival press kit (Sept. 1999), Quick Facts: one-way speed-of-light time from Mars to Earth at arrival 10 minutes, 56 seconds", "url": "https://mars.nasa.gov/internal_resources/812/", "isGameEstimate": false },
+      "plannedPeriapsis_km": { "value": 226, "unit": "km altitude", "source": "MCO Mishap Investigation Board Phase I Report (Nov. 10, 1999), section 2: after TCM-4 the first periapse altitude would be 226 km", "url": "https://discovery.larc.nasa.gov/PDF_FILES/MCO_report_2.pdf", "isGameEstimate": false },
+      "predictedBeforeArrival_km": { "value": 110, "unit": "km altitude", "source": "MCO Mishap Investigation Board Phase I Report (Nov. 10, 1999), section 2: about one hour before orbit insertion the first periapse altitude was calculated to be as low as 110 km", "url": "https://discovery.larc.nasa.gov/PDF_FILES/MCO_report_2.pdf", "isGameEstimate": false },
+      "survivableMinPeriapsis_km": { "value": 80, "unit": "km altitude", "source": "MCO Mishap Investigation Board Phase I Report (Nov. 10, 1999), section 2: the minimum periapse altitude considered survivable by MCO is 80 km", "url": "https://discovery.larc.nasa.gov/PDF_FILES/MCO_report_2.pdf", "isGameEstimate": false },
+      "estimatedPeriapsis_km": { "value": 57, "unit": "km altitude", "source": "MCO Mishap Investigation Board Phase I Report (Nov. 10, 1999), section 2: after-the-fact navigation estimates indicated an initial periapsis of 57 km, judged too low for spacecraft survival", "url": "https://discovery.larc.nasa.gov/PDF_FILES/MCO_report_2.pdf", "isGameEstimate": false }
+    },
+    "clues": [
+      {
+        "id": "solar-array",
+        "title": "Lopsided solar wing",
+        "text": "The solar array sat on one side of the craft. Sunlight pushed on it, so small thrusters fired far more often than the navigators expected to keep the craft steady.",
+        "isBug": false,
+        "verdict": "Real, and it made things worse: more firings meant the error grew faster. But each firing was logged. The bug was in how the pushes were written down.",
+        "evidence": { "value": "Angular momentum desaturation (AMD) events happened 10-14 times more often than the navigation team expected, because MCO's solar array was asymmetrical.", "unit": "", "source": "MCO Mishap Investigation Board Phase I Report (Nov. 10, 1999), section 2 and Contributing Cause No. 1", "url": "https://discovery.larc.nasa.gov/PDF_FILES/MCO_report_2.pdf", "isGameEstimate": false }
+      },
+      {
+        "id": "amd-units",
+        "title": "Thruster-firing file",
+        "text": "After every small thruster firing, the spacecraft team's software wrote down how hard the thrusters pushed, and sent the file to the navigators in another state.",
+        "isBug": true,
+        "verdict": "Found it! The file gave each push in pound-force seconds, but the navigators read the numbers as newton-seconds.",
+        "evidence": { "value": "The SM_FORCES software was required to give its output in newton-seconds (N·s). Instead the data in the Angular Momentum Desaturation (AMD) file was in pound-force seconds (lbf·s).", "unit": "", "source": "MCO Mishap Investigation Board Phase I Report (Nov. 10, 1999), section 4: MCO Root Cause", "url": "https://discovery.larc.nasa.gov/PDF_FILES/MCO_report_2.pdf", "isGameEstimate": false }
+      },
+      {
+        "id": "tcm-5",
+        "title": "Skipped safety burn",
+        "text": "A last-chance course correction (TCM-5) was ready to raise the craft if it came in too low. It was discussed just before arrival, but never done.",
+        "isBug": false,
+        "verdict": "Real, and it might have saved the craft at the last minute. But it would only have patched the symptom: the bad data was still there.",
+        "evidence": { "value": "A request to perform TCM-5 was discussed verbally shortly before the orbit insertion procedure began, but was never executed.", "unit": "", "source": "MCO Mishap Investigation Board Phase I Report (Nov. 10, 1999), Contributing Cause No. 3", "url": "https://discovery.larc.nasa.gov/PDF_FILES/MCO_report_2.pdf", "isGameEstimate": false }
+      },
+      {
+        "id": "staffing",
+        "title": "Busy navigators",
+        "text": "The navigation team was looking after three missions at the same time, so very few people were watching this one.",
+        "isBug": false,
+        "verdict": "Real, and it made the mistake harder to catch. But the navigators were working with numbers that were wrong from the start.",
+        "evidence": { "value": "The operations project was running three missions at once (Mars Global Surveyor, Mars Climate Orbiter, Mars Polar Lander); MCO navigation was handled by the navigation team lead and the MCO navigator.", "unit": "", "source": "MCO Mishap Investigation Board Phase I Report (Nov. 10, 1999), Contributing Cause No. 6", "url": "https://discovery.larc.nasa.gov/PDF_FILES/MCO_report_2.pdf", "isGameEstimate": false }
+      }
+    ]
+  }
+}

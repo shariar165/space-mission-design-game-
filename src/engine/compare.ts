@@ -6,8 +6,12 @@ import { evaluateDesign, type FullEvaluation } from './index';
 import { missionPreset, presetDesign, type MissionId } from './missions';
 import { sourced, type Design, type DestinationId, type MeterStatus, type Sourced } from './types';
 
-export type MeterKey = 'mass' | 'power' | 'deltaV' | 'data' | 'cost' | 'risk';
-export const METER_KEYS: MeterKey[] = ['mass', 'power', 'deltaV', 'data', 'cost', 'risk'];
+/** Meters evaluateDesign computes at once. */
+export type MeterKey = 'mass' | 'power' | 'deltaV' | 'data' | 'cost';
+export const METER_KEYS: MeterKey[] = ['mass', 'power', 'deltaV', 'data', 'cost'];
+/** The Mission Budget panel: the five meters plus Risk, which comes from the Mission operations Monte Carlo (ops/riskEstimate.ts). */
+export type PanelKey = MeterKey | 'risk';
+export const PANEL_KEYS: PanelKey[] = [...METER_KEYS, 'risk'];
 
 export interface DesignDelta {
   wetMass_kg: number;

@@ -143,6 +143,14 @@ a:hover { color: #ffb880; }
 .bar { position: relative; height: 10px; border-radius: 5px; background: rgba(143, 186, 255, 0.12); }
 .bar-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 5px; }
 .bar-fill.ok { background: var(--ok); }
+.bar-fill.computing { background: linear-gradient(90deg, var(--bp), rgba(142, 197, 255, 0.55)); transition: width 0.3s ease; }
+.chip.computing { color: var(--bp); background: rgba(142, 197, 255, 0.1); border: 1px solid var(--line2); }
+.spinner { width: 10px; height: 10px; border-radius: 50%; border: 2px solid rgba(142, 197, 255, 0.3); border-top-color: var(--bp); animation: spin 0.9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.risk-pending .unit { color: var(--ink3); font-size: 12px; }
+.risk-wrap { display: flex; flex-direction: column; gap: 4px; }
+.risk-runs { font-size: 10.5px; color: var(--ink3); padding: 0 6px; letter-spacing: 0.02em; }
+@media (prefers-reduced-motion: reduce) { .spinner { animation: none; } .bar-fill.computing { transition: none; } }
 .bar-fill.warning { background: var(--warn); }
 .bar-fill.over { background: repeating-linear-gradient(135deg, var(--bad) 0 4px, rgba(255, 107, 138, 0.55) 4px 8px); }
 .bar-limit { position: absolute; top: -4px; bottom: -4px; width: 2px; border-radius: 1px; background: var(--ink); }
