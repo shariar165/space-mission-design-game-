@@ -97,10 +97,17 @@ export function powerMeter(available_W: number, required_W: number, inputs: Reco
 
 /**
  * Power on a date: available (solar with degradation since launch, or RTG) and required (base load + heaters,
- * which rise as sunlight falls). Shared by evaluateDesign and Mission operations.
+ * which rise as sunlight falls). Shared by evaluateDesign and Mission operations, which passes the craft's own Sun
+ * distance in cruise.
  */
-export function powerOnDay(design: Design, jd: number, years: number, baseRequired_W: number, heaterBase_W: number) {
-  const rSun = sunDistance(design.destination, jd);
+export function powerOnDay(
+  design: Design,
+  jd: number,
+  years: number,
+  baseRequired_W: number,
+  heaterBase_W: number,
+  rSun = sunDistance(design.destination, jd),
+) {
   const available_W =
     design.power.type === 'solar'
       ? solarPower({
