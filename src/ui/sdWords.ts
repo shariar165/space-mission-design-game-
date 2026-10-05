@@ -446,6 +446,7 @@ export const COACH: CoachPanel[] = [
   { icon: 'storm', title: 'DANGER CARDS', body: 'When trouble is coming, time stops and a card appears. Pick an answer. Each one shows what it costs.' },
   { icon: 'dish', title: 'ORDERS TRAVEL SLOWLY', body: 'Your order crosses space at the speed of light. It can take minutes to reach the robot, so act early.' },
   { icon: 'power', title: 'WATCH THE FOUR BARS', body: 'Power, fuel, data and systems are at the top. Keep them out of the red.' },
+  { icon: 'postcard', title: 'YOUR ROBOT WRITES HOME', body: 'Its messages cross space at the speed of light too. When its science reaches Earth, you get real NASA postcards.' },
   { icon: 'star', title: 'REACH THE END', body: 'When the mission ends you get your report and stars. In a hurry? FINISH MISSION lets the robot fly the rest.' },
 ];
 
