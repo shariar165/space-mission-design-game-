@@ -12,6 +12,7 @@ import type { Design } from '../../engine/types';
 import { ComicArt } from '../components/report/ComicArt';
 import { SourceInfo } from '../components/SourceInfo';
 import { MissionSteps } from '../components/sd/MissionSteps';
+import { BackButton } from '../components/sd/BackButton';
 import { ModeLever, type Mode } from '../components/sd/ModeLever';
 import { SDIcon } from '../components/sd/SDIcon';
 import { useReducedMotion } from '../opsGeometry';
@@ -58,10 +59,12 @@ interface Props {
   newCard?: { num: number; total: number; title: string; body: string; onOpen: () => void };
   onFlyAgain: () => void;
   onHome: () => void;
+  /** ◂ BACK to the screen before the flight. */
+  onBack?: () => void;
   homeLabel: string;
 }
 
-export function MissionReport({ state, design, mode, onMode, missionName, next, newCard, onFlyAgain, onHome, homeLabel }: Props) {
+export function MissionReport({ state, design, mode, onMode, missionName, next, newCard, onFlyAgain, onHome, onBack, homeLabel }: Props) {
   const engineer = mode === 'engineer';
   const phone = useIsPhone();
   const still = useReducedMotion();
@@ -317,6 +320,7 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
     return (
       <div className={`sd rp phone${engineer ? ' eng' : ''}`}>
         <div className="rp-sheet">
+          {onBack && <BackButton onBack={onBack} className="rp-back" />}
           <div className="rp-phone-head">
             <div>
               <span className="rp-kicker">
@@ -348,6 +352,7 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
         <div className="rp-holes right" />
         <header className="rp-head">
           <div className="rp-head-l">
+            {onBack && <BackButton onBack={onBack} className="rp-back" />}
             <span className="rp-kicker">
               TELETYPE · {missionName.toUpperCase()} · {dest.name.toUpperCase()} · DAY 000–{f.dayPad(panels.at(-1)!.day)}
             </span>

@@ -1,3 +1,4 @@
+import { BackButton } from './sd/BackButton';
 import { DESTINATIONS } from '../../engine/data';
 import type { DestinationId } from '../../engine/types';
 import { Check, Logo } from './icons';
@@ -35,14 +36,17 @@ interface Props {
   onDestination: (d: DestinationId) => void;
   /** Cadet: go back to the level map. */
   onMap?: () => void;
+  /** ◂ BACK to the previous screen. */
+  onBack?: () => void;
 }
 
-export function TopBar({ step, mode, onMode, missionName, onMissionName, destination, onDestination, onMap }: Props) {
+export function TopBar({ step, mode, onMode, missionName, onMissionName, destination, onDestination, onMap, onBack }: Props) {
   const cadet = mode === 'cadet';
   const steps = cadet ? CADET_STEPS : ENGINEER_STEPS;
   const currentIdx = steps.findIndex((s) => s.ours?.includes(step));
   return (
     <header className="topbar">
+      {onBack && <BackButton onBack={onBack} className="topbar-back" />}
       <div className="brand">
         <Logo />
         <div>

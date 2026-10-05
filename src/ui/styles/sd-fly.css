@@ -72,7 +72,7 @@
 .dc-kicker { display: flex; align-items: center; gap: 10px; font: 700 13px/1 var(--sd-mono); letter-spacing: 0.18em; color: var(--sd-paper); }
 .dc-day { font: 700 13px/1 var(--sd-mono); letter-spacing: 0.14em; color: var(--sd-paper); }
 .dc-body { padding: 22px 26px 24px; display: flex; flex-direction: column; gap: 16px; }
-.dc-title { margin: 0; font: 900 64px/0.9 var(--sd-display); color: var(--sd-paper-ink); letter-spacing: 0.01em; }
+.dc-title { margin: 0; font: 900 48px/0.9 var(--sd-display); color: var(--sd-paper-ink); letter-spacing: 0.01em; }
 .dc-line { margin: 0; font: 400 20px/1.4 var(--sd-body); color: var(--sd-paper-ink); text-wrap: pretty; }
 .dc-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .dc-fact { padding: 10px 12px; border-radius: 5px; background: var(--sd-paper-ink); display: flex; flex-direction: column; gap: 4px; }
@@ -88,8 +88,8 @@
 .dc-choice.side-2 { width: 480px; padding: 12px 20px; gap: 8px; }
 .dc-hint { font: 400 22px/1 var(--sd-crt-font); color: var(--sd-crt-mid); }
 .dc-choice.side-1 .dc-hint { text-align: right; width: 100%; }
-.dc-label { font: 800 36px/0.95 var(--sd-display); color: var(--sd-ink); letter-spacing: 0.03em; }
-.dc-choice.side-2 .dc-label { font-size: 28px; }
+.dc-label { font: 800 27px/0.95 var(--sd-display); color: var(--sd-ink); letter-spacing: 0.03em; }
+.dc-choice.side-2 .dc-label { font-size: 21px; }
 .dc-sub { font: 400 16px/1.35 var(--sd-body); color: var(--sd-ink-2); }
 .dc-tag { align-self: flex-start; padding: 3px 6px; border: 1px solid var(--sd-ink-4); border-radius: 3px; font: 700 10px/1 var(--sd-mono); letter-spacing: 0.12em; color: var(--sd-ink-3); }
 .dc-chips { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -133,7 +133,7 @@
 /* ---- Phone: 390 × 844, rows 30 / 70 / 1fr / 168 ---- */
 .fly.phone { height: 100dvh; min-height: 600px; padding: 12px 10px 14px; grid-template-rows: 30px 70px minmax(0, 1fr) 168px; gap: 10px; }
 .fly-status { display: flex; justify-content: space-between; align-items: center; padding: 0 4px 0 14px; }
-.fly-status-brand { background: none; border: 0; padding: 0; cursor: pointer; font: 900 16px/1 var(--sd-display); color: var(--sd-ink); letter-spacing: 0.08em; }
+.fly-status-brand { background: none; border: 0; padding: 0; cursor: pointer; font: 900 12px/1 var(--sd-display); color: var(--sd-ink); letter-spacing: 0.08em; }
 .fly.phone .sd-lever-word, .fly.phone .sd-lever-switch { display: none; }
 .fly.phone .sd-lever-short { display: inline-block; }
 .fly.phone .fly-tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
@@ -190,7 +190,7 @@
 .dc-overlay.phone .dc-head { padding: 10px 16px; }
 .dc-overlay.phone .dc-kicker, .dc-overlay.phone .dc-day { font-size: 11px; letter-spacing: 0.16em; gap: 8px; }
 .dc-overlay.phone .dc-body { padding: 16px 18px 18px; gap: 12px; }
-.dc-overlay.phone .dc-title { font-size: 50px; }
+.dc-overlay.phone .dc-title { font-size: 38px; }
 .dc-overlay.phone .dc-line { font-size: 17px; }
 .dc-overlay.phone .dc-facts { gap: 8px; }
 .dc-overlay.phone .dc-fact { padding: 8px 10px; gap: 3px; }
@@ -204,7 +204,7 @@
 .dc-overlay.phone .dc-choice.side-1 { text-align: right; align-items: flex-end; }
 .dc-overlay.phone .dc-choice.side-2 { width: 100%; }
 .dc-overlay.phone .dc-hint { font-size: 18px; }
-.dc-overlay.phone .dc-label { font-size: 24px; }
+.dc-overlay.phone .dc-label { font-size: 18px; }
 .dc-overlay.phone .sd-chip { padding: 4px 6px; gap: 4px; font-size: 18px; }
 .dc-overlay.phone .dc-chips { gap: 6px; }
 .dc-overlay.phone .dc-choice.side-1 .dc-chips { justify-content: flex-end; }
@@ -244,3 +244,34 @@
 .fly .ops-cmd, .fly .ops-warnbox { background: var(--sd-chassis); border-color: var(--sd-line); }
 .fly .btn, .fly .ops-close { font-family: var(--sd-mono); }
 .fly .cta { background: var(--sd-amber); color: var(--sd-paper-ink); border-radius: 5px; box-shadow: 0 4px 0 var(--sd-amber-edge); font-family: var(--sd-display); letter-spacing: 0.08em; }
+
+/* ---- Back, help, goal, progress and the press-play nudge ---- */
+.fly-top { grid-template-columns: auto minmax(0, 1fr) auto; }
+.fly-top-left, .fly-top-right { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.fly-top-right { justify-content: flex-end; }
+.fly-help { display: flex; gap: 6px; align-items: center; }
+.fly-help .sd-ghost-btn { padding: 8px 10px; font-size: 11px; }
+.fly-help-q { width: 34px; color: var(--sd-amber); }
+.fly-goal { position: absolute; top: 24px; right: 26px; z-index: 1; max-width: 40%; text-align: right; font: 400 18px/1.1 var(--sd-crt-font); letter-spacing: 0.04em; color: var(--sd-crt-dim); pointer-events: none; }
+.fly-action.finish { border-color: var(--sd-amber-edge); color: var(--sd-amber); }
+.fly-progress { display: flex; flex-direction: column; gap: 6px; }
+.fly-progress-bar { height: 10px; overflow: hidden; }
+.fly-progress-fill { height: 100%; background: var(--sd-crt-mid); box-shadow: 0 0 8px var(--sd-crt-mid); transition: width 0.25s linear; }
+.fly-progress-txt { font: 400 18px/1 var(--sd-crt-font); color: var(--sd-crt-mid); letter-spacing: 0.04em; }
+.fly-speeds.nudge .fly-speed:not([aria-pressed='true']) { animation: sd-nudge 1.1s ease-in-out infinite; }
+.fly-speeds.nudge + .fly-progress .fly-progress-txt { color: var(--sd-amber); }
+@keyframes sd-nudge { 50% { box-shadow: 0 0 16px rgba(255, 181, 71, 0.75); border-color: var(--sd-amber); } }
+.fly.phone { grid-template-rows: 34px 70px minmax(0, 1fr) 196px; }
+.fly-status .sd-back { flex: 0 0 auto; width: auto; }
+.fly.phone .fly-speed { width: 44px; font-size: 12px; letter-spacing: 0; }
+.fly.phone .fly-progress { gap: 4px; }
+.fly.phone .fly-progress-bar { height: 6px; }
+.fly-status { gap: 8px; padding: 0 4px; }
+.fly-status .fly-help { margin-left: auto; }
+.fly.phone .sd-back { padding: 7px 10px; font-size: 11px; }
+.fly.phone .fly-help .sd-ghost-btn { padding: 6px 8px; font-size: 10px; }
+.fly.phone .fly-progress-txt { font-size: 16px; }
+/* With ◂ BACK and the help keys the phone status row is a plain row: back, help, then the lever on the right. */
+.fly-status:has(.sd-back) { display: flex; align-items: center; gap: 8px; }
+.fly-status:has(.sd-back) .sd-lever { margin-left: auto; }
+.fly-status .fly-help { margin-left: 0; }

@@ -28,6 +28,8 @@ import {
 } from '../../engine/pack';
 import type { Design } from '../../engine/types';
 import { SourceInfo } from '../components/SourceInfo';
+import { BackButton } from '../components/sd/BackButton';
+import { MissionBriefing } from '../components/sd/MissionBriefing';
 import { MissionSteps } from '../components/sd/MissionSteps';
 import { ModeLever, type Mode } from '../components/sd/ModeLever';
 import { SDIcon } from '../components/sd/SDIcon';
@@ -37,7 +39,9 @@ import {
   dangerLook,
   deckWhen,
   GAME_NAME,
+  LAUNCH_CHECKS,
   monthSpan,
+  NAV,
   NO_ROOM,
   PACK_BLOCKER,
   PART_LOOK,
@@ -45,6 +49,7 @@ import {
   shortDate,
   STAMP,
   WEIGHT_WORDS,
+  type Briefing,
 } from '../sdWords';
 import * as f from '../format';
 
@@ -59,11 +64,17 @@ interface Props {
   onLesson?: () => void;
   onHome: () => void;
   onLaunch: (d: Design) => void;
+  /** ◂ BACK to the previous screen. */
+  onBack?: () => void;
+  /** The mission briefing behind MISSION INFO; `open` shows it at once (the first visit to a level). */
+  brief?: { title: string; briefing: Briefing; concept?: string; open?: boolean };
+  /** The briefing was closed. */
+  onBriefSeen?: () => void;
 }
 
 type Hl = { dangers: string[]; parts: PartId[] } | undefined;
 
-export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLesson, onHome, onLaunch }: Props) {
+export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLesson, onHome, onLaunch, onBack, brief, onBriefSeen }: Props) {
   const engineer = mode === 'engineer';
   const phone = useIsPhone();
   const dest = DESTINATIONS[base.destination];
@@ -73,6 +84,7 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
   const [noRoom, setNoRoom] = useState<PartId>();
   const [days, setDays] = useState<CalendarDay[]>();
   const [dayIdx, setDayIdx] = useState(PACK.calendar.before.value);
+  const [briefOpen, setBriefOpen] = useState(!!brief?.open);
 
   // The calendar's transfers are worked out once per level, one tick after the screen paints.
   useEffect(() => {
@@ -299,6 +311,38 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
     </div>
   );
 
+  // The launch checklist: each step ticks itself off; the first one still to do is lit, so a greyed LAUNCH explains itself.
+  const checks = [
+    { id: 'packed', text: LAUNCH_CHECKS.packed, done: blockers.length === 0 },
+    { id: 'day', text: LAUNCH_CHECKS.day, done: q !== undefined && q.quality !== 'bad' },
+    { id: 'arm', text: LAUNCH_CHECKS.arm, done: armed },
+    { id: 'go', text: LAUNCH_CHECKS.go, done: false },
+  ];
+  const todo = checks.find((c) => !c.done)?.id;
+  const checklist = (
+    <ol className="pk-checks" aria-label="Launch checklist">
+      {checks.map((c) => (
+        <li key={c.id} className={`${c.done ? 'done' : ''}${todo === c.id ? ' todo' : ''}`} aria-checked={c.done} role="checkbox" aria-disabled="true">
+          <span className="pk-check-box">{c.done && <SDIcon icon="check" size={12} color="var(--sd-crt-hi)" />}</span>
+          {c.text}
+        </li>
+      ))}
+    </ol>
+  );
+
+  const closeBrief = () => {
+    setBriefOpen(false);
+    onBriefSeen?.();
+  };
+  const briefing = briefOpen && brief && (
+    <MissionBriefing title={brief.title} destination={base.destination} briefing={brief.briefing} {...(brief.concept ? { concept: brief.concept } : {})} onClose={closeBrief} />
+  );
+  const infoKey = brief && (
+    <button type="button" className="sd-ghost-btn pk-info" onClick={() => setBriefOpen(true)}>
+      {NAV.info}
+    </button>
+  );
+
   const launch = (
     <div className="pk-launch">
       <button type="button" className={`pk-arm${armed ? ' on' : ''}`} role="switch" aria-checked={armed} aria-label="Arm" onClick={() => setArmed((a) => !a)}>
@@ -340,9 +384,14 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
     return (
       <div className={`sd pk phone${engineer ? ' eng' : ''}`}>
         <div className="fly-status">
-          <button type="button" className="fly-status-brand" onClick={onHome}>
-            PACK
-          </button>
+          {onBack ? (
+            <BackButton onBack={onBack} />
+          ) : (
+            <button type="button" className="fly-status-brand" onClick={onHome}>
+              PACK
+            </button>
+          )}
+          {infoKey}
           <ModeLever mode={mode} onMode={onMode} />
         </div>
         <div className="pk-deck-phone">
@@ -357,23 +406,31 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
         {lesson}
         {shelfCards}
         {calendar}
+        {checklist}
         {launch}
+        {briefing}
       </div>
     );
 
   return (
     <div className={`sd pk${engineer ? ' eng' : ''}`}>
       <header className="pk-top">
-        <div className="sd-brand">
+        <div className="pk-top-left">
+          {onBack && <BackButton onBack={onBack} />}
+          <div className="sd-brand">
           <button type="button" className="sd-brand-name" onClick={onHome} aria-label="Signal Delay: home">
             {GAME_NAME}
           </button>
           <span className="sd-brand-sub">
             {missionName.toUpperCase()} · TO {dest.name.toUpperCase()}
           </span>
+          </div>
         </div>
         <MissionSteps at={0} />
-        <ModeLever mode={mode} onMode={onMode} />
+        <div className="pk-top-right">
+          {infoKey}
+          <ModeLever mode={mode} onMode={onMode} />
+        </div>
       </header>
       <div className="pk-main">
         <section className="pk-panel pk-tray" aria-label="Parts shelf">
@@ -402,8 +459,12 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
       </div>
       <footer className="pk-bottom">
         <section className="pk-panel pk-cal-panel">{calendar}</section>
-        <section className="pk-panel pk-launch-panel">{launch}</section>
+        <section className="pk-panel pk-launch-panel">
+          {checklist}
+          {launch}
+        </section>
       </footer>
+      {briefing}
     </div>
   );
 }

@@ -269,3 +269,6 @@ a:hover { color: #ffd28a; }
   .crisis h1 { font-size: 26px; }
   .actions .cta, .actions .btn { flex: 1 1 100%; justify-content: center; }
 }
+
+/* Back key in the classic top bar (level map, Rescue History, Engineer Build Bay) */
+.topbar-back { order: -1; }

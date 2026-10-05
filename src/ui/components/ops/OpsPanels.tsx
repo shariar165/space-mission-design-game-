@@ -216,11 +216,12 @@ export function ExtensionDecision({
               <div className="ops-ext-card-head">
                 <span className={`ops-icon-box ${end ? 'bp' : 'acc'}`}>{end ? <RetireIcon /> : <ExtendIcon />}</span>
                 <span className="ops-ext-name">{end ? 'Retire with honour' : `Extend by ${o.years === 1 ? 'one year' : `${f.num(o.years)} years`}`}</span>
+                {end && !engineer && <span className="ops-ext-rec">RECOMMENDED · GO TO YOUR REPORT</span>}
               </div>
               <p className="muted">
                 {end
                   ? 'Bank everything you have learned. Your score is locked in and nothing more can go wrong.'
-                  : 'Keep flying for more science. New money pays for it, but parts are ageing and fuel is limited.'}
+                  : `Keep flying for more science. New money pays for it, but parts are ageing and fuel is limited.${engineer ? '' : ' More flying time before your report.'}`}
               </p>
               {!end && (
                 <div className="ops-ext-rows">

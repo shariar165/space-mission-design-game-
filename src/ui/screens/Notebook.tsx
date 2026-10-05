@@ -6,6 +6,7 @@ import { HAZARDS } from '../../engine/data';
 import { lessonText, notebook, NOTEBOOK, type LessonCategory, type NotebookFacts } from '../../engine/notebook';
 import { rescueCase, type RescueCaseId } from '../../engine/rescue';
 import { SourceInfo } from '../components/SourceInfo';
+import { BackButton } from '../components/sd/BackButton';
 import { ModeLever, type Mode } from '../components/sd/ModeLever';
 import { SDIcon, type SDIconName } from '../components/sd/SDIcon';
 import { useIsPhone } from '../sdGeometry';
@@ -23,9 +24,11 @@ interface Props {
   mode: Mode;
   onMode: (m: Mode) => void;
   onHome: () => void;
+  /** ◂ BACK to the previous screen (Home when there is none). */
+  onBack?: () => void;
 }
 
-export function Notebook({ facts, fresh, mode, onMode, onHome }: Props) {
+export function Notebook({ facts, fresh, mode, onMode, onHome, onBack }: Props) {
   const engineer = mode === 'engineer';
   const phone = useIsPhone();
   const cards = notebook(facts);
@@ -105,9 +108,7 @@ export function Notebook({ facts, fresh, mode, onMode, onHome }: Props) {
       <div className="nb-frame">
         <div className="nb-head">
           <div className="nb-head-l">
-            <button type="button" className="nb-home" onClick={onHome}>
-              ◂ HOME
-            </button>
+            <BackButton onBack={onBack ?? onHome} />
             <h1 className="nb-title">{phone ? 'NOTEBOOK' : 'ENGINEER’S NOTEBOOK'}</h1>
             <span className="nb-count">
               {f.num(got)} OF {f.num(NOTEBOOK.length)} COLLECTED

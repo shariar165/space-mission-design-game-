@@ -414,3 +414,5 @@
   .ops-alert, .ops-skel { animation: none; }
   .ops-track-fill, .ops-track-pulse, .ops-batt-fill, .ops-bar-fill, .ops-switch span { transition: none; }
 }
+
+.ops-ext-rec { margin-left: auto; padding: 3px 6px; border-radius: 3px; background: var(--sd-crt-chip, #0a1a0f); color: var(--sd-crt-hi, #8cff9e); font: 700 10px/1 var(--sd-mono, monospace); letter-spacing: 0.1em; white-space: nowrap; }

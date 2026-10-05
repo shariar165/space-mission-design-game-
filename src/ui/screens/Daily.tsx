@@ -3,6 +3,7 @@
 // Every number is engine output (daily.ts); the canvas only draws it.
 import { useEffect, useState } from 'react';
 import { dailyStreak, nextDailyIn_s, type DailyGrid, type DailyResult } from '../../engine/daily';
+import { BackButton } from '../components/sd/BackButton';
 import { ModeLever, type Mode } from '../components/sd/ModeLever';
 import { SDIcon } from '../components/sd/SDIcon';
 import { useIsPhone } from '../sdGeometry';
@@ -46,17 +47,17 @@ function cardImage(n: number, date: string, title: string, g: DailyGrid, streak:
   x.fillStyle = '#d8432b';
   x.fillRect(0, 0, W, 64);
   x.fillStyle = '#efe6cf';
-  x.font = '900 40px "Big Shoulders Display", sans-serif';
+  x.font = '900 30px Orbitron, sans-serif';
   x.fillText(GAME_NAME, 36, 46);
-  x.font = '700 22px "B612 Mono", monospace';
+  x.font = '700 22px "Share Tech Mono", monospace';
   x.textAlign = 'right';
   x.fillText(`DAILY #${f.num(n)}`, W - 36, 42);
   x.textAlign = 'left';
   x.fillStyle = '#7a715c';
-  x.font = '700 20px "B612 Mono", monospace';
+  x.font = '700 20px "Share Tech Mono", monospace';
   x.fillText(`${date} · MARS`, 36, 116);
   x.fillStyle = '#1b1a16';
-  x.font = '900 64px "Big Shoulders Display", sans-serif';
+  x.font = '900 44px Orbitron, sans-serif';
   x.fillText(title, 36, 180);
   x.fillStyle = '#d8a21c';
   x.font = '48px sans-serif';
@@ -99,10 +100,12 @@ interface Props {
   mode: Mode;
   onMode: (m: Mode) => void;
   onHome: () => void;
+  /** ◂ BACK to the previous screen (Home when there is none). */
+  onBack?: () => void;
   onReport?: () => void;
 }
 
-export function Daily({ number, date, grid, played, mode, onMode, onHome, onReport }: Props) {
+export function Daily({ number, date, grid, played, mode, onMode, onHome, onBack, onReport }: Props) {
   const phone = useIsPhone();
   const [now, setNow] = useState(() => Date.now());
   const [copied, setCopied] = useState(false);
@@ -181,9 +184,7 @@ export function Daily({ number, date, grid, played, mode, onMode, onHome, onRepo
     <div className={`sd dl${phone ? ' phone' : ''}`}>
       <div className="dl-dots" />
       <div className="dl-top">
-        <button type="button" className="sd-ghost-btn" onClick={onHome}>
-          ◂ HOME
-        </button>
+        <BackButton onBack={onBack ?? onHome} />
         <ModeLever mode={mode} onMode={onMode} />
       </div>
       <div className="dl-stage">

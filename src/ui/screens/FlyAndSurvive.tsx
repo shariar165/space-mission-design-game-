@@ -5,7 +5,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { DESTINATIONS, HAZARDS, PARTS } from '../../engine/data';
 import { flightMap, ghostFor, pathAhead } from '../../engine/flightMap';
-import { comingUp, eclipseCard, flyCard, flyTiles, FLY_RULES, outcomeIn_s, type FlyChip, type OpsState } from '../../engine/ops/index';
+import { comingUp, eclipseCard, flyCard, flyTiles, FLY_RULES, missionProgress, outcomeIn_s, type FlyChip, type OpsState } from '../../engine/ops/index';
 import type { Design, Sourced } from '../../engine/types';
 import { SPEED_OF_LIGHT } from '../../engine/constants';
 import { BookCall } from '../components/ops/BookCall';
@@ -14,6 +14,9 @@ import { PowerDial } from '../components/ops/PowerDial';
 import { CrtMap } from '../components/fly/CrtMap';
 import { DangerCard, type CardView, type ChipView, type ChoiceView } from '../components/fly/DangerCard';
 import { EquationsPanel } from '../components/fly/EquationsPanel';
+import { BackButton } from '../components/sd/BackButton';
+import { CoachCard } from '../components/sd/CoachCard';
+import { MissionBriefing } from '../components/sd/MissionBriefing';
 import { ModeLever, type Mode } from '../components/sd/ModeLever';
 import { SDIcon } from '../components/sd/SDIcon';
 import { Segments } from '../components/sd/Segments';
@@ -26,15 +29,22 @@ import {
   CHIP_ICON,
   COMING,
   EFFECT_ICON,
+  endsInWords,
+  FINISH_CONFIRM,
+  FLY_GOAL,
   GAME_NAME,
+  LEAVE_CONFIRM,
   milestoneLine,
   monthsShort,
   monthsWords,
+  NAV,
   optionShort,
+  playNudge,
   quietLine,
   RESULT_EFFECT_CHIP,
   resultLines,
   TILE,
+  type Briefing,
   type TileKey,
 } from '../sdWords';
 import { OPS_SPEEDS, useOpsSession, type OpsSpeed } from '../useOpsSession';
@@ -49,9 +59,19 @@ interface Props {
   onHome: () => void;
   /** The mission is over (complete, lost or never launched): go to the Mission Report. */
   onDone: (s: OpsState) => void;
+  /** ◂ BACK: leave the flight (after a confirmation). */
+  onBack?: () => void;
+  /** Open the "how to fly" coach panels at the start (first flight). */
+  coach?: boolean;
+  /** The coach panels were closed. */
+  onCoachSeen?: () => void;
+  /** The mission briefing behind MISSION INFO. */
+  brief?: { title: string; briefing: Briefing; concept?: string };
 }
 
 type Panel = 'power' | 'call' | 'queue' | 'eqs';
+/** Overlays that hold the clock while they are open. */
+type Overlay = 'coach' | 'info' | 'finish' | 'leave';
 
 const SPEED_LABEL = (s: OpsSpeed) => (s === 0 ? 'II' : `${f.num(s)}×`);
 const SPEED_NAME = (s: OpsSpeed) => (s === 0 ? 'Pause' : `${f.num(s)}× speed`);
@@ -61,7 +81,7 @@ function chipViews(chips: FlyChip[]): ChipView[] {
   return chips.map((k) => ({ icon: CHIP_ICON[k.gauge], text: k.gauge === 'coins' ? `${f.signedInt(k.delta)} COINS` : f.signedInt(k.delta), tone: 'cost' as const }));
 }
 
-export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome, onDone }: Props) {
+export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome, onDone, onBack, coach, onCoachSeen, brief }: Props) {
   const engineer = mode === 'engineer';
   const ops = useOpsSession(design, seed);
   const { state, view } = ops;
@@ -69,7 +89,8 @@ export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome,
   const still = useReducedMotion();
   const dest = DESTINATIONS[design.destination];
   const [panel, setPanel] = useState<Panel>();
-  const [lastSpeed, setLastSpeed] = useState<OpsSpeed>(10);
+  const [lastSpeed, setLastSpeed] = useState<OpsSpeed>(OPS_SPEEDS[2]);
+  const [overlay, setOverlay] = useState<Overlay | undefined>(coach ? 'coach' : undefined);
   const [chosen, setChosen] = useState<{ label: string; chips: FlyChip[] }>();
   const [eclipseDone, setEclipseDone] = useState<number[]>([]);
   const ev = state?.env.ev;
@@ -86,10 +107,21 @@ export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome,
   const eclipse = state && !ops.showAlert && !ops.transit && !ops.result ? eclipseCard(state) : undefined;
   const eclipseOpen = eclipse !== undefined && !eclipseDone.includes(eclipse.season.startDay);
 
-  // An eclipse planning card stops the clock like a danger card does.
+  // An eclipse planning card or an overlay holds the clock like a danger card does; time runs on when it closes.
+  const held = eclipseOpen || overlay !== undefined;
   useEffect(() => {
-    if (eclipseOpen && ops.speed !== 0) ops.setSpeed(0);
-  }, [eclipseOpen, ops.speed]); // eslint-disable-line react-hooks/exhaustive-deps
+    ops.setHold(held);
+  }, [held]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const closeOverlay = () => {
+    if (overlay === 'coach') onCoachSeen?.();
+    setOverlay(undefined);
+  };
+  const finishMission = () => {
+    setOverlay(undefined);
+    setPanel(undefined);
+    ops.finish();
+  };
 
   const typeOf = (hazardId: string) => state?.hazards.find((h) => h.id === hazardId)?.type ?? '';
   const shortLabel = (hazardId: string, optionId: string) => {
@@ -99,7 +131,7 @@ export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome,
   };
 
   const setSpeed = (s: OpsSpeed) => {
-    if (eclipseOpen) return;
+    if (s > 0 && held) return;
     if (s > 0) setLastSpeed(s);
     ops.setSpeed(s);
   };
@@ -192,6 +224,7 @@ export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome,
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
       if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
+      if (overlay) return;
       if (openCard) {
         const i = e.key === 'ArrowLeft' ? 0 : e.key === 'ArrowRight' ? 1 : e.key === 'ArrowDown' ? 2 : -1;
         const c = openCard.choices[i];
@@ -250,7 +283,9 @@ export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome,
           })();
 
   const awaitingExt = state.status === 'awaiting-extension' && view.extension && !view.extension.decided;
-  const lockedUi = ops.locked || eclipseOpen;
+  const lockedUi = ops.locked || held;
+  const progress = missionProgress(state);
+  const nudge = ops.speed === 0 && !lockedUi && !openCard && !flying && !ops.result && !debrief;
   const g = ghost && { path: ghost.path, label: `${ghost.label.toUpperCase()} · REAL` };
   const arrival = milestoneLine(view.clock.next?.kind, view.clock.next?.inDays, dest.name);
   const segTotal = FLY_RULES.gaugeSegments.value;
@@ -288,7 +323,7 @@ export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome,
   );
 
   const speeds = (
-    <div className="fly-speeds" role="group" aria-label="Time speed">
+    <div className={`fly-speeds${nudge ? ' nudge' : ''}`} role="group" aria-label="Time speed">
       {OPS_SPEEDS.map((sp) => (
         <button key={sp} type="button" className="sd-key fly-speed" aria-pressed={ops.speed === sp} aria-label={SPEED_NAME(sp)} disabled={lockedUi && sp !== 0} onClick={() => setSpeed(sp)}>
           {SPEED_LABEL(sp)}
@@ -313,7 +348,7 @@ export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome,
         const left = phone ? Math.min(it.left, RIBBON_PHONE_MAX) : it.left;
         const w = COMING[it.kind];
         return (
-          <div key={`${it.kind}-${it.day}`} className={`fly-ev${flip ? ' flip' : ''}${i % 2 ? ' low' : ''}${it.important ? ' important' : ''}`} style={{ left: `${left * 100}%` }}>
+          <div key={`${it.kind}-${it.day}-${i}`} className={`fly-ev${flip ? ' flip' : ''}${i % 2 ? ' low' : ''}${it.important ? ' important' : ''}`} style={{ left: `${left * 100}%` }}>
             <span className="fly-ev-icon">
               <SDIcon icon={w.icon} size={phone ? 15 : 17} />
             </span>
@@ -390,6 +425,9 @@ export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome,
       )}
       <button type="button" className="fly-action" onClick={ops.nextEvent} disabled={lockedUi} aria-label="Next event">
         NEXT EVENT ▸
+      </button>
+      <button type="button" className="fly-action finish" onClick={() => setOverlay('finish')}>
+        {NAV.finish}
       </button>
     </div>
   );
@@ -478,6 +516,7 @@ export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome,
         lost={state.status === 'lost'}
       />
       <Teletype className="fly-log sd-crt-text" text={logText} prefix="> " />
+      {!phone && <span className="fly-goal">{FLY_GOAL}</span>}
       {!phone && (
         <div className="fly-legend">
           <span>
@@ -515,6 +554,65 @@ export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome,
     </main>
   );
 
+  const progressBar = (
+    <div className="fly-progress" role="progressbar" aria-label="Mission progress" aria-valuemin={0} aria-valuemax={1} aria-valuenow={progress.fraction}>
+      <div className="fly-progress-bar sd-well">
+        <div className="fly-progress-fill" style={{ width: `${progress.fraction * 100}%` }} />
+      </div>
+      <span className="fly-progress-txt">{nudge ? playNudge(SPEED_LABEL(lastSpeed)) : endsInWords(progress.daysLeft)}</span>
+    </div>
+  );
+
+  const confirm = (overlay === 'finish' || overlay === 'leave') && (
+    <div className="sd-overlay" role="dialog" aria-modal="true" aria-label={overlay === 'finish' ? FINISH_CONFIRM.title : LEAVE_CONFIRM.title}>
+      <div className="sd-confirm sd-paper">
+        <h2 className="sd-brief-title">{overlay === 'finish' ? FINISH_CONFIRM.title : LEAVE_CONFIRM.title}</h2>
+        <p className="sd-brief-job">{overlay === 'finish' ? FINISH_CONFIRM.body : LEAVE_CONFIRM.body}</p>
+        <div className="sd-confirm-foot">
+          <button type="button" className="sd-ghost-btn" onClick={() => setOverlay(undefined)}>
+            {overlay === 'finish' ? FINISH_CONFIRM.no : LEAVE_CONFIRM.stay}
+          </button>
+          {overlay === 'leave' && onBack && (
+            <button type="button" className="sd-ghost-btn" onClick={onBack}>
+              {LEAVE_CONFIRM.leave}
+            </button>
+          )}
+          {!debrief && (
+            <button type="button" className="sd-cta" onClick={finishMission}>
+              {overlay === 'finish' ? FINISH_CONFIRM.yes : LEAVE_CONFIRM.finish}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  const overlays = (
+    <>
+      {overlay === 'coach' && <CoachCard onClose={closeOverlay} />}
+      {overlay === 'info' && brief && (
+        <MissionBriefing title={brief.title} destination={design.destination} briefing={brief.briefing} {...(brief.concept ? { concept: brief.concept } : {})} onClose={closeOverlay} />
+      )}
+      {confirm}
+    </>
+  );
+
+  // Once the mission is over, Back goes on to the report instead of throwing the flight away.
+  const back = () => (debrief ? onDone(state) : setOverlay('leave'));
+
+  const helpKeys = (
+    <div className="fly-help">
+      {brief && (
+        <button type="button" className="sd-ghost-btn fly-help-q" aria-label={NAV.info} title={NAV.info} onClick={() => setOverlay('info')}>
+          i
+        </button>
+      )}
+      <button type="button" className="sd-ghost-btn fly-help-q" aria-label={NAV.help} title={NAV.help} onClick={() => setOverlay('coach')}>
+        ?
+      </button>
+    </div>
+  );
+
   const brand = (
     <div className="sd-brand">
       <button type="button" className="sd-brand-name" onClick={onHome} aria-label="Signal Delay: home">
@@ -530,9 +628,14 @@ export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome,
     return (
       <div className={`sd fly phone${engineer ? ' eng' : ''}`}>
         <div className="fly-status">
-          <button type="button" className="fly-status-brand" onClick={onHome}>
-            {GAME_NAME}
-          </button>
+          {onBack ? (
+            <BackButton onBack={back} />
+          ) : (
+            <button type="button" className="fly-status-brand" onClick={onHome}>
+              {GAME_NAME}
+            </button>
+          )}
+          {helpKeys}
           <ModeLever mode={mode} onMode={onMode} />
         </div>
         {resources}
@@ -545,6 +648,7 @@ export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome,
             </div>
             {speeds}
           </div>
+          {progressBar}
           <div className="fly-ribbon phone">
             <span className="fly-ribbon-title">COMING UP</span>
             {ribbon}
@@ -552,15 +656,22 @@ export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome,
         </div>
         {openCard && <DangerCard card={openCard} engineer={engineer} phone onPick={pickCard} />}
         {resultBox}
+        {overlays}
       </div>
     );
 
   return (
     <div className={`sd fly${engineer ? ' eng' : ''}`}>
       <header className="fly-top">
-        {brand}
+        <div className="fly-top-left">
+          {onBack && <BackButton onBack={back} />}
+          {brand}
+        </div>
         {resources}
-        <ModeLever mode={mode} onMode={onMode} />
+        <div className="fly-top-right">
+          {helpKeys}
+          <ModeLever mode={mode} onMode={onMode} />
+        </div>
       </header>
       {crt}
       <footer className="fly-bottom">
@@ -571,6 +682,7 @@ export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome,
             <span className="fly-arrival">{arrival}</span>
           </div>
           {speeds}
+          {progressBar}
         </div>
         <div className="fly-ribbon">
           <div className="fly-ribbon-head">
@@ -580,6 +692,7 @@ export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome,
           {ribbon}
         </div>
       </footer>
+      {overlays}
     </div>
   );
 }

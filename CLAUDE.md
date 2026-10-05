@@ -52,6 +52,9 @@ There is no lint step.
 
 - **The UI never computes a number.** It calls the engine and only formats units (`src/ui/format.ts`). Need a new on-screen number? Add it to the engine (with a test in `tests/engineApi.test.ts`, `tests/fly.test.ts`, `tests/pack.test.ts` or `tests/report.test.ts`), not the UI. `tests/uiGuards.test.ts` fails on digits in JSX text or "number + unit" in UI strings, and on any React/DOM import in `src/engine`. Put styles in CSS files, not inline strings.
 - **Design source of truth:** the Claude Design "Signal Delay" screens, copied byte-for-byte in `docs/design/signal-delay/` (with reference shots). Tokens are CSS variables in `src/ui/styles/theme.css`; each screen has its own `sd-*.css`. After a visual change, run `npm run shots` and compare the app and design PNGs side by side.
+  - **Fonts deliberately differ from the mockups** (the user asked for a game look): Orbitron (`--sd-display`), Exo 2 (`--sd-body`), Share Tech Mono (`--sd-mono`), VT323 on the CRT screens. Orbitron is about a third wider than the mockups' Big Shoulders, so display sizes were scaled by 0.75; check new display text at both shot sizes.
+- **Navigation:** every step has ◂ BACK (`components/sd/BackButton.tsx`). `App.tsx` keeps a trail of visited steps (`go` / `back`), synced with the browser's Back button. Back skips a finished flight; Back in flight asks first (leave, finish, or keep flying).
+- **Help for new players:** `MissionBriefing` (opens itself the first time a level is packed; MISSION INFO / ⓘ reopens it), `CoachCard` (how to fly: first flight, the ? key, HOW TO PLAY on Home), and the Pack launch checklist. Words live in `sdWords.ts` (`BRIEFING`, `COACH`, `LAUNCH_CHECKS`, `NAV`); "seen" flags in `saves.ts` (`sd.seen`). The screenshot specs pre-set `sd.seen`; `tests/visual/help.spec.ts` shoots the help itself.
 - **One flight model everywhere (the Mission operations engine).**
   - Cadet: `Home` → (mission map) → `Pack` → `FlyAndSurvive` → `MissionReport`; `Daily` (share card) and `Notebook` from Home.
   - Engineer: `BuildBay` → `FlyAndSurvive` (Engineer readouts and the EQUATIONS drawer) → `MissionReport` with Engineer details.
@@ -59,6 +62,8 @@ There is no lint step.
 - Engineer mode shows each equation and every input; ⓘ (`SourceInfo`) shows the `Sourced<T>` record, with a "game estimate" badge when `isGameEstimate`.
 - **Fly & Survive** (`screens/FlyAndSurvive.tsx`, `components/fly/*`):
   - Clock in `useOpsSession.ts` (`advanceOperations`, `decide`, `sendCommand`, `bookDsn`, `nextEventT`; a transit plays the team's reaction, the light-time trip, then the wait for the outcome).
+  - **The chosen speed stays set** (II / 10× / 100× / 1000× mission days a minute): a card, a result, the eclipse card or an overlay only *holds* the clock (`locked` / `setHold`), and time runs on by itself once it clears. A transit that cannot advance is cleared (stall guard).
+  - **FINISH MISSION** (`finish()` → engine `finishOperations`): the robot flies the rest with its default responses and ends at the extension decision, so every flight reaches the report. The footer shows `missionProgress` (bar + "MISSION ENDS IN …").
   - Numbers come from `consoleView`, `powerPlanPreview`, `dsnOptions` (`ops/console.ts`) and `flyTiles`, `flyCard`, `comingUp`, `eclipseCard`, `outcomeIn_s` (`ops/fly.ts`).
   - **Risk chips read "⚠ +n risk" (`riskIncrease`), never a negative number.**
   - The console panels (`components/ops/PowerDial`, `BookCall`, `OpsPanels`) are drawers.
@@ -95,7 +100,7 @@ There is no lint step.
 **Mission operations (`src/engine/ops/`; spec "Mission operations"; UI: the Operations Console).**
 - Entry points in `ops/index.ts`:
   - `startOperations`, `advanceOperations` (stops at each new decision), `sendCommand`, `decide`, `bookDsn`;
-  - `runOperations` (headless, with a policy), `replayOperations` (seed + action log);
+  - `runOperations` (headless, with a policy), `finishOperations` (fly on from any state to the end; `runOperations` uses it), `replayOperations` (seed + action log);
   - `operationsDebrief`, `operationsForecast`.
 - `timeline.ts` `prepareOps(design)` precomputes the fixed day-by-day environment: distances, light time, Sun–Earth–probe angle, eclipses, power, link rates and dose. The clock then runs in days, split part-way through a day when a command arrives.
 - **Determinism:** each hazard has its own seeded stream (`subRng`), and every random number is drawn at the start (Poisson thinning). Tests rely on the same seed giving the same mission, and on decisions never reshuffling later draws. `rng: () => 0.999999` means no bad luck.

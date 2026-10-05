@@ -9,6 +9,7 @@ async function launch(page: Page, mobile: boolean, engineer = false) {
   await page.addInitScript(() => {
     try {
       localStorage.setItem('mdt.mode', 'engineer');
+      localStorage.setItem('sd.seen', JSON.stringify(['coach', 'brief:moon-1', 'brief:moon-2', 'brief:moon-3', 'brief:mars', 'brief:venus', 'brief:bennu', 'brief:jupiter']));
       localStorage.removeItem('mdt.ops');
     } catch {
       /* ignore */

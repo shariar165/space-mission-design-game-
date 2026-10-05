@@ -5,6 +5,7 @@ import { test } from '@playwright/test';
 test('map, rescue, build bay', async ({ page }, info) => {
   await page.addInitScript(() => {
     localStorage.setItem('mdt.mode', 'cadet');
+    localStorage.setItem('sd.seen', JSON.stringify(['coach', 'brief:moon-1', 'brief:moon-2', 'brief:moon-3', 'brief:mars', 'brief:venus', 'brief:bennu', 'brief:jupiter']));
     localStorage.setItem('mdt.progress', JSON.stringify({ 'moon-1': 2, 'moon-2': 1, 'moon-3': 3 }));
   });
   await page.goto('/');
@@ -17,7 +18,8 @@ test('map, rescue, build bay', async ({ page }, info) => {
   await page.waitForTimeout(400);
   await page.screenshot({ path: `test-results/shots/rescue-${info.project.name}.png`, fullPage: true });
   await page.goto('/');
-  await page.getByRole('switch', { name: 'Engineer mode' }).click();
+  const mobile = info.project.name === 'mobile';
+  await page.getByRole(mobile ? 'button' : 'switch', { name: mobile ? 'Engineer mode (short)' : 'Engineer mode' }).click();
   await page.waitForTimeout(1500);
   await page.screenshot({ path: `test-results/shots/buildbay-${info.project.name}.png` });
 });

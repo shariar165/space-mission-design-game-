@@ -137,23 +137,39 @@ export function runOperations(
   design: Design,
   opts: StartOptions & { policy?: HazardPolicy; extension?: ExtensionPolicy } = {},
 ): { state: OpsState; debrief: OpsDebrief } {
-  let s = startOperations(design, opts);
+  const s = finishOperations(startOperations(design, opts), { policy: opts.policy ?? 'safe', extension: opts.extension ?? 'end' });
+  return { state: s, debrief: operationsDebrief(s) };
+}
+
+/**
+ * Fly on from any state to the end of the mission (complete or lost), answering each new decision with a policy.
+ * By default the craft handles every open hazard itself (standing order or fault protection at the deadline) and
+ * the mission ends at the extension decision: the player's "finish mission", so a flight always reaches the report.
+ */
+export function finishOperations(state: OpsState, opts: { policy?: HazardPolicy; extension?: ExtensionPolicy } = {}): OpsState {
+  const policy = opts.policy ?? 'default';
+  let s = state;
   for (let i = 0; s.status === 'flying' || s.status === 'awaiting-extension'; i++) {
-    if (i > 100_000) throw new Error('runOperations did not finish');
+    if (i > 100_000) throw new Error('finishOperations did not finish');
     if (s.status === 'awaiting-extension') {
       const dec = s.decisions.find((d) => d.id === 'extension')!;
       s = decide(s, 'extension', pickExtension(opts.extension ?? 'end', dec.extensionOptions!, s)).state;
       continue;
     }
+    const t0 = s.t;
     s = advanceOperations(s);
     for (const id of s.newDecisions) {
       const dec = s.decisions.find((d) => d.id === id)!;
       if (dec.kind !== 'hazard' || dec.commanded) continue;
-      const choice = pickHazard(opts.policy ?? 'safe', dec, s);
+      const choice = pickHazard(policy, dec, s);
       if (choice !== undefined) s = decide(s, id, choice).state;
     }
+    // The clock's horizon was reached while still flying: nothing more can happen, so the mission is over.
+    if (s.status === 'flying' && s.t <= t0 && s.newDecisions.length === 0) {
+      s = { ...s, status: 'complete', events: [...s.events, { t: s.t, code: 'mission-complete', values: {} }] };
+    }
   }
-  return { state: s, debrief: operationsDebrief(s) };
+  return s;
 }
 
 /**
@@ -360,6 +376,6 @@ export function operationsDebrief(s: OpsState): OpsDebrief {
 export { defaultBooking, defaultPowerPlan, prepareOps, primeScienceFraction };
 export { consoleView, dsnOptions, nextEventT, opsAvailable, powerPlanPreview, CONSOLE_RULES } from './console';
 export type * from './console';
-export { comingUp, eclipseCard, flyCard, flyTiles, FLY_RULES, outcomeIn_s, segmentsFromFraction, segmentsFromMargin, systemsHealth } from './fly';
+export { comingUp, eclipseCard, flyCard, flyTiles, FLY_RULES, missionProgress, outcomeIn_s, segmentsFromFraction, segmentsFromMargin, systemsHealth } from './fly';
 export type * from './fly';
 export type * from './types';

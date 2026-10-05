@@ -42,3 +42,11 @@ export const loadDaily = (): DailySave => {
   return { played: Array.isArray(v.played) ? v.played : [], results: v.results ?? {} };
 };
 export const saveDaily = (d: DailySave) => write(DAILY_KEY, d);
+
+/** Which help the player has already seen: level briefings ("brief:<level id>") and the flight coach ("coach"). */
+const SEEN_KEY = 'sd.seen';
+export const loadSeen = (): string[] => {
+  const v = read<unknown>(SEEN_KEY, []);
+  return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [];
+};
+export const saveSeen = (seen: string[]) => write(SEEN_KEY, seen);
