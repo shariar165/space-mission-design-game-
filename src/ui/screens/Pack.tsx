@@ -30,6 +30,7 @@ import type { Design } from '../../engine/types';
 import { SourceInfo } from '../components/SourceInfo';
 import { BackButton } from '../components/sd/BackButton';
 import { MissionBriefing } from '../components/sd/MissionBriefing';
+import { NameTag } from '../components/sd/NameTag';
 import { MissionSteps } from '../components/sd/MissionSteps';
 import { ModeLever, type Mode } from '../components/sd/ModeLever';
 import { SDIcon } from '../components/sd/SDIcon';
@@ -70,11 +71,14 @@ interface Props {
   brief?: { title: string; briefing: Briefing; concept?: string; open?: boolean };
   /** The briefing was closed. */
   onBriefSeen?: () => void;
+  /** The robot's name (empty: the default) and its setter. */
+  robotName?: string;
+  onRobotName?: (name: string) => void;
 }
 
 type Hl = { dangers: string[]; parts: PartId[] } | undefined;
 
-export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLesson, onHome, onLaunch, onBack, brief, onBriefSeen }: Props) {
+export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLesson, onHome, onLaunch, onBack, brief, onBriefSeen, robotName, onRobotName }: Props) {
   const engineer = mode === 'engineer';
   const phone = useIsPhone();
   const dest = DESTINATIONS[base.destination];
@@ -365,6 +369,8 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
     </div>
   );
 
+  const nameTag = onRobotName && <NameTag name={robotName ?? ''} onName={onRobotName} />;
+
   const lesson = lessonCard && (
     <div className="pk-lesson sd-paper">
       <span className="sd-history-k">
@@ -403,6 +409,7 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
           {scale}
         </div>
         {statusLine}
+        {nameTag}
         {lesson}
         {shelfCards}
         {calendar}
@@ -446,7 +453,10 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
             {nose}
             {scale}
           </div>
-          {statusLine}
+          <div className="pk-status-row">
+            {statusLine}
+            {nameTag}
+          </div>
           {lesson}
         </section>
         <section className="pk-panel pk-deck" aria-label={`Danger deck: ${dest.name}`}>

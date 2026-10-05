@@ -11,6 +11,8 @@ import './styles/sd-report.css';
 import './styles/sd-home.css';
 import './styles/sd-daily.css';
 import './styles/sd-notebook.css';
+import './styles/sd-moments.css';
+import './styles/sd-postcards.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

@@ -1,0 +1,57 @@
+/* POSTCARDS FROM SPACE (screens/Postcards.tsx, components/sd/PostcardView.tsx), the flight's postcard toast and the
+   report's strip. Real NASA pictures on a paper card with a destination stamp. */
+
+/* ---- One card, full size ---- */
+.pc-overlay { z-index: 70; }
+.pc-card { position: relative; margin: 0; width: min(560px, 92vw); max-height: 92vh; overflow: auto; display: flex; flex-direction: column; gap: 12px; padding: 16px 16px 18px; border-radius: 6px; transform: rotate(-1deg); box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55); }
+.pc-img { display: block; width: 100%; max-height: 52vh; object-fit: contain; background: #000; border: 1px solid var(--sd-paper-ink-2); }
+.pc-stamp { position: absolute; top: 24px; right: 24px; z-index: 1; padding: 6px 10px; border: 2px dashed var(--sd-red); border-radius: 3px; background: var(--sd-paper); color: var(--sd-red); font: 700 12px/1 var(--sd-mono); letter-spacing: 0.18em; transform: rotate(4deg); }
+.pc-body { display: flex; flex-direction: column; gap: 8px; }
+.pc-title { font: 800 22px/1.1 var(--sd-display); letter-spacing: 0.04em; color: var(--sd-paper-ink); text-transform: uppercase; }
+.pc-caption { display: inline; font: 400 16px/1.4 var(--sd-body); color: var(--sd-paper-ink-2); }
+.pc-caption .sd-verify { margin-left: 8px; }
+.pc-credit { font: 700 10px/1.2 var(--sd-mono); letter-spacing: 0.12em; color: var(--sd-paper-ink-2); opacity: 0.8; }
+.pc-close { align-self: flex-end; }
+
+/* ---- The album ---- */
+.pc { box-sizing: border-box; min-height: 100vh; padding: 28px 40px 48px; background: var(--sd-chassis); }
+.pc-head { display: flex; align-items: center; gap: 18px; }
+.pc-count { margin-left: auto; font: 400 34px/1 var(--sd-crt-font); color: var(--sd-amber); }
+.pc-sub { margin: 14px 0 22px; max-width: 720px; font: 400 15px/1.4 var(--sd-body); color: var(--sd-ink-2); }
+.pc-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 18px; }
+.pc-tile { box-sizing: border-box; width: 100%; height: 100%; min-height: 220px; display: flex; flex-direction: column; gap: 6px; padding: 10px 10px 12px; border-radius: 6px; text-align: left; }
+.pc-tile.open { cursor: pointer; border: none; background: var(--sd-paper); color: var(--sd-paper-ink); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35); transition: transform 0.15s; }
+.pc-tile.open:hover { transform: rotate(-1.5deg) translateY(-3px); }
+.pc-tile.open img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; background: #000; }
+.pc-tile.locked { border: 2px dashed var(--sd-line-2); background: var(--sd-panel); color: var(--sd-ink-3); align-items: center; justify-content: center; text-align: center; }
+.pc-tile-lock { font-size: 36px; filter: grayscale(1); opacity: 0.5; }
+.pc-tile-dest { font: 700 10px/1 var(--sd-mono); letter-spacing: 0.18em; color: var(--sd-red-ink); }
+.pc-tile.locked .pc-tile-dest { color: var(--sd-ink-3); }
+.pc-tile-title { font: 800 15px/1.15 var(--sd-display); letter-spacing: 0.03em; text-transform: uppercase; }
+.pc-tile-hint { font: 400 13px/1.35 var(--sd-body); color: var(--sd-ink-2); max-width: 22ch; }
+.pc.phone { padding: 16px 14px 32px; }
+.pc.phone .pc-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.pc.phone .pc-tile { min-height: 170px; }
+
+/* ---- Flight: the postcard toast (the clock runs on) ---- */
+.fly-postcard { position: fixed; right: 22px; bottom: 210px; z-index: 40; cursor: pointer; display: flex; align-items: center; gap: 12px; max-width: 360px; padding: 8px 14px 8px 8px; border: none; border-radius: 6px; background: var(--sd-paper); color: var(--sd-paper-ink); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5); transform: rotate(-1.5deg); animation: fly-postcard-in 0.45s cubic-bezier(0.2, 1.4, 0.4, 1); text-align: left; }
+.fly-postcard img { width: 84px; height: 64px; object-fit: cover; background: #000; flex: none; }
+.fly-postcard-t { display: flex; flex-direction: column; gap: 4px; }
+.fly-postcard-k { font: 700 11px/1 var(--sd-mono); letter-spacing: 0.12em; color: var(--sd-red-ink); }
+.fly-postcard-v { font: 800 15px/1.1 var(--sd-display); text-transform: uppercase; }
+.fly-postcard-look { font: 700 10px/1 var(--sd-mono); letter-spacing: 0.14em; color: var(--sd-paper-ink-2); }
+@keyframes fly-postcard-in { from { opacity: 0; transform: translateY(30px) rotate(6deg); } }
+.fly.phone .fly-postcard { left: 12px; right: 12px; bottom: auto; top: 128px; max-width: none; }
+
+/* ---- Report: postcards from this flight ---- */
+.rp-postcards { display: flex; flex-direction: column; gap: 10px; padding: 12px 16px; border-radius: 3px; background: var(--sd-paper-ink); }
+.rp-postcards-k { font: 700 11px/1 var(--sd-mono); letter-spacing: 0.16em; color: var(--sd-paper); }
+.rp-postcards-row { display: flex; flex-wrap: wrap; gap: 12px; }
+.rp-postcard { cursor: pointer; display: flex; flex-direction: column; gap: 6px; width: 150px; padding: 6px 6px 8px; border: none; border-radius: 3px; background: var(--sd-paper); color: var(--sd-paper-ink); font: 800 11px/1.15 var(--sd-display); text-transform: uppercase; text-align: left; transform: rotate(-1deg); }
+.rp-postcard:nth-child(even) { transform: rotate(1.2deg); }
+.rp-postcard img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; background: #000; }
+.rp-postcards-none { font: 400 14px/1.3 var(--sd-body); color: var(--sd-ink-3); }
+.rp.phone .rp-postcard { width: calc(50% - 6px); }
+.pc-head .sd-brand { min-width: 0; }
+.pc.phone .pc-head { flex-wrap: wrap; gap: 10px 14px; }
+.pc.phone .pc-count { font-size: 26px; white-space: nowrap; }

@@ -33,7 +33,7 @@ function missionTimeline(ev: FullEvaluation): PhaseWindow[] {
   });
 }
 
-/** Earth, destination and the frame they are drawn in, on a mission day. */
+/** Earth, destination, the Sun and the frame they are drawn in, on a mission day. */
 function bodies(design: Design, ev: FullEvaluation) {
   const jd0 = julianDate(ev.details.launchDate);
   if (design.destination === 'moon') {
@@ -43,6 +43,11 @@ function bodies(design: Design, ev: FullEvaluation) {
     return {
       frame: 'earth' as const,
       earth: (_day: number): XY => [0, 0],
+      // Seen from Earth, the Sun is at minus Earth's heliocentric position (solar storms come from there).
+      sun: (day: number): XY => {
+        const e = heliocentricPosition('earth', jd0 + day);
+        return [-e[0], -e[1]];
+      },
       // The transfer ends on the far side ([−r, 0]); the Moon is there on arrival and keeps orbiting.
       dest: (day: number): XY => {
         const th = Math.PI + (2 * Math.PI * (day - flight)) / period;
@@ -58,6 +63,7 @@ function bodies(design: Design, ev: FullEvaluation) {
   return {
     frame: 'sun' as const,
     earth: (day: number) => xy('earth', day),
+    sun: (_day: number): XY => [0, 0],
     dest: (day: number) => xy(design.destination, day),
     destDistance: (day: number) => earthDistance(design.destination, jd0 + day),
   };
@@ -103,6 +109,8 @@ export interface FlightFrame {
   craft: XY;
   earth: XY;
   dest: XY;
+  /** The Sun in the map's frame: the centre, or about 1 AU off the Moon map (Earth-centred). */
+  sun: XY;
   earthDistance_m: number;
   /** One-way light time Earth ↔ craft (s). */
   oneWay_s: number;
@@ -137,6 +145,7 @@ function frameAt(design: Design, ev: FullEvaluation, tl: PhaseWindow[], b: Retur
     craft: craftPosition(design, day, ev),
     earth: b.earth(day),
     dest: b.dest(day),
+    sun: b.sun(day),
     earthDistance_m: s.distance_m,
     oneWay_s: s.oneWay_s,
   };

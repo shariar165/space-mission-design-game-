@@ -157,7 +157,7 @@ export function durationWords(s: number): string {
   if (t >= 2 * 3600) return `${num(Math.round(t / 3600))} HOURS`;
   if (t >= 3600) return `${num(Math.round(t / 60))} MINUTES`;
   if (t >= 90) return `${num(Math.round(t / 60))} MINUTES`;
-  return `${num(Math.round(t))} SECONDS`;
+  return Math.round(t) === 1 ? `${num(1)} SECOND` : `${num(Math.round(t))} SECONDS`;
 }
 
 /** A segment change on a chip, with a true minus sign: "−1", "+2". */

@@ -32,7 +32,7 @@ Playwright (`@playwright/test`, a devDependency) keeps its browsers inside the v
 | Validation only (rewrites `docs/VALIDATION_RESULTS.md`) | `npm run test:validation` |
 | Data audit (rewrites `TODO_DATA.md`) | `npm run todo-data` |
 | Typecheck | `npm run typecheck` (`tsc --noEmit`, TypeScript 7, strict, `noUncheckedIndexedAccess`) |
-| Screenshots | `npm run shots` (Playwright: game and design copies at 1440 × 900 and 390 × 844; `-- fly`, `-- pack`, `-- report`, `-- design`). App shots go to `test-results/shots/`, design shots to `docs/design/signal-delay/shots/` |
+| Screenshots | `npm run shots` (Playwright: game and design copies at 1440 × 900 and 390 × 844; `-- fly`, `-- pack`, `-- report`, `-- design`). App shots go to `test-results/shots/`, design shots to `docs/design/signal-delay/shots/`. Specs live in `tests/visual/` and are not part of `npm test`; Playwright starts its own Vite on port 5199 (or reuses one already there) |
 
 There is no lint step.
 
@@ -50,13 +50,13 @@ There is no lint step.
 
 ## UI rules (spec: "UI rules", rules 21–27 for Signal Delay)
 
-- **The UI never computes a number.** It calls the engine and only formats units (`src/ui/format.ts`). Need a new on-screen number? Add it to the engine (with a test in `tests/engineApi.test.ts`, `tests/fly.test.ts`, `tests/pack.test.ts` or `tests/report.test.ts`), not the UI. `tests/uiGuards.test.ts` fails on digits in JSX text or "number + unit" in UI strings, and on any React/DOM import in `src/engine`. Put styles in CSS files, not inline strings.
+- **The UI never computes a number.** It calls the engine and only formats units (`src/ui/format.ts`). Need a new on-screen number? Add it to the engine (with a test in `tests/engineApi.test.ts`, `tests/fly.test.ts`, `tests/pack.test.ts`, `tests/report.test.ts` or `tests/notebook.test.ts` (Notebook and Daily)), not the UI. `tests/uiGuards.test.ts` fails on digits in JSX text or "number + unit" in UI strings, and on any React/DOM import in `src/engine`. Put styles in CSS files, not inline strings.
 - **Design source of truth:** the Claude Design "Signal Delay" screens, copied byte-for-byte in `docs/design/signal-delay/` (with reference shots). Tokens are CSS variables in `src/ui/styles/theme.css`; each screen has its own `sd-*.css`. After a visual change, run `npm run shots` and compare the app and design PNGs side by side.
   - **Fonts deliberately differ from the mockups** (the user asked for a game look): Orbitron (`--sd-display`), Exo 2 (`--sd-body`), Share Tech Mono (`--sd-mono`), VT323 on the CRT screens. Orbitron is about a third wider than the mockups' Big Shoulders, so display sizes were scaled by 0.75; check new display text at both shot sizes.
 - **Navigation:** every step has ◂ BACK (`components/sd/BackButton.tsx`). `App.tsx` keeps a trail of visited steps (`go` / `back`), synced with the browser's Back button. Back skips a finished flight; Back in flight asks first (leave, finish, or keep flying).
 - **Help for new players:** `MissionBriefing` (opens itself the first time a level is packed; MISSION INFO / ⓘ reopens it), `CoachCard` (how to fly: first flight, the ? key, HOW TO PLAY on Home), and the Pack launch checklist. Words live in `sdWords.ts` (`BRIEFING`, `COACH`, `LAUNCH_CHECKS`, `NAV`); "seen" flags in `saves.ts` (`sd.seen`). The screenshot specs pre-set `sd.seen`; `tests/visual/help.spec.ts` shoots the help itself.
 - **One flight model everywhere (the Mission operations engine).**
-  - Cadet: `Home` → (mission map) → `Pack` → `FlyAndSurvive` → `MissionReport`; `Daily` (share card) and `Notebook` from Home.
+  - Cadet: `Home` → (mission map) → `Pack` → `FlyAndSurvive` → `MissionReport`; `Daily` (share card), `Notebook` and Rescue History (`screens/Rescue.tsx`, engine `rescue.ts`, data `rescueCases.json`) from Home.
   - Engineer: `BuildBay` → `FlyAndSurvive` (Engineer readouts and the EQUATIONS drawer) → `MissionReport` with Engineer details.
   - The old crisis-card flight is gone from the UI (`simulateMission` / `previewCrisis` stay for engine and validation tests).
 - Engineer mode shows each equation and every input; ⓘ (`SourceInfo`) shows the `Sourced<T>` record, with a "game estimate" badge when `isGameEstimate`.
@@ -70,15 +70,22 @@ There is no lint step.
 - **Pack** (`screens/Pack.tsx`): numbers from `pack.ts` (`buildPackDesign`, `packBlockers`, `dangerDeck`, `calendarTransfers`, `dayQuality`, `fitPart`) and `evaluateDesign` / `cadetGauges`. Part data and effects live in `src/data/pack.json`; a part's effect reaches the engine through `Design.kit`. Volume (the nose) and weight (the launch meter) are separate limits, and each blocker names the one that failed. Levels carry their shelf (`levels.ts` `shelfOf`).
 - **Mission Report** (`screens/MissionReport.tsx`, `components/report/ComicArt.tsx`): `operationsDebrief`, `reportPanels`, `reportVerdict` and `reportCompare` (`ops/report.ts`), star rules from `STAR_RULES`, and risk from `useOpsRisk`.
 - **Home / Daily / Notebook** (`screens/Home.tsx`, `Daily.tsx`, `Notebook.tsx`): counts from `notebook.ts` (`notebook`, `notebookProgress`, `rescueProgress`, `flightFacts`, `newLessons`) and `daily.ts` (`dailyNumber`, `dailySeed`, `dailyDesign`, `dailyGrid`, `dailyStreak`, `nextDailyIn_s`). Lessons live in `src/data/notebook.json` and each points at an existing Sourced text. Notebook facts and Daily results are saved in the browser (`src/ui/saves.ts`).
+- **Things that make players care** (spec UI rules 31–35; none of it changes the simulation):
+  - **Storms come from the Sun:** `FlightFrame.sun` (Sun-centred maps: the centre; Moon map: −r_earth, drawn on the edge by `sdGeometry.sunOnMap`) and `stormFront` (`ops/fly.ts`); `CrtMap` draws the wave (`stormWave`) and labels the Earth pulse YOUR ORDER.
+  - **The robot talks:** name tag on Pack (`components/sd/NameTag.tsx`, `saves.ts` `sd.robot`); `ops/voice.ts` `robotMessages` / `heardMessages` (each message arrives one light time late); `components/fly/RobotRadio.tsx`; the report shows the last message. Its lines are in `sdWords.ts` (`robotSays`).
+  - **Moments and sound:** `countdownAt` and `momentsSince` (`ops/fly.ts`); `components/fly/Moment.tsx` (launch countdown on the first flight of each level, `sd.seen` `launch:<level>`; arrival and storm banners); `src/ui/sound.ts` (WebAudio cues, silent without audio; `SoundToggle`, `sd.sound`). Styles in `sd-moments.css`.
+  - **Postcards:** `src/data/postcards.json` (NASA public-domain pictures, copies in `public/postcards/`, served under `import.meta.env.BASE_URL`), engine `postcards.ts` (`postcardsEarned`, `postcardAlbum`, `newPostcards`), `screens/Postcards.tsx`, `components/sd/PostcardView.tsx`, the flight toast and the report strip; saved as `sd.postcards`.
+  - **Ranks and badges:** `src/data/ranks.json`, engine `ranks.ts` (`starTotals`, `rankFor`, `badges`, `newBadges`; badge facts in `notebook.ts` `flightFacts`), `components/sd/CrewFile.tsx` (Home plate and panel); the report shows PROMOTED! / NEW BADGE against the crew file at launch.
+  - The screenshot specs pre-set `launch:*` in `sd.seen`; `tests/visual/storm.spec.ts` shoots the storm, `help.spec.ts` the countdown.
 - Words live in `src/ui/sdWords.ts` (Signal Delay), with `opsWords.ts` for the drawers. Pixel layout lives in `src/ui/sdGeometry.ts`. Levels and saved stars are in `src/ui/levels.ts`. New display constants go in `FLY_RULES` / `CONSOLE_RULES` / `pack.json`, registered in the data audit.
-- **Component tests** (`tests/ui/*.test.tsx`) start with `// @vitest-environment jsdom` and import `./setup` (cleanup, empty storage, `openMarsLevel`). With fake timers, advance time in small slices: each animation step schedules the next.
+- **Component tests** (`tests/ui/*.test.tsx`) start with `// @vitest-environment jsdom` and import `./setup` (cleanup, empty storage, `openMarsLevel`). jsdom has no Web Worker, so `setup.ts` runs the Risk Monte Carlo inline with `TEST_RISK_RUNS` (20) runs. With fake timers, advance time in small slices: each animation step schedules the next.
 - English only for now; the language toggle is hidden.
 
 ## Architecture
 
 **Data flow.** `src/data/*.json` (Sourced values) → `src/engine/data.ts` (typed casts plus `lookup()`) → physics modules → `src/engine/index.ts` (and `compare.ts`), which the UI calls.
 
-**Signal Delay engine modules:** `pack.ts` (Pack: nose, part effects, danger deck, launch calendar), `ops/fly.ts` (Fly & Survive view model), `ops/report.ts` (Mission Report), `notebook.ts` (Engineer's Notebook) and `daily.ts` (Daily mission).
+**Signal Delay engine modules:** `pack.ts` (Pack: nose, part effects, danger deck, launch calendar), `ops/fly.ts` (Fly & Survive view model), `ops/voice.ts` (the robot's messages), `ops/report.ts` (Mission Report), `notebook.ts` (Engineer's Notebook), `daily.ts` (Daily mission), `postcards.ts` (Postcards) and `ranks.ts` (ranks and badges).
 
 **`index.ts`** has four main entry points (`previewCrisis` shows the crisis card a seed will draw, before `simulateMission` flies it):
 - `evaluateDesign(design)` runs the whole pipeline:

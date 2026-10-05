@@ -6,13 +6,15 @@ import { evaluateDesign } from '../../engine/index';
 import { presetDesign } from '../../engine/missions';
 import { CoachCard } from '../components/sd/CoachCard';
 import { ModeLever, type Mode } from '../components/sd/ModeLever';
+import { SoundToggle } from '../components/sd/SoundToggle';
+import { CrewPlate, type Crew } from '../components/sd/CrewFile';
 import { SDIcon, type SDIconName } from '../components/sd/SDIcon';
 import { Teletype } from '../components/sd/Teletype';
 import { useReducedMotion } from '../opsGeometry';
 import { along, ring, useCycle, useIsPhone } from '../sdGeometry';
 import { isUnlocked, LEVELS, type Level, type Progress } from '../levels';
 import * as f from '../format';
-import { HOW_TO_PLAY } from '../sdWords';
+import { HOW_TO_PLAY, POSTCARD_WORDS } from '../sdWords';
 
 /** The demo order loops every 6 s: 5 s of flight, then a second of RECEIVED (design). */
 export const HOME_LOOP_MS = 6000;
@@ -36,11 +38,15 @@ interface Props {
   daily: { number: number; played: boolean };
   rescue: { solved: number; total: number };
   notebook: { got: number; total: number };
+  postcards: { got: number; total: number };
+  /** Rank and badges (the crew file). */
+  crew?: Crew;
   onPlay: (l: Level) => void;
   onMissions: () => void;
   onDaily: () => void;
   onRescue: () => void;
   onNotebook: () => void;
+  onPostcards: () => void;
 }
 
 /** The level PLAY continues: the first open level without a star, else the last open one. */
@@ -49,7 +55,7 @@ export function nextToPlay(progress: Progress): { level: Level; index: number } 
   return open.find((x) => !(progress[x.level.id] ?? 0)) ?? open[open.length - 1]!;
 }
 
-export function Home({ progress, mode, onMode, daily, rescue, notebook, onPlay, onMissions, onDaily, onRescue, onNotebook }: Props) {
+export function Home({ progress, mode, onMode, daily, rescue, notebook, postcards, crew, onPlay, onMissions, onDaily, onRescue, onNotebook, onPostcards }: Props) {
   const phone = useIsPhone();
   const still = useReducedMotion();
   const cycle = useCycle(HOME_LOOP_MS, !still);
@@ -69,6 +75,7 @@ export function Home({ progress, mode, onMode, daily, rescue, notebook, onPlay, 
     { label: 'DAILY MISSION', sub: `Daily #${f.num(daily.number)}. Same mission for everyone today.`, icon: 'calendar', tag: daily.played ? 'DONE ✓' : 'NEW TODAY', hot: !daily.played, onClick: onDaily },
     { label: 'RESCUE HISTORY', sub: 'Real robots that nearly died. Try to save them.', icon: 'rescue', tag: `${f.num(rescue.solved)} OF ${f.num(rescue.total)}`, hot: false, onClick: onRescue },
     { label: 'NOTEBOOK', sub: 'Real lessons you have earned.', icon: 'book', tag: `${f.num(notebook.got)} OF ${f.num(notebook.total)}`, hot: false, onClick: onNotebook },
+    { label: POSTCARD_WORDS.menu, sub: POSTCARD_WORDS.menuSub, icon: 'postcard', tag: `${f.num(postcards.got)} OF ${f.num(postcards.total)}`, hot: false, onClick: onPostcards },
   ];
   const howToEl = howTo && <CoachCard title={HOW_TO_PLAY.label} onClose={() => setHowTo(false)} />;
   const howToKey = (
@@ -178,8 +185,10 @@ export function Home({ progress, mode, onMode, daily, rescue, notebook, onPlay, 
     return (
       <div className={`sd hm phone${mode === 'engineer' ? ' eng' : ''}`}>
         <div className="hm-phone-top">
+          <SoundToggle />
           <ModeLever mode={mode} onMode={onMode} />
         </div>
+        {crew && <CrewPlate crew={crew} className="phone" />}
         <h1 className="hm-word">
           SIGNAL
           <br />
@@ -202,7 +211,10 @@ export function Home({ progress, mode, onMode, daily, rescue, notebook, onPlay, 
       <div className="hm-frame">
         <div className="hm-left">
           <div className="hm-hero">
-            <span className="hm-kicker">MISSION CONTROL · DEEP SPACE</span>
+            <span className="hm-kicker-row">
+              <span className="hm-kicker">MISSION CONTROL · DEEP SPACE</span>
+              {crew && <CrewPlate crew={crew} />}
+            </span>
             <h1 className="hm-word">
               SIGNAL
               <br />
@@ -220,6 +232,7 @@ export function Home({ progress, mode, onMode, daily, rescue, notebook, onPlay, 
                 CHOOSE A MISSION ▸
               </button>
               {howToKey}
+              <SoundToggle className="hm-sound" />
             </span>
             <ModeLever mode={mode} onMode={onMode} />
           </div>

@@ -4,7 +4,8 @@
 // Engineer: Build Bay → Fly & Survive → Mission Report (with Engineer details).
 // Every step has ◂ BACK: the steps visited are kept on a trail, and the browser's own Back button walks it too.
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { dailyDate, dailyDesign, dailyGrid, dailyNumber, dailySeed } from '../engine/daily';
+import { dailyDate, dailyDesign, dailyGrid, dailyNumber, dailySeed, dailyStreak } from '../engine/daily';
+import { badges, newBadges, rankFor, starTotals, type RankDef } from '../engine/ranks';
 import { evaluateDesign } from '../engine/index';
 import { flightFacts, mergeFacts, newLessons, NOTEBOOK, notebook, notebookProgress, rescueProgress, type NotebookFacts } from '../engine/notebook';
 import { operationsDebrief, type OpsState } from '../engine/ops/index';
@@ -12,8 +13,11 @@ import { shelfFor } from '../engine/pack';
 import type { RescueCaseId } from '../engine/rescue';
 import type { Design, DestinationId } from '../engine/types';
 import { TopBar, type Mode, type Step } from './components/TopBar';
-import { levelById, loadProgress, nextLevel, saveProgress, shelfOf, withStars, type Level, type Progress } from './levels';
-import { loadDaily, loadFlights, loadSeen, saveDaily, saveFlights, saveSeen, type DailySave } from './saves';
+import { LEVELS, levelById, loadProgress, maxStars, nextLevel, saveProgress, shelfOf, withStars, type Level, type Progress } from './levels';
+import { loadDaily, loadFlights, loadPostcards, loadRobotName, loadSeen, saveDaily, saveFlights, savePostcards, saveRobotName, saveSeen, type DailySave } from './saves';
+import { Postcards } from './screens/Postcards';
+import { postcardAlbum, postcardsEarned } from '../engine/postcards';
+import type { Crew } from './components/sd/CrewFile';
 import { BuildBay } from './screens/BuildBay';
 import { Daily } from './screens/Daily';
 import { FlyAndSurvive } from './screens/FlyAndSurvive';
@@ -82,6 +86,18 @@ export function App() {
   const [dailyRun, setDailyRun] = useState(false);
   /** Help already seen: level briefings and the flight coach. */
   const [seen, setSeen] = useState<string[]>(loadSeen);
+  const [robotName, setRobotName] = useState<string>(loadRobotName);
+  const [postcards, setPostcards] = useState<string[]>(loadPostcards);
+  const addPostcards = (ids: string[]) =>
+    setPostcards((p) => {
+      const next = [...new Set([...p, ...ids])];
+      savePostcards(next);
+      return next;
+    });
+  const nameRobot = (n: string) => {
+    setRobotName(n);
+    saveRobotName(n);
+  };
 
   const cadetMode = mode === 'cadet';
   const level = levelById(cadet.levelId);
@@ -90,6 +106,18 @@ export function App() {
   const ev = useMemo(() => evaluateDesign(active), [active]);
   const facts: NotebookFacts = useMemo(() => ({ ...flights, progress }), [flights, progress]);
   const todayIso = dailyDate(Date.now());
+
+  // ---- Crew file: rank from the stars across the levels, badges from deeds (engine ranks.ts) ----
+  const levelMax = useMemo(() => Object.fromEntries(LEVELS.map((l) => [l.id, maxStars(l)])), []);
+  type CrewInput = { facts: NotebookFacts; postcards: readonly string[]; played: string[] };
+  const badgeInput = (x: CrewInput) => ({ facts: x.facts, postcards: x.postcards, dailyStreak: dailyStreak(x.played, todayIso) });
+  const crewOf = (x: CrewInput): Crew => {
+    const totals = starTotals(x.facts.progress, levelMax);
+    return { ...rankFor(totals.stars, totals.maxStars), ...totals, badges: badges(badgeInput(x)) };
+  };
+  /** The crew file as it was when this flight launched, so the report can say what is new. */
+  const atLaunch = useRef<CrewInput | undefined>(undefined);
+  const [promotion, setPromotion] = useState<{ rank?: RankDef; badges: string[] }>();
 
   useEffect(() => {
     try {
@@ -206,6 +234,7 @@ export function App() {
 
   /** Launch: Fly & Survive flies the pinned craft with this seed. */
   const launchDesign = (d: Design) => {
+    atLaunch.current = { facts, postcards, played: daily.played };
     setFlyDesign(d);
     setFlown(undefined);
     go('fly');
@@ -227,6 +256,11 @@ export function App() {
     const nextFacts = mergeFacts(facts, flightFacts(s));
     const { progress: _p, ...flightOnly } = nextFacts;
     setFresh(newLessons(facts, { ...nextFacts, progress: nextProgress }));
+    const before = atLaunch.current ?? { facts, postcards, played: daily.played };
+    const after = { facts: { ...nextFacts, progress: nextProgress }, postcards: [...new Set([...postcards, ...postcardsEarned(s)])], played: dailyRun ? [...daily.played, todayIso] : daily.played };
+    const rankBefore = crewOf(before).rank;
+    const rankAfter = crewOf(after).rank;
+    setPromotion({ ...(rankAfter.id !== rankBefore.id ? { rank: rankAfter } : {}), badges: newBadges(badgeInput(before), badgeInput(after)) });
     setProgress(nextProgress);
     setFlights(flightOnly);
     setFlown(s);
@@ -246,7 +280,7 @@ export function App() {
   const next = level && cadetMode && (progress[level.id] ?? 0) >= 1 ? nextLevel(level.id) : undefined;
   const home = () => go('home');
   const firstNew = fresh.length ? notebook(facts).find((c) => c.id === fresh[0]) : undefined;
-  const fullScreen = step === 'fly' || step === 'report' || step === 'home' || step === 'daily' || step === 'notebook' || (step === 'build' && cadetMode);
+  const fullScreen = step === 'fly' || step === 'report' || step === 'home' || step === 'daily' || step === 'notebook' || step === 'postcards' || (step === 'build' && cadetMode);
 
   /** The mission briefing: what to do on this level (or a free build, or today's Daily). */
   const briefFor = (forDaily: boolean) =>
@@ -256,6 +290,8 @@ export function App() {
         ? { title: level.title, briefing: BRIEFING[level.id] ?? FREE_BRIEFING, concept: level.concept }
         : { title: 'Free build', briefing: FREE_BRIEFING };
   const packBrief = { ...briefFor(false), open: level !== undefined && !seen.includes(`brief:${level.id}`) };
+  /** The launch countdown plays on the first flight of each level (and of the Daily, and of a free build). */
+  const launchKey = `launch:${dailyRun ? 'daily' : (level?.id ?? 'free')}`;
 
   return (
     <div className={`app${step === 'build' && !cadetMode ? ' fixed' : ''}${cadetMode ? ' is-cadet' : ''}${step === 'fly' ? ' is-fly' : ''}`}>
@@ -288,6 +324,9 @@ export function App() {
             go('rescue');
           }}
           onNotebook={() => go('notebook')}
+          postcards={postcardAlbum(postcards)}
+          crew={crewOf({ facts, postcards, played: daily.played })}
+          onPostcards={() => go('postcards')}
         />
       )}
       {step === 'map' && (
@@ -309,6 +348,7 @@ export function App() {
           onBack={() => setRescueId(undefined)}
         />
       )}
+      {step === 'postcards' && <Postcards earned={postcards} onHome={home} onBack={back} />}
       {step === 'notebook' && <Notebook facts={facts} fresh={fresh} mode={mode} onMode={changeMode} onHome={home} onBack={back} />}
       {step === 'daily' && daily.results[todayIso] && (
         <Daily
@@ -337,6 +377,8 @@ export function App() {
           onLaunch={launchDesign}
           brief={packBrief}
           onBriefSeen={() => level && markSeen(`brief:${level.id}`)}
+          robotName={robotName}
+          onRobotName={nameRobot}
         />
       )}
       {step === 'build' && !cadetMode && <BuildBay design={design} ev={ev} engineer onChange={setDesign} onLaunch={launch} />}
@@ -353,11 +395,17 @@ export function App() {
           coach={!seen.includes('coach')}
           onCoachSeen={() => markSeen('coach')}
           brief={briefFor(dailyRun)}
+          robotName={robotName}
+          launchMoment={!seen.includes(launchKey)}
+          onLaunchSeen={() => markSeen(launchKey)}
+          onPostcards={addPostcards}
         />
       )}
       {step === 'report' && flown && flyDesign && (
         <MissionReport
           state={flown}
+          {...(promotion ? { promotion } : {})}
+          robotName={robotName}
           design={flyDesign}
           mode={mode}
           onMode={changeMode}

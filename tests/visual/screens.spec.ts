@@ -9,7 +9,7 @@ const seedStorage = (extra: Record<string, string> = {}) => {
 
 test('home', async ({ page }, info) => {
   await page.addInitScript((items) => {
-    localStorage.setItem('sd.seen', JSON.stringify(['coach', 'brief:moon-1', 'brief:moon-2', 'brief:moon-3', 'brief:mars', 'brief:venus', 'brief:bennu', 'brief:jupiter']));
+    localStorage.setItem('sd.seen', JSON.stringify(['coach', 'brief:moon-1', 'brief:moon-2', 'brief:moon-3', 'brief:mars', 'brief:venus', 'brief:bennu', 'brief:jupiter', 'launch:moon-1', 'launch:moon-2', 'launch:moon-3', 'launch:mars', 'launch:venus', 'launch:bennu', 'launch:jupiter', 'launch:free', 'launch:daily']));
     for (const [k, v] of Object.entries(items)) localStorage.setItem(k, v);
   }, seedStorage());
   await page.goto('/');
@@ -20,7 +20,7 @@ test('home', async ({ page }, info) => {
 
 test('notebook', async ({ page }, info) => {
   await page.addInitScript((items) => {
-    localStorage.setItem('sd.seen', JSON.stringify(['coach', 'brief:moon-1', 'brief:moon-2', 'brief:moon-3', 'brief:mars', 'brief:venus', 'brief:bennu', 'brief:jupiter']));
+    localStorage.setItem('sd.seen', JSON.stringify(['coach', 'brief:moon-1', 'brief:moon-2', 'brief:moon-3', 'brief:mars', 'brief:venus', 'brief:bennu', 'brief:jupiter', 'launch:moon-1', 'launch:moon-2', 'launch:moon-3', 'launch:mars', 'launch:venus', 'launch:bennu', 'launch:jupiter', 'launch:free', 'launch:daily']));
     for (const [k, v] of Object.entries(items)) localStorage.setItem(k, v);
   }, seedStorage({ 'sd.notebook': JSON.stringify({ hazards: { 'solar-storm': 87, 'memory-corruption': 149 }, conjunction: true, eclipse: true }) }));
   await page.goto('/');
@@ -39,7 +39,7 @@ test('daily', async ({ page }, info) => {
   test.setTimeout(420_000);
   const mobile = info.project.name === 'mobile';
   await page.addInitScript((items) => {
-    localStorage.setItem('sd.seen', JSON.stringify(['coach', 'brief:moon-1', 'brief:moon-2', 'brief:moon-3', 'brief:mars', 'brief:venus', 'brief:bennu', 'brief:jupiter']));
+    localStorage.setItem('sd.seen', JSON.stringify(['coach', 'brief:moon-1', 'brief:moon-2', 'brief:moon-3', 'brief:mars', 'brief:venus', 'brief:bennu', 'brief:jupiter', 'launch:moon-1', 'launch:moon-2', 'launch:moon-3', 'launch:mars', 'launch:venus', 'launch:bennu', 'launch:jupiter', 'launch:free', 'launch:daily']));
     for (const [k, v] of Object.entries(items)) localStorage.setItem(k, v);
     localStorage.removeItem('sd.daily');
     localStorage.removeItem('mdt.ops');
@@ -52,4 +52,19 @@ test('daily', async ({ page }, info) => {
   await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(600);
   await page.screenshot({ path: `test-results/shots/daily-${info.project.name}.png` });
+});
+
+test('postcards', async ({ page }, info) => {
+  await page.addInitScript((items) => {
+    localStorage.setItem('sd.seen', JSON.stringify(['coach']));
+    for (const [k, v] of Object.entries(items)) localStorage.setItem(k, v);
+  }, seedStorage({ 'sd.postcards': JSON.stringify({ earned: ['moon-earthrise', 'moon-tycho', 'moon-apollo11', 'mars-globe', 'mars-dunes'] }) }));
+  await page.goto('/');
+  await page.getByRole('button', { name: /^POSTCARDS/ }).click();
+  await page.evaluate(() => document.fonts.ready);
+  await page.waitForTimeout(900);
+  await page.screenshot({ path: `test-results/shots/postcards-${info.project.name}.png`, fullPage: true });
+  await page.getByRole('button', { name: /^Sunrise on Tycho/ }).click();
+  await page.waitForTimeout(600);
+  await page.screenshot({ path: `test-results/shots/postcard-open-${info.project.name}.png` });
 });

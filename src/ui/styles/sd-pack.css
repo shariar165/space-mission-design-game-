@@ -190,3 +190,14 @@
 .pk.phone .fly-status { gap: 8px; }
 .pk.phone .pk-info { margin-left: auto; padding: 6px 8px; font-size: 10px; }
 .pk.phone .sd-back { padding: 7px 10px; font-size: 11px; }
+
+/* Name your robot: a compact tag beside the status line (desktop), under it (phone) */
+.pk-status-row { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 12px 16px; }
+.sd-nametag { display: flex; align-items: center; gap: 10px; }
+.sd-nametag-k { font: 700 10px/1.25 var(--sd-mono); letter-spacing: 0.16em; color: var(--sd-ink-2); max-width: 9ch; text-align: right; }
+.sd-nametag-row { display: flex; align-items: center; gap: 6px; }
+.sd-nametag-input { width: 9ch; padding: 9px 10px; border: 1px solid var(--sd-line); color: var(--sd-amber); font: 400 24px/1 var(--sd-crt-font); letter-spacing: 0.08em; text-align: center; text-transform: uppercase; }
+.sd-nametag-input::placeholder { color: var(--sd-amber); opacity: 0.45; }
+.sd-nametag-input:focus-visible { outline: 2px solid var(--sd-amber); outline-offset: 2px; }
+.sd-nametag-dice { padding: 8px 10px; font-size: 18px; line-height: 1; }
+.pk.phone .sd-nametag { justify-content: center; padding: 2px 0; }

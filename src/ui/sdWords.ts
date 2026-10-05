@@ -1,7 +1,7 @@
 // Words for the Signal Delay screens (design: docs/design/signal-delay). Numbers come from the engine and are only
 // formatted here, through format.ts. Cadet reads short uppercase lines; Engineer adds the numbers.
 import type { FailureEffect, OpsPhase } from '../engine/data';
-import type { ComingUpKind, ConsoleOutcome, FlyChip } from '../engine/ops/index';
+import type { ComingUpKind, ConsoleOutcome, FlyChip, RobotMessage, VoiceKind } from '../engine/ops/index';
 import type { DeckCard, PackBlockerCode, PartId } from '../engine/pack';
 import type { Hurt, ReportPanel, Saved } from '../engine/ops/report';
 import type { Category } from '../engine/scoring';
@@ -446,6 +446,7 @@ export const COACH: CoachPanel[] = [
   { icon: 'storm', title: 'DANGER CARDS', body: 'When trouble is coming, time stops and a card appears. Pick an answer. Each one shows what it costs.' },
   { icon: 'dish', title: 'ORDERS TRAVEL SLOWLY', body: 'Your order crosses space at the speed of light. It can take minutes to reach the robot, so act early.' },
   { icon: 'power', title: 'WATCH THE FOUR BARS', body: 'Power, fuel, data and systems are at the top. Keep them out of the red.' },
+  { icon: 'postcard', title: 'YOUR ROBOT WRITES HOME', body: 'Its messages cross space at the speed of light too. When its science reaches Earth, you get real NASA postcards.' },
   { icon: 'star', title: 'REACH THE END', body: 'When the mission ends you get your report and stars. In a hurry? FINISH MISSION lets the robot fly the rest.' },
 ];
 
@@ -491,3 +492,166 @@ export const endsInWords = (daysLeft: number) => (daysLeft <= 0 ? 'MISSION OVER'
 
 /** The nudge when the clock is paused and nothing else is on screen. */
 export const playNudge = (speedLabel: string) => `▶ PRESS ${speedLabel} TO LET TIME RUN`;
+
+/** Labels on the CRT map. */
+export const MAP_WORDS = {
+  sun: 'SUN',
+  storm: 'SOLAR STORM',
+  order: 'YOUR ORDER',
+  you: 'YOU',
+};
+
+/** The log line while a solar storm crosses space toward the robot, and while it hits. */
+export const stormLine = (phase: 'coming' | 'hitting', name: string, hitsIn: string) =>
+  phase === 'coming' ? `THE SUN ERUPTED. A SOLAR STORM HITS ${name} IN ${hitsIn}.` : `SOLAR STORM ON ${name}. PARTICLES EVERYWHERE.`;
+
+// ---------------------------------------------------------------------------
+// The robot's voice. It reports in the first person; every line reached Earth one light time after it was sent.
+
+/** Names the 🎲 button cycles through on Pack (the first is the default). */
+export const ROBOT_NAMES = ['PIP', 'NOVA', 'ZIPPY', 'BOLT', 'COMET', 'SPARKY', 'ORBIT', 'BEEP', 'ASTRO', 'DOT', 'RUSTY', 'TWINKLE'];
+/** Longest robot name (letters), so it fits over the robot on the map. */
+export const ROBOT_NAME_MAX = 10;
+
+/** A typed name made safe for the map: capitals, letters, digits, spaces and dashes, at most ROBOT_NAME_MAX. */
+export const cleanRobotName = (raw: string) =>
+  raw
+    .toUpperCase()
+    .replace(/[^A-Z0-9 -]/g, '')
+    .replace(/\s+/g, ' ')
+    .slice(0, ROBOT_NAME_MAX);
+
+/** The name to show: the player's, or the default when the field was left empty. */
+export const robotNameOr = (name: string | undefined) => (name && name.trim() ? name.trim() : ROBOT_NAMES[0]!);
+
+/** The next suggestion after the current name. */
+export const nextRobotName = (name: string) => ROBOT_NAMES[(ROBOT_NAMES.indexOf(name) + 1) % ROBOT_NAMES.length]!;
+
+export const ROBOT_WORDS = {
+  nameLabel: 'YOUR ROBOT’S NAME',
+  suggest: 'Suggest a name',
+  radio: (name: string) => `${name} SAYS`,
+  took: (dest: string, delay: string) => `FROM ${dest} · TOOK ${delay} TO REACH YOU`,
+  lastMessage: (name: string) => `LAST MESSAGE FROM ${name}`,
+};
+
+type Line = (dest: string) => string;
+const HIT_LINES: Record<string, Line[]> = {
+  'solar-storm': [() => 'Storm’s here! Particles are pinging off my panels!', () => 'Another solar storm. I can feel it in my circuits.'],
+  'mars-dust-storm': [() => 'Dust storm below! The air is puffing up toward my orbit.'],
+  debris: [() => 'Whoa! Something tiny just went whizzing past me!'],
+  'reaction-wheel': [() => 'One of my spinning wheels is grinding. Ouch.'],
+  'memory-corruption': [() => 'My memory feels… scrambled. Running checks.'],
+  'radiation-damage': [(d) => `So much radiation around ${d}. My circuits are tingling.`],
+};
+
+const VOICE: Record<Exclude<VoiceKind, 'hit'>, Line[]> = {
+  launch: [(d) => `Liftoff! I can feel the rocket shaking. Next stop: ${d}!`],
+  'launch-failed': [() => 'The rocket… didn’t make it. I never left the ground.'],
+  halfway: [(d) => `Halfway to ${d}! Earth looks like a tiny blue dot from here.`],
+  arrived: [(d) => `I made it to ${d}! Firing my engine to slow down…`],
+  science: [(d) => `Instruments on. ${d} looks amazing from up here!`],
+  'heading-home': [() => 'Sample on board. Turning around… I’m coming home!'],
+  'bonus-time': [() => 'Bonus time! Thanks for keeping me flying.'],
+  dark: [
+    (d) => `It’s getting dark. ${d} is blocking the Sun, so I’m running on battery.`,
+    () => 'Shadow season again. Battery on, heaters down a bit.',
+    () => 'Dark again. I know the drill by now.',
+  ],
+  conjunction: [() => 'The Sun is right between us. I can’t hear you for a while. See you on the other side!'],
+  'conjunction-end': [() => 'I can hear you again! Did you miss me?'],
+  saved: [() => 'That worked! Thanks for the quick thinking.', () => 'Phew. Your order got here just in time.', () => 'All good up here. Nice call, Mission Control!'],
+  hurt: [() => 'That didn’t go well. I’m hurt, but I’m still flying.', () => 'Ow. Something broke. I’ll keep going as best I can.'],
+  'instrument-lost': [() => 'I lost one of my instruments. I’ll do what I can with the rest.'],
+  'safe-mode': [() => 'I switched to safe mode to protect myself. Waiting for your orders…'],
+  brownout: [() => 'Not enough power! I’m switching things off to stay alive.'],
+  'wheel-spare': [() => 'A wheel gave up, but my spare took over. Still pointing straight!'],
+  'out-of-fuel': [() => 'My tank is empty. I can’t steer any more.'],
+  'prime-complete': [() => 'Mission done! All my science is on its way to you.'],
+  'last-words': [() => 'My battery is low… and it’s getting dark. Goodbye, Mission Control.'],
+};
+
+/** What the robot says, in its own words. */
+export function robotSays(m: RobotMessage, destName: string): string {
+  const lines = m.kind === 'hit' ? (HIT_LINES[m.values.hazardType ?? ''] ?? [() => 'Trouble up here! Something just went wrong.']) : VOICE[m.kind];
+  return lines[m.seq % lines.length]!(destName);
+}
+
+// ---------------------------------------------------------------------------
+// Big moments and sound
+
+export const SOUND_WORDS = { on: 'Sound on', off: 'Sound off' };
+
+export const MOMENT_WORDS = {
+  countdownK: 'LAUNCH IN',
+  count: (n: number) => `T−${f.num(n)}`,
+  liftoff: 'LIFTOFF!',
+  skip: 'SKIP ▸',
+  arrived: (dest: string, asteroid: boolean) => (asteroid ? `ARRIVED AT ${dest}!` : `IN ORBIT AT ${dest}!`),
+  arrivedSub: (name: string) => `${name} FIRED ITS ENGINE AND WAS CAUGHT BY GRAVITY.`,
+  arrivedSubBennu: (name: string) => `${name} SLOWED DOWN TO FLY BESIDE THE ASTEROID.`,
+  storm: 'SOLAR STORM HIT!',
+  stormSub: (name: string) => `PARTICLES FROM THE SUN ARE HITTING ${name}.`,
+  launchFailed: 'LAUNCH FAILED',
+};
+
+// ---------------------------------------------------------------------------
+// Postcards from space
+
+export const POSTCARD_WORDS = {
+  menu: 'POSTCARDS',
+  menuSub: 'Real NASA pictures your robots sent home.',
+  title: 'POSTCARDS FROM SPACE',
+  sub: 'Real pictures from NASA missions. Your robot sends one home as its science reaches Earth.',
+  toast: (dest: string) => `📮 POSTCARD FROM ${dest}!`,
+  look: 'TAP TO LOOK',
+  keep: 'KEEP FLYING ▸',
+  close: 'CLOSE',
+  credit: (c: string) => `IMAGE: ${c}`,
+  report: 'POSTCARDS FROM THIS FLIGHT',
+  none: 'No postcards this time: no science reached Earth.',
+  locked: 'LOCKED',
+  /** How a locked card is earned, from its unlock share (0 = first data, 1 = the whole goal). */
+  hint: (dest: string, share: number) =>
+    share <= 0 ? `Fly to ${dest} and send home your first science.` : share >= 1 ? `Send home all the science from ${dest}.` : `Send home half the science from ${dest}.`,
+};
+
+// ---------------------------------------------------------------------------
+// Ranks and badges (engine ranks.ts)
+
+export const RANK_WORDS: Record<string, string> = {
+  cadet: 'CADET',
+  'flight-controller': 'FLIGHT CONTROLLER',
+  capcom: 'CAPCOM',
+  'flight-director': 'FLIGHT DIRECTOR',
+  'mission-legend': 'MISSION LEGEND',
+};
+
+export const CREW_WORDS = {
+  title: 'CREW FILE',
+  rank: 'YOUR RANK',
+  toNext: (n: number, next: string) => `${f.num(n)}★ TO ${next}`,
+  top: 'TOP RANK',
+  stars: (n: number, max: number) => `${f.num(n)} OF ${f.num(max)} STARS`,
+  badges: 'BADGES',
+  open: 'Open your crew file',
+  close: 'CLOSE',
+  realJob: 'THE REAL JOB',
+  promoted: 'PROMOTED!',
+  newBadge: 'NEW BADGE',
+  earned: 'EARNED',
+  locked: 'NOT YET',
+};
+
+export const BADGE_WORDS: Record<string, { name: string; how: string }> = {
+  'first-flight': { name: 'FIRST FLIGHT', how: 'Earn a star on any mission.' },
+  'storm-survivor': { name: 'STORM SURVIVOR', how: 'Fly through a solar storm without losing an instrument.' },
+  'through-the-sun': { name: 'THROUGH THE SUN', how: 'Keep flying while the Sun blocks your radio (a solar conjunction).' },
+  'night-shift': { name: 'NIGHT SHIFT', how: 'Get through a whole eclipse season with no brownout.' },
+  'bonus-time': { name: 'BONUS TIME', how: 'Ask for a mission extension at the end of a flight.' },
+  'sample-home': { name: 'SAMPLE HOME', how: 'Bring a piece of asteroid Bennu back to Earth.' },
+  shutterbug: { name: 'SHUTTERBUG', how: 'Collect all the postcards from one place.' },
+  'daily-streak': { name: 'DAILY STREAK', how: 'Play the Daily mission three days in a row.' },
+  rescuer: { name: 'RESCUER', how: 'Save a robot in Rescue History.' },
+  'big-thinker': { name: 'BIG THINKER', how: 'Find out why no rocket flies straight to Jupiter.' },
+};

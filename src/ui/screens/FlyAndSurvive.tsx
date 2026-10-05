@@ -2,16 +2,22 @@
 // own; danger cards stop time; you pick; the order flies to the robot at light speed and you wait to hear back.
 // One screen for both modes, driven by the Mission operations engine. Every number comes from consoleView
 // (ops/console.ts) and the Fly view model (ops/fly.ts); this screen only lays them out.
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { DESTINATIONS, HAZARDS, PARTS } from '../../engine/data';
 import { flightMap, ghostFor, pathAhead } from '../../engine/flightMap';
-import { comingUp, eclipseCard, flyCard, flyTiles, FLY_RULES, missionProgress, outcomeIn_s, type FlyChip, type OpsState } from '../../engine/ops/index';
+import { comingUp, eclipseCard, flyCard, flyTiles, FLY_RULES, heardMessages, missionProgress, momentsSince, outcomeIn_s, stormFront, type FlyChip, type MomentKind, type OpsState } from '../../engine/ops/index';
 import type { Design, Sourced } from '../../engine/types';
 import { SPEED_OF_LIGHT } from '../../engine/constants';
 import { BookCall } from '../components/ops/BookCall';
 import { BlackoutPanel, CommandQueue, ExtensionDecision, NoticeToast, SafeModePanel } from '../components/ops/OpsPanels';
 import { PowerDial } from '../components/ops/PowerDial';
 import { CrtMap } from '../components/fly/CrtMap';
+import { RobotRadio } from '../components/fly/RobotRadio';
+import { BANNER_MS, LaunchCountdown, MomentBanner } from '../components/fly/Moment';
+import { SoundToggle } from '../components/sd/SoundToggle';
+import { PostcardView, postcardSrc } from '../components/sd/PostcardView';
+import { newPostcards, POSTCARDS, postcardsEarned } from '../../engine/postcards';
+import { play } from '../sound';
 import { DangerCard, type CardView, type ChipView, type ChoiceView } from '../components/fly/DangerCard';
 import { EquationsPanel } from '../components/fly/EquationsPanel';
 import { BackButton } from '../components/sd/BackButton';
@@ -41,6 +47,10 @@ import {
   optionShort,
   playNudge,
   quietLine,
+  MOMENT_WORDS,
+  POSTCARD_WORDS,
+  robotNameOr,
+  stormLine,
   RESULT_EFFECT_CHIP,
   resultLines,
   TILE,
@@ -67,6 +77,13 @@ interface Props {
   onCoachSeen?: () => void;
   /** The mission briefing behind MISSION INFO. */
   brief?: { title: string; briefing: Briefing; concept?: string };
+  /** The launch countdown opens the flight (the first flight of a level). */
+  launchMoment?: boolean;
+  onLaunchSeen?: () => void;
+  /** Postcards this flight has earned so far (called when a new one arrives). */
+  onPostcards?: (ids: string[]) => void;
+  /** The robot's name (Pack); the default when empty. */
+  robotName?: string;
 }
 
 type Panel = 'power' | 'call' | 'queue' | 'eqs';
@@ -81,7 +98,8 @@ function chipViews(chips: FlyChip[]): ChipView[] {
   return chips.map((k) => ({ icon: CHIP_ICON[k.gauge], text: k.gauge === 'coins' ? `${f.signedInt(k.delta)} COINS` : f.signedInt(k.delta), tone: 'cost' as const }));
 }
 
-export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome, onDone, onBack, coach, onCoachSeen, brief }: Props) {
+export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome, onDone, onBack, coach, onCoachSeen, brief, robotName, launchMoment, onLaunchSeen, onPostcards }: Props) {
+  const name = robotNameOr(robotName);
   const engineer = mode === 'engineer';
   const ops = useOpsSession(design, seed);
   const { state, view } = ops;
@@ -101,14 +119,81 @@ export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome,
   const ringPhase = useCycle(RING_MS, !!ops.transit && !still);
 
   const tiles = state && view ? flyTiles(state, view) : undefined;
+  const storm = state ? stormFront(state) : undefined;
+  const radio = state ? heardMessages(state).latest : undefined;
   const card = state && view && ops.showAlert ? flyCard(state, view) : undefined;
   const coming = state ? comingUp(state) : undefined;
   const ahead = useMemo(() => (ev && view ? pathAhead(design, view.map.frame.day, ev) : []), [design, ev, view?.map.frame.day]); // eslint-disable-line react-hooks/exhaustive-deps
   const eclipse = state && !ops.showAlert && !ops.transit && !ops.result ? eclipseCard(state) : undefined;
   const eclipseOpen = eclipse !== undefined && !eclipseDone.includes(eclipse.season.startDay);
 
-  // An eclipse planning card or an overlay holds the clock like a danger card does; time runs on when it closes.
-  const held = eclipseOpen || overlay !== undefined;
+  // ---- Big moments: the launch countdown, banners for the arrival burn and a storm hit, and their sounds ----
+  const [launching, setLaunching] = useState(!!launchMoment);
+  const endLaunch = () => {
+    setLaunching(false);
+    onLaunchSeen?.();
+  };
+  const seenEvents = useRef(0);
+  const [banner, setBanner] = useState<{ kind: MomentKind; n: number }>();
+  const [shake, setShake] = useState(false);
+  useEffect(() => {
+    if (!state) return;
+    if (state.events.length < seenEvents.current) seenEvents.current = 0;
+    const ms = momentsSince(state, seenEvents.current);
+    seenEvents.current = state.events.length;
+    const last = ms[ms.length - 1];
+    if (!last) return;
+    if (ms.some((m) => m.kind === 'storm-hit')) {
+      play('zap');
+      setShake(true);
+    }
+    if (last.kind === 'arrived') play('fanfare');
+    if (last.kind === 'arrived' || last.kind === 'storm-hit') setBanner((b) => ({ kind: last.kind, n: (b?.n ?? 0) + 1 }));
+  }, [state]);
+  useEffect(() => {
+    if (!banner) return;
+    const id = setTimeout(() => setBanner(undefined), BANNER_MS);
+    return () => clearTimeout(id);
+  }, [banner]);
+  useEffect(() => {
+    if (!shake) return;
+    const id = setTimeout(() => setShake(false), BANNER_MS / 4);
+    return () => clearTimeout(id);
+  }, [shake]);
+  const alertId = ops.showAlert ? view?.alert?.decisionId : undefined;
+  useEffect(() => {
+    if (alertId) play('alarm');
+  }, [alertId]);
+  useEffect(() => {
+    if (over) play(state?.status === 'lost' || state?.status === 'not-launched' ? 'sad' : 'fanfare');
+  }, [over]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ---- Postcards: a toast when the science opens a new one (the clock runs on); tap it for the full card ----
+  const earned = useMemo(() => (state ? postcardsEarned(state) : []), [state]);
+  const earnedKey = earned.join(',');
+  const seenCards = useRef<string[]>([]);
+  const [toast, setToast] = useState<string>();
+  const [cardOpen, setCardOpen] = useState<string>();
+  useEffect(() => {
+    const fresh = newPostcards(seenCards.current, earned);
+    seenCards.current = earned;
+    if (!fresh.length) return;
+    onPostcards?.(earned);
+    if (!over) {
+      setToast(fresh[fresh.length - 1]);
+      play('ding');
+    }
+  }, [earnedKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!toast) return;
+    const id = setTimeout(() => setToast(undefined), BANNER_MS * 2);
+    return () => clearTimeout(id);
+  }, [toast]);
+  const toastCard = POSTCARDS.find((c) => c.id === toast);
+  const openPostcard = POSTCARDS.find((c) => c.id === cardOpen);
+
+  // An eclipse planning card, an overlay, an open postcard or the launch countdown holds the clock like a danger card does.
+  const held = eclipseOpen || overlay !== undefined || launching || openPostcard !== undefined;
   useEffect(() => {
     ops.setHold(held);
   }, [held]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -141,6 +226,7 @@ export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome,
     const o = card?.options.find((x) => x.id === optionId);
     if (!o || !view?.alert) return;
     setChosen({ label: optionShort(view.alert.type, o.id, o.label), chips: o.chips });
+    play('chirp');
     ops.respond(optionId);
   };
 
@@ -276,7 +362,9 @@ export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome,
         ? 'ORDER RECEIVED BY THE ROBOT.'
         : ops.result
         ? 'SIGNAL RECEIVED.'
-        : (() => {
+        : storm
+          ? stormLine(storm.phase, name, f.durationWords(storm.hitsIn_s).toUpperCase())
+          : (() => {
             const e = view.feed[0];
             const line = e && e.t > state.t - 3 ? eventLine(e, { destName: dest.name, optionLabel: shortLabel }) : undefined;
             return line ? line.toUpperCase() : quietLine(view.clock.phase, dest.name);
@@ -501,7 +589,7 @@ export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome,
   );
 
   const crt = (
-    <main className={`sd-crt fly-crt${view.blackout.active ? ' blackout' : ''}`} aria-label="Mission map">
+    <main className={`sd-crt fly-crt${view.blackout.active ? ' blackout' : ''}${shake && !still ? ' shake' : ''}`} aria-label="Mission map">
       <CrtMap
         map={map}
         frame={view.map.frame}
@@ -512,10 +600,13 @@ export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome,
         {...(g ? { ghost: g } : {})}
         {...(flying ? { pulse: flying.progress } : {})}
         ringPhase={ringPhase}
+        {...(storm ? { storm } : {})}
+        robotName={name}
         phone={phone}
         lost={state.status === 'lost'}
       />
       <Teletype className="fly-log sd-crt-text" text={logText} prefix="> " />
+      <RobotRadio {...(radio ? { message: radio } : {})} name={name} destName={dest.name} hidden={!!openCard || debrief} />
       {!phone && <span className="fly-goal">{FLY_GOAL}</span>}
       {!phone && (
         <div className="fly-legend">
@@ -544,6 +635,14 @@ export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome,
         <div className="fly-eng-phone">
           t = d / c = {f.au(view.clock.earthDistance_m)} / c = {f.mmss(view.clock.oneWay_s)}
         </div>
+      )}
+      {banner && !openCard && !debrief && (
+        <MomentBanner
+          key={banner.n}
+          kind={banner.kind}
+          title={banner.kind === 'arrived' ? MOMENT_WORDS.arrived(dest.name.toUpperCase(), design.destination === 'bennu') : MOMENT_WORDS.storm}
+          sub={banner.kind === 'arrived' ? (design.destination === 'bennu' ? MOMENT_WORDS.arrivedSubBennu(name) : MOMENT_WORDS.arrivedSub(name)) : MOMENT_WORDS.stormSub(name)}
+        />
       )}
       {transitBox}
       {waitBox}
@@ -589,7 +688,26 @@ export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome,
 
   const overlays = (
     <>
-      {overlay === 'coach' && <CoachCard onClose={closeOverlay} />}
+      {launching && <LaunchCountdown onDone={endLaunch} still={still} />}
+      {toastCard && !openPostcard && !debrief && (
+        <button
+          type="button"
+          className="fly-postcard"
+          onClick={() => {
+            setCardOpen(toastCard.id);
+            setToast(undefined);
+          }}
+        >
+          <img src={postcardSrc(toastCard)} alt="" />
+          <span className="fly-postcard-t">
+            <span className="fly-postcard-k">{POSTCARD_WORDS.toast(dest.name.toUpperCase())}</span>
+            <span className="fly-postcard-v">{toastCard.title}</span>
+            <span className="fly-postcard-look">{POSTCARD_WORDS.look}</span>
+          </span>
+        </button>
+      )}
+      {openPostcard && <PostcardView card={openPostcard} onClose={() => setCardOpen(undefined)} closeLabel={POSTCARD_WORDS.keep} />}
+      {overlay === 'coach' && !launching && <CoachCard onClose={closeOverlay} />}
       {overlay === 'info' && brief && (
         <MissionBriefing title={brief.title} destination={design.destination} briefing={brief.briefing} {...(brief.concept ? { concept: brief.concept } : {})} onClose={closeOverlay} />
       )}
@@ -602,6 +720,7 @@ export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome,
 
   const helpKeys = (
     <div className="fly-help">
+      <SoundToggle className="fly-help-q" />
       {brief && (
         <button type="button" className="sd-ghost-btn fly-help-q" aria-label={NAV.info} title={NAV.info} onClick={() => setOverlay('info')}>
           i

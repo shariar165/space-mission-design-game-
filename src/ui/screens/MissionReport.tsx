@@ -4,12 +4,16 @@
 // Every number comes from the engine (operationsDebrief, ops/report.ts, compare.ts); this screen lays them out.
 import { useEffect, useMemo, useState } from 'react';
 import { DESTINATIONS, HAZARDS, LAUNCH_VEHICLES, RIDESHARES } from '../../engine/data';
-import { operationsDebrief, type OpsState } from '../../engine/ops/index';
+import { heardMessages, operationsDebrief, VOICE_RULES, type OpsState } from '../../engine/ops/index';
 import { reportCompare, reportPanels, reportVerdict } from '../../engine/ops/report';
 import { MAX_SCORE, MARGIN_BAND, scoreGrade, STAR_RULES } from '../../engine/scoring';
 import type { CompareMetric } from '../../engine/compare';
 import type { Design } from '../../engine/types';
 import { ComicArt } from '../components/report/ComicArt';
+import { PostcardView, postcardSrc } from '../components/sd/PostcardView';
+import { POSTCARDS, postcardsEarned } from '../../engine/postcards';
+import type { RankDef } from '../../engine/ranks';
+import { play } from '../sound';
 import { SourceInfo } from '../components/SourceInfo';
 import { MissionSteps } from '../components/sd/MissionSteps';
 import { BackButton } from '../components/sd/BackButton';
@@ -27,6 +31,13 @@ import {
   PANEL_SOUND,
   panelWords,
   REPORT_STAMP,
+  POSTCARD_WORDS,
+  BADGE_WORDS,
+  CREW_WORDS,
+  RANK_WORDS,
+  ROBOT_WORDS,
+  robotNameOr,
+  robotSays,
   savedWords,
   STAR_WORDS,
 } from '../sdWords';
@@ -62,9 +73,13 @@ interface Props {
   /** ◂ BACK to the screen before the flight. */
   onBack?: () => void;
   homeLabel: string;
+  /** The robot's name (Pack); the default when empty. */
+  robotName?: string;
+  /** What this flight earned in the crew file: a new rank, new badges. */
+  promotion?: { rank?: RankDef; badges: string[] };
 }
 
-export function MissionReport({ state, design, mode, onMode, missionName, next, newCard, onFlyAgain, onHome, onBack, homeLabel }: Props) {
+export function MissionReport({ state, design, mode, onMode, missionName, next, newCard, onFlyAgain, onHome, onBack, homeLabel, robotName, promotion }: Props) {
   const engineer = mode === 'engineer';
   const phone = useIsPhone();
   const still = useReducedMotion();
@@ -277,6 +292,68 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
     </div>
   );
 
+  const name = robotNameOr(robotName);
+  const last = heardMessages(state).latest;
+  const lastEl = last && (
+    <div className={`rp-radio${last.kind === 'last-words' || last.kind === 'launch-failed' ? ' bad' : ''}`} role="note" aria-label={ROBOT_WORDS.lastMessage(name)}>
+      <span className="rp-radio-k">
+        📡 {ROBOT_WORDS.lastMessage(name)}
+        {last.kind === 'last-words' && <SourceInfo s={VOICE_RULES.lastWordsHistory} title="Opportunity’s last message" />}
+      </span>
+      <span className="rp-radio-v">“{robotSays(last, dest.name)}”</span>
+      <span className="rp-radio-t">{ROBOT_WORDS.took(dest.name.toUpperCase(), f.durationWords(last.delay_s))}</span>
+    </div>
+  );
+
+  const promoted = !!promotion && (promotion.rank !== undefined || promotion.badges.length > 0);
+  useEffect(() => {
+    if (promoted) play('jingle');
+  }, [promoted]);
+  const promoEl = promoted && (
+    <section className="rp-promo" aria-label={CREW_WORDS.title}>
+      {promotion!.rank && (
+        <div className="rp-promo-item rank">
+          <SDIcon icon="medal" size={30} color="var(--sd-gold)" />
+          <span>
+            <span className="rp-promo-k">{CREW_WORDS.promoted}</span>
+            <span className="rp-promo-v">{RANK_WORDS[promotion!.rank.id] ?? promotion!.rank.id}</span>
+          </span>
+        </div>
+      )}
+      {promotion!.badges.map((id) => (
+        <div key={id} className="rp-promo-item">
+          <SDIcon icon="medal" size={26} color="var(--sd-crt-hi)" />
+          <span>
+            <span className="rp-promo-k">{CREW_WORDS.newBadge}</span>
+            <span className="rp-promo-v">{BADGE_WORDS[id]?.name ?? id}</span>
+          </span>
+        </div>
+      ))}
+    </section>
+  );
+
+  const won = useMemo(() => postcardsEarned(state).map((id) => POSTCARDS.find((c) => c.id === id)!), [state]);
+  const [card, setCard] = useState<string>();
+  const openCard = won.find((c) => c.id === card);
+  const cardsEl = state.status !== 'not-launched' && (
+    <section className="rp-postcards" aria-label={POSTCARD_WORDS.report}>
+      <span className="rp-postcards-k">📮 {POSTCARD_WORDS.report}</span>
+      {won.length ? (
+        <div className="rp-postcards-row">
+          {won.map((c) => (
+            <button key={c.id} type="button" className="rp-postcard" onClick={() => setCard(c.id)} aria-label={c.title}>
+              <img src={postcardSrc(c)} alt="" />
+              <span>{c.title}</span>
+            </button>
+          ))}
+        </div>
+      ) : (
+        <span className="rp-postcards-none">{POSTCARD_WORDS.none}</span>
+      )}
+      {openCard && <PostcardView card={openCard} onClose={() => setCard(undefined)} />}
+    </section>
+  );
+
   const engineerEl = engineer && (
     <section className="rp-eng" aria-label="Engineer details">
       <div className="rp-eng-col">
@@ -337,6 +414,9 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
           <ModeLever mode={mode} onMode={onMode} />
           {starsEl}
           <div className="rp-strip">{panelEls}</div>
+          {promoEl}
+          {lastEl}
+          {cardsEl}
           {verdictEl}
           {compareEl}
           {lessonEl}
@@ -362,6 +442,9 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
           {stampEl}
         </header>
         <div className="rp-comic">{panelEls}</div>
+        {promoEl}
+        {lastEl}
+        {cardsEl}
         <div className="rp-lower">
           {verdictEl}
           {compareEl ?? <div className="rp-compare empty">NO REAL MISSION TO COMPARE WITH YET</div>}

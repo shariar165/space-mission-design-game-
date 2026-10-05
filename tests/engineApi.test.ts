@@ -4,8 +4,8 @@ import { describe, expect, it } from 'vitest';
 import { compareWithRealMission, designDelta, METER_KEYS, REAL_MISSION_FOR } from '../src/engine/compare';
 import { crisisOrders, evaluateDesign, MONTE_CARLO_SEED, monteCarloMission, previewCrisis, simulateMission, standingOrderPolicy } from '../src/engine/index';
 import { applicableCards, availableOptions, safestOption } from '../src/engine/crisis';
-import { earthDistance, julianDate } from '../src/engine/ephemeris';
-import { countdown, craftPosition, flightFrames, flightMap, ghostFor, signalDelay } from '../src/engine/flightMap';
+import { earthDistance, heliocentricPosition, julianDate } from '../src/engine/ephemeris';
+import { countdown, craftPosition, flightFrames, flightMap, frameOnDay, ghostFor, signalDelay } from '../src/engine/flightMap';
 import { presetDesign } from '../src/engine/missions';
 import { MAX_SCORE, nextStar, nextStarHint, SCORE_GRADES, scoreGrade } from '../src/engine/scoring';
 import { bestLaunchWindow, lambertTransfer } from '../src/engine/trajectory';
@@ -693,6 +693,31 @@ describe('Flight map geometry', () => {
     const m = flightMap(d);
     expect(m.frame).toBe('earth');
     for (const p of m.destOrbit) expect(Math.hypot(p[0], p[1])).toBeCloseTo(384_400_000, -1);
+  });
+  it('the Sun on the map: at the centre of the heliocentric frame', () => {
+    const b = cadetBase('mars');
+    const d = cadet.buildCadetDesign(b, cadet.defaultChoices(b));
+    for (const x of flightFrames(d, { endDay: 400, frames: 10 })) expect(x.sun).toEqual([0, 0]);
+  });
+  it('the Sun on the Moon map: seen from Earth it sits at −r_earth(t), about 1 AU away (solar storms come from there)', () => {
+    const b = cadetBase('moon');
+    const d = cadet.buildCadetDesign(b, cadet.defaultChoices(b));
+    const e = evaluateDesign(d);
+    const AU = 149_597_870_700;
+    for (const day of [0, 3, 40, 200]) {
+      const r = heliocentricPosition('earth', julianDate(e.details.launchDate) + day);
+      const sun = frameOnDay(d, day, e).sun;
+      expect(sun[0]).toBeCloseTo(-r[0], -3);
+      expect(sun[1]).toBeCloseTo(-r[1], -3);
+      // Earth's orbit: perihelion 0.983 AU, aphelion 1.017 AU
+      expect(Math.hypot(sun[0], sun[1]) / AU).toBeGreaterThan(0.98);
+      expect(Math.hypot(sun[0], sun[1]) / AU).toBeLessThan(1.02);
+    }
+    // Earth goes round the Sun in a year, so the Sun's direction turns 360° / 365.25 ≈ 0.99° a day: ≈ 29.6° in 30 days
+    const angle = (day: number) => Math.atan2(frameOnDay(d, day, e).sun[1], frameOnDay(d, day, e).sun[0]);
+    const turn = ((((angle(30) - angle(0)) * 180) / Math.PI + 540) % 360) - 180;
+    expect(Math.abs(turn)).toBeGreaterThan(27);
+    expect(Math.abs(turn)).toBeLessThan(33);
   });
   it('frames carry the one-way light time t = d / c', () => {
     const b = cadetBase('mars');

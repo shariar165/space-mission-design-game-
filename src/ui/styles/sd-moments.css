@@ -1,0 +1,84 @@
+/* Big moments (components/fly/Moment.tsx): the launch countdown, arrival and storm banners, the storm shake,
+   and the sound toggle. Presentation only. */
+
+/* ---- Launch countdown ---- */
+.mo-launch { position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; background: radial-gradient(ellipse at 50% 85%, rgba(255, 154, 46, 0.18), transparent 55%), rgba(6, 10, 7, 0.94); overflow: hidden; }
+.mo-pad { width: 160px; height: 300px; display: flex; align-items: flex-end; justify-content: center; }
+.mo-rocket { width: 120px; height: 300px; overflow: visible; }
+.mo-flame { fill: var(--sd-sun); opacity: 0; transform-origin: 0 40px; }
+.mo-smoke circle { fill: var(--sd-ink-3); opacity: 0; transform-box: fill-box; transform-origin: center; }
+.mo-launch:not(.liftoff) .mo-ship { animation: mo-rumble 0.12s steps(2) infinite; }
+.mo-launch.liftoff .mo-ship { animation: mo-rise 1.6s cubic-bezier(0.5, 0, 0.9, 0.4) forwards; }
+.mo-launch.liftoff .mo-flame { opacity: 1; animation: mo-flame 0.08s steps(2) infinite; }
+.mo-launch.liftoff .mo-smoke circle { animation: mo-smoke 1.4s ease-out forwards; }
+.mo-launch.still .mo-ship, .mo-launch.still .mo-smoke circle { animation: none; }
+.mo-count-k { font: 700 13px/1 var(--sd-mono); letter-spacing: 0.3em; color: var(--sd-crt-mid); }
+.mo-count { font: 400 clamp(64px, 15vw, 112px)/1 var(--sd-crt-font); color: var(--sd-amber); text-shadow: 0 0 18px rgba(255, 181, 71, 0.6); min-height: 1em; }
+.mo-launch.liftoff .mo-count { color: var(--sd-crt-hi); text-shadow: 0 0 22px var(--sd-crt-hi); }
+.mo-skip { position: absolute; right: 22px; bottom: 22px; }
+@keyframes mo-rumble { 50% { transform: translateX(1px); } }
+@keyframes mo-rise { to { transform: translateY(-900px); } }
+@keyframes mo-flame { 50% { transform: scaleY(1.35); } }
+@keyframes mo-smoke { from { opacity: 0.9; transform: scale(0.6); } to { opacity: 0; transform: scale(1.8); } }
+
+/* ---- Banners over the map ---- */
+.mo-banner { position: absolute; left: 50%; top: 42%; z-index: 3; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 18px 30px 20px; border: 2px solid var(--sd-crt-hi); border-radius: 6px; background: rgba(5, 12, 7, 0.9); text-align: center; pointer-events: none; animation: mo-banner 2.8s ease-out forwards; max-width: min(620px, 86%); }
+.mo-banner.storm-hit { border-color: var(--sd-sun); }
+.mo-banner-title { font: 400 54px/1 var(--sd-crt-font); color: var(--sd-crt-hi); text-shadow: 0 0 14px var(--sd-crt-hi); letter-spacing: 0.04em; }
+.mo-banner.storm-hit .mo-banner-title { color: var(--sd-sun-core); text-shadow: 0 0 14px var(--sd-sun); }
+.mo-banner-sub { font: 400 20px/1.15 var(--sd-crt-font); color: var(--sd-crt-mid); letter-spacing: 0.04em; }
+.mo-burst { position: absolute; inset: -40px; z-index: -1; background: repeating-conic-gradient(from 0deg, rgba(118, 255, 160, 0.12) 0 8deg, transparent 8deg 22deg); border-radius: 50%; animation: mo-spin 6s linear infinite; }
+.mo-banner.storm-hit .mo-burst { background: repeating-conic-gradient(from 0deg, rgba(255, 154, 46, 0.16) 0 8deg, transparent 8deg 22deg); }
+@keyframes mo-banner { 0% { opacity: 0; transform: translate(-50%, -50%) scale(0.6); } 12% { opacity: 1; transform: translate(-50%, -50%) scale(1.06); } 20% { transform: translate(-50%, -50%) scale(1); } 85% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes mo-spin { to { transform: rotate(360deg); } }
+.fly.phone .mo-banner { top: 38%; padding: 14px 16px; }
+.fly.phone .mo-banner-title { font-size: 38px; }
+.fly.phone .mo-banner-sub { font-size: 17px; }
+
+/* ---- Storm hit: the screen shakes and flashes ---- */
+.fly-crt.shake { animation: mo-shake 0.6s steps(6); }
+.fly-crt.shake::after { content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none; background: var(--sd-sun); animation: mo-flash 0.6s ease-out forwards; }
+@keyframes mo-shake { 20% { transform: translate(-6px, 3px); } 40% { transform: translate(5px, -4px); } 60% { transform: translate(-4px, -2px); } 80% { transform: translate(3px, 4px); } 100% { transform: none; } }
+@keyframes mo-flash { from { opacity: 0.3; } to { opacity: 0; } }
+
+/* ---- Sound toggle ---- */
+.sd-sound { font-size: 15px; line-height: 1; }
+.sd-ghost-btn.sd-sound[aria-pressed] { background: transparent; border-color: var(--sd-line-2); }
+.sd-ghost-btn.sd-sound[aria-pressed='false'] { opacity: 0.7; }
+
+/* ---- Crew file: rank plate (Home), panel, and the report's promotion ---- */
+.hm-kicker-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.crew-plate { cursor: pointer; display: inline-flex; align-items: center; gap: 10px; padding: 6px 12px 6px 6px; border-radius: 6px; border: 1px solid var(--sd-line-2); background: var(--sd-panel); color: var(--sd-ink); text-align: left; }
+.crew-plate:hover { border-color: var(--sd-gold); }
+.crew-medal { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 4px; background: var(--sd-crt); box-shadow: var(--sd-well); }
+.crew-text { display: flex; flex-direction: column; gap: 4px; }
+.crew-rank { font: 800 13px/1 var(--sd-display); letter-spacing: 0.04em; color: var(--sd-gold); }
+.crew-next { font: 700 10px/1 var(--sd-mono); letter-spacing: 0.12em; color: var(--sd-ink-3); }
+.crew-dots { display: grid; grid-template-columns: repeat(5, 7px); gap: 3px; margin-left: 4px; }
+.crew-dots span { width: 7px; height: 7px; border-radius: 50%; background: var(--sd-line-2); }
+.crew-dots span.on { background: var(--sd-crt-hi); box-shadow: 0 0 5px var(--sd-crt-hi); }
+.crew-plate.phone { margin-bottom: 4px; align-self: flex-start; }
+
+.crew-panel { width: min(620px, 94vw); max-height: 90vh; overflow: auto; display: flex; flex-direction: column; gap: 12px; padding: 22px 24px; border-radius: 6px; }
+.crew-k { display: inline-flex; align-items: center; gap: 8px; font: 700 11px/1 var(--sd-mono); letter-spacing: 0.18em; color: var(--sd-red-ink); }
+.crew-head { display: flex; align-items: center; gap: 16px; }
+.crew-title { margin: 6px 0 4px; font: 800 26px/1 var(--sd-display); color: var(--sd-paper-ink); }
+.crew-sub { font: 700 11px/1 var(--sd-mono); letter-spacing: 0.12em; color: var(--sd-paper-ink-2); }
+.crew-job { margin: 0; display: flex; flex-direction: column; gap: 6px; font: 400 15px/1.4 var(--sd-body); color: var(--sd-paper-ink-2); }
+.crew-badges { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 8px; }
+.crew-badges li { display: grid; grid-template-columns: 38px minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 10px; row-gap: 2px; align-items: center; padding: 8px; border-radius: 4px; border: 1px dashed var(--sd-paper-ink-2); opacity: 0.6; }
+.crew-badges li.on { border-style: solid; opacity: 1; }
+.crew-badge-icon { grid-row: 1 / span 2; width: 38px; height: 38px; display: grid; place-items: center; border-radius: 50%; background: var(--sd-paper-ink-2); }
+.crew-badges li.on .crew-badge-icon { background: var(--sd-red); }
+.crew-badge-name { font: 800 12px/1.1 var(--sd-display); color: var(--sd-paper-ink); }
+.crew-badge-how { font: 400 12px/1.3 var(--sd-body); color: var(--sd-paper-ink-2); }
+.crew-close { align-self: flex-end; }
+
+.rp-promo { display: flex; flex-wrap: wrap; gap: 10px; padding: 12px 14px; border-radius: 3px; background: var(--sd-paper-ink); animation: mo-promo 0.6s cubic-bezier(0.2, 1.4, 0.4, 1); }
+.rp-promo-item { display: flex; align-items: center; gap: 10px; padding: 8px 14px 8px 10px; border-radius: 4px; border: 1px solid var(--sd-crt-line); background: var(--sd-crt); }
+.rp-promo-item.rank { border-color: var(--sd-gold); }
+.rp-promo-item > span { display: flex; flex-direction: column; gap: 4px; }
+.rp-promo-k { font: 700 10px/1 var(--sd-mono); letter-spacing: 0.16em; color: var(--sd-crt-mid); }
+.rp-promo-v { font: 400 24px/1 var(--sd-crt-font); color: var(--sd-crt-hi); }
+.rp-promo-item.rank .rp-promo-v { color: var(--sd-gold); }
+@keyframes mo-promo { from { opacity: 0; transform: scale(0.92); } }
