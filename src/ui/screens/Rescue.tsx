@@ -51,7 +51,7 @@ export function RescueSelect({ stars, onOpen, onMap }: { stars: Record<string, n
       </div>
       <div className="cnav">
         <button type="button" className="btn-big ghost" onClick={onMap}>
-          ← Map
+          ◂ Back
         </button>
       </div>
     </div>

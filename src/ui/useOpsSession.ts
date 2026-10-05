@@ -1,5 +1,7 @@
 // The Operations Console session: one OpsState, stepped by the engine's advanceOperations. The UI only chooses
 // how fast mission time runs and when to stop; every number on screen comes from consoleView (engine).
+// The chosen speed stays set: a danger card, a result or a screen overlay only holds the clock, and time runs on
+// by itself once it is cleared, so the player is never left on a silently paused screen.
 // The action log is kept in localStorage so a session can be resumed (replayOperations with `until`).
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -7,6 +9,7 @@ import {
   bookDsn,
   consoleView,
   decide,
+  finishOperations,
   nextEventT,
   replayOperations,
   sendCommand,
@@ -14,7 +17,6 @@ import {
   type CommandReceipt,
   type OpsAction,
   type OpsConsoleView,
-  type OpsEventCode,
   type OpsState,
   type PowerPlan,
 } from '../engine/ops/index';
@@ -22,16 +24,13 @@ import type { Design } from '../engine/types';
 
 /** One clock step every quarter second; each step schedules the next. */
 export const OPS_TICK_MS = 250;
-/** Mission days per real minute: Pause, 1×, 10×, 100× (as the mockup: 1× = 1 day a minute). */
-export const OPS_SPEEDS = [0, 1, 10, 100] as const;
+/** Mission days per real minute: Pause, 10×, 100×, 1000× (1× = 1 day a minute). */
+export const OPS_SPEEDS = [0, 10, 100, 1000] as const;
 export type OpsSpeed = (typeof OPS_SPEEDS)[number];
 /** A command's trip across space plays in this many steps (about six seconds). */
 export const TRANSIT_STEPS = 24;
 /** The team's reaction time before the order leaves Earth plays in this many steps (one and a half seconds). */
 export const TEAM_STEPS = 6;
-
-/** The clock stops by itself when one of these happens, so the player never misses it. */
-const PAUSE_ON = new Set<OpsEventCode>(['decision-open', 'conjunction-start', 'safe-mode', 'craft-lost', 'response-outcome', 'prime-complete', 'mission-complete', 'launch-failed']);
 
 const STORE = 'mdt.ops';
 
@@ -92,7 +91,7 @@ export interface OpsSession {
   view?: OpsConsoleView;
   error?: string;
   speed: OpsSpeed;
-  /** Time cannot run: a decision waits, or the mission is over. */
+  /** Time cannot run: a decision waits, a result is on screen, the screen holds the clock, or the mission is over. */
   locked: boolean;
   /** The open hazard alert is on screen (not left to the craft). */
   showAlert: boolean;
@@ -101,6 +100,10 @@ export interface OpsSession {
   result?: { hazardId: string; optionId: string };
   notice?: Notice;
   setSpeed: (s: OpsSpeed) => void;
+  /** The screen holds the clock (a planning card or an overlay is open); time runs on when it is released. */
+  setHold: (on: boolean) => void;
+  /** The robot flies the rest of the mission on its own (engine finishOperations): the flight always ends. */
+  finish: () => void;
   respond: (optionId: string) => void;
   /** Leave the open hazard to the craft (standing order or fault protection at the deadline). */
   deferAlert: () => void;
@@ -123,6 +126,7 @@ export function useOpsSession(design: Design, seed: number): OpsSession {
   const [result, setResult] = useState<{ hazardId: string; optionId: string }>();
   const [notice, setNotice] = useState<Notice>();
   const [deferred, setDeferred] = useState<string[]>([]);
+  const [hold, setHold] = useState(false);
   const stateRef = useRef<OpsState>(undefined);
   stateRef.current = state;
   /** Real time of the last clock step, so mission time follows the wall clock even if the browser slows timers. */
@@ -148,34 +152,45 @@ export function useOpsSession(design: Design, seed: number): OpsSession {
 
   const view = useMemo(() => (state ? consoleView(state) : undefined), [state]);
 
-  /** Take a new state; stop the clock if something happened the player must see. */
+  /** Take a new state; show the outcome of a response if one landed. */
   const apply = useCallback((next: OpsState, prev: OpsState) => {
     const fresh = next.events.slice(prev.events.length);
-    if (fresh.some((e) => PAUSE_ON.has(e.code))) setSpeedRaw(0);
     const out = [...fresh].reverse().find((e) => e.code === 'response-outcome');
     if (out) setResult({ hazardId: String(out.values.hazardId), optionId: String(out.values.optionId) });
     setState(next);
   }, []);
 
   const showAlert = view?.alert !== undefined && !deferred.includes(view.alert.decisionId);
-  // In a conjunction nothing can be sent, so the clock may run on to the deadline (the craft decides).
-  const alertOpen = showAlert && !view!.alert!.blockedByConjunction;
+  // An open card holds the clock (in a conjunction too: "let the robot decide" releases it and time runs on).
   const over = state !== undefined && state.status !== 'flying';
-  const locked = !state || over || alertOpen || result !== undefined;
+  const locked = !state || over || showAlert || result !== undefined || hold;
 
   // The clock: one step per tick while running; a command in transit runs fast until it arrives.
   useEffect(() => {
     if (!state) return;
-    if (!transit && (speed === 0 || locked)) {
+    if (transit ? hold : speed === 0 || locked) {
       lastTick.current = 0;
       return;
     }
     const id = setTimeout(() => {
       const s = stateRef.current;
-      if (!s || s.status !== 'flying') return;
+      if (!s || s.status !== 'flying') {
+        // The mission ended (or paused for the extension) with an order still on screen: show where it stands.
+        if (transit) {
+          setTransit(undefined);
+          setResult((r) => r ?? { hazardId: transit.hazardId, optionId: transit.optionId });
+        }
+        return;
+      }
       if (transit) {
         const next = advanceOperations(s, { until: transitStop(transit, s.t) });
         apply(next, s);
+        // Guard: the clock could not move and nothing happened, so waiting longer would never end. Show the result.
+        if (next.status === 'flying' && next.t <= s.t + 1e-12 && next.events.length === s.events.length) {
+          setTransit(undefined);
+          setResult((r) => r ?? { hazardId: transit.hazardId, optionId: transit.optionId });
+          return;
+        }
         const rec = next.hazards.find((h) => h.id === transit.hazardId);
         const outcomeLanded = next.events.slice(s.events.length).some((e) => e.code === 'response-outcome' && e.values.hazardId === transit.hazardId);
         const arrived = next.t >= transit.arrivesAt - 1e-12;
@@ -195,7 +210,7 @@ export function useOpsSession(design: Design, seed: number): OpsSession {
       apply(advanceOperations(s, { days: (speed * ms) / 60_000 }), s);
     }, OPS_TICK_MS);
     return () => clearTimeout(id);
-  }, [state, speed, locked, transit, apply]);
+  }, [state, speed, locked, transit, hold, apply]);
 
   // Save the action log and the clock whenever an action is taken or the clock stops.
   useEffect(() => {
@@ -257,7 +272,16 @@ export function useOpsSession(design: Design, seed: number): OpsSession {
     ...(transit ? { transit } : {}),
     ...(result ? { result } : {}),
     ...(notice ? { notice } : {}),
-    setSpeed: (sp) => !locked && setSpeedRaw(sp),
+    setSpeed: (sp) => (sp === 0 || !locked) && setSpeedRaw(sp),
+    setHold,
+    finish: () => {
+      const s = stateRef.current;
+      if (!s || s.status === 'complete' || s.status === 'lost' || s.status === 'not-launched') return;
+      setTransit(undefined);
+      setResult(undefined);
+      setNotice(undefined);
+      setState(finishOperations(s));
+    },
     respond,
     deferAlert: () => view?.alert && setDeferred((d) => [...d, view.alert!.decisionId]),
     sendPlan,
@@ -274,6 +298,7 @@ export function useOpsSession(design: Design, seed: number): OpsSession {
       setResult(undefined);
       setDeferred([]);
       setNotice(undefined);
+      setHold(false);
       setState(startOperations(design, { seed }));
     },
   };

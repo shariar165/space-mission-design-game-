@@ -31,7 +31,7 @@ describe('Home', () => {
     render(<App />);
     fireEvent.click(screen.getByRole('button', { name: /^NOTEBOOK/ }));
     expect(screen.getByRole('heading', { name: 'ENGINEER’S NOTEBOOK' })).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: '◂ HOME' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
     expect(screen.getByRole('heading', { name: /SIGNAL/ })).toBeTruthy();
   });
 });

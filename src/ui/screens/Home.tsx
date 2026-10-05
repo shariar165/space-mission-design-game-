@@ -1,9 +1,10 @@
 // HOME (Signal Delay design, screen 04). Four switches and the whole idea in one picture: an order leaves Earth
 // and you watch it crawl to the robot, with MAVEN's real one-way light time at Mars arrival (engine).
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { countdown, signalDelay } from '../../engine/flightMap';
 import { evaluateDesign } from '../../engine/index';
 import { presetDesign } from '../../engine/missions';
+import { CoachCard } from '../components/sd/CoachCard';
 import { ModeLever, type Mode } from '../components/sd/ModeLever';
 import { SDIcon, type SDIconName } from '../components/sd/SDIcon';
 import { Teletype } from '../components/sd/Teletype';
@@ -11,6 +12,7 @@ import { useReducedMotion } from '../opsGeometry';
 import { along, ring, useCycle, useIsPhone } from '../sdGeometry';
 import { isUnlocked, LEVELS, type Level, type Progress } from '../levels';
 import * as f from '../format';
+import { HOW_TO_PLAY } from '../sdWords';
 
 /** The demo order loops every 6 s: 5 s of flight, then a second of RECEIVED (design). */
 export const HOME_LOOP_MS = 6000;
@@ -61,12 +63,19 @@ export function Home({ progress, mode, onMode, daily, rescue, notebook, onPlay, 
   const left = countdown(oneWay, p);
   const next = nextToPlay(progress);
   const r = ring(ringPhase);
+  const [howTo, setHowTo] = useState(false);
 
   const menu: MenuItem[] = [
     { label: 'DAILY MISSION', sub: `Daily #${f.num(daily.number)}. Same mission for everyone today.`, icon: 'calendar', tag: daily.played ? 'DONE ✓' : 'NEW TODAY', hot: !daily.played, onClick: onDaily },
     { label: 'RESCUE HISTORY', sub: 'Real robots that nearly died. Try to save them.', icon: 'rescue', tag: `${f.num(rescue.solved)} OF ${f.num(rescue.total)}`, hot: false, onClick: onRescue },
     { label: 'NOTEBOOK', sub: 'Real lessons you have earned.', icon: 'book', tag: `${f.num(notebook.got)} OF ${f.num(notebook.total)}`, hot: false, onClick: onNotebook },
   ];
+  const howToEl = howTo && <CoachCard title={HOW_TO_PLAY.label} onClose={() => setHowTo(false)} />;
+  const howToKey = (
+    <button type="button" className="hm-missions hm-howto" aria-label={`${HOW_TO_PLAY.label}: ${HOW_TO_PLAY.sub}`} onClick={() => setHowTo(true)}>
+      ? {HOW_TO_PLAY.label}
+    </button>
+  );
 
   // Demo geometry (design: Earth bottom-left, Mars top-right with the robot orbiting it). Decorative, not to scale.
   const orbit = cycle * Math.PI * 2 * 0.86;
@@ -183,6 +192,8 @@ export function Home({ progress, mode, onMode, daily, rescue, notebook, onPlay, 
         <button type="button" className="hm-missions" onClick={onMissions}>
           CHOOSE A MISSION ▸
         </button>
+        {howToKey}
+        {howToEl}
       </div>
     );
 
@@ -204,14 +215,18 @@ export function Home({ progress, mode, onMode, daily, rescue, notebook, onPlay, 
             {menuEls}
           </div>
           <div className="hm-foot">
-            <button type="button" className="hm-missions" onClick={onMissions}>
-              CHOOSE A MISSION ▸
-            </button>
+            <span className="hm-foot-keys">
+              <button type="button" className="hm-missions" onClick={onMissions}>
+                CHOOSE A MISSION ▸
+              </button>
+              {howToKey}
+            </span>
             <ModeLever mode={mode} onMode={onMode} />
           </div>
         </div>
         {crt}
       </div>
+      {howToEl}
     </div>
   );
 }

@@ -272,5 +272,23 @@ export function outcomeIn_s(s: OpsState, hazardId: string): number | undefined {
   return Math.max(0, rec.resolveAt - s.t) * DAY_S;
 }
 
+export interface MissionProgress {
+  /** Share of the mission flown, 0–1 (prime mission, or prime + extension once one is chosen). */
+  fraction: number;
+  /** Mission days not yet started. */
+  daysLeft: number;
+  /** The mission's last day. */
+  endDay: number;
+}
+
+/** How far the flight is: the progress bar and "mission ends in …" (days 0 … endDay). */
+export function missionProgress(s: OpsState): MissionProgress {
+  const endDay = s.extension ? s.extension.endDay : s.env.primeEndDay;
+  const total = endDay + 1;
+  const over = s.status === 'complete' || s.status === 'lost' || s.status === 'not-launched';
+  if (over) return { fraction: 1, daysLeft: 0, endDay };
+  return { fraction: clamp01(s.t / total), daysLeft: Math.max(0, total - Math.floor(s.t + 1e-9)), endDay };
+}
+
 /** How the tiles are counted (Engineer equations drawer). */
 export const TILE_EQUATION = 'segments = N × min(1, margin / m_full), at least one while ≥ 0 · systems = N − k × (wheels lost + instruments lost + safe mode + brownout + degraded)';

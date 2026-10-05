@@ -364,3 +364,130 @@ export function unlockHint(u: LessonUnlock, ctx: { level: (id: string) => string
       return 'Fly through an eclipse season';
   }
 }
+
+// ---------------------------------------------------------------------------
+// Briefings, coach panels, launch checklist and navigation (plain words for every player)
+
+export interface Briefing {
+  /** What the player has to do, in one or two sentences. */
+  job: string;
+  /** One tip that helps on this mission. */
+  tip: string;
+}
+
+export const BRIEFING: Record<string, Briefing> = {
+  'moon-1': {
+    job: 'Send a small robot to the Moon and keep it charged while it takes pictures.',
+    tip: 'Pack solar wings and a battery. The robot needs power in the Moon’s shadow too.',
+  },
+  'moon-2': {
+    job: 'Reach the Moon with enough fuel to slow down and stay in orbit.',
+    tip: 'Fuel is heavy, and the rocket has to lift every bit of it. Watch the weight meter.',
+  },
+  'moon-3': {
+    job: 'Build the whole robot yourself: science, power, radio and fuel. Then fly it.',
+    tip: 'Science parts collect data. A bigger dish sends it home faster.',
+  },
+  mars: {
+    job: 'Fly a robot to Mars and keep it alive while it studies the planet.',
+    tip: 'Mars is minutes away by radio, so your orders arrive late. Answer danger cards early.',
+  },
+  venus: {
+    job: 'Send a radar robot to cloudy Venus without running out of money.',
+    tip: 'Every choice costs coins. Cheap is good, but a robot that breaks earns nothing.',
+  },
+  bennu: {
+    job: 'Meet a small asteroid, study it and bring a pebble sample home.',
+    tip: 'An asteroid has almost no gravity. Spare fuel keeps you safe close to it.',
+  },
+  jupiter: {
+    job: 'Find out if any rocket can send a robot straight from Earth to Jupiter.',
+    tip: 'If nothing fits on the weight meter, that is the lesson: real missions swing past other planets first.',
+  },
+};
+
+export const FREE_BRIEFING: Briefing = {
+  job: 'Build any robot you like, launch it and keep it alive until the mission ends.',
+  tip: 'Pack parts that cover the dangers on the right. Each one shows which danger it helps with.',
+};
+
+export const DAILY_BRIEFING: Briefing = {
+  job: 'Today’s mission is the same for every player. Keep the robot alive and compare your result.',
+  tip: 'You only get one try a day, so read each danger card before you choose.',
+};
+
+/** The four steps of every mission. */
+export const MISSION_STEPS_WORDS: { word: string; line: string }[] = [
+  { word: 'PACK', line: 'Choose the parts that fit in the rocket nose.' },
+  { word: 'LAUNCH', line: 'Pick a green launch day, flip ARM, press LAUNCH.' },
+  { word: 'FLY', line: 'Let time run. Answer danger cards when they appear.' },
+  { word: 'REPORT', line: 'See how you did and earn stars.' },
+];
+
+/** How the three stars are earned, in plain words (the rules are the engine's STAR_RULES). */
+export const STAR_GOALS = (dest: string): string[] => [
+  `Reach ${dest} and start the science.`,
+  'Send lots of science home.',
+  'Finish with spare power, fuel and weight (not too little, not too much).',
+];
+
+/** A real mission that flew there, for the briefing. */
+export const REAL_MISSION_LINE = (label: string) => `Real NASA mission that flew there: ${label}.`;
+
+export interface CoachPanel {
+  icon: SDIconName;
+  title: string;
+  body: string;
+}
+
+/** How to fly: the coach panels on the first flight, the ? button and HOW TO PLAY. */
+export const COACH: CoachPanel[] = [
+  { icon: 'play', title: 'LET TIME RUN', body: 'Press 10×, 100× or 1000× at the bottom to fly. Press II to pause. Time keeps going after each card.' },
+  { icon: 'storm', title: 'DANGER CARDS', body: 'When trouble is coming, time stops and a card appears. Pick an answer. Each one shows what it costs.' },
+  { icon: 'dish', title: 'ORDERS TRAVEL SLOWLY', body: 'Your order crosses space at the speed of light. It can take minutes to reach the robot, so act early.' },
+  { icon: 'power', title: 'WATCH THE FOUR BARS', body: 'Power, fuel, data and systems are at the top. Keep them out of the red.' },
+  { icon: 'star', title: 'REACH THE END', body: 'When the mission ends you get your report and stars. In a hurry? FINISH MISSION lets the robot fly the rest.' },
+];
+
+export const HOW_TO_PLAY = { label: 'HOW TO PLAY', sub: 'New here? Learn the game in one minute.' };
+
+/** The Pack launch checklist, in order. */
+export const LAUNCH_CHECKS = {
+  packed: 'PACK PARTS THAT FIT',
+  day: 'PICK A GREEN LAUNCH DAY',
+  arm: 'FLIP THE ARM SWITCH',
+  go: 'PRESS LAUNCH',
+} as const;
+
+export const NAV = {
+  back: '◂ BACK',
+  info: 'MISSION INFO',
+  help: 'HOW TO FLY',
+  start: 'GOT IT ▸',
+  next: 'NEXT ▸',
+  prev: '◂ PREV',
+  finish: 'FINISH MISSION ▸▸',
+};
+
+export const FINISH_CONFIRM = {
+  title: 'FINISH THE MISSION?',
+  body: 'The robot flies the rest on its own. It answers any danger with its built-in plan, then you see your report.',
+  yes: 'FINISH MISSION ▸▸',
+  no: 'KEEP FLYING',
+};
+
+export const LEAVE_CONFIRM = {
+  title: 'LEAVE THIS FLIGHT?',
+  body: 'This flight ends and you go back to the last screen. You can launch again from there.',
+  leave: '◂ LEAVE FLIGHT',
+  finish: 'FINISH AND SEE REPORT ▸▸',
+  stay: 'KEEP FLYING',
+};
+
+export const FLY_GOAL = 'GOAL: KEEP THE ROBOT ALIVE UNTIL THE MISSION ENDS';
+
+/** The footer line under the progress bar. */
+export const endsInWords = (daysLeft: number) => (daysLeft <= 0 ? 'MISSION OVER' : `MISSION ENDS IN ${f.num(daysLeft)} ${daysLeft === 1 ? 'DAY' : 'DAYS'}`);
+
+/** The nudge when the clock is paused and nothing else is on screen. */
+export const playNudge = (speedLabel: string) => `▶ PRESS ${speedLabel} TO LET TIME RUN`;

@@ -9,6 +9,7 @@ const seedStorage = (extra: Record<string, string> = {}) => {
 
 test('home', async ({ page }, info) => {
   await page.addInitScript((items) => {
+    localStorage.setItem('sd.seen', JSON.stringify(['coach', 'brief:moon-1', 'brief:moon-2', 'brief:moon-3', 'brief:mars', 'brief:venus', 'brief:bennu', 'brief:jupiter']));
     for (const [k, v] of Object.entries(items)) localStorage.setItem(k, v);
   }, seedStorage());
   await page.goto('/');
@@ -19,6 +20,7 @@ test('home', async ({ page }, info) => {
 
 test('notebook', async ({ page }, info) => {
   await page.addInitScript((items) => {
+    localStorage.setItem('sd.seen', JSON.stringify(['coach', 'brief:moon-1', 'brief:moon-2', 'brief:moon-3', 'brief:mars', 'brief:venus', 'brief:bennu', 'brief:jupiter']));
     for (const [k, v] of Object.entries(items)) localStorage.setItem(k, v);
   }, seedStorage({ 'sd.notebook': JSON.stringify({ hazards: { 'solar-storm': 87, 'memory-corruption': 149 }, conjunction: true, eclipse: true }) }));
   await page.goto('/');
@@ -37,6 +39,7 @@ test('daily', async ({ page }, info) => {
   test.setTimeout(420_000);
   const mobile = info.project.name === 'mobile';
   await page.addInitScript((items) => {
+    localStorage.setItem('sd.seen', JSON.stringify(['coach', 'brief:moon-1', 'brief:moon-2', 'brief:moon-3', 'brief:mars', 'brief:venus', 'brief:bennu', 'brief:jupiter']));
     for (const [k, v] of Object.entries(items)) localStorage.setItem(k, v);
     localStorage.removeItem('sd.daily');
     localStorage.removeItem('mdt.ops');

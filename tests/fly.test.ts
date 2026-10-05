@@ -6,7 +6,7 @@ import { craftPosition } from '../src/engine/flightMap';
 import { presetDesign } from '../src/engine/missions';
 import * as ops from '../src/engine/ops/index';
 import { consoleView, powerPlanPreview } from '../src/engine/ops/console';
-import { comingUp, eclipseCard, flyCard, flyTiles, FLY_RULES, outcomeIn_s, segmentsFromFraction, segmentsFromMargin, systemsHealth } from '../src/engine/ops/fly';
+import { comingUp, eclipseCard, flyCard, flyTiles, FLY_RULES, missionProgress, outcomeIn_s, segmentsFromFraction, segmentsFromMargin, systemsHealth } from '../src/engine/ops/fly';
 import { pathAhead } from '../src/engine/flightMap';
 
 const maven = presetDesign('maven');
@@ -231,5 +231,70 @@ describe('eclipse planning card', () => {
     expect(save!.eclipseSegments).toBeGreaterThanOrEqual(warm!.eclipseSegments);
     // far from any season: no card
     expect(eclipseCard(ops.advanceOperations(ops.startOperations(maven, { rng: () => 0.999999, env }), { until: 20 }))).toBeUndefined();
+  });
+});
+
+describe('mission progress (the flight bar and "mission ends in")', () => {
+  it('runs from 0 at launch to 1 at the end of the prime mission', () => {
+    const env = ops.prepareOps(maven);
+    const s0 = ops.startOperations(maven, { rng: () => 0.999999, env });
+    const total = env.primeEndDay + 1; // days 0 … primeEndDay
+    // launch: nothing flown, every day still ahead
+    expect(missionProgress(s0)).toEqual({ fraction: 0, daysLeft: total, endDay: env.primeEndDay });
+    // half way (t = total / 2): fraction 0.5, and the days not yet started are left
+    const half = ops.advanceOperations(s0, { until: total / 2 });
+    expect(half.t).toBeCloseTo(total / 2, 9);
+    expect(missionProgress(half).fraction).toBeCloseTo(0.5, 9);
+    expect(missionProgress(half).daysLeft).toBe(total - Math.floor(total / 2));
+    // over: full bar, nothing left
+    const done = ops.finishOperations(s0);
+    expect(missionProgress(done).fraction).toBe(1);
+    expect(missionProgress(done).daysLeft).toBe(0);
+  });
+
+  it('in an extension the end moves to the extension’s last day', () => {
+    const { state } = ops.runOperations(maven, { rng: () => 0.999999, extension: 'shortest' });
+    const ext = state.extension!;
+    expect(ext).toBeDefined();
+    // mid-extension: rebuild the flight to the middle of it
+    const s = ops.replayOperations(maven, { rng: () => 0.999999 }, state.actions, (ext.startDay + ext.endDay) / 2);
+    const p = missionProgress(s);
+    expect(p.endDay).toBe(ext.endDay);
+    expect(p.daysLeft).toBe(ext.endDay + 1 - Math.floor(s.t));
+    expect(p.fraction).toBeCloseTo(s.t / (ext.endDay + 1), 9);
+  });
+});
+
+describe('finishOperations (the robot flies the rest: the flight always reaches the report)', () => {
+  it('from a decision in mid-flight it runs to the end, deterministically', () => {
+    // A seeded mission with real bad luck, stopped at its first hazard decision.
+    let s = ops.startOperations(maven, { seed: 2013 });
+    while (s.status === 'flying' && s.newDecisions.length === 0) s = ops.advanceOperations(s);
+    const a = ops.finishOperations(s);
+    const b = ops.finishOperations(s);
+    expect(['complete', 'lost']).toContain(a.status);
+    expect(b.status).toBe(a.status);
+    expect(b.t).toBe(a.t);
+    expect(b.events.length).toBe(a.events.length);
+    // the input state is never changed
+    expect(s.status).not.toBe('complete');
+    // every open hazard was left to the craft (standing order or fault protection), none answered by the player
+    expect(a.hazards.every((h) => h.choice === undefined || h.choice.by !== 'player')).toBe(true);
+  });
+
+  it('ends the mission at the extension decision instead of flying more years', () => {
+    let s = ops.startOperations(maven, { rng: () => 0.999999 });
+    while (s.status === 'flying') s = ops.advanceOperations(s);
+    expect(s.status).toBe('awaiting-extension');
+    const done = ops.finishOperations(s);
+    expect(done.status).toBe('complete');
+    expect(done.extension).toBeUndefined();
+    expect(done.t).toBe(s.t); // no extra days flown
+  });
+
+  it('a finished mission is returned as it is', () => {
+    const { state } = ops.runOperations(maven, { rng: () => 0.999999 });
+    expect(ops.finishOperations(state).status).toBe(state.status);
+    expect(ops.finishOperations(state).t).toBe(state.t);
   });
 });
