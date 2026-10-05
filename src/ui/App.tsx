@@ -13,7 +13,7 @@ import type { RescueCaseId } from '../engine/rescue';
 import type { Design, DestinationId } from '../engine/types';
 import { TopBar, type Mode, type Step } from './components/TopBar';
 import { levelById, loadProgress, nextLevel, saveProgress, shelfOf, withStars, type Level, type Progress } from './levels';
-import { loadDaily, loadFlights, loadSeen, saveDaily, saveFlights, saveSeen, type DailySave } from './saves';
+import { loadDaily, loadFlights, loadRobotName, loadSeen, saveDaily, saveFlights, saveRobotName, saveSeen, type DailySave } from './saves';
 import { BuildBay } from './screens/BuildBay';
 import { Daily } from './screens/Daily';
 import { FlyAndSurvive } from './screens/FlyAndSurvive';
@@ -82,6 +82,11 @@ export function App() {
   const [dailyRun, setDailyRun] = useState(false);
   /** Help already seen: level briefings and the flight coach. */
   const [seen, setSeen] = useState<string[]>(loadSeen);
+  const [robotName, setRobotName] = useState<string>(loadRobotName);
+  const nameRobot = (n: string) => {
+    setRobotName(n);
+    saveRobotName(n);
+  };
 
   const cadetMode = mode === 'cadet';
   const level = levelById(cadet.levelId);
@@ -337,6 +342,8 @@ export function App() {
           onLaunch={launchDesign}
           brief={packBrief}
           onBriefSeen={() => level && markSeen(`brief:${level.id}`)}
+          robotName={robotName}
+          onRobotName={nameRobot}
         />
       )}
       {step === 'build' && !cadetMode && <BuildBay design={design} ev={ev} engineer onChange={setDesign} onLaunch={launch} />}
@@ -353,11 +360,13 @@ export function App() {
           coach={!seen.includes('coach')}
           onCoachSeen={() => markSeen('coach')}
           brief={briefFor(dailyRun)}
+          robotName={robotName}
         />
       )}
       {step === 'report' && flown && flyDesign && (
         <MissionReport
           state={flown}
+          robotName={robotName}
           design={flyDesign}
           mode={mode}
           onMode={changeMode}

@@ -378,4 +378,6 @@ export { consoleView, dsnOptions, nextEventT, opsAvailable, powerPlanPreview, CO
 export type * from './console';
 export { comingUp, eclipseCard, flyCard, flyTiles, FLY_RULES, missionProgress, outcomeIn_s, segmentsFromFraction, segmentsFromMargin, stormFront, systemsHealth } from './fly';
 export type * from './fly';
+export { heardMessages, robotMessages, VOICE_RULES } from './voice';
+export type * from './voice';
 export type * from './types';

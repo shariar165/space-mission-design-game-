@@ -1,7 +1,7 @@
 // Words for the Signal Delay screens (design: docs/design/signal-delay). Numbers come from the engine and are only
 // formatted here, through format.ts. Cadet reads short uppercase lines; Engineer adds the numbers.
 import type { FailureEffect, OpsPhase } from '../engine/data';
-import type { ComingUpKind, ConsoleOutcome, FlyChip } from '../engine/ops/index';
+import type { ComingUpKind, ConsoleOutcome, FlyChip, RobotMessage, VoiceKind } from '../engine/ops/index';
 import type { DeckCard, PackBlockerCode, PartId } from '../engine/pack';
 import type { Hurt, ReportPanel, Saved } from '../engine/ops/report';
 import type { Category } from '../engine/scoring';
@@ -503,3 +503,75 @@ export const MAP_WORDS = {
 /** The log line while a solar storm crosses space toward the robot, and while it hits. */
 export const stormLine = (phase: 'coming' | 'hitting', name: string, hitsIn: string) =>
   phase === 'coming' ? `THE SUN ERUPTED. A SOLAR STORM HITS ${name} IN ${hitsIn}.` : `SOLAR STORM ON ${name}. PARTICLES EVERYWHERE.`;
+
+// ---------------------------------------------------------------------------
+// The robot's voice. It reports in the first person; every line reached Earth one light time after it was sent.
+
+/** Names the 🎲 button cycles through on Pack (the first is the default). */
+export const ROBOT_NAMES = ['PIP', 'NOVA', 'ZIPPY', 'BOLT', 'COMET', 'SPARKY', 'ORBIT', 'BEEP', 'ASTRO', 'DOT', 'RUSTY', 'TWINKLE'];
+/** Longest robot name (letters), so it fits over the robot on the map. */
+export const ROBOT_NAME_MAX = 10;
+
+/** A typed name made safe for the map: capitals, letters, digits, spaces and dashes, at most ROBOT_NAME_MAX. */
+export const cleanRobotName = (raw: string) =>
+  raw
+    .toUpperCase()
+    .replace(/[^A-Z0-9 -]/g, '')
+    .replace(/\s+/g, ' ')
+    .slice(0, ROBOT_NAME_MAX);
+
+/** The name to show: the player's, or the default when the field was left empty. */
+export const robotNameOr = (name: string | undefined) => (name && name.trim() ? name.trim() : ROBOT_NAMES[0]!);
+
+/** The next suggestion after the current name. */
+export const nextRobotName = (name: string) => ROBOT_NAMES[(ROBOT_NAMES.indexOf(name) + 1) % ROBOT_NAMES.length]!;
+
+export const ROBOT_WORDS = {
+  nameLabel: 'YOUR ROBOT’S NAME',
+  suggest: 'Suggest a name',
+  radio: (name: string) => `${name} SAYS`,
+  took: (dest: string, delay: string) => `FROM ${dest} · TOOK ${delay} TO REACH YOU`,
+  lastMessage: (name: string) => `LAST MESSAGE FROM ${name}`,
+};
+
+type Line = (dest: string) => string;
+const HIT_LINES: Record<string, Line[]> = {
+  'solar-storm': [() => 'Storm’s here! Particles are pinging off my panels!', () => 'Another solar storm. I can feel it in my circuits.'],
+  'mars-dust-storm': [() => 'Dust storm below! The air is puffing up toward my orbit.'],
+  debris: [() => 'Whoa! Something tiny just went whizzing past me!'],
+  'reaction-wheel': [() => 'One of my spinning wheels is grinding. Ouch.'],
+  'memory-corruption': [() => 'My memory feels… scrambled. Running checks.'],
+  'radiation-damage': [(d) => `So much radiation around ${d}. My circuits are tingling.`],
+};
+
+const VOICE: Record<Exclude<VoiceKind, 'hit'>, Line[]> = {
+  launch: [(d) => `Liftoff! I can feel the rocket shaking. Next stop: ${d}!`],
+  'launch-failed': [() => 'The rocket… didn’t make it. I never left the ground.'],
+  halfway: [(d) => `Halfway to ${d}! Earth looks like a tiny blue dot from here.`],
+  arrived: [(d) => `I made it to ${d}! Firing my engine to slow down…`],
+  science: [(d) => `Instruments on. ${d} looks amazing from up here!`],
+  'heading-home': [() => 'Sample on board. Turning around… I’m coming home!'],
+  'bonus-time': [() => 'Bonus time! Thanks for keeping me flying.'],
+  dark: [
+    (d) => `It’s getting dark. ${d} is blocking the Sun, so I’m running on battery.`,
+    () => 'Shadow season again. Battery on, heaters down a bit.',
+    () => 'Dark again. I know the drill by now.',
+  ],
+  conjunction: [() => 'The Sun is right between us. I can’t hear you for a while. See you on the other side!'],
+  'conjunction-end': [() => 'I can hear you again! Did you miss me?'],
+  saved: [() => 'That worked! Thanks for the quick thinking.', () => 'Phew. Your order got here just in time.', () => 'All good up here. Nice call, Mission Control!'],
+  hurt: [() => 'That didn’t go well. I’m hurt, but I’m still flying.', () => 'Ow. Something broke. I’ll keep going as best I can.'],
+  'instrument-lost': [() => 'I lost one of my instruments. I’ll do what I can with the rest.'],
+  'safe-mode': [() => 'I switched to safe mode to protect myself. Waiting for your orders…'],
+  brownout: [() => 'Not enough power! I’m switching things off to stay alive.'],
+  'wheel-spare': [() => 'A wheel gave up, but my spare took over. Still pointing straight!'],
+  'out-of-fuel': [() => 'My tank is empty. I can’t steer any more.'],
+  'prime-complete': [() => 'Mission done! All my science is on its way to you.'],
+  'last-words': [() => 'My battery is low… and it’s getting dark. Goodbye, Mission Control.'],
+};
+
+/** What the robot says, in its own words. */
+export function robotSays(m: RobotMessage, destName: string): string {
+  const lines = m.kind === 'hit' ? (HIT_LINES[m.values.hazardType ?? ''] ?? [() => 'Trouble up here! Something just went wrong.']) : VOICE[m.kind];
+  return lines[m.seq % lines.length]!(destName);
+}

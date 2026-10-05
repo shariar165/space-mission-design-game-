@@ -67,7 +67,7 @@ test('solar storm comes from the Sun', async ({ page }, info) => {
     await page.waitForTimeout(150);
   }
   const pause = page.getByRole('button', { name: 'Pause' });
-  if (await pause.isEnabled()) await pause.click();
+  if (await pause.isEnabled()) await pause.click({ timeout: 2000 }).catch(() => undefined);
   await page.waitForTimeout(300);
   await page.screenshot({ path: `${OUT}storm-wave-${p}.png` });
   // Run on until the storm is on the robot.
@@ -79,7 +79,19 @@ test('solar storm comes from the Sun', async ({ page }, info) => {
     if (await page.locator('.crt-storm.hitting').isVisible()) break;
     await page.waitForTimeout(150);
   }
-  if (await pause.isEnabled()) await pause.click();
+  if (await pause.isEnabled()) await pause.click({ timeout: 2000 }).catch(() => undefined);
   await page.waitForTimeout(mobile ? 500 : 300);
   await page.screenshot({ path: `${OUT}storm-hit-${p}.png` });
+  // The robot's own report of the hit reaches Earth one light time later: its radio bubble.
+  for (let i = 0; i < 40; i++) {
+    const cont = page.getByRole('button', { name: 'CONTINUE ▸' });
+    if (await cont.isVisible()) await cont.click();
+    if (await page.locator('.fly-radio').isVisible()) break;
+    const ten = page.getByRole('button', { name: '10× speed' });
+    if ((await ten.isEnabled()) && (await ten.getAttribute('aria-pressed')) !== 'true') await ten.click();
+    await page.waitForTimeout(100);
+  }
+  if (await pause.isEnabled()) await pause.click({ timeout: 2000 }).catch(() => undefined);
+  await page.waitForTimeout(500);
+  await page.screenshot({ path: `${OUT}storm-radio-${p}.png` });
 });

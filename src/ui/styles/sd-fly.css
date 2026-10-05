@@ -292,3 +292,14 @@
 .fly-status:has(.sd-back) { display: flex; align-items: center; gap: 8px; }
 .fly-status:has(.sd-back) .sd-lever { margin-left: auto; }
 .fly-status .fly-help { margin-left: 0; }
+
+/* The robot's radio: its latest message, and how long it took to cross space */
+.fly-radio { position: absolute; left: 22px; top: 64px; z-index: 1; max-width: 430px; display: flex; flex-direction: column; gap: 6px; padding: 10px 14px 11px; border: 1px solid var(--sd-crt-line); border-left: 4px solid var(--sd-crt-hi); border-radius: 4px; background: rgba(5, 12, 7, 0.82); animation: fly-radio-in 0.35s ease-out; }
+.fly-radio.bad { border-left-color: var(--sd-amber); }
+.fly-radio-k { font: 400 17px/1 var(--sd-crt-font); letter-spacing: 0.08em; color: var(--sd-crt-mid); }
+.fly-radio-v { font: 400 23px/1.1 var(--sd-crt-font); color: var(--sd-crt-hi); }
+.fly-radio.bad .fly-radio-v { color: var(--sd-amber-hi); }
+.fly-radio-t { font: 400 15px/1 var(--sd-crt-font); letter-spacing: 0.06em; color: var(--sd-crt-mid); opacity: 0.85; }
+@keyframes fly-radio-in { from { opacity: 0; transform: translateY(-6px); } }
+.fly.phone .fly-radio { left: 12px; right: 12px; top: 50px; max-width: none; padding: 8px 10px; }
+.fly.phone .fly-radio-v { font-size: 20px; }

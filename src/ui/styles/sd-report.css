@@ -133,3 +133,12 @@
 /* ---- Back ---- */
 .rp .rp-back { align-self: flex-start; background: var(--sd-paper-ink); color: var(--sd-amber); border-color: var(--sd-paper-ink); }
 .rp.phone .rp-back { margin-bottom: 4px; }
+
+/* The robot's last message (heardMessages), under the comic */
+.rp-radio { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; padding: 12px 16px; border-radius: 3px; background: var(--sd-crt); border-left: 5px solid var(--sd-crt-hi); box-shadow: var(--sd-well); }
+.rp-radio.bad { border-left-color: var(--sd-amber); }
+.rp-radio-k { display: inline-flex; align-items: center; gap: 8px; font: 700 11px/1 var(--sd-mono); letter-spacing: 0.16em; color: var(--sd-crt-mid); }
+.rp-radio-v { flex: 1 1 320px; font: 400 24px/1.1 var(--sd-crt-font); color: var(--sd-crt-hi); }
+.rp-radio.bad .rp-radio-v { color: var(--sd-amber-hi); }
+.rp-radio-t { font: 400 16px/1 var(--sd-crt-font); color: var(--sd-crt-mid); letter-spacing: 0.06em; }
+.rp.phone .rp-radio-v { font-size: 21px; flex-basis: 100%; }

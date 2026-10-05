@@ -50,3 +50,11 @@ export const loadSeen = (): string[] => {
   return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [];
 };
 export const saveSeen = (seen: string[]) => write(SEEN_KEY, seen);
+
+/** The robot's name, chosen on Pack (empty means the default). */
+const ROBOT_KEY = 'sd.robot';
+export const loadRobotName = (): string => {
+  const v = read<{ name?: unknown }>(ROBOT_KEY, {});
+  return typeof v.name === 'string' ? v.name : '';
+};
+export const saveRobotName = (name: string) => write(ROBOT_KEY, { name });

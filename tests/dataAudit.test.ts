@@ -28,6 +28,7 @@ import { RISK_RUNS, RISK_SEED } from '../src/engine/ops/riskEstimate';
 import { CONSOLE_RULES } from '../src/engine/ops/console';
 import { FLY_RULES } from '../src/engine/ops/fly';
 import { DAILY_RULES } from '../src/engine/daily';
+import { VOICE_RULES } from '../src/engine/ops/voice';
 
 interface Entry {
   path: string;
@@ -98,6 +99,7 @@ const ENGINE_VALUES: Record<string, Record<string, Sourced<unknown>>> = {
   'ops/fly.ts FLY_RULES': FLY_RULES,
   'scoring.ts STAR_RULES': STAR_RULES,
   'daily.ts DAILY_RULES': DAILY_RULES,
+  'ops/voice.ts VOICE_RULES': VOICE_RULES,
 };
 
 const all: Entry[] = [];

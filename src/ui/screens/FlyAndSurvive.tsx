@@ -5,13 +5,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { DESTINATIONS, HAZARDS, PARTS } from '../../engine/data';
 import { flightMap, ghostFor, pathAhead } from '../../engine/flightMap';
-import { comingUp, eclipseCard, flyCard, flyTiles, FLY_RULES, missionProgress, outcomeIn_s, stormFront, type FlyChip, type OpsState } from '../../engine/ops/index';
+import { comingUp, eclipseCard, flyCard, flyTiles, FLY_RULES, heardMessages, missionProgress, outcomeIn_s, stormFront, type FlyChip, type OpsState } from '../../engine/ops/index';
 import type { Design, Sourced } from '../../engine/types';
 import { SPEED_OF_LIGHT } from '../../engine/constants';
 import { BookCall } from '../components/ops/BookCall';
 import { BlackoutPanel, CommandQueue, ExtensionDecision, NoticeToast, SafeModePanel } from '../components/ops/OpsPanels';
 import { PowerDial } from '../components/ops/PowerDial';
 import { CrtMap } from '../components/fly/CrtMap';
+import { RobotRadio } from '../components/fly/RobotRadio';
 import { DangerCard, type CardView, type ChipView, type ChoiceView } from '../components/fly/DangerCard';
 import { EquationsPanel } from '../components/fly/EquationsPanel';
 import { BackButton } from '../components/sd/BackButton';
@@ -41,6 +42,7 @@ import {
   optionShort,
   playNudge,
   quietLine,
+  robotNameOr,
   stormLine,
   RESULT_EFFECT_CHIP,
   resultLines,
@@ -68,6 +70,8 @@ interface Props {
   onCoachSeen?: () => void;
   /** The mission briefing behind MISSION INFO. */
   brief?: { title: string; briefing: Briefing; concept?: string };
+  /** The robot's name (Pack); the default when empty. */
+  robotName?: string;
 }
 
 type Panel = 'power' | 'call' | 'queue' | 'eqs';
@@ -82,7 +86,8 @@ function chipViews(chips: FlyChip[]): ChipView[] {
   return chips.map((k) => ({ icon: CHIP_ICON[k.gauge], text: k.gauge === 'coins' ? `${f.signedInt(k.delta)} COINS` : f.signedInt(k.delta), tone: 'cost' as const }));
 }
 
-export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome, onDone, onBack, coach, onCoachSeen, brief }: Props) {
+export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome, onDone, onBack, coach, onCoachSeen, brief, robotName }: Props) {
+  const name = robotNameOr(robotName);
   const engineer = mode === 'engineer';
   const ops = useOpsSession(design, seed);
   const { state, view } = ops;
@@ -103,6 +108,7 @@ export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome,
 
   const tiles = state && view ? flyTiles(state, view) : undefined;
   const storm = state ? stormFront(state) : undefined;
+  const radio = state ? heardMessages(state).latest : undefined;
   const card = state && view && ops.showAlert ? flyCard(state, view) : undefined;
   const coming = state ? comingUp(state) : undefined;
   const ahead = useMemo(() => (ev && view ? pathAhead(design, view.map.frame.day, ev) : []), [design, ev, view?.map.frame.day]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -279,7 +285,7 @@ export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome,
         : ops.result
         ? 'SIGNAL RECEIVED.'
         : storm
-          ? stormLine(storm.phase, 'YOUR ROBOT', f.durationWords(storm.hitsIn_s).toUpperCase())
+          ? stormLine(storm.phase, name, f.durationWords(storm.hitsIn_s).toUpperCase())
           : (() => {
             const e = view.feed[0];
             const line = e && e.t > state.t - 3 ? eventLine(e, { destName: dest.name, optionLabel: shortLabel }) : undefined;
@@ -517,10 +523,12 @@ export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome,
         {...(flying ? { pulse: flying.progress } : {})}
         ringPhase={ringPhase}
         {...(storm ? { storm } : {})}
+        robotName={name}
         phone={phone}
         lost={state.status === 'lost'}
       />
       <Teletype className="fly-log sd-crt-text" text={logText} prefix="> " />
+      <RobotRadio {...(radio ? { message: radio } : {})} name={name} destName={dest.name} hidden={!!openCard || debrief} />
       {!phone && <span className="fly-goal">{FLY_GOAL}</span>}
       {!phone && (
         <div className="fly-legend">

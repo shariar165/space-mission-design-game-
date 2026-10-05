@@ -4,7 +4,7 @@
 // Every number comes from the engine (operationsDebrief, ops/report.ts, compare.ts); this screen lays them out.
 import { useEffect, useMemo, useState } from 'react';
 import { DESTINATIONS, HAZARDS, LAUNCH_VEHICLES, RIDESHARES } from '../../engine/data';
-import { operationsDebrief, type OpsState } from '../../engine/ops/index';
+import { heardMessages, operationsDebrief, VOICE_RULES, type OpsState } from '../../engine/ops/index';
 import { reportCompare, reportPanels, reportVerdict } from '../../engine/ops/report';
 import { MAX_SCORE, MARGIN_BAND, scoreGrade, STAR_RULES } from '../../engine/scoring';
 import type { CompareMetric } from '../../engine/compare';
@@ -27,6 +27,9 @@ import {
   PANEL_SOUND,
   panelWords,
   REPORT_STAMP,
+  ROBOT_WORDS,
+  robotNameOr,
+  robotSays,
   savedWords,
   STAR_WORDS,
 } from '../sdWords';
@@ -62,9 +65,11 @@ interface Props {
   /** ◂ BACK to the screen before the flight. */
   onBack?: () => void;
   homeLabel: string;
+  /** The robot's name (Pack); the default when empty. */
+  robotName?: string;
 }
 
-export function MissionReport({ state, design, mode, onMode, missionName, next, newCard, onFlyAgain, onHome, onBack, homeLabel }: Props) {
+export function MissionReport({ state, design, mode, onMode, missionName, next, newCard, onFlyAgain, onHome, onBack, homeLabel, robotName }: Props) {
   const engineer = mode === 'engineer';
   const phone = useIsPhone();
   const still = useReducedMotion();
@@ -277,6 +282,19 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
     </div>
   );
 
+  const name = robotNameOr(robotName);
+  const last = heardMessages(state).latest;
+  const lastEl = last && (
+    <div className={`rp-radio${last.kind === 'last-words' || last.kind === 'launch-failed' ? ' bad' : ''}`} role="note" aria-label={ROBOT_WORDS.lastMessage(name)}>
+      <span className="rp-radio-k">
+        📡 {ROBOT_WORDS.lastMessage(name)}
+        {last.kind === 'last-words' && <SourceInfo s={VOICE_RULES.lastWordsHistory} title="Opportunity’s last message" />}
+      </span>
+      <span className="rp-radio-v">“{robotSays(last, dest.name)}”</span>
+      <span className="rp-radio-t">{ROBOT_WORDS.took(dest.name.toUpperCase(), f.durationWords(last.delay_s))}</span>
+    </div>
+  );
+
   const engineerEl = engineer && (
     <section className="rp-eng" aria-label="Engineer details">
       <div className="rp-eng-col">
@@ -337,6 +355,7 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
           <ModeLever mode={mode} onMode={onMode} />
           {starsEl}
           <div className="rp-strip">{panelEls}</div>
+          {lastEl}
           {verdictEl}
           {compareEl}
           {lessonEl}
@@ -362,6 +381,7 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
           {stampEl}
         </header>
         <div className="rp-comic">{panelEls}</div>
+        {lastEl}
         <div className="rp-lower">
           {verdictEl}
           {compareEl ?? <div className="rp-compare empty">NO REAL MISSION TO COMPARE WITH YET</div>}
