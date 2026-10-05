@@ -593,3 +593,24 @@ export const MOMENT_WORDS = {
   stormSub: (name: string) => `PARTICLES FROM THE SUN ARE HITTING ${name}.`,
   launchFailed: 'LAUNCH FAILED',
 };
+
+// ---------------------------------------------------------------------------
+// Postcards from space
+
+export const POSTCARD_WORDS = {
+  menu: 'POSTCARDS',
+  menuSub: 'Real NASA pictures your robots sent home.',
+  title: 'POSTCARDS FROM SPACE',
+  sub: 'Real pictures from NASA missions. Your robot sends one home as its science reaches Earth.',
+  toast: (dest: string) => `📮 POSTCARD FROM ${dest}!`,
+  look: 'TAP TO LOOK',
+  keep: 'KEEP FLYING ▸',
+  close: 'CLOSE',
+  credit: (c: string) => `IMAGE: ${c}`,
+  report: 'POSTCARDS FROM THIS FLIGHT',
+  none: 'No postcards this time: no science reached Earth.',
+  locked: 'LOCKED',
+  /** How a locked card is earned, from its unlock share (0 = first data, 1 = the whole goal). */
+  hint: (dest: string, share: number) =>
+    share <= 0 ? `Fly to ${dest} and send home your first science.` : share >= 1 ? `Send home all the science from ${dest}.` : `Send home half the science from ${dest}.`,
+};

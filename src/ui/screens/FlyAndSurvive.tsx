@@ -15,6 +15,8 @@ import { CrtMap } from '../components/fly/CrtMap';
 import { RobotRadio } from '../components/fly/RobotRadio';
 import { BANNER_MS, LaunchCountdown, MomentBanner } from '../components/fly/Moment';
 import { SoundToggle } from '../components/sd/SoundToggle';
+import { PostcardView, postcardSrc } from '../components/sd/PostcardView';
+import { newPostcards, POSTCARDS, postcardsEarned } from '../../engine/postcards';
 import { play } from '../sound';
 import { DangerCard, type CardView, type ChipView, type ChoiceView } from '../components/fly/DangerCard';
 import { EquationsPanel } from '../components/fly/EquationsPanel';
@@ -46,6 +48,7 @@ import {
   playNudge,
   quietLine,
   MOMENT_WORDS,
+  POSTCARD_WORDS,
   robotNameOr,
   stormLine,
   RESULT_EFFECT_CHIP,
@@ -77,6 +80,8 @@ interface Props {
   /** The launch countdown opens the flight (the first flight of a level). */
   launchMoment?: boolean;
   onLaunchSeen?: () => void;
+  /** Postcards this flight has earned so far (called when a new one arrives). */
+  onPostcards?: (ids: string[]) => void;
   /** The robot's name (Pack); the default when empty. */
   robotName?: string;
 }
@@ -93,7 +98,7 @@ function chipViews(chips: FlyChip[]): ChipView[] {
   return chips.map((k) => ({ icon: CHIP_ICON[k.gauge], text: k.gauge === 'coins' ? `${f.signedInt(k.delta)} COINS` : f.signedInt(k.delta), tone: 'cost' as const }));
 }
 
-export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome, onDone, onBack, coach, onCoachSeen, brief, robotName, launchMoment, onLaunchSeen }: Props) {
+export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome, onDone, onBack, coach, onCoachSeen, brief, robotName, launchMoment, onLaunchSeen, onPostcards }: Props) {
   const name = robotNameOr(robotName);
   const engineer = mode === 'engineer';
   const ops = useOpsSession(design, seed);
@@ -163,8 +168,32 @@ export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome,
     if (over) play(state?.status === 'lost' || state?.status === 'not-launched' ? 'sad' : 'fanfare');
   }, [over]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // An eclipse planning card, an overlay or the launch countdown holds the clock like a danger card does.
-  const held = eclipseOpen || overlay !== undefined || launching;
+  // ---- Postcards: a toast when the science opens a new one (the clock runs on); tap it for the full card ----
+  const earned = useMemo(() => (state ? postcardsEarned(state) : []), [state]);
+  const earnedKey = earned.join(',');
+  const seenCards = useRef<string[]>([]);
+  const [toast, setToast] = useState<string>();
+  const [cardOpen, setCardOpen] = useState<string>();
+  useEffect(() => {
+    const fresh = newPostcards(seenCards.current, earned);
+    seenCards.current = earned;
+    if (!fresh.length) return;
+    onPostcards?.(earned);
+    if (!over) {
+      setToast(fresh[fresh.length - 1]);
+      play('ding');
+    }
+  }, [earnedKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!toast) return;
+    const id = setTimeout(() => setToast(undefined), BANNER_MS * 2);
+    return () => clearTimeout(id);
+  }, [toast]);
+  const toastCard = POSTCARDS.find((c) => c.id === toast);
+  const openPostcard = POSTCARDS.find((c) => c.id === cardOpen);
+
+  // An eclipse planning card, an overlay, an open postcard or the launch countdown holds the clock like a danger card does.
+  const held = eclipseOpen || overlay !== undefined || launching || openPostcard !== undefined;
   useEffect(() => {
     ops.setHold(held);
   }, [held]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -660,6 +689,24 @@ export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome,
   const overlays = (
     <>
       {launching && <LaunchCountdown onDone={endLaunch} still={still} />}
+      {toastCard && !openPostcard && !debrief && (
+        <button
+          type="button"
+          className="fly-postcard"
+          onClick={() => {
+            setCardOpen(toastCard.id);
+            setToast(undefined);
+          }}
+        >
+          <img src={postcardSrc(toastCard)} alt="" />
+          <span className="fly-postcard-t">
+            <span className="fly-postcard-k">{POSTCARD_WORDS.toast(dest.name.toUpperCase())}</span>
+            <span className="fly-postcard-v">{toastCard.title}</span>
+            <span className="fly-postcard-look">{POSTCARD_WORDS.look}</span>
+          </span>
+        </button>
+      )}
+      {openPostcard && <PostcardView card={openPostcard} onClose={() => setCardOpen(undefined)} closeLabel={POSTCARD_WORDS.keep} />}
       {overlay === 'coach' && !launching && <CoachCard onClose={closeOverlay} />}
       {overlay === 'info' && brief && (
         <MissionBriefing title={brief.title} destination={design.destination} briefing={brief.briefing} {...(brief.concept ? { concept: brief.concept } : {})} onClose={closeOverlay} />

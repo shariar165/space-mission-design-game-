@@ -63,3 +63,11 @@ export const saveRobotName = (name: string) => write(ROBOT_KEY, { name });
 const SOUND_KEY = 'sd.sound';
 export const loadSoundOn = (): boolean => read<{ on?: unknown }>(SOUND_KEY, {}).on !== false;
 export const saveSoundOn = (on: boolean) => write(SOUND_KEY, { on });
+
+/** Postcards from space: the ids of every card earned so far (postcards.ts). */
+const POSTCARDS_KEY = 'sd.postcards';
+export const loadPostcards = (): string[] => {
+  const v = read<{ earned?: unknown }>(POSTCARDS_KEY, {});
+  return Array.isArray(v.earned) ? v.earned.filter((x): x is string => typeof x === 'string') : [];
+};
+export const savePostcards = (earned: string[]) => write(POSTCARDS_KEY, { earned });

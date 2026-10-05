@@ -12,6 +12,7 @@ import missions from '../src/data/missions.json';
 import operations from '../src/data/operations.json';
 import pack from '../src/data/pack.json';
 import notebookData from '../src/data/notebook.json';
+import postcards from '../src/data/postcards.json';
 import orbitalElements from '../src/data/orbitalElements.json';
 import parts from '../src/data/parts.json';
 import rescueCases from '../src/data/rescueCases.json';
@@ -76,6 +77,7 @@ const DATA_FILES: Record<string, unknown> = {
   'orbitalElements.json': orbitalElements,
   'pack.json': pack,
   'notebook.json': notebookData,
+  'postcards.json': postcards,
   'parts.json': parts,
   'rescueCases.json': rescueCases,
   'rideshares.json': rideshares,

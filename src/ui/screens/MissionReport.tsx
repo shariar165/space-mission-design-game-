@@ -10,6 +10,8 @@ import { MAX_SCORE, MARGIN_BAND, scoreGrade, STAR_RULES } from '../../engine/sco
 import type { CompareMetric } from '../../engine/compare';
 import type { Design } from '../../engine/types';
 import { ComicArt } from '../components/report/ComicArt';
+import { PostcardView, postcardSrc } from '../components/sd/PostcardView';
+import { POSTCARDS, postcardsEarned } from '../../engine/postcards';
 import { SourceInfo } from '../components/SourceInfo';
 import { MissionSteps } from '../components/sd/MissionSteps';
 import { BackButton } from '../components/sd/BackButton';
@@ -27,6 +29,7 @@ import {
   PANEL_SOUND,
   panelWords,
   REPORT_STAMP,
+  POSTCARD_WORDS,
   ROBOT_WORDS,
   robotNameOr,
   robotSays,
@@ -295,6 +298,28 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
     </div>
   );
 
+  const won = useMemo(() => postcardsEarned(state).map((id) => POSTCARDS.find((c) => c.id === id)!), [state]);
+  const [card, setCard] = useState<string>();
+  const openCard = won.find((c) => c.id === card);
+  const cardsEl = state.status !== 'not-launched' && (
+    <section className="rp-postcards" aria-label={POSTCARD_WORDS.report}>
+      <span className="rp-postcards-k">📮 {POSTCARD_WORDS.report}</span>
+      {won.length ? (
+        <div className="rp-postcards-row">
+          {won.map((c) => (
+            <button key={c.id} type="button" className="rp-postcard" onClick={() => setCard(c.id)} aria-label={c.title}>
+              <img src={postcardSrc(c)} alt="" />
+              <span>{c.title}</span>
+            </button>
+          ))}
+        </div>
+      ) : (
+        <span className="rp-postcards-none">{POSTCARD_WORDS.none}</span>
+      )}
+      {openCard && <PostcardView card={openCard} onClose={() => setCard(undefined)} />}
+    </section>
+  );
+
   const engineerEl = engineer && (
     <section className="rp-eng" aria-label="Engineer details">
       <div className="rp-eng-col">
@@ -356,6 +381,7 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
           {starsEl}
           <div className="rp-strip">{panelEls}</div>
           {lastEl}
+          {cardsEl}
           {verdictEl}
           {compareEl}
           {lessonEl}
@@ -382,6 +408,7 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
         </header>
         <div className="rp-comic">{panelEls}</div>
         {lastEl}
+        {cardsEl}
         <div className="rp-lower">
           {verdictEl}
           {compareEl ?? <div className="rp-compare empty">NO REAL MISSION TO COMPARE WITH YET</div>}

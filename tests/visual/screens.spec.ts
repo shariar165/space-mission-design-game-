@@ -53,3 +53,18 @@ test('daily', async ({ page }, info) => {
   await page.waitForTimeout(600);
   await page.screenshot({ path: `test-results/shots/daily-${info.project.name}.png` });
 });
+
+test('postcards', async ({ page }, info) => {
+  await page.addInitScript((items) => {
+    localStorage.setItem('sd.seen', JSON.stringify(['coach']));
+    for (const [k, v] of Object.entries(items)) localStorage.setItem(k, v);
+  }, seedStorage({ 'sd.postcards': JSON.stringify({ earned: ['moon-earthrise', 'moon-tycho', 'moon-apollo11', 'mars-globe', 'mars-dunes'] }) }));
+  await page.goto('/');
+  await page.getByRole('button', { name: /^POSTCARDS/ }).click();
+  await page.evaluate(() => document.fonts.ready);
+  await page.waitForTimeout(900);
+  await page.screenshot({ path: `test-results/shots/postcards-${info.project.name}.png`, fullPage: true });
+  await page.getByRole('button', { name: /^Sunrise on Tycho/ }).click();
+  await page.waitForTimeout(600);
+  await page.screenshot({ path: `test-results/shots/postcard-open-${info.project.name}.png` });
+});

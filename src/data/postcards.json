@@ -1,0 +1,257 @@
+{
+  "_comment": "Postcards from space (spec: UI rules, Postcards). Real NASA pictures, public domain, from the NASA Image and Video Library (nasaId). Each unlocks when that share of the science goal has reached Earth. Captions come from the NASA description; anything added from general knowledge is marked to verify. Images are resized copies in public/postcards/.",
+  "postcards": [
+    {
+      "id": "moon-earthrise",
+      "destination": "moon",
+      "nasaId": "GSFC_20171208_Archive_e000496",
+      "title": "Earthrise",
+      "image": "postcards/moon-earthrise.jpg",
+      "credit": "NASA/GSFC/Arizona State University",
+      "caption": {
+        "value": "NASA’s Lunar Reconnaissance Orbiter took this picture of Earth from its orbit around the Moon.",
+        "unit": "",
+        "source": "NASA Image and Video Library, GSFC_20171208_Archive_e000496 (caption from its description)",
+        "url": "https://images.nasa.gov/details/GSFC_20171208_Archive_e000496",
+        "isGameEstimate": false
+      },
+      "unlockAt": {
+        "value": 0,
+        "unit": "fraction of the science goal",
+        "source": "Game rule (Postcards): the first science data to reach Earth",
+        "isGameEstimate": true
+      }
+    },
+    {
+      "id": "moon-tycho",
+      "destination": "moon",
+      "nasaId": "GSFC_20171208_Archive_e001873",
+      "title": "Sunrise on Tycho",
+      "image": "postcards/moon-tycho.jpg",
+      "credit": "NASA/GSFC/Arizona State University",
+      "caption": {
+        "value": "Sunrise on the central peak of Tycho crater, seen by the Lunar Reconnaissance Orbiter. Tycho is about 82 km wide, and its peak rises about 2 km above the crater floor.",
+        "unit": "",
+        "source": "NASA Image and Video Library, GSFC_20171208_Archive_e001873 (caption from its description)",
+        "url": "https://images.nasa.gov/details/GSFC_20171208_Archive_e001873",
+        "isGameEstimate": false
+      },
+      "unlockAt": {
+        "value": 0.5,
+        "unit": "fraction of the science goal",
+        "source": "Game rule (Postcards): half the science goal downlinked",
+        "isGameEstimate": true
+      }
+    },
+    {
+      "id": "moon-apollo11",
+      "destination": "moon",
+      "nasaId": "PIA12909",
+      "title": "Apollo 11, from above",
+      "image": "postcards/moon-apollo11.jpg",
+      "credit": "NASA/GSFC/Arizona State University",
+      "caption": {
+        "value": "The Apollo 11 landing site, seen by the Lunar Reconnaissance Orbiter in 2009. The labels mark the Eagle lander’s descent stage and the experiments the astronauts left behind.",
+        "unit": "",
+        "source": "NASA Image and Video Library, PIA12909 (caption from its description)",
+        "url": "https://images.nasa.gov/details/PIA12909",
+        "isGameEstimate": false
+      },
+      "unlockAt": {
+        "value": 1,
+        "unit": "fraction of the science goal",
+        "source": "Game rule (Postcards): the whole science goal downlinked",
+        "isGameEstimate": true
+      }
+    },
+    {
+      "id": "mars-globe",
+      "destination": "mars",
+      "nasaId": "PIA00407",
+      "title": "The whole red planet",
+      "image": "postcards/mars-globe.jpg",
+      "credit": "NASA/JPL/USGS",
+      "caption": {
+        "value": "Mars from space: the white north polar cap at the top and the giant canyon Valles Marineris across the middle.",
+        "unit": "",
+        "source": "Caption from the NASA image description plus general knowledge; to verify against NASA source",
+        "url": "https://images.nasa.gov/details/PIA00407",
+        "isGameEstimate": true
+      },
+      "unlockAt": {
+        "value": 0,
+        "unit": "fraction of the science goal",
+        "source": "Game rule (Postcards): the first science data to reach Earth",
+        "isGameEstimate": true
+      }
+    },
+    {
+      "id": "mars-dunes",
+      "destination": "mars",
+      "nasaId": "PIA18244",
+      "title": "Dunes on the move",
+      "image": "postcards/mars-dunes.jpg",
+      "credit": "NASA/JPL-Caltech/Univ. of Arizona",
+      "caption": {
+        "value": "Nili Patera is one of the most active dune fields on Mars. The HiRISE camera on Mars Reconnaissance Orbiter takes a new picture of it about every six weeks.",
+        "unit": "",
+        "source": "NASA Image and Video Library, PIA18244 (caption from its description)",
+        "url": "https://images.nasa.gov/details/PIA18244",
+        "isGameEstimate": false
+      },
+      "unlockAt": {
+        "value": 0.5,
+        "unit": "fraction of the science goal",
+        "source": "Game rule (Postcards): half the science goal downlinked",
+        "isGameEstimate": true
+      }
+    },
+    {
+      "id": "mars-victoria",
+      "destination": "mars",
+      "nasaId": "PIA12167",
+      "title": "Victoria Crater",
+      "image": "postcards/mars-victoria.jpg",
+      "credit": "NASA/JPL-Caltech/University of Arizona",
+      "caption": {
+        "value": "Victoria Crater, seen at a sideways angle by HiRISE on Mars Reconnaissance Orbiter. The Opportunity rover explored this crater from its rim.",
+        "unit": "",
+        "source": "Caption from the NASA image description plus general knowledge; to verify against NASA source",
+        "url": "https://images.nasa.gov/details/PIA12167",
+        "isGameEstimate": true
+      },
+      "unlockAt": {
+        "value": 1,
+        "unit": "fraction of the science goal",
+        "source": "Game rule (Postcards): the whole science goal downlinked",
+        "isGameEstimate": true
+      }
+    },
+    {
+      "id": "venus-globe",
+      "destination": "venus",
+      "nasaId": "PIA00104",
+      "title": "Venus without clouds",
+      "image": "postcards/venus-globe.jpg",
+      "credit": "NASA/JPL",
+      "caption": {
+        "value": "The surface of Venus, mapped by the Magellan spacecraft’s radar, which sees through the thick clouds.",
+        "unit": "",
+        "source": "Caption from the NASA image description plus general knowledge; to verify against NASA source",
+        "url": "https://images.nasa.gov/details/PIA00104",
+        "isGameEstimate": true
+      },
+      "unlockAt": {
+        "value": 0,
+        "unit": "fraction of the science goal",
+        "source": "Game rule (Postcards): the first science data to reach Earth",
+        "isGameEstimate": true
+      }
+    },
+    {
+      "id": "venus-maat-mons",
+      "destination": "venus",
+      "nasaId": "PIA00254",
+      "title": "Maat Mons",
+      "image": "postcards/venus-maat-mons.jpg",
+      "credit": "NASA/JPL",
+      "caption": {
+        "value": "Maat Mons, a giant volcano on Venus, in a 3-D view made from Magellan data.",
+        "unit": "",
+        "source": "Caption from the NASA image description plus general knowledge; to verify against NASA source",
+        "url": "https://images.nasa.gov/details/PIA00254",
+        "isGameEstimate": true
+      },
+      "unlockAt": {
+        "value": 0.5,
+        "unit": "fraction of the science goal",
+        "source": "Game rule (Postcards): half the science goal downlinked",
+        "isGameEstimate": true
+      }
+    },
+    {
+      "id": "venus-coronae",
+      "destination": "venus",
+      "nasaId": "PIA00461",
+      "title": "Coronae",
+      "image": "postcards/venus-coronae.jpg",
+      "credit": "NASA/JPL",
+      "caption": {
+        "value": "Two coronae, huge round structures on Venus, mapped by Magellan. Bahet Corona, on the left, is about 230 km long.",
+        "unit": "",
+        "source": "NASA Image and Video Library, PIA00461 (caption from its description)",
+        "url": "https://images.nasa.gov/details/PIA00461",
+        "isGameEstimate": false
+      },
+      "unlockAt": {
+        "value": 1,
+        "unit": "fraction of the science goal",
+        "source": "Game rule (Postcards): the whole science goal downlinked",
+        "isGameEstimate": true
+      }
+    },
+    {
+      "id": "bennu-surface",
+      "destination": "bennu",
+      "nasaId": "2019-02-25_regolith_image_compilation",
+      "title": "Bennu up close",
+      "image": "postcards/bennu-surface.jpg",
+      "credit": "NASA/Goddard/University of Arizona",
+      "caption": {
+        "value": "A patch of asteroid Bennu about 180 m wide: rocks, big boulders and a smooth “pond” of fine material, seen by OSIRIS-REx’s cameras.",
+        "unit": "",
+        "source": "NASA Image and Video Library, 2019-02-25_regolith_image_compilation (caption from its description)",
+        "url": "https://images.nasa.gov/details/2019-02-25_regolith_image_compilation",
+        "isGameEstimate": false
+      },
+      "unlockAt": {
+        "value": 0,
+        "unit": "fraction of the science goal",
+        "source": "Game rule (Postcards): the first science data to reach Earth",
+        "isGameEstimate": true
+      }
+    },
+    {
+      "id": "bennu-capsule",
+      "destination": "bennu",
+      "nasaId": "NHQ202309240006",
+      "title": "Home with a sample",
+      "image": "postcards/bennu-capsule.jpg",
+      "credit": "NASA/Keegan Barber",
+      "caption": {
+        "value": "September 24, 2023: the OSIRIS-REx sample capsule has just landed in the Utah desert, with rocks and dust from asteroid Bennu inside.",
+        "unit": "",
+        "source": "NASA Image and Video Library, NHQ202309240006 (caption from its description)",
+        "url": "https://images.nasa.gov/details/NHQ202309240006",
+        "isGameEstimate": false
+      },
+      "unlockAt": {
+        "value": 0.5,
+        "unit": "fraction of the science goal",
+        "source": "Game rule (Postcards): half the science goal downlinked",
+        "isGameEstimate": true
+      }
+    },
+    {
+      "id": "bennu-sample",
+      "destination": "bennu",
+      "nasaId": "DSCN0130",
+      "title": "A piece of Bennu",
+      "image": "postcards/bennu-sample.jpg",
+      "credit": "NASA/Molly Wasser",
+      "caption": {
+        "value": "A piece of asteroid Bennu, brought to Earth by OSIRIS-REx, set into a microscope slide at NASA Goddard.",
+        "unit": "",
+        "source": "NASA Image and Video Library, DSCN0130 (caption from its description)",
+        "url": "https://images.nasa.gov/details/DSCN0130",
+        "isGameEstimate": false
+      },
+      "unlockAt": {
+        "value": 1,
+        "unit": "fraction of the science goal",
+        "source": "Game rule (Postcards): the whole science goal downlinked",
+        "isGameEstimate": true
+      }
+    }
+  ]
+}

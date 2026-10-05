@@ -13,7 +13,9 @@ import type { RescueCaseId } from '../engine/rescue';
 import type { Design, DestinationId } from '../engine/types';
 import { TopBar, type Mode, type Step } from './components/TopBar';
 import { levelById, loadProgress, nextLevel, saveProgress, shelfOf, withStars, type Level, type Progress } from './levels';
-import { loadDaily, loadFlights, loadRobotName, loadSeen, saveDaily, saveFlights, saveRobotName, saveSeen, type DailySave } from './saves';
+import { loadDaily, loadFlights, loadPostcards, loadRobotName, loadSeen, saveDaily, saveFlights, savePostcards, saveRobotName, saveSeen, type DailySave } from './saves';
+import { Postcards } from './screens/Postcards';
+import { postcardAlbum } from '../engine/postcards';
 import { BuildBay } from './screens/BuildBay';
 import { Daily } from './screens/Daily';
 import { FlyAndSurvive } from './screens/FlyAndSurvive';
@@ -83,6 +85,13 @@ export function App() {
   /** Help already seen: level briefings and the flight coach. */
   const [seen, setSeen] = useState<string[]>(loadSeen);
   const [robotName, setRobotName] = useState<string>(loadRobotName);
+  const [postcards, setPostcards] = useState<string[]>(loadPostcards);
+  const addPostcards = (ids: string[]) =>
+    setPostcards((p) => {
+      const next = [...new Set([...p, ...ids])];
+      savePostcards(next);
+      return next;
+    });
   const nameRobot = (n: string) => {
     setRobotName(n);
     saveRobotName(n);
@@ -251,7 +260,7 @@ export function App() {
   const next = level && cadetMode && (progress[level.id] ?? 0) >= 1 ? nextLevel(level.id) : undefined;
   const home = () => go('home');
   const firstNew = fresh.length ? notebook(facts).find((c) => c.id === fresh[0]) : undefined;
-  const fullScreen = step === 'fly' || step === 'report' || step === 'home' || step === 'daily' || step === 'notebook' || (step === 'build' && cadetMode);
+  const fullScreen = step === 'fly' || step === 'report' || step === 'home' || step === 'daily' || step === 'notebook' || step === 'postcards' || (step === 'build' && cadetMode);
 
   /** The mission briefing: what to do on this level (or a free build, or today's Daily). */
   const briefFor = (forDaily: boolean) =>
@@ -295,6 +304,8 @@ export function App() {
             go('rescue');
           }}
           onNotebook={() => go('notebook')}
+          postcards={postcardAlbum(postcards)}
+          onPostcards={() => go('postcards')}
         />
       )}
       {step === 'map' && (
@@ -316,6 +327,7 @@ export function App() {
           onBack={() => setRescueId(undefined)}
         />
       )}
+      {step === 'postcards' && <Postcards earned={postcards} onHome={home} onBack={back} />}
       {step === 'notebook' && <Notebook facts={facts} fresh={fresh} mode={mode} onMode={changeMode} onHome={home} onBack={back} />}
       {step === 'daily' && daily.results[todayIso] && (
         <Daily
@@ -365,6 +377,7 @@ export function App() {
           robotName={robotName}
           launchMoment={!seen.includes(launchKey)}
           onLaunchSeen={() => markSeen(launchKey)}
+          onPostcards={addPostcards}
         />
       )}
       {step === 'report' && flown && flyDesign && (

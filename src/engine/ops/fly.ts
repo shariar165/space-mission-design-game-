@@ -93,7 +93,8 @@ export function systemsHealth(s: OpsState): SystemsHealth {
 
 const tileStatus = (segments: number): MeterStatus => (segments === 0 ? 'over' : segments <= 1 ? 'warning' : 'ok');
 
-function goalGbit(s: OpsState): number {
+/** The prime science goal (Gbit): every instrument's daily data × the planned science days. */
+export function goalGbit(s: OpsState): number {
   const sci = s.env.timeline.find((w) => w.phase === 'science')!;
   return scienceGoal_Gbit(
     s.env.loads.instruments.reduce((a, i) => a + i.data_bitsPerDay, 0),

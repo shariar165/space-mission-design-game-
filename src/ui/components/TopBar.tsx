@@ -3,7 +3,7 @@ import { DESTINATIONS } from '../../engine/data';
 import type { DestinationId } from '../../engine/types';
 import { Check, Logo } from './icons';
 
-export type Step = 'home' | 'map' | 'rescue' | 'build' | 'fly' | 'report' | 'daily' | 'notebook';
+export type Step = 'home' | 'map' | 'rescue' | 'build' | 'fly' | 'report' | 'daily' | 'notebook' | 'postcards';
 export type Mode = 'cadet' | 'engineer';
 
 interface StepDef {
