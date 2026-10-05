@@ -58,3 +58,8 @@ export const loadRobotName = (): string => {
   return typeof v.name === 'string' ? v.name : '';
 };
 export const saveRobotName = (name: string) => write(ROBOT_KEY, { name });
+
+/** Sound on or off (on unless the player turned it off). */
+const SOUND_KEY = 'sd.sound';
+export const loadSoundOn = (): boolean => read<{ on?: unknown }>(SOUND_KEY, {}).on !== false;
+export const saveSoundOn = (on: boolean) => write(SOUND_KEY, { on });

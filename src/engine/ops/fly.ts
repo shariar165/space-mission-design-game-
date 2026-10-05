@@ -26,6 +26,8 @@ export const FLY_RULES = {
     'deg',
     'Game estimate (Fly & Survive map), approx.: a coronal mass ejection spreads over tens of degrees as it leaves the Sun; the map draws the solar storm as a 60° wedge',
   ),
+  countdownFrom_s: gameEstimate(5, 's', 'Game rule (Fly & Survive): the launch countdown runs T−5 … LIFTOFF in real seconds (presentation only)'),
+  liftoffHold_s: gameEstimate(1.6, 's', 'Game rule (Fly & Survive): LIFTOFF stays on screen this long before the flight starts'),
 } satisfies Record<string, Sourced<unknown>>;
 
 const DAY_S = 86_400;
@@ -299,6 +301,28 @@ export function stormFront(s: OpsState): StormFront | undefined {
   if (s.t >= h.onset) return { hazardId: h.id, phase: 'hitting', progress: 1, hitsIn_s: 0 };
   const lead = h.onset - h.knownAt;
   return { hazardId: h.id, phase: 'coming', progress: lead > 0 ? clamp01((s.t - h.knownAt) / lead) : 1, hitsIn_s: (h.onset - s.t) * DAY_S };
+}
+
+/** The launch countdown, `elapsed_s` real seconds after it starts: T−count, then LIFTOFF, then done. */
+export function countdownAt(elapsed_s: number): { count: number; liftoff: boolean; done: boolean } {
+  const from = FLY_RULES.countdownFrom_s.value;
+  const e = Math.max(0, elapsed_s);
+  const liftoff = e >= from;
+  return { count: liftoff ? 0 : Math.ceil(from - e - 1e-9) || from, liftoff, done: e >= from + FLY_RULES.liftoffHold_s.value };
+}
+
+export type MomentKind = 'launch' | 'launch-failed' | 'arrived' | 'storm-hit';
+
+/** The big moments among the events logged since event index `from` (launch, the arrival burn, a solar storm hit). */
+export function momentsSince(s: OpsState, from: number): { kind: MomentKind; t: number }[] {
+  const out: { kind: MomentKind; t: number }[] = [];
+  for (const e of s.events.slice(Math.max(0, from))) {
+    if (e.code === 'launch') out.push({ kind: 'launch', t: e.t });
+    else if (e.code === 'launch-failed') out.push({ kind: 'launch-failed', t: e.t });
+    else if (e.code === 'burn' && e.values.kind === 'arrival') out.push({ kind: 'arrived', t: e.t });
+    else if (e.code === 'hazard-onset' && e.values.type === 'solar-storm') out.push({ kind: 'storm-hit', t: e.t });
+  }
+  return out;
 }
 
 export interface MissionProgress {

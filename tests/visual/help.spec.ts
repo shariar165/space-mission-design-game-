@@ -28,6 +28,13 @@ test('briefing, coach and back', async ({ page }, info) => {
   const go = page.getByRole('button', { name: 'LAUNCH' });
   if (await go.isDisabled()) await page.locator('.pk-day.good, .pk-day.soso').first().click();
   await go.click();
+  // The first flight of a level opens with the launch countdown, then the coach.
+  await expect(page.getByRole('dialog', { name: 'LAUNCH IN' })).toBeVisible({ timeout: 60_000 });
+  await page.waitForTimeout(1500);
+  await page.screenshot({ path: `${OUT}help-countdown-${p}.png` });
+  await expect(page.locator('.mo-launch.liftoff')).toBeVisible({ timeout: 10_000 });
+  await page.waitForTimeout(500);
+  await page.screenshot({ path: `${OUT}help-liftoff-${p}.png` });
   await expect(page.getByRole('dialog', { name: 'HOW TO FLY' })).toBeVisible({ timeout: 60_000 });
   await page.waitForTimeout(500);
   await page.screenshot({ path: `${OUT}help-coach-${p}.png` });

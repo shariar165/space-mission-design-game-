@@ -575,3 +575,21 @@ export function robotSays(m: RobotMessage, destName: string): string {
   const lines = m.kind === 'hit' ? (HIT_LINES[m.values.hazardType ?? ''] ?? [() => 'Trouble up here! Something just went wrong.']) : VOICE[m.kind];
   return lines[m.seq % lines.length]!(destName);
 }
+
+// ---------------------------------------------------------------------------
+// Big moments and sound
+
+export const SOUND_WORDS = { on: 'Sound on', off: 'Sound off' };
+
+export const MOMENT_WORDS = {
+  countdownK: 'LAUNCH IN',
+  count: (n: number) => `T−${f.num(n)}`,
+  liftoff: 'LIFTOFF!',
+  skip: 'SKIP ▸',
+  arrived: (dest: string, asteroid: boolean) => (asteroid ? `ARRIVED AT ${dest}!` : `IN ORBIT AT ${dest}!`),
+  arrivedSub: (name: string) => `${name} FIRED ITS ENGINE AND WAS CAUGHT BY GRAVITY.`,
+  arrivedSubBennu: (name: string) => `${name} SLOWED DOWN TO FLY BESIDE THE ASTEROID.`,
+  storm: 'SOLAR STORM HIT!',
+  stormSub: (name: string) => `PARTICLES FROM THE SUN ARE HITTING ${name}.`,
+  launchFailed: 'LAUNCH FAILED',
+};

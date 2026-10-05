@@ -2,10 +2,10 @@
 // own; danger cards stop time; you pick; the order flies to the robot at light speed and you wait to hear back.
 // One screen for both modes, driven by the Mission operations engine. Every number comes from consoleView
 // (ops/console.ts) and the Fly view model (ops/fly.ts); this screen only lays them out.
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { DESTINATIONS, HAZARDS, PARTS } from '../../engine/data';
 import { flightMap, ghostFor, pathAhead } from '../../engine/flightMap';
-import { comingUp, eclipseCard, flyCard, flyTiles, FLY_RULES, heardMessages, missionProgress, outcomeIn_s, stormFront, type FlyChip, type OpsState } from '../../engine/ops/index';
+import { comingUp, eclipseCard, flyCard, flyTiles, FLY_RULES, heardMessages, missionProgress, momentsSince, outcomeIn_s, stormFront, type FlyChip, type MomentKind, type OpsState } from '../../engine/ops/index';
 import type { Design, Sourced } from '../../engine/types';
 import { SPEED_OF_LIGHT } from '../../engine/constants';
 import { BookCall } from '../components/ops/BookCall';
@@ -13,6 +13,9 @@ import { BlackoutPanel, CommandQueue, ExtensionDecision, NoticeToast, SafeModePa
 import { PowerDial } from '../components/ops/PowerDial';
 import { CrtMap } from '../components/fly/CrtMap';
 import { RobotRadio } from '../components/fly/RobotRadio';
+import { BANNER_MS, LaunchCountdown, MomentBanner } from '../components/fly/Moment';
+import { SoundToggle } from '../components/sd/SoundToggle';
+import { play } from '../sound';
 import { DangerCard, type CardView, type ChipView, type ChoiceView } from '../components/fly/DangerCard';
 import { EquationsPanel } from '../components/fly/EquationsPanel';
 import { BackButton } from '../components/sd/BackButton';
@@ -42,6 +45,7 @@ import {
   optionShort,
   playNudge,
   quietLine,
+  MOMENT_WORDS,
   robotNameOr,
   stormLine,
   RESULT_EFFECT_CHIP,
@@ -70,6 +74,9 @@ interface Props {
   onCoachSeen?: () => void;
   /** The mission briefing behind MISSION INFO. */
   brief?: { title: string; briefing: Briefing; concept?: string };
+  /** The launch countdown opens the flight (the first flight of a level). */
+  launchMoment?: boolean;
+  onLaunchSeen?: () => void;
   /** The robot's name (Pack); the default when empty. */
   robotName?: string;
 }
@@ -86,7 +93,7 @@ function chipViews(chips: FlyChip[]): ChipView[] {
   return chips.map((k) => ({ icon: CHIP_ICON[k.gauge], text: k.gauge === 'coins' ? `${f.signedInt(k.delta)} COINS` : f.signedInt(k.delta), tone: 'cost' as const }));
 }
 
-export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome, onDone, onBack, coach, onCoachSeen, brief, robotName }: Props) {
+export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome, onDone, onBack, coach, onCoachSeen, brief, robotName, launchMoment, onLaunchSeen }: Props) {
   const name = robotNameOr(robotName);
   const engineer = mode === 'engineer';
   const ops = useOpsSession(design, seed);
@@ -115,8 +122,49 @@ export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome,
   const eclipse = state && !ops.showAlert && !ops.transit && !ops.result ? eclipseCard(state) : undefined;
   const eclipseOpen = eclipse !== undefined && !eclipseDone.includes(eclipse.season.startDay);
 
-  // An eclipse planning card or an overlay holds the clock like a danger card does; time runs on when it closes.
-  const held = eclipseOpen || overlay !== undefined;
+  // ---- Big moments: the launch countdown, banners for the arrival burn and a storm hit, and their sounds ----
+  const [launching, setLaunching] = useState(!!launchMoment);
+  const endLaunch = () => {
+    setLaunching(false);
+    onLaunchSeen?.();
+  };
+  const seenEvents = useRef(0);
+  const [banner, setBanner] = useState<{ kind: MomentKind; n: number }>();
+  const [shake, setShake] = useState(false);
+  useEffect(() => {
+    if (!state) return;
+    if (state.events.length < seenEvents.current) seenEvents.current = 0;
+    const ms = momentsSince(state, seenEvents.current);
+    seenEvents.current = state.events.length;
+    const last = ms[ms.length - 1];
+    if (!last) return;
+    if (ms.some((m) => m.kind === 'storm-hit')) {
+      play('zap');
+      setShake(true);
+    }
+    if (last.kind === 'arrived') play('fanfare');
+    if (last.kind === 'arrived' || last.kind === 'storm-hit') setBanner((b) => ({ kind: last.kind, n: (b?.n ?? 0) + 1 }));
+  }, [state]);
+  useEffect(() => {
+    if (!banner) return;
+    const id = setTimeout(() => setBanner(undefined), BANNER_MS);
+    return () => clearTimeout(id);
+  }, [banner]);
+  useEffect(() => {
+    if (!shake) return;
+    const id = setTimeout(() => setShake(false), BANNER_MS / 4);
+    return () => clearTimeout(id);
+  }, [shake]);
+  const alertId = ops.showAlert ? view?.alert?.decisionId : undefined;
+  useEffect(() => {
+    if (alertId) play('alarm');
+  }, [alertId]);
+  useEffect(() => {
+    if (over) play(state?.status === 'lost' || state?.status === 'not-launched' ? 'sad' : 'fanfare');
+  }, [over]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // An eclipse planning card, an overlay or the launch countdown holds the clock like a danger card does.
+  const held = eclipseOpen || overlay !== undefined || launching;
   useEffect(() => {
     ops.setHold(held);
   }, [held]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -149,6 +197,7 @@ export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome,
     const o = card?.options.find((x) => x.id === optionId);
     if (!o || !view?.alert) return;
     setChosen({ label: optionShort(view.alert.type, o.id, o.label), chips: o.chips });
+    play('chirp');
     ops.respond(optionId);
   };
 
@@ -511,7 +560,7 @@ export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome,
   );
 
   const crt = (
-    <main className={`sd-crt fly-crt${view.blackout.active ? ' blackout' : ''}`} aria-label="Mission map">
+    <main className={`sd-crt fly-crt${view.blackout.active ? ' blackout' : ''}${shake && !still ? ' shake' : ''}`} aria-label="Mission map">
       <CrtMap
         map={map}
         frame={view.map.frame}
@@ -558,6 +607,14 @@ export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome,
           t = d / c = {f.au(view.clock.earthDistance_m)} / c = {f.mmss(view.clock.oneWay_s)}
         </div>
       )}
+      {banner && !openCard && !debrief && (
+        <MomentBanner
+          key={banner.n}
+          kind={banner.kind}
+          title={banner.kind === 'arrived' ? MOMENT_WORDS.arrived(dest.name.toUpperCase(), design.destination === 'bennu') : MOMENT_WORDS.storm}
+          sub={banner.kind === 'arrived' ? (design.destination === 'bennu' ? MOMENT_WORDS.arrivedSubBennu(name) : MOMENT_WORDS.arrivedSub(name)) : MOMENT_WORDS.stormSub(name)}
+        />
+      )}
       {transitBox}
       {waitBox}
       {!phone && resultBox}
@@ -602,7 +659,8 @@ export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome,
 
   const overlays = (
     <>
-      {overlay === 'coach' && <CoachCard onClose={closeOverlay} />}
+      {launching && <LaunchCountdown onDone={endLaunch} still={still} />}
+      {overlay === 'coach' && !launching && <CoachCard onClose={closeOverlay} />}
       {overlay === 'info' && brief && (
         <MissionBriefing title={brief.title} destination={design.destination} briefing={brief.briefing} {...(brief.concept ? { concept: brief.concept } : {})} onClose={closeOverlay} />
       )}
@@ -615,6 +673,7 @@ export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome,
 
   const helpKeys = (
     <div className="fly-help">
+      <SoundToggle className="fly-help-q" />
       {brief && (
         <button type="button" className="sd-ghost-btn fly-help-q" aria-label={NAV.info} title={NAV.info} onClick={() => setOverlay('info')}>
           i

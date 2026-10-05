@@ -1,0 +1,47 @@
+/* Big moments (components/fly/Moment.tsx): the launch countdown, arrival and storm banners, the storm shake,
+   and the sound toggle. Presentation only. */
+
+/* ---- Launch countdown ---- */
+.mo-launch { position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; background: radial-gradient(ellipse at 50% 85%, rgba(255, 154, 46, 0.18), transparent 55%), rgba(6, 10, 7, 0.94); overflow: hidden; }
+.mo-pad { width: 160px; height: 300px; display: flex; align-items: flex-end; justify-content: center; }
+.mo-rocket { width: 120px; height: 300px; overflow: visible; }
+.mo-flame { fill: var(--sd-sun); opacity: 0; transform-origin: 0 40px; }
+.mo-smoke circle { fill: var(--sd-ink-3); opacity: 0; transform-box: fill-box; transform-origin: center; }
+.mo-launch:not(.liftoff) .mo-ship { animation: mo-rumble 0.12s steps(2) infinite; }
+.mo-launch.liftoff .mo-ship { animation: mo-rise 1.6s cubic-bezier(0.5, 0, 0.9, 0.4) forwards; }
+.mo-launch.liftoff .mo-flame { opacity: 1; animation: mo-flame 0.08s steps(2) infinite; }
+.mo-launch.liftoff .mo-smoke circle { animation: mo-smoke 1.4s ease-out forwards; }
+.mo-launch.still .mo-ship, .mo-launch.still .mo-smoke circle { animation: none; }
+.mo-count-k { font: 700 13px/1 var(--sd-mono); letter-spacing: 0.3em; color: var(--sd-crt-mid); }
+.mo-count { font: 400 clamp(64px, 15vw, 112px)/1 var(--sd-crt-font); color: var(--sd-amber); text-shadow: 0 0 18px rgba(255, 181, 71, 0.6); min-height: 1em; }
+.mo-launch.liftoff .mo-count { color: var(--sd-crt-hi); text-shadow: 0 0 22px var(--sd-crt-hi); }
+.mo-skip { position: absolute; right: 22px; bottom: 22px; }
+@keyframes mo-rumble { 50% { transform: translateX(1px); } }
+@keyframes mo-rise { to { transform: translateY(-900px); } }
+@keyframes mo-flame { 50% { transform: scaleY(1.35); } }
+@keyframes mo-smoke { from { opacity: 0.9; transform: scale(0.6); } to { opacity: 0; transform: scale(1.8); } }
+
+/* ---- Banners over the map ---- */
+.mo-banner { position: absolute; left: 50%; top: 42%; z-index: 3; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 18px 30px 20px; border: 2px solid var(--sd-crt-hi); border-radius: 6px; background: rgba(5, 12, 7, 0.9); text-align: center; pointer-events: none; animation: mo-banner 2.8s ease-out forwards; max-width: min(620px, 86%); }
+.mo-banner.storm-hit { border-color: var(--sd-sun); }
+.mo-banner-title { font: 400 54px/1 var(--sd-crt-font); color: var(--sd-crt-hi); text-shadow: 0 0 14px var(--sd-crt-hi); letter-spacing: 0.04em; }
+.mo-banner.storm-hit .mo-banner-title { color: var(--sd-sun-core); text-shadow: 0 0 14px var(--sd-sun); }
+.mo-banner-sub { font: 400 20px/1.15 var(--sd-crt-font); color: var(--sd-crt-mid); letter-spacing: 0.04em; }
+.mo-burst { position: absolute; inset: -40px; z-index: -1; background: repeating-conic-gradient(from 0deg, rgba(118, 255, 160, 0.12) 0 8deg, transparent 8deg 22deg); border-radius: 50%; animation: mo-spin 6s linear infinite; }
+.mo-banner.storm-hit .mo-burst { background: repeating-conic-gradient(from 0deg, rgba(255, 154, 46, 0.16) 0 8deg, transparent 8deg 22deg); }
+@keyframes mo-banner { 0% { opacity: 0; transform: translate(-50%, -50%) scale(0.6); } 12% { opacity: 1; transform: translate(-50%, -50%) scale(1.06); } 20% { transform: translate(-50%, -50%) scale(1); } 85% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes mo-spin { to { transform: rotate(360deg); } }
+.fly.phone .mo-banner { top: 38%; padding: 14px 16px; }
+.fly.phone .mo-banner-title { font-size: 38px; }
+.fly.phone .mo-banner-sub { font-size: 17px; }
+
+/* ---- Storm hit: the screen shakes and flashes ---- */
+.fly-crt.shake { animation: mo-shake 0.6s steps(6); }
+.fly-crt.shake::after { content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none; background: var(--sd-sun); animation: mo-flash 0.6s ease-out forwards; }
+@keyframes mo-shake { 20% { transform: translate(-6px, 3px); } 40% { transform: translate(5px, -4px); } 60% { transform: translate(-4px, -2px); } 80% { transform: translate(3px, 4px); } 100% { transform: none; } }
+@keyframes mo-flash { from { opacity: 0.3; } to { opacity: 0; } }
+
+/* ---- Sound toggle ---- */
+.sd-sound { font-size: 15px; line-height: 1; }
+.sd-ghost-btn.sd-sound[aria-pressed] { background: transparent; border-color: var(--sd-line-2); }
+.sd-ghost-btn.sd-sound[aria-pressed='false'] { opacity: 0.7; }

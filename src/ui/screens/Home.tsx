@@ -6,6 +6,7 @@ import { evaluateDesign } from '../../engine/index';
 import { presetDesign } from '../../engine/missions';
 import { CoachCard } from '../components/sd/CoachCard';
 import { ModeLever, type Mode } from '../components/sd/ModeLever';
+import { SoundToggle } from '../components/sd/SoundToggle';
 import { SDIcon, type SDIconName } from '../components/sd/SDIcon';
 import { Teletype } from '../components/sd/Teletype';
 import { useReducedMotion } from '../opsGeometry';
@@ -178,6 +179,7 @@ export function Home({ progress, mode, onMode, daily, rescue, notebook, onPlay, 
     return (
       <div className={`sd hm phone${mode === 'engineer' ? ' eng' : ''}`}>
         <div className="hm-phone-top">
+          <SoundToggle />
           <ModeLever mode={mode} onMode={onMode} />
         </div>
         <h1 className="hm-word">
@@ -220,6 +222,7 @@ export function Home({ progress, mode, onMode, daily, rescue, notebook, onPlay, 
                 CHOOSE A MISSION ▸
               </button>
               {howToKey}
+              <SoundToggle className="hm-sound" />
             </span>
             <ModeLever mode={mode} onMode={onMode} />
           </div>

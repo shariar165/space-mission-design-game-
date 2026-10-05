@@ -261,6 +261,8 @@ export function App() {
         ? { title: level.title, briefing: BRIEFING[level.id] ?? FREE_BRIEFING, concept: level.concept }
         : { title: 'Free build', briefing: FREE_BRIEFING };
   const packBrief = { ...briefFor(false), open: level !== undefined && !seen.includes(`brief:${level.id}`) };
+  /** The launch countdown plays on the first flight of each level (and of the Daily, and of a free build). */
+  const launchKey = `launch:${dailyRun ? 'daily' : (level?.id ?? 'free')}`;
 
   return (
     <div className={`app${step === 'build' && !cadetMode ? ' fixed' : ''}${cadetMode ? ' is-cadet' : ''}${step === 'fly' ? ' is-fly' : ''}`}>
@@ -361,6 +363,8 @@ export function App() {
           onCoachSeen={() => markSeen('coach')}
           brief={briefFor(dailyRun)}
           robotName={robotName}
+          launchMoment={!seen.includes(launchKey)}
+          onLaunchSeen={() => markSeen(launchKey)}
         />
       )}
       {step === 'report' && flown && flyDesign && (

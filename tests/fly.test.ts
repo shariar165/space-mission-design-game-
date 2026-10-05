@@ -6,7 +6,7 @@ import { craftPosition } from '../src/engine/flightMap';
 import { presetDesign } from '../src/engine/missions';
 import * as ops from '../src/engine/ops/index';
 import { consoleView, powerPlanPreview } from '../src/engine/ops/console';
-import { comingUp, eclipseCard, flyCard, flyTiles, FLY_RULES, missionProgress, outcomeIn_s, segmentsFromFraction, segmentsFromMargin, stormFront, systemsHealth } from '../src/engine/ops/fly';
+import { comingUp, eclipseCard, flyCard, flyTiles, FLY_RULES, missionProgress, outcomeIn_s, segmentsFromFraction, segmentsFromMargin, stormFront, systemsHealth, countdownAt, momentsSince } from '../src/engine/ops/fly';
 import { pathAhead } from '../src/engine/flightMap';
 import type { OpsState } from '../src/engine/ops/types';
 import { starterDesign } from '../src/ui/starters';
@@ -357,5 +357,49 @@ describe('solar storm front (the wave from the Sun on the map)', () => {
   it('the drawn wedge is a game estimate (CMEs are tens of degrees wide)', () => {
     expect(FLY_RULES.cmeWidth_deg.value).toBe(60);
     expect(FLY_RULES.cmeWidth_deg.isGameEstimate).toBe(true);
+  });
+});
+
+describe('launch countdown (Fly & Survive opens with T−5 … LIFTOFF)', () => {
+  it('counts whole seconds down from FLY_RULES.countdownFrom_s, then lifts off, then is done', () => {
+    const from = FLY_RULES.countdownFrom_s.value; // 5
+    const hold = FLY_RULES.liftoffHold_s.value; // 1.6
+    expect(countdownAt(0)).toEqual({ count: from, liftoff: false, done: false });
+    // 0.4 s in: still showing 5 (ceil(5 − 0.4) = 5); 1.0 s in: 4
+    expect(countdownAt(0.4).count).toBe(5);
+    expect(countdownAt(1).count).toBe(4);
+    expect(countdownAt(4.99).count).toBe(1);
+    expect(countdownAt(from)).toEqual({ count: 0, liftoff: true, done: false });
+    expect(countdownAt(from + hold - 0.01).done).toBe(false);
+    expect(countdownAt(from + hold).done).toBe(true);
+    expect(countdownAt(-1).count).toBe(from); // never above the start
+  });
+});
+
+describe('moments (what the flight screen celebrates)', () => {
+  it('a calm MAVEN flight: launch on day 0, then the arrival burn at Mars', () => {
+    const s0 = ops.startOperations(maven, { rng: () => 0.999999 });
+    const s = ops.runOperations(maven, { rng: () => 0.999999 }).state;
+    const m = momentsSince(s, 0);
+    expect(m.map((x) => x.kind)).toEqual(['launch', 'arrived']);
+    expect(m[0]!.t).toBe(0);
+    // the arrival burn day: env.arrivalDay (307 for MAVEN in this model)
+    expect(m[1]!.t).toBeCloseTo(s.env.arrivalDay, 0);
+    // nothing new since the last event
+    expect(momentsSince(s, s.events.length)).toEqual([]);
+    expect(momentsSince(s0, 0)).toEqual([]);
+  });
+
+  it('a solar storm on the craft is a moment; other hazards are left to their cards', () => {
+    const s = ops.runOperations(maven, { seed: 4 }).state;
+    const storms = s.hazards.filter((h) => h.type === 'solar-storm' && h.onset <= s.t);
+    const hits = momentsSince(s, 0).filter((x) => x.kind === 'storm-hit');
+    expect(hits.length).toBe(storms.length);
+    for (const h of hits) expect(storms.some((x) => Math.abs(x.onset - h.t) < 1e-9)).toBe(true);
+  });
+
+  it('a launch failure is its own moment', () => {
+    const s = ops.runOperations(maven, { rng: () => 0 }).state;
+    expect(momentsSince(s, 0).map((x) => x.kind)).toEqual(['launch-failed']);
   });
 });

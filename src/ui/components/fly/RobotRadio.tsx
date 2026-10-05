@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import type { RobotMessage } from '../../../engine/ops/index';
 import * as f from '../../format';
+import { play } from '../../sound';
 import { ROBOT_WORDS, robotSays } from '../../sdWords';
 
 /** How long a new message stays on screen (ms, real time). */
@@ -14,6 +15,7 @@ export function RobotRadio({ message, name, destName, hidden }: { message?: Robo
   useEffect(() => {
     if (!key) return;
     setShown(key);
+    if (!hidden) play('radio');
     const id = setTimeout(() => setShown((k) => (k === key ? undefined : k)), RADIO_SHOW_MS);
     return () => clearTimeout(id);
   }, [key]);

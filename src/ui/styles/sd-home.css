@@ -40,7 +40,7 @@
 
 /* ---- Phone (frame 4b) ---- */
 .hm.phone { padding: 46px 18px 22px; display: flex; flex-direction: column; gap: 16px; }
-.hm-phone-top { position: absolute; top: 12px; right: 14px; }
+.hm-phone-top { position: absolute; top: 12px; right: 14px; display: flex; align-items: center; gap: 8px; }
 .hm.phone .sd-lever-word, .hm.phone .sd-lever-switch { display: none; }
 .hm.phone .sd-lever-short { display: inline-block; }
 .hm.phone .hm-word { font-size: 54px; }
@@ -61,3 +61,4 @@
 /* HOW TO PLAY: beside CHOOSE A MISSION, amber so a new player finds it */
 .hm-foot-keys { display: flex; gap: 10px; flex-wrap: wrap; }
 .hm-howto { color: var(--sd-amber); border-color: var(--sd-amber-edge); }
+.hm-sound { align-self: center; padding: 8px 10px; }
