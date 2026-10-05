@@ -19,6 +19,7 @@ function openLevel(title: RegExp, progress: Record<string, number>) {
   vi.useFakeTimers();
   localStorage.setItem('mdt.progress', JSON.stringify(progress));
   render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: 'CHOOSE A MISSION ▸' }));
   fireEvent.click(screen.getByRole('button', { name: title }));
   pass(100); // the calendar is worked out one tick after the screen paints
 }

@@ -172,21 +172,21 @@ function Solved({ c, k, stars, onBack }: { c: ReturnType<typeof rescueCase>; k: 
       <svg className="alt-chart" viewBox="0 0 320 170" role="img" aria-label={`Planned ${f.num(k.planned_km)} km, survivable ${f.num(k.survivable_km)} km, actual ${f.num(k.estimated_km)} km`}>
         <defs>
           <linearGradient id="alt-atm" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#ff7a4d" stopOpacity="0" />
-            <stop offset="1" stopColor="#ff7a4d" stopOpacity="0.45" />
+            <stop offset="0" stopColor="var(--sd-mars)" stopOpacity="0" />
+            <stop offset="1" stopColor="var(--sd-mars)" stopOpacity="0.45" />
           </linearGradient>
         </defs>
         <rect x="0" y={y(k.survivable_km)} width="320" height={150 - y(k.survivable_km)} fill="url(#alt-atm)" />
-        <path d="M0 150 Q160 140 320 150 V170 H0 Z" fill="#b8482a" />
-        <line x1="10" x2="310" y1={y(k.planned_km)} y2={y(k.planned_km)} stroke="#3cd3c1" strokeWidth="3" />
+        <path d="M0 150 Q160 140 320 150 V170 H0 Z" fill="var(--sd-mars-dark)" />
+        <line x1="10" x2="310" y1={y(k.planned_km)} y2={y(k.planned_km)} stroke="var(--sd-crt-hi)" strokeWidth="3" />
         <text x="14" y={y(k.planned_km) - 6} className="alt-label ok">
           Plan · {f.num(k.planned_km)} km
         </text>
-        <line x1="10" x2="310" y1={y(k.survivable_km)} y2={y(k.survivable_km)} stroke="#f2c744" strokeWidth="2" strokeDasharray="6 4" />
+        <line x1="10" x2="310" y1={y(k.survivable_km)} y2={y(k.survivable_km)} stroke="var(--sd-amber)" strokeWidth="2" strokeDasharray="6 4" />
         <text x="14" y={y(k.survivable_km) - 6} className="alt-label warn">
           Lowest safe · {f.num(k.survivable_km)} km
         </text>
-        <line x1="10" x2="310" y1={y(k.estimated_km)} y2={y(k.estimated_km)} stroke="#ff6b8a" strokeWidth="3" />
+        <line x1="10" x2="310" y1={y(k.estimated_km)} y2={y(k.estimated_km)} stroke="var(--sd-alarm)" strokeWidth="3" />
         <text x="306" y={y(k.estimated_km) + 16} textAnchor="end" className="alt-label bad">
           What happened · {f.num(k.estimated_km)} km
         </text>

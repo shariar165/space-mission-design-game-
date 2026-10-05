@@ -1,0 +1,196 @@
+{
+  "_comment": "Engineer's Notebook (spec: UI rules, Notebook). Each lesson points at a real-history text that is already Sourced elsewhere in the data (hazards, crisis cards, rescue cases, lessons, or the source of a Sourced rule) and says how it is earned. Titles and plain-English bodies are game copy in the UI.",
+  "lessons": [
+    {
+      "id": "safe-beats-curious",
+      "category": "weather",
+      "icon": "storm",
+      "text": {
+        "kind": "hazard",
+        "id": "solar-storm"
+      },
+      "unlock": {
+        "kind": "face-hazard",
+        "id": "solar-storm"
+      }
+    },
+    {
+      "id": "air-swells",
+      "category": "weather",
+      "icon": "dust",
+      "text": {
+        "kind": "hazard",
+        "id": "mars-dust-storm"
+      },
+      "unlock": {
+        "kind": "face-hazard",
+        "id": "mars-dust-storm"
+      }
+    },
+    {
+      "id": "radiation-adds-up",
+      "category": "weather",
+      "icon": "sys",
+      "text": {
+        "kind": "hazard",
+        "id": "radiation-damage"
+      },
+      "unlock": {
+        "kind": "face-hazard",
+        "id": "radiation-damage"
+      }
+    },
+    {
+      "id": "sun-gets-in-the-way",
+      "category": "signal",
+      "icon": "conj",
+      "text": {
+        "kind": "conjunction-rule"
+      },
+      "unlock": {
+        "kind": "conjunction"
+      }
+    },
+    {
+      "id": "bits-flip",
+      "category": "signal",
+      "icon": "computer",
+      "text": {
+        "kind": "hazard",
+        "id": "memory-corruption"
+      },
+      "unlock": {
+        "kind": "face-hazard",
+        "id": "memory-corruption"
+      }
+    },
+    {
+      "id": "full-memory",
+      "category": "signal",
+      "icon": "data",
+      "text": {
+        "kind": "crisis",
+        "id": "memory-full"
+      },
+      "unlock": {
+        "kind": "finish-level",
+        "id": "moon-2"
+      }
+    },
+    {
+      "id": "batteries-hate-the-dark",
+      "category": "power",
+      "icon": "eclipse",
+      "text": {
+        "kind": "battery-rule"
+      },
+      "unlock": {
+        "kind": "eclipse"
+      }
+    },
+    {
+      "id": "wheels-wear-out",
+      "category": "power",
+      "icon": "sys",
+      "text": {
+        "kind": "hazard",
+        "id": "reaction-wheel"
+      },
+      "unlock": {
+        "kind": "face-hazard",
+        "id": "reaction-wheel"
+      }
+    },
+    {
+      "id": "safe-mode-is-a-friend",
+      "category": "nav",
+      "icon": "sys",
+      "text": {
+        "kind": "crisis",
+        "id": "lost-attitude"
+      },
+      "unlock": {
+        "kind": "finish-level",
+        "id": "moon-1"
+      }
+    },
+    {
+      "id": "braking-is-scary",
+      "category": "nav",
+      "icon": "orbit",
+      "text": {
+        "kind": "hazard",
+        "id": "insertion-anomaly"
+      },
+      "unlock": {
+        "kind": "face-hazard",
+        "id": "insertion-anomaly"
+      }
+    },
+    {
+      "id": "duck-the-dust",
+      "category": "nav",
+      "icon": "debris",
+      "text": {
+        "kind": "hazard",
+        "id": "debris"
+      },
+      "unlock": {
+        "kind": "face-hazard",
+        "id": "debris"
+      }
+    },
+    {
+      "id": "borrow-speed",
+      "category": "nav",
+      "icon": "orbit",
+      "text": {
+        "kind": "lesson",
+        "id": "jupiter"
+      },
+      "unlock": {
+        "kind": "finish-level",
+        "id": "jupiter"
+      }
+    },
+    {
+      "id": "check-your-units",
+      "category": "people",
+      "icon": "cross",
+      "text": {
+        "kind": "rescue-lost",
+        "id": "mco"
+      },
+      "unlock": {
+        "kind": "solve-rescue",
+        "id": "mco"
+      }
+    },
+    {
+      "id": "trust-but-test",
+      "category": "people",
+      "icon": "burn",
+      "text": {
+        "kind": "crisis",
+        "id": "false-touchdown"
+      },
+      "unlock": {
+        "kind": "finish-level",
+        "id": "moon-3"
+      }
+    },
+    {
+      "id": "install-it-right",
+      "category": "people",
+      "icon": "shield",
+      "text": {
+        "kind": "crisis",
+        "id": "upside-down-sensor"
+      },
+      "unlock": {
+        "kind": "finish-level",
+        "id": "bennu"
+      }
+    }
+  ]
+}

@@ -2,7 +2,7 @@ import { DESTINATIONS } from '../../engine/data';
 import type { DestinationId } from '../../engine/types';
 import { Check, Logo } from './icons';
 
-export type Step = 'map' | 'rescue' | 'build' | 'fly' | 'report';
+export type Step = 'home' | 'map' | 'rescue' | 'build' | 'fly' | 'report' | 'daily' | 'notebook';
 export type Mode = 'cadet' | 'engineer';
 
 interface StepDef {
@@ -19,7 +19,7 @@ const ENGINEER_STEPS: StepDef[] = [
 ];
 
 const CADET_STEPS: StepDef[] = [
-  { id: 'map', label: 'Map', ours: ['map', 'rescue'] },
+  { id: 'map', label: 'Home', ours: ['home', 'map', 'rescue'] },
   { id: 'build', label: 'Build', ours: ['build'] },
   { id: 'fly', label: 'Fly', ours: ['fly'] },
   { id: 'report', label: 'Report', ours: ['report'] },

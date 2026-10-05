@@ -1,21 +1,28 @@
 // App state: the player's Design and the current step. The engine is called here and in the screens;
 // the UI never computes a number itself. One flight model everywhere (the Mission operations engine):
-// Cadet: Level map → build → Fly & Survive → Mission Report → next level.
+// Cadet: Home → (mission map) → Pack → Fly & Survive → Mission Report; Daily mission; Notebook; Rescue History.
 // Engineer: Build Bay → Fly & Survive → Mission Report (with Engineer details).
 import { useEffect, useMemo, useState } from 'react';
+import { dailyDate, dailyDesign, dailyGrid, dailyNumber, dailySeed } from '../engine/daily';
 import { evaluateDesign } from '../engine/index';
+import { flightFacts, mergeFacts, newLessons, NOTEBOOK, notebook, notebookProgress, rescueProgress, type NotebookFacts } from '../engine/notebook';
 import { operationsDebrief, type OpsState } from '../engine/ops/index';
+import { shelfFor } from '../engine/pack';
+import type { RescueCaseId } from '../engine/rescue';
 import type { Design, DestinationId } from '../engine/types';
 import { TopBar, type Mode, type Step } from './components/TopBar';
 import { levelById, loadProgress, nextLevel, saveProgress, shelfOf, withStars, type Level, type Progress } from './levels';
+import { loadDaily, loadFlights, saveDaily, saveFlights, type DailySave } from './saves';
 import { BuildBay } from './screens/BuildBay';
-import { Pack } from './screens/Pack';
-import { shelfFor } from '../engine/pack';
+import { Daily } from './screens/Daily';
 import { FlyAndSurvive } from './screens/FlyAndSurvive';
+import { Home } from './screens/Home';
 import { LevelMap } from './screens/LevelMap';
 import { MissionReport } from './screens/MissionReport';
+import { Notebook } from './screens/Notebook';
+import { Pack } from './screens/Pack';
 import { RescueCaseView, RescueSelect } from './screens/Rescue';
-import type { RescueCaseId } from '../engine/rescue';
+import { LESSON_WORDS } from './sdWords';
 import { defaultMissionName, starterDesign, today } from './starters';
 
 const newSeed = () => Math.floor(Math.random() * 2 ** 31);
@@ -54,7 +61,7 @@ export function App() {
   const [design, setDesign] = useState<Design>(() => starterDesign('mars', today()));
   const [cadet, setCadet] = useState<CadetState>(() => cadetStart(design));
   const [missionName, setMissionName] = useState(() => defaultMissionName('mars'));
-  const [step, setStep] = useState<Step>(() => (mode === 'cadet' ? 'map' : 'build'));
+  const [step, setStep] = useState<Step>(() => (mode === 'cadet' ? 'home' : 'build'));
   const [fixedSeed] = useState(urlSeed);
   const [seed, setSeed] = useState(() => fixedSeed ?? newSeed());
   const [progress, setProgress] = useState<Progress>(loadProgress);
@@ -63,12 +70,21 @@ export function App() {
   const [flyDesign, setFlyDesign] = useState<Design>();
   /** The finished mission, for the Mission Report. */
   const [flown, setFlown] = useState<OpsState>();
+  /** Notebook facts from flights (hazards faced, seasons flown through); levels and rescues come from progress. */
+  const [flights, setFlights] = useState(loadFlights);
+  /** Lessons the last flight opened (NEW). */
+  const [fresh, setFresh] = useState<string[]>([]);
+  const [daily, setDaily] = useState<DailySave>(loadDaily);
+  /** The flight in progress is today's Daily mission. */
+  const [dailyRun, setDailyRun] = useState(false);
 
   const cadetMode = mode === 'cadet';
   const level = levelById(cadet.levelId);
   /** The design being built: Cadet packs on top of the level's starter, Engineer edits it directly. */
   const active = cadetMode ? cadet.base : design;
   const ev = useMemo(() => evaluateDesign(active), [active]);
+  const facts: NotebookFacts = useMemo(() => ({ ...flights, progress }), [flights, progress]);
+  const todayIso = dailyDate(Date.now());
 
   useEffect(() => {
     try {
@@ -79,6 +95,8 @@ export function App() {
   }, [mode]);
 
   useEffect(() => saveProgress(progress), [progress]);
+  useEffect(() => saveFlights(flights), [flights]);
+  useEffect(() => saveDaily(daily), [daily]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -94,11 +112,11 @@ export function App() {
   const changeMode = (m: Mode) => {
     if (m === mode) return;
     // Carry the craft across: Engineer starts from the Cadet build; Cadet re-reads the Engineer design as a free build.
-    // In flight or on the report only the layer changes.
+    // In flight, on the report and on the Cadet-only screens only the layer changes.
     if (m === 'engineer') {
-      setDesign(flyDesign && step !== 'map' ? flyDesign : cadet.base);
-      if (step === 'map' || step === 'rescue') setStep('build');
-    } else if (step !== 'fly' && step !== 'report') {
+      setDesign(flyDesign && step !== 'map' && step !== 'home' ? flyDesign : cadet.base);
+      if (step === 'map' || step === 'rescue' || step === 'home') setStep('build');
+    } else if (step === 'build') {
       setCadet(cadetStart(design));
     }
     setMode(m);
@@ -109,10 +127,9 @@ export function App() {
     setCadet(cadetStart(s, l.id));
     setMissionName(defaultMissionName(l.destination));
     setFlown(undefined);
+    setDailyRun(false);
     setStep('build');
   };
-
-  const award = (stars: number) => level && setProgress((p) => withStars(p, level.id, stars));
 
   /** Launch: Fly & Survive flies the pinned craft with this seed. */
   const launchDesign = (d: Design) => {
@@ -122,23 +139,47 @@ export function App() {
   };
   const launch = () => ev.blockers.length === 0 && launchDesign(active);
 
+  /** Today's Daily: the same craft and seed for everyone; played once, then its card. */
+  const openDaily = () => {
+    if (daily.results[todayIso]) return setStep('daily');
+    setMissionName('Daily mission');
+    setDailyRun(true);
+    setSeed(dailySeed(todayIso));
+    launchDesign(dailyDesign(starterDesign('mars', todayIso)));
+  };
+
   const finish = (s: OpsState) => {
-    if (cadetMode) award(operationsDebrief(s).stars);
+    const stars = operationsDebrief(s).stars;
+    const nextProgress = cadetMode && level && !dailyRun ? withStars(progress, level.id, stars) : progress;
+    const nextFacts = mergeFacts(facts, flightFacts(s));
+    const { progress: _p, ...flightOnly } = nextFacts;
+    setFresh(newLessons(facts, { ...nextFacts, progress: nextProgress }));
+    setProgress(nextProgress);
+    setFlights(flightOnly);
     setFlown(s);
-    setStep('report');
+    if (dailyRun) {
+      setDaily((d) => ({ played: [...new Set([...d.played, todayIso])], results: { ...d.results, [todayIso]: dailyGrid(s) } }));
+      setStep('daily');
+    } else setStep('report');
   };
 
   /** Fly again: back to packing (Cadet) or the Build Bay (Engineer), with a new seed. */
   const flyAgain = () => {
     setSeed(fixedSeed ?? newSeed());
     setFlown(undefined);
+    setDailyRun(false);
     setStep('build');
   };
   const next = level && cadetMode && (progress[level.id] ?? 0) >= 1 ? nextLevel(level.id) : undefined;
+  const home = () => {
+    setStep(cadetMode ? 'home' : 'build');
+  };
+  const firstNew = fresh.length ? notebook(facts).find((c) => c.id === fresh[0]) : undefined;
+  const fullScreen = step === 'fly' || step === 'report' || step === 'home' || step === 'daily' || step === 'notebook' || (step === 'build' && cadetMode);
 
   return (
     <div className={`app${step === 'build' && !cadetMode ? ' fixed' : ''}${cadetMode ? ' is-cadet' : ''}${step === 'fly' ? ' is-fly' : ''}`}>
-      {step !== 'fly' && step !== 'report' && !(step === 'build' && cadetMode) && (
+      {!fullScreen && (
         <TopBar
           step={step}
           mode={mode}
@@ -147,7 +188,25 @@ export function App() {
           onMissionName={setMissionName}
           destination={active.destination}
           onDestination={changeDestination}
-          onMap={() => setStep('map')}
+          onMap={() => setStep('home')}
+        />
+      )}
+      {cadetMode && step === 'home' && (
+        <Home
+          progress={progress}
+          mode={mode}
+          onMode={changeMode}
+          daily={{ number: dailyNumber(todayIso), played: daily.results[todayIso] !== undefined }}
+          rescue={rescueProgress(progress)}
+          notebook={notebookProgress(facts)}
+          onPlay={playLevel}
+          onMissions={() => setStep('map')}
+          onDaily={openDaily}
+          onRescue={() => {
+            setRescueId(undefined);
+            setStep('rescue');
+          }}
+          onNotebook={() => setStep('notebook')}
         />
       )}
       {cadetMode && step === 'map' && (
@@ -161,7 +220,7 @@ export function App() {
         />
       )}
       {cadetMode && step === 'rescue' && !rescueId && (
-        <RescueSelect stars={{ mco: progress['rescue-mco'] ?? 0 }} onOpen={setRescueId} onMap={() => setStep('map')} />
+        <RescueSelect stars={{ mco: progress['rescue-mco'] ?? 0 }} onOpen={setRescueId} onMap={() => setStep('home')} />
       )}
       {cadetMode && step === 'rescue' && rescueId && (
         <RescueCaseView
@@ -169,6 +228,19 @@ export function App() {
           id={rescueId}
           onSolved={(stars) => setProgress((p) => withStars(p, `rescue-${rescueId}`, stars))}
           onBack={() => setRescueId(undefined)}
+        />
+      )}
+      {step === 'notebook' && <Notebook facts={facts} fresh={fresh} mode={mode} onMode={changeMode} onHome={home} />}
+      {step === 'daily' && daily.results[todayIso] && (
+        <Daily
+          number={dailyNumber(todayIso)}
+          date={todayIso}
+          grid={daily.results[todayIso]!}
+          played={daily.played}
+          mode={mode}
+          onMode={changeMode}
+          onHome={home}
+          {...(flown && dailyRun ? { onReport: () => setStep('report') } : {})}
         />
       )}
       {step === 'build' && cadetMode && (
@@ -179,22 +251,14 @@ export function App() {
           mode={mode}
           onMode={changeMode}
           missionName={missionName}
-          {...(level?.impossible ? { impossible: true, onLesson: () => award(1) } : {})}
-          onHome={() => setStep('map')}
+          {...(level?.impossible ? { impossible: true, onLesson: () => setProgress((p) => withStars(p, level.id, 1)) } : {})}
+          onHome={() => setStep('home')}
           onLaunch={launchDesign}
         />
       )}
       {step === 'build' && !cadetMode && <BuildBay design={design} ev={ev} engineer onChange={setDesign} onLaunch={launch} />}
       {step === 'fly' && flyDesign && (
-        <FlyAndSurvive
-          design={flyDesign}
-          seed={seed}
-          mode={mode}
-          onMode={changeMode}
-          missionName={missionName}
-          onHome={() => setStep(cadetMode ? 'map' : 'build')}
-          onDone={finish}
-        />
+        <FlyAndSurvive design={flyDesign} seed={seed} mode={mode} onMode={changeMode} missionName={missionName} onHome={home} onDone={finish} />
       )}
       {step === 'report' && flown && flyDesign && (
         <MissionReport
@@ -203,13 +267,21 @@ export function App() {
           mode={mode}
           onMode={changeMode}
           missionName={missionName}
-          {...(next ? { next: { title: next.title, onPlay: () => playLevel(next) } } : {})}
-          onFlyAgain={flyAgain}
-          onHome={() => {
-            setFlown(undefined);
-            setStep(cadetMode ? 'map' : 'build');
-          }}
-          homeLabel={cadetMode ? 'MISSION MAP' : 'BUILD BAY'}
+          {...(next && !dailyRun ? { next: { title: next.title, onPlay: () => playLevel(next) } } : {})}
+          {...(firstNew
+            ? {
+                newCard: {
+                  num: firstNew.num,
+                  total: NOTEBOOK.length,
+                  title: LESSON_WORDS[firstNew.id]?.title ?? firstNew.id,
+                  body: LESSON_WORDS[firstNew.id]?.body ?? '',
+                  onOpen: () => setStep('notebook'),
+                },
+              }
+            : {})}
+          onFlyAgain={dailyRun ? home : flyAgain}
+          onHome={home}
+          homeLabel={cadetMode ? 'HOME' : 'BUILD BAY'}
         />
       )}
     </div>
