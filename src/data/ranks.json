@@ -1,0 +1,159 @@
+{
+  "_comment": "Ranks and badges (spec: UI rules, Ranks and badges). Ranks follow real Mission Control jobs; you rise by the stars you have earned across the levels. Badges are earned by deeds in flight, in the album, the Daily and Rescue History. Names and how-to-earn words are UI copy (sdWords RANK_WORDS, BADGE_WORDS); the job descriptions are Sourced and marked to verify.",
+  "ranks": [
+    {
+      "id": "cadet",
+      "minStars": {
+        "value": 0,
+        "unit": "stars",
+        "source": "Game rule (Ranks): everyone starts as a cadet",
+        "isGameEstimate": true
+      },
+      "job": {
+        "value": "A trainee in Mission Control, learning how robots in deep space stay alive.",
+        "unit": "",
+        "source": "Game rank (not a NASA job title)",
+        "isGameEstimate": true
+      }
+    },
+    {
+      "id": "flight-controller",
+      "minStars": {
+        "value": 3,
+        "unit": "stars",
+        "source": "Game rule (Ranks): three stars across the levels",
+        "isGameEstimate": true
+      },
+      "job": {
+        "value": "In NASA Mission Control, each flight controller watches one part of the spacecraft, such as power or communications, from a console.",
+        "unit": "",
+        "source": "Summary of the NASA Mission Control role from general knowledge; to verify against NASA source",
+        "isGameEstimate": true
+      }
+    },
+    {
+      "id": "capcom",
+      "minStars": {
+        "value": 8,
+        "unit": "stars",
+        "source": "Game rule (Ranks): eight stars across the levels",
+        "isGameEstimate": true
+      },
+      "job": {
+        "value": "CAPCOM, the capsule communicator: on crewed flights, the one person in Mission Control who talks to the astronauts.",
+        "unit": "",
+        "source": "Summary of the NASA Mission Control role from general knowledge; to verify against NASA source",
+        "isGameEstimate": true
+      }
+    },
+    {
+      "id": "flight-director",
+      "minStars": {
+        "value": 14,
+        "unit": "stars",
+        "source": "Game rule (Ranks): fourteen stars across the levels",
+        "isGameEstimate": true
+      },
+      "job": {
+        "value": "The flight director leads the Mission Control team and makes the final call on every decision.",
+        "unit": "",
+        "source": "Summary of the NASA Mission Control role from general knowledge; to verify against NASA source",
+        "isGameEstimate": true
+      }
+    },
+    {
+      "id": "mission-legend",
+      "allStars": true,
+      "job": {
+        "value": "Every star in the game. Mission Control will tell stories about you.",
+        "unit": "",
+        "source": "Game rank (not a NASA job title)",
+        "isGameEstimate": true
+      }
+    }
+  ],
+  "badges": [
+    {
+      "id": "first-flight",
+      "icon": "play",
+      "rule": {
+        "kind": "any-level-star"
+      }
+    },
+    {
+      "id": "storm-survivor",
+      "icon": "storm",
+      "rule": {
+        "kind": "fact",
+        "fact": "stormNoLoss"
+      }
+    },
+    {
+      "id": "through-the-sun",
+      "icon": "conj",
+      "rule": {
+        "kind": "fact",
+        "fact": "conjunction"
+      }
+    },
+    {
+      "id": "night-shift",
+      "icon": "eclipse",
+      "rule": {
+        "kind": "fact",
+        "fact": "eclipseNoBrownout"
+      }
+    },
+    {
+      "id": "bonus-time",
+      "icon": "star",
+      "rule": {
+        "kind": "fact",
+        "fact": "extended"
+      }
+    },
+    {
+      "id": "sample-home",
+      "icon": "orbit",
+      "rule": {
+        "kind": "fact",
+        "fact": "sampleReturned"
+      }
+    },
+    {
+      "id": "shutterbug",
+      "icon": "postcard",
+      "rule": {
+        "kind": "postcard-set"
+      }
+    },
+    {
+      "id": "daily-streak",
+      "icon": "calendar",
+      "rule": {
+        "kind": "daily-streak",
+        "days": {
+          "value": 3,
+          "unit": "days",
+          "source": "Game rule (Badges): play the Daily three days in a row",
+          "isGameEstimate": true
+        }
+      }
+    },
+    {
+      "id": "rescuer",
+      "icon": "rescue",
+      "rule": {
+        "kind": "rescue"
+      }
+    },
+    {
+      "id": "big-thinker",
+      "icon": "medal",
+      "rule": {
+        "kind": "level-star",
+        "id": "jupiter"
+      }
+    }
+  ]
+}

@@ -60,12 +60,27 @@ export interface NotebookFacts {
   hazards: Record<string, number>;
   conjunction: boolean;
   eclipse: boolean;
+  /** Badges (ranks.ts): a solar storm met with every instrument kept, an eclipse season with no brownout, an
+   *  extension chosen, a sample brought home. */
+  stormNoLoss: boolean;
+  eclipseNoBrownout: boolean;
+  extended: boolean;
+  sampleReturned: boolean;
   progress: Record<string, number>;
 }
 
-export const emptyFacts = (): NotebookFacts => ({ hazards: {}, conjunction: false, eclipse: false, progress: {} });
+export const emptyFacts = (): NotebookFacts => ({
+  hazards: {},
+  conjunction: false,
+  eclipse: false,
+  stormNoLoss: false,
+  eclipseNoBrownout: false,
+  extended: false,
+  sampleReturned: false,
+  progress: {},
+});
 
-/** The facts one finished flight adds: hazards answered (their first day), and the seasons it flew through. */
+/** The facts one finished flight adds: hazards answered (their first day), the seasons it flew through, its deeds. */
 export function flightFacts(s: OpsState): Omit<NotebookFacts, 'progress'> {
   const end = s.status === 'lost' ? Math.floor(s.failureT ?? s.t) : Math.min(Math.floor(s.t), s.env.primeEndDay);
   const hazards: Record<string, number> = {};
@@ -74,10 +89,15 @@ export function flightFacts(s: OpsState): Omit<NotebookFacts, 'progress'> {
     const d = Math.floor(h.onset);
     hazards[h.type] = Math.min(hazards[h.type] ?? Infinity, d);
   }
+  const alive = s.status !== 'lost' && s.status !== 'not-launched';
   return {
     hazards,
     conjunction: s.env.conjunctions.some((w) => w.startDay <= end),
     eclipse: s.env.eclipseSeasons.some((e) => e.startDay <= end),
+    stormNoLoss: alive && s.instrumentsLost.length === 0 && s.hazards.some((h) => h.type === 'solar-storm' && h.onset <= s.t),
+    eclipseNoBrownout: alive && s.events.some((e) => e.code === 'eclipse-season-end') && !s.events.some((e) => e.code === 'brownout'),
+    extended: s.extension !== undefined,
+    sampleReturned: s.status === 'complete' && s.env.timeline.some((w) => w.phase === 'return'),
   };
 }
 
@@ -86,7 +106,17 @@ export function mergeFacts(a: NotebookFacts, b: Partial<NotebookFacts>): Noteboo
   for (const [k, d] of Object.entries(b.hazards ?? {})) hazards[k] = Math.min(hazards[k] ?? Infinity, d);
   const progress = { ...a.progress };
   for (const [k, v] of Object.entries(b.progress ?? {})) progress[k] = Math.max(progress[k] ?? 0, v);
-  return { hazards, conjunction: a.conjunction || !!b.conjunction, eclipse: a.eclipse || !!b.eclipse, progress };
+  const or = (k: 'conjunction' | 'eclipse' | 'stormNoLoss' | 'eclipseNoBrownout' | 'extended' | 'sampleReturned') => !!a[k] || !!b[k];
+  return {
+    hazards,
+    conjunction: or('conjunction'),
+    eclipse: or('eclipse'),
+    stormNoLoss: or('stormNoLoss'),
+    eclipseNoBrownout: or('eclipseNoBrownout'),
+    extended: or('extended'),
+    sampleReturned: or('sampleReturned'),
+    progress,
+  };
 }
 
 function isOpen(l: Lesson, f: NotebookFacts): boolean {

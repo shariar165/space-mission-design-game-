@@ -614,3 +614,43 @@ export const POSTCARD_WORDS = {
   hint: (dest: string, share: number) =>
     share <= 0 ? `Fly to ${dest} and send home your first science.` : share >= 1 ? `Send home all the science from ${dest}.` : `Send home half the science from ${dest}.`,
 };
+
+// ---------------------------------------------------------------------------
+// Ranks and badges (engine ranks.ts)
+
+export const RANK_WORDS: Record<string, string> = {
+  cadet: 'CADET',
+  'flight-controller': 'FLIGHT CONTROLLER',
+  capcom: 'CAPCOM',
+  'flight-director': 'FLIGHT DIRECTOR',
+  'mission-legend': 'MISSION LEGEND',
+};
+
+export const CREW_WORDS = {
+  title: 'CREW FILE',
+  rank: 'YOUR RANK',
+  toNext: (n: number, next: string) => `${f.num(n)}★ TO ${next}`,
+  top: 'TOP RANK',
+  stars: (n: number, max: number) => `${f.num(n)} OF ${f.num(max)} STARS`,
+  badges: 'BADGES',
+  open: 'Open your crew file',
+  close: 'CLOSE',
+  realJob: 'THE REAL JOB',
+  promoted: 'PROMOTED!',
+  newBadge: 'NEW BADGE',
+  earned: 'EARNED',
+  locked: 'NOT YET',
+};
+
+export const BADGE_WORDS: Record<string, { name: string; how: string }> = {
+  'first-flight': { name: 'FIRST FLIGHT', how: 'Earn a star on any mission.' },
+  'storm-survivor': { name: 'STORM SURVIVOR', how: 'Fly through a solar storm without losing an instrument.' },
+  'through-the-sun': { name: 'THROUGH THE SUN', how: 'Keep flying while the Sun blocks your radio (a solar conjunction).' },
+  'night-shift': { name: 'NIGHT SHIFT', how: 'Get through a whole eclipse season with no brownout.' },
+  'bonus-time': { name: 'BONUS TIME', how: 'Ask for a mission extension at the end of a flight.' },
+  'sample-home': { name: 'SAMPLE HOME', how: 'Bring a piece of asteroid Bennu back to Earth.' },
+  shutterbug: { name: 'SHUTTERBUG', how: 'Collect all the postcards from one place.' },
+  'daily-streak': { name: 'DAILY STREAK', how: 'Play the Daily mission three days in a row.' },
+  rescuer: { name: 'RESCUER', how: 'Save a robot in Rescue History.' },
+  'big-thinker': { name: 'BIG THINKER', how: 'Find out why no rocket flies straight to Jupiter.' },
+};

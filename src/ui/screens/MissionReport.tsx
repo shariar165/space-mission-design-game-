@@ -12,6 +12,8 @@ import type { Design } from '../../engine/types';
 import { ComicArt } from '../components/report/ComicArt';
 import { PostcardView, postcardSrc } from '../components/sd/PostcardView';
 import { POSTCARDS, postcardsEarned } from '../../engine/postcards';
+import type { RankDef } from '../../engine/ranks';
+import { play } from '../sound';
 import { SourceInfo } from '../components/SourceInfo';
 import { MissionSteps } from '../components/sd/MissionSteps';
 import { BackButton } from '../components/sd/BackButton';
@@ -30,6 +32,9 @@ import {
   panelWords,
   REPORT_STAMP,
   POSTCARD_WORDS,
+  BADGE_WORDS,
+  CREW_WORDS,
+  RANK_WORDS,
   ROBOT_WORDS,
   robotNameOr,
   robotSays,
@@ -70,9 +75,11 @@ interface Props {
   homeLabel: string;
   /** The robot's name (Pack); the default when empty. */
   robotName?: string;
+  /** What this flight earned in the crew file: a new rank, new badges. */
+  promotion?: { rank?: RankDef; badges: string[] };
 }
 
-export function MissionReport({ state, design, mode, onMode, missionName, next, newCard, onFlyAgain, onHome, onBack, homeLabel, robotName }: Props) {
+export function MissionReport({ state, design, mode, onMode, missionName, next, newCard, onFlyAgain, onHome, onBack, homeLabel, robotName, promotion }: Props) {
   const engineer = mode === 'engineer';
   const phone = useIsPhone();
   const still = useReducedMotion();
@@ -298,6 +305,33 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
     </div>
   );
 
+  const promoted = !!promotion && (promotion.rank !== undefined || promotion.badges.length > 0);
+  useEffect(() => {
+    if (promoted) play('jingle');
+  }, [promoted]);
+  const promoEl = promoted && (
+    <section className="rp-promo" aria-label={CREW_WORDS.title}>
+      {promotion!.rank && (
+        <div className="rp-promo-item rank">
+          <SDIcon icon="medal" size={30} color="var(--sd-gold)" />
+          <span>
+            <span className="rp-promo-k">{CREW_WORDS.promoted}</span>
+            <span className="rp-promo-v">{RANK_WORDS[promotion!.rank.id] ?? promotion!.rank.id}</span>
+          </span>
+        </div>
+      )}
+      {promotion!.badges.map((id) => (
+        <div key={id} className="rp-promo-item">
+          <SDIcon icon="medal" size={26} color="var(--sd-crt-hi)" />
+          <span>
+            <span className="rp-promo-k">{CREW_WORDS.newBadge}</span>
+            <span className="rp-promo-v">{BADGE_WORDS[id]?.name ?? id}</span>
+          </span>
+        </div>
+      ))}
+    </section>
+  );
+
   const won = useMemo(() => postcardsEarned(state).map((id) => POSTCARDS.find((c) => c.id === id)!), [state]);
   const [card, setCard] = useState<string>();
   const openCard = won.find((c) => c.id === card);
@@ -380,6 +414,7 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
           <ModeLever mode={mode} onMode={onMode} />
           {starsEl}
           <div className="rp-strip">{panelEls}</div>
+          {promoEl}
           {lastEl}
           {cardsEl}
           {verdictEl}
@@ -407,6 +442,7 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
           {stampEl}
         </header>
         <div className="rp-comic">{panelEls}</div>
+        {promoEl}
         {lastEl}
         {cardsEl}
         <div className="rp-lower">

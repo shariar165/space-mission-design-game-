@@ -4,7 +4,8 @@
 // Engineer: Build Bay → Fly & Survive → Mission Report (with Engineer details).
 // Every step has ◂ BACK: the steps visited are kept on a trail, and the browser's own Back button walks it too.
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { dailyDate, dailyDesign, dailyGrid, dailyNumber, dailySeed } from '../engine/daily';
+import { dailyDate, dailyDesign, dailyGrid, dailyNumber, dailySeed, dailyStreak } from '../engine/daily';
+import { badges, newBadges, rankFor, starTotals, type RankDef } from '../engine/ranks';
 import { evaluateDesign } from '../engine/index';
 import { flightFacts, mergeFacts, newLessons, NOTEBOOK, notebook, notebookProgress, rescueProgress, type NotebookFacts } from '../engine/notebook';
 import { operationsDebrief, type OpsState } from '../engine/ops/index';
@@ -12,10 +13,11 @@ import { shelfFor } from '../engine/pack';
 import type { RescueCaseId } from '../engine/rescue';
 import type { Design, DestinationId } from '../engine/types';
 import { TopBar, type Mode, type Step } from './components/TopBar';
-import { levelById, loadProgress, nextLevel, saveProgress, shelfOf, withStars, type Level, type Progress } from './levels';
+import { LEVELS, levelById, loadProgress, maxStars, nextLevel, saveProgress, shelfOf, withStars, type Level, type Progress } from './levels';
 import { loadDaily, loadFlights, loadPostcards, loadRobotName, loadSeen, saveDaily, saveFlights, savePostcards, saveRobotName, saveSeen, type DailySave } from './saves';
 import { Postcards } from './screens/Postcards';
-import { postcardAlbum } from '../engine/postcards';
+import { postcardAlbum, postcardsEarned } from '../engine/postcards';
+import type { Crew } from './components/sd/CrewFile';
 import { BuildBay } from './screens/BuildBay';
 import { Daily } from './screens/Daily';
 import { FlyAndSurvive } from './screens/FlyAndSurvive';
@@ -104,6 +106,18 @@ export function App() {
   const ev = useMemo(() => evaluateDesign(active), [active]);
   const facts: NotebookFacts = useMemo(() => ({ ...flights, progress }), [flights, progress]);
   const todayIso = dailyDate(Date.now());
+
+  // ---- Crew file: rank from the stars across the levels, badges from deeds (engine ranks.ts) ----
+  const levelMax = useMemo(() => Object.fromEntries(LEVELS.map((l) => [l.id, maxStars(l)])), []);
+  type CrewInput = { facts: NotebookFacts; postcards: readonly string[]; played: string[] };
+  const badgeInput = (x: CrewInput) => ({ facts: x.facts, postcards: x.postcards, dailyStreak: dailyStreak(x.played, todayIso) });
+  const crewOf = (x: CrewInput): Crew => {
+    const totals = starTotals(x.facts.progress, levelMax);
+    return { ...rankFor(totals.stars, totals.maxStars), ...totals, badges: badges(badgeInput(x)) };
+  };
+  /** The crew file as it was when this flight launched, so the report can say what is new. */
+  const atLaunch = useRef<CrewInput | undefined>(undefined);
+  const [promotion, setPromotion] = useState<{ rank?: RankDef; badges: string[] }>();
 
   useEffect(() => {
     try {
@@ -220,6 +234,7 @@ export function App() {
 
   /** Launch: Fly & Survive flies the pinned craft with this seed. */
   const launchDesign = (d: Design) => {
+    atLaunch.current = { facts, postcards, played: daily.played };
     setFlyDesign(d);
     setFlown(undefined);
     go('fly');
@@ -241,6 +256,11 @@ export function App() {
     const nextFacts = mergeFacts(facts, flightFacts(s));
     const { progress: _p, ...flightOnly } = nextFacts;
     setFresh(newLessons(facts, { ...nextFacts, progress: nextProgress }));
+    const before = atLaunch.current ?? { facts, postcards, played: daily.played };
+    const after = { facts: { ...nextFacts, progress: nextProgress }, postcards: [...new Set([...postcards, ...postcardsEarned(s)])], played: dailyRun ? [...daily.played, todayIso] : daily.played };
+    const rankBefore = crewOf(before).rank;
+    const rankAfter = crewOf(after).rank;
+    setPromotion({ ...(rankAfter.id !== rankBefore.id ? { rank: rankAfter } : {}), badges: newBadges(badgeInput(before), badgeInput(after)) });
     setProgress(nextProgress);
     setFlights(flightOnly);
     setFlown(s);
@@ -305,6 +325,7 @@ export function App() {
           }}
           onNotebook={() => go('notebook')}
           postcards={postcardAlbum(postcards)}
+          crew={crewOf({ facts, postcards, played: daily.played })}
           onPostcards={() => go('postcards')}
         />
       )}
@@ -383,6 +404,7 @@ export function App() {
       {step === 'report' && flown && flyDesign && (
         <MissionReport
           state={flown}
+          {...(promotion ? { promotion } : {})}
           robotName={robotName}
           design={flyDesign}
           mode={mode}
