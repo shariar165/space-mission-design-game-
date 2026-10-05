@@ -21,6 +21,11 @@ export const FLY_RULES = {
   minimumChip: gameEstimate(1, 'segments', 'Game rule (Fly & Survive): a cost on a choice always shows at least one segment, so no cost reads as free'),
   eclipseCardLead_days: gameEstimate(3, 'days', 'Game rule (Fly & Survive): the eclipse planning card opens this many days before a season'),
   savePowerHeaters: gameEstimate(0.5, 'fraction of heater need', 'Game rule (Fly & Survive): "Save power" runs the heaters at half their need through an eclipse season'),
+  cmeWidth_deg: gameEstimate(
+    60,
+    'deg',
+    'Game estimate (Fly & Survive map), approx.: a coronal mass ejection spreads over tens of degrees as it leaves the Sun; the map draws the solar storm as a 60° wedge',
+  ),
 } satisfies Record<string, Sourced<unknown>>;
 
 const DAY_S = 86_400;
@@ -270,6 +275,30 @@ export function outcomeIn_s(s: OpsState, hazardId: string): number | undefined {
   const rec = s.hazards.find((h) => h.id === hazardId);
   if (!rec || rec.outcomeDone || rec.resolveAt === undefined) return undefined;
   return Math.max(0, rec.resolveAt - s.t) * DAY_S;
+}
+
+export interface StormFront {
+  hazardId: string;
+  /** 'coming': the eruption has been seen and the wave is crossing space; 'hitting': it is on the craft. */
+  phase: 'coming' | 'hitting';
+  /** Share of the Sun → craft trip done: 0 when the eruption is seen, 1 from onset on. */
+  progress: number;
+  /** Seconds until the storm reaches the craft (0 once it has). */
+  hitsIn_s: number;
+}
+
+/**
+ * The solar storm on the map (spec UI rules: storms come from the Sun). A solar-storm hazard is seen at knownAt,
+ * reaches the craft at onset (hazards.json warningLead_days later) and lasts until endsAt. Progress is linear in
+ * time between the two: a drawing, not a CME speed model.
+ */
+export function stormFront(s: OpsState): StormFront | undefined {
+  if (s.status !== 'flying' && s.status !== 'awaiting-extension') return undefined;
+  const h = s.hazards.find((x) => x.type === 'solar-storm' && x.knownAt <= s.t + 1e-9 && s.t < x.endsAt);
+  if (!h) return undefined;
+  if (s.t >= h.onset) return { hazardId: h.id, phase: 'hitting', progress: 1, hitsIn_s: 0 };
+  const lead = h.onset - h.knownAt;
+  return { hazardId: h.id, phase: 'coming', progress: lead > 0 ? clamp01((s.t - h.knownAt) / lead) : 1, hitsIn_s: (h.onset - s.t) * DAY_S };
 }
 
 export interface MissionProgress {

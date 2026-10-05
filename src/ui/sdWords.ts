@@ -491,3 +491,15 @@ export const endsInWords = (daysLeft: number) => (daysLeft <= 0 ? 'MISSION OVER'
 
 /** The nudge when the clock is paused and nothing else is on screen. */
 export const playNudge = (speedLabel: string) => `▶ PRESS ${speedLabel} TO LET TIME RUN`;
+
+/** Labels on the CRT map. */
+export const MAP_WORDS = {
+  sun: 'SUN',
+  storm: 'SOLAR STORM',
+  order: 'YOUR ORDER',
+  you: 'YOU',
+};
+
+/** The log line while a solar storm crosses space toward the robot, and while it hits. */
+export const stormLine = (phase: 'coming' | 'hitting', name: string, hitsIn: string) =>
+  phase === 'coming' ? `THE SUN ERUPTED. A SOLAR STORM HITS ${name} IN ${hitsIn}.` : `SOLAR STORM ON ${name}. PARTICLES EVERYWHERE.`;

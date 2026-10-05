@@ -5,7 +5,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { DESTINATIONS, HAZARDS, PARTS } from '../../engine/data';
 import { flightMap, ghostFor, pathAhead } from '../../engine/flightMap';
-import { comingUp, eclipseCard, flyCard, flyTiles, FLY_RULES, missionProgress, outcomeIn_s, type FlyChip, type OpsState } from '../../engine/ops/index';
+import { comingUp, eclipseCard, flyCard, flyTiles, FLY_RULES, missionProgress, outcomeIn_s, stormFront, type FlyChip, type OpsState } from '../../engine/ops/index';
 import type { Design, Sourced } from '../../engine/types';
 import { SPEED_OF_LIGHT } from '../../engine/constants';
 import { BookCall } from '../components/ops/BookCall';
@@ -41,6 +41,7 @@ import {
   optionShort,
   playNudge,
   quietLine,
+  stormLine,
   RESULT_EFFECT_CHIP,
   resultLines,
   TILE,
@@ -101,6 +102,7 @@ export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome,
   const ringPhase = useCycle(RING_MS, !!ops.transit && !still);
 
   const tiles = state && view ? flyTiles(state, view) : undefined;
+  const storm = state ? stormFront(state) : undefined;
   const card = state && view && ops.showAlert ? flyCard(state, view) : undefined;
   const coming = state ? comingUp(state) : undefined;
   const ahead = useMemo(() => (ev && view ? pathAhead(design, view.map.frame.day, ev) : []), [design, ev, view?.map.frame.day]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -276,7 +278,9 @@ export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome,
         ? 'ORDER RECEIVED BY THE ROBOT.'
         : ops.result
         ? 'SIGNAL RECEIVED.'
-        : (() => {
+        : storm
+          ? stormLine(storm.phase, 'YOUR ROBOT', f.durationWords(storm.hitsIn_s).toUpperCase())
+          : (() => {
             const e = view.feed[0];
             const line = e && e.t > state.t - 3 ? eventLine(e, { destName: dest.name, optionLabel: shortLabel }) : undefined;
             return line ? line.toUpperCase() : quietLine(view.clock.phase, dest.name);
@@ -512,6 +516,7 @@ export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome,
         {...(g ? { ghost: g } : {})}
         {...(flying ? { pulse: flying.progress } : {})}
         ringPhase={ringPhase}
+        {...(storm ? { storm } : {})}
         phone={phone}
         lost={state.status === 'lost'}
       />

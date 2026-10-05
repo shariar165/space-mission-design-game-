@@ -30,6 +30,22 @@
 .crt-pulse-ring { fill: none; stroke: var(--sd-amber); stroke-width: 2; }
 .crt-pulse-dot { fill: var(--sd-amber-hi); }
 .fly-crt.blackout .crt-map { opacity: 0.55; }
+.crt-order-label { fill: var(--sd-amber-hi); font: 18px var(--sd-crt-font); }
+
+/* The Sun off the Moon map, and a solar storm: a wave from the Sun to the robot */
+.crt-sun-label { fill: var(--sd-sun-core); font: 20px var(--sd-crt-font); }
+.crt-storm path { fill: none; stroke: var(--sd-sun); stroke-width: 5; stroke-linecap: round; filter: drop-shadow(0 0 6px var(--sd-sun)); }
+.crt-storm path:nth-child(2) { stroke-opacity: 0.55; stroke-width: 4; }
+.crt-storm path:nth-child(3) { stroke-opacity: 0.28; stroke-width: 3; }
+.crt-storm.coming path:first-child { animation: crt-storm-flicker 0.5s steps(2) infinite; }
+.crt-storm.hitting path { animation: crt-storm-pulse 0.9s ease-in-out infinite; }
+.crt-storm-label { fill: var(--sd-sun); font: 20px var(--sd-crt-font); letter-spacing: 0.06em; }
+.crt-robot.storm > rect, .crt-robot.storm > path { filter: drop-shadow(0 0 5px var(--sd-sun)); }
+.crt-flecks circle { fill: var(--sd-sun-core); animation: crt-fleck 0.7s steps(2) infinite; }
+.crt-flecks circle:nth-child(even) { animation-delay: 0.35s; }
+@keyframes crt-storm-flicker { 50% { stroke-opacity: 0.75; } }
+@keyframes crt-storm-pulse { 50% { stroke-opacity: 0.25; } }
+@keyframes crt-fleck { 50% { opacity: 0; } }
 
 .fly-log { position: absolute; left: 22px; top: 18px; max-width: 560px; font: 400 26px/1.15 var(--sd-crt-font); z-index: 1; }
 .fly-legend { position: absolute; left: 22px; bottom: 16px; display: flex; gap: 22px; font: 400 20px/1 var(--sd-crt-font); color: var(--sd-crt-mid); z-index: 1; }
@@ -152,6 +168,7 @@
 .fly.phone .crt-ghost path { stroke-width: 4; stroke-dasharray: 0.1 12; }
 .fly.phone .crt-label { font-size: 26px; }
 .fly.phone .crt-you { font-size: 20px; }
+.fly.phone .crt-sun-label { font-size: 24px; }
 .fly.phone .fly-log { left: 14px; right: 14px; top: 12px; font-size: 22px; line-height: 1.1; }
 .fly-eng-phone { position: absolute; left: 14px; bottom: 10px; font: 400 17px/1.1 var(--sd-crt-font); color: var(--sd-amber); z-index: 1; }
 .fly.phone .fly-transit { top: auto; bottom: 16px; gap: 4px; padding: 12px 22px; background: rgba(5, 12, 7, 0.85); }

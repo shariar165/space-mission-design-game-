@@ -6,8 +6,10 @@ import { craftPosition } from '../src/engine/flightMap';
 import { presetDesign } from '../src/engine/missions';
 import * as ops from '../src/engine/ops/index';
 import { consoleView, powerPlanPreview } from '../src/engine/ops/console';
-import { comingUp, eclipseCard, flyCard, flyTiles, FLY_RULES, missionProgress, outcomeIn_s, segmentsFromFraction, segmentsFromMargin, systemsHealth } from '../src/engine/ops/fly';
+import { comingUp, eclipseCard, flyCard, flyTiles, FLY_RULES, missionProgress, outcomeIn_s, segmentsFromFraction, segmentsFromMargin, stormFront, systemsHealth } from '../src/engine/ops/fly';
 import { pathAhead } from '../src/engine/flightMap';
+import type { OpsState } from '../src/engine/ops/types';
+import { starterDesign } from '../src/ui/starters';
 
 const maven = presetDesign('maven');
 const DAY_S = 86_400;
@@ -296,5 +298,64 @@ describe('finishOperations (the robot flies the rest: the flight always reaches 
     const { state } = ops.runOperations(maven, { rng: () => 0.999999 });
     expect(ops.finishOperations(state).status).toBe(state.status);
     expect(ops.finishOperations(state).t).toBe(state.t);
+  });
+});
+
+describe('solar storm front (the wave from the Sun on the map)', () => {
+  // Run the clock to a time, stopping at every new decision on the way and leaving it open (the robot's default).
+  const to = (s: OpsState, t: number) => {
+    let x = s;
+    for (let i = 0; i < 1000 && x.t < t - 1e-9 && x.status === 'flying'; i++) x = ops.advanceOperations(x, { until: t });
+    return x;
+  };
+  const cases = [
+    // Seed 4 draws a storm on both flights (hazards.json solar-storm: seen 1 day before it hits, lasts 3 days).
+    { name: 'Moon', design: starterDesign('moon', '2026-10-04'), seed: 4 },
+    { name: 'Mars (MAVEN)', design: maven, seed: 4 },
+  ];
+  for (const c of cases) {
+    const first = ops.runOperations(c.design, { seed: c.seed }).state.hazards.find((h) => h.type === 'solar-storm')!;
+
+    it(`${c.name}: nothing before the eruption is seen`, () => {
+      expect(first).toBeDefined();
+      const s = to(ops.startOperations(c.design, { seed: c.seed }), first.knownAt - 0.5);
+      const f = stormFront(s);
+      expect(f === undefined || f.hazardId !== first.id).toBe(true);
+    });
+
+    it(`${c.name}: the wave leaves the Sun when the eruption is seen and reaches the craft at onset`, () => {
+      const lead = first.onset - first.knownAt; // warningLead_days = 1
+      expect(lead).toBeCloseTo(1, 9);
+      let s = to(ops.startOperations(c.design, { seed: c.seed }), first.knownAt);
+      let f = stormFront(s)!;
+      expect(f.hazardId).toBe(first.id);
+      expect(f.phase).toBe('coming');
+      expect(f.progress).toBeCloseTo((s.t - first.knownAt) / lead, 9); // 0 at the eruption
+      expect(f.hitsIn_s).toBeCloseTo((first.onset - s.t) * DAY_S, 3); // 1 day = 86,400 s
+      // halfway: progress (t − knownAt) / (onset − knownAt) = 0.5, and the hit is 12 h away
+      s = to(s, first.knownAt + lead / 2);
+      f = stormFront(s)!;
+      expect(f.phase).toBe('coming');
+      expect(f.progress).toBeCloseTo(0.5, 6);
+      expect(f.hitsIn_s).toBeCloseTo(43_200, 0);
+    });
+
+    it(`${c.name}: hitting from onset until the storm ends, then gone`, () => {
+      let s = to(ops.startOperations(c.design, { seed: c.seed }), first.onset + 0.1);
+      if (s.status !== 'flying') return; // a lost craft has nothing left to hit
+      let f: ReturnType<typeof stormFront> = stormFront(s)!;
+      expect(f!.hazardId).toBe(first.id);
+      expect(f!.phase).toBe('hitting');
+      expect(f!.progress).toBe(1);
+      expect(f!.hitsIn_s).toBe(0);
+      s = to(s, first.endsAt + 0.01);
+      f = stormFront(s);
+      expect(f === undefined || f.hazardId !== first.id).toBe(true);
+    });
+  }
+
+  it('the drawn wedge is a game estimate (CMEs are tens of degrees wide)', () => {
+    expect(FLY_RULES.cmeWidth_deg.value).toBe(60);
+    expect(FLY_RULES.cmeWidth_deg.isGameEstimate).toBe(true);
   });
 });
