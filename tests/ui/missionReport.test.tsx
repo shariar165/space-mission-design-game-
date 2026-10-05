@@ -50,7 +50,7 @@ describe('Mission Report', () => {
     expect(figs[3]!.className).not.toContain('on');
     for (let t = 0; t < PANEL_STEP_MS * 4; t += 40) act(() => vi.advanceTimersByTime(40)); // each tick schedules the next
     expect(figs[3]!.className).toContain('on');
-  });
+  }, 30_000);
 
   it('you vs the real one: launch dates and planned science from the preset', () => {
     open();

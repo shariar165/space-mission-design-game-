@@ -5,6 +5,7 @@ import type { ComingUpKind, ConsoleOutcome, FlyChip } from '../engine/ops/index'
 import type { DeckCard, PackBlockerCode, PartId } from '../engine/pack';
 import type { Hurt, ReportPanel, Saved } from '../engine/ops/report';
 import type { Category } from '../engine/scoring';
+import type { LessonCategory, LessonUnlock } from '../engine/notebook';
 import type { SDIconName } from './components/sd/SDIcon';
 import * as f from './format';
 
@@ -306,3 +307,60 @@ export const REPORT_STAMP: Record<'complete' | 'lost' | 'not-launched', { word: 
   lost: { word: ['ROBOT', 'LOST'], color: 'var(--sd-red)' },
   'not-launched': { word: ['NOT', 'LAUNCHED'], color: 'var(--sd-red)' },
 };
+
+// ---------------------------------------------------------------------------
+// Notebook
+
+
+export const CATEGORY_LOOK: Record<LessonCategory, { name: string; color: string }> = {
+  signal: { name: 'SIGNAL', color: 'var(--sd-part-science)' },
+  power: { name: 'POWER', color: 'var(--sd-part-power)' },
+  weather: { name: 'SPACE WEATHER', color: 'var(--sd-part-guard)' },
+  nav: { name: 'NAVIGATION', color: 'var(--sd-part-drive)' },
+  people: { name: 'PEOPLE', color: 'var(--sd-part-brain)' },
+};
+
+/** Lesson titles and plain-English bodies (game copy; the real history is the Sourced text the lesson points at). */
+export const LESSON_WORDS: Record<string, { title: string; body: string }> = {
+  'safe-beats-curious': { title: 'SAFE BEATS CURIOUS', body: 'When a solar storm is coming, real teams switch instruments off. Missing a few days of science beats losing an instrument forever.' },
+  'air-swells': { title: 'THE AIR SWELLS', body: 'A planet-wide dust storm heats Mars’s air and puffs it up. A low orbit suddenly drags through thicker air.' },
+  'radiation-adds-up': { title: 'RADIATION ADDS UP', body: 'Electronics can only take so much radiation in a lifetime. Every day near a big planet’s belts spends some of it.' },
+  'sun-gets-in-the-way': { title: 'THE SUN GETS IN THE WAY', body: 'Sometimes the Sun sits between Earth and your robot. Its noise scrambles radio, so nobody sends orders until it moves aside.' },
+  'bits-flip': { title: 'BITS FLIP', body: 'A fast particle can flip a bit in the computer’s memory. Robots carry ways to check, patch or switch computers.' },
+  'full-memory': { title: 'MEMORY FILLS UP', body: 'A robot that saves too many files can run out of room and get confused. Engineers fixed one from millions of km away.' },
+  'batteries-hate-the-dark': { title: 'BATTERIES HATE THE DARK', body: 'In a planet’s shadow, solar panels make nothing. Batteries carry the robot, and they last longer if they are never drained deep.' },
+  'wheels-wear-out': { title: 'WHEELS WEAR OUT', body: 'Spinning wheels point the robot without fuel, but they wear out. Spares and thrusters keep it pointing when one fails.' },
+  'safe-mode-is-a-friend': { title: 'SAFE MODE IS A FRIEND', body: 'When a robot gets confused, it shuts off extras, points at the Sun and waits for help from Earth.' },
+  'braking-is-scary': { title: 'BRAKING IS SCARY', body: 'Arriving means one long engine burn with no second chance. Teams plan what to do if it comes out wrong.' },
+  'duck-the-dust': { title: 'DUCK THE DUST', body: 'Comet dust hits faster than bullets. Seen far ahead, a robot can hide behind the planet or turn its panels edge-on.' },
+  'borrow-speed': { title: 'BORROW SPEED FROM A PLANET', body: 'When no rocket is strong enough, fly past a planet and steal a little of its speed: a gravity assist.' },
+  'check-your-units': { title: 'CHECK YOUR UNITS', body: 'Two teams, two kinds of numbers, one lost spacecraft. Always agree on units out loud.' },
+  'trust-but-test': { title: 'TRUST, BUT TEST', body: 'A sensor can lie: a shake can look like a landing. Test the software against everything the hardware might feel.' },
+  'install-it-right': { title: 'INSTALL IT THE RIGHT WAY UP', body: 'A part fitted backwards can pass every check and still fail on the day. Test the whole craft, not just the parts.' },
+};
+
+/** How a hazard reads after "Face …" in an unlock hint. */
+const HAZARD_PHRASE: Record<string, string> = {
+  'solar-storm': 'a solar storm',
+  'mars-dust-storm': 'a dust storm',
+  debris: 'comet dust',
+  'reaction-wheel': 'a wheel failure',
+  'memory-corruption': 'a memory glitch',
+  'insertion-anomaly': 'an arrival burn anomaly',
+  'radiation-damage': 'radiation damage',
+};
+
+export function unlockHint(u: LessonUnlock, ctx: { level: (id: string) => string; rescue: (id: string) => string; hazard: (id: string) => string }): string {
+  switch (u.kind) {
+    case 'face-hazard':
+      return `Face ${HAZARD_PHRASE[u.id] ?? ctx.hazard(u.id).toLowerCase()}`;
+    case 'finish-level':
+      return `Earn a star on ${ctx.level(u.id)}`;
+    case 'solve-rescue':
+      return `Save ${ctx.rescue(u.id)} in Rescue History`;
+    case 'conjunction':
+      return 'Fly through a solar conjunction';
+    case 'eclipse':
+      return 'Fly through an eclipse season';
+  }
+}

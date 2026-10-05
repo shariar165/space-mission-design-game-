@@ -54,12 +54,14 @@ interface Props {
   missionName: string;
   /** Next level, when this flight opened it (Cadet). */
   next?: { title: string; onPlay: () => void };
+  /** The first Notebook lesson this flight earned (NEW CARD). */
+  newCard?: { num: number; total: number; title: string; body: string; onOpen: () => void };
   onFlyAgain: () => void;
   onHome: () => void;
   homeLabel: string;
 }
 
-export function MissionReport({ state, design, mode, onMode, missionName, next, onFlyAgain, onHome, homeLabel }: Props) {
+export function MissionReport({ state, design, mode, onMode, missionName, next, newCard, onFlyAgain, onHome, homeLabel }: Props) {
   const engineer = mode === 'engineer';
   const phone = useIsPhone();
   const still = useReducedMotion();
@@ -221,7 +223,17 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
 
   const lessonEl = (
     <div className="rp-card-col">
-      {lesson && (
+      {newCard && (
+        <div className="rp-card">
+          <span className="rp-card-tag">NEW CARD</span>
+          <span className="rp-card-k">
+            ENGINEER’S NOTEBOOK · {String(newCard.num).padStart(2, '0')} / {String(newCard.total).padStart(2, '0')}
+          </span>
+          <span className="rp-card-title">{newCard.title}</span>
+          <span className="rp-card-v">{newCard.body}</span>
+        </div>
+      )}
+      {!newCard && lesson && (
         <div className="rp-card">
           <span className="rp-card-tag">REAL LESSON</span>
           <span className="rp-card-k">
@@ -234,7 +246,11 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
         </div>
       )}
       <div className="rp-actions">
-        {next ? (
+        {newCard ? (
+          <button type="button" className="rp-btn outline" onClick={newCard.onOpen}>
+            {phone ? 'NOTEBOOK' : 'OPEN NOTEBOOK'}
+          </button>
+        ) : next ? (
           <button type="button" className="rp-btn outline" onClick={next.onPlay}>
             NEXT: {next.title.toUpperCase()}
           </button>
@@ -247,11 +263,14 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
           FLY AGAIN
         </button>
       </div>
-      {next && (
-        <button type="button" className="rp-link" onClick={onHome}>
-          {homeLabel}
+      {next && newCard && (
+        <button type="button" className="rp-link" onClick={next.onPlay}>
+          NEXT: {next.title.toUpperCase()}
         </button>
       )}
+      <button type="button" className="rp-link" onClick={onHome}>
+        {homeLabel}
+      </button>
     </div>
   );
 

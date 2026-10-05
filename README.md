@@ -4,7 +4,7 @@
 
 *You don't fly the rocket. You keep a robot alive millions of kilometres away, and every order arrives minutes late.*
 
-A NASA space-mission design game: a pure TypeScript simulation engine (`src/engine`) and a React + Vite UI (`src/ui`) in a retro mission-control look (design: the Claude Design "Signal Delay" screens, copied in `docs/design/signal-delay/`). **Cadet mode** (the default): pick a mission, **Pack** the rocket nose (volume and weight are separate limits) for the dangers you can see coming, pick a launch day, then **Fly & Survive**: danger cards stop time, you choose, and the order crawls to the robot at light speed. The **Mission Report** prints the flight as a comic. **Engineer mode** builds in the full Build Bay and flies the same Fly & Survive with every equation and source. One flight model everywhere: the Mission operations engine. The UI only displays numbers the engine computes. The science rules are in [docs/SCIENCE_SPEC.md](docs/SCIENCE_SPEC.md). Every constant and data value is a `Sourced<T>` that carries its source and an `isGameEstimate` flag.
+A NASA space-mission design game: a pure TypeScript simulation engine (`src/engine`) and a React + Vite UI (`src/ui`) in a retro mission-control look (design: the Claude Design "Signal Delay" screens, copied in `docs/design/signal-delay/`). **Cadet mode** (the default): pick a mission, **Pack** the rocket nose (volume and weight are separate limits) for the dangers you can see coming, pick a launch day, then **Fly & Survive**: danger cards stop time, you choose, and the order crawls to the robot at light speed. The **Mission Report** prints the flight as a comic and hands you a real lesson for the **Engineer's Notebook**. A **Daily mission** is the same flight for everyone each day, with a spoiler-free share card. **Engineer mode** builds in the full Build Bay and flies the same Fly & Survive with every equation and source. One flight model everywhere: the Mission operations engine. The UI only displays numbers the engine computes. The science rules are in [docs/SCIENCE_SPEC.md](docs/SCIENCE_SPEC.md). Every constant and data value is a `Sourced<T>` that carries its source and an `isGameEstimate` flag.
 
 ## Setup (everything lives in `.venv`)
 
@@ -59,13 +59,15 @@ src/engine/
   pack.ts         Signal Delay Pack: nose grid, part effects (Design.kit), danger deck, launch calendar
   ops/fly.ts      Fly & Survive view model: five-segment tiles, danger-card times and chips, Coming Up ribbon
   ops/report.ts   Mission Report: comic panels, what saved / hurt you, you vs the real mission
-src/ui/           React UI: App.tsx, screens/ (Pack, FlyAndSurvive, MissionReport; Engineer BuildBay; LevelMap,
-                  Rescue), components/sd (icons, teletype, lever), components/fly, components/report,
+  notebook.ts     Engineer's Notebook: lessons that point at existing Sourced texts, unlock rules
+  daily.ts        Daily mission: date seed, number, fixed craft, outcome grid, streak
+src/ui/           React UI: App.tsx, screens/ (Home, Pack, FlyAndSurvive, MissionReport, Daily, Notebook;
+                  Engineer BuildBay; LevelMap, Rescue), saves.ts (notebook facts and daily results in the browser), components/sd (icons, teletype, lever), components/fly, components/report,
                   components/ops (console drawers), levels.ts (levels, shelves and saved stars),
                   sdWords.ts (Signal Delay wording), sdGeometry.ts (pixel layout), useOpsSession.ts (clock),
                   format.ts (unit display only), styles/theme.css (design tokens) + sd-*.css per screen
 src/data/         destinations, orbitalElements, launchVehicles, parts, missions, crisisCards, lessons,
-                  rescueCases, pack (all values Sourced)
+                  rescueCases, pack, notebook (all values Sourced)
 tests/            physics.test.ts, validation.test.ts, dataAudit.test.ts, engineApi.test.ts, uiGuards.test.ts,
                   ui/*.test.tsx (component tests)
 docs/design/      reference copies of the Claude Design mockups (signal-delay/ is the current UI)
@@ -74,7 +76,7 @@ tests/visual/     Playwright screenshot harness (npm run shots), not part of npm
 
 All modules in the spec's build order are built.
 
-- **Cadet:** Level map → Pack (parts shelf, rocket nose, weight scale, danger deck, launch calendar, ARM, LAUNCH) → Fly & Survive → Mission Report with the level stars. Rescue History opens from the map.
+- **Cadet:** Home → Pack (PLAY, or choose a mission on the map) (parts shelf, rocket nose, weight scale, danger deck, launch calendar, ARM, LAUNCH) → Fly & Survive → Mission Report with the level stars and any new Notebook lesson. Daily mission, Rescue History and the Notebook open from Home.
 - **Engineer:** Build Bay → Fly & Survive (Engineer readouts and the EQUATIONS drawer) → Mission Report with the score breakdown, every comparison row's ⓘ and the Mission operations risk.
 - **Fly & Survive (both modes, spec UI rules 16–20):** the Mission operations engine flies the craft day by day: danger cards with light-delayed orders, the eclipse planning card, the power plan, calls home on the 34 m or 70 m dish, conjunction blackouts, safe mode and the extension decision.
 

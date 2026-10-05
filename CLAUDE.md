@@ -53,7 +53,7 @@ There is no lint step.
 - **The UI never computes a number.** It calls the engine and only formats units (`src/ui/format.ts`). Need a new on-screen number? Add it to the engine (with a test in `tests/engineApi.test.ts`, `tests/fly.test.ts`, `tests/pack.test.ts` or `tests/report.test.ts`), not the UI. `tests/uiGuards.test.ts` fails on digits in JSX text or "number + unit" in UI strings, and on any React/DOM import in `src/engine`. Put styles in CSS files, not inline strings.
 - **Design source of truth:** the Claude Design "Signal Delay" screens, copied byte-for-byte in `docs/design/signal-delay/` (with reference shots). Tokens are CSS variables in `src/ui/styles/theme.css`; each screen has its own `sd-*.css`. After a visual change, run `npm run shots` and compare the app and design PNGs side by side.
 - **One flight model everywhere (the Mission operations engine).**
-  - Cadet: Level map → `Pack` → `FlyAndSurvive` → `MissionReport`.
+  - Cadet: `Home` → (mission map) → `Pack` → `FlyAndSurvive` → `MissionReport`; `Daily` (share card) and `Notebook` from Home.
   - Engineer: `BuildBay` → `FlyAndSurvive` (Engineer readouts and the EQUATIONS drawer) → `MissionReport` with Engineer details.
   - The old crisis-card flight is gone from the UI (`simulateMission` / `previewCrisis` stay for engine and validation tests).
 - Engineer mode shows each equation and every input; ⓘ (`SourceInfo`) shows the `Sourced<T>` record, with a "game estimate" badge when `isGameEstimate`.
@@ -64,6 +64,7 @@ There is no lint step.
   - The console panels (`components/ops/PowerDial`, `BookCall`, `OpsPanels`) are drawers.
 - **Pack** (`screens/Pack.tsx`): numbers from `pack.ts` (`buildPackDesign`, `packBlockers`, `dangerDeck`, `calendarTransfers`, `dayQuality`, `fitPart`) and `evaluateDesign` / `cadetGauges`. Part data and effects live in `src/data/pack.json`; a part's effect reaches the engine through `Design.kit`. Volume (the nose) and weight (the launch meter) are separate limits, and each blocker names the one that failed. Levels carry their shelf (`levels.ts` `shelfOf`).
 - **Mission Report** (`screens/MissionReport.tsx`, `components/report/ComicArt.tsx`): `operationsDebrief`, `reportPanels`, `reportVerdict` and `reportCompare` (`ops/report.ts`), star rules from `STAR_RULES`, and risk from `useOpsRisk`.
+- **Home / Daily / Notebook** (`screens/Home.tsx`, `Daily.tsx`, `Notebook.tsx`): counts from `notebook.ts` (`notebook`, `notebookProgress`, `rescueProgress`, `flightFacts`, `newLessons`) and `daily.ts` (`dailyNumber`, `dailySeed`, `dailyDesign`, `dailyGrid`, `dailyStreak`, `nextDailyIn_s`). Lessons live in `src/data/notebook.json` and each points at an existing Sourced text. Notebook facts and Daily results are saved in the browser (`src/ui/saves.ts`).
 - Words live in `src/ui/sdWords.ts` (Signal Delay), with `opsWords.ts` for the drawers. Pixel layout lives in `src/ui/sdGeometry.ts`. Levels and saved stars are in `src/ui/levels.ts`. New display constants go in `FLY_RULES` / `CONSOLE_RULES` / `pack.json`, registered in the data audit.
 - **Component tests** (`tests/ui/*.test.tsx`) start with `// @vitest-environment jsdom` and import `./setup` (cleanup, empty storage, `openMarsLevel`). With fake timers, advance time in small slices: each animation step schedules the next.
 - English only for now; the language toggle is hidden.
@@ -72,7 +73,7 @@ There is no lint step.
 
 **Data flow.** `src/data/*.json` (Sourced values) → `src/engine/data.ts` (typed casts plus `lookup()`) → physics modules → `src/engine/index.ts` (and `compare.ts`), which the UI calls.
 
-**Signal Delay engine modules:** `pack.ts` (Pack: nose, part effects, danger deck, launch calendar), `ops/fly.ts` (Fly & Survive view model) and `ops/report.ts` (Mission Report).
+**Signal Delay engine modules:** `pack.ts` (Pack: nose, part effects, danger deck, launch calendar), `ops/fly.ts` (Fly & Survive view model), `ops/report.ts` (Mission Report), `notebook.ts` (Engineer's Notebook) and `daily.ts` (Daily mission).
 
 **`index.ts`** has four main entry points (`previewCrisis` shows the crisis card a seed will draw, before `simulateMission` flies it):
 - `evaluateDesign(design)` runs the whole pipeline:

@@ -11,6 +11,7 @@ test('pack', async ({ page }, info) => {
     }
   });
   await page.goto('/?seed=2013');
+  await page.getByRole('button', { name: 'CHOOSE A MISSION ▸' }).click();
   await page.getByRole('button', { name: /^Red Planet/ }).click();
   await expect(page.getByRole('radiogroup', { name: 'Launch day' }).getByRole('radio').first()).toBeVisible({ timeout: 60_000 });
   // pack the design's starter extras: shield, solar, battery, autopilot

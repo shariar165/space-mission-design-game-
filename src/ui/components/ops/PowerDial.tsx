@@ -111,15 +111,15 @@ export function PowerDial({ state, engineer, destName, blocked, onSend, onClose 
           onPointerLeave={() => setDrag(undefined)}
         >
           <circle cx={C} cy={C} r={(R + r) / 2} fill="none" stroke="rgba(143,186,255,0.12)" strokeWidth={R - r} />
-          <path d={arc(0, b1)} fill="#5b6b8c" />
-          <path d={arc(b1, s1)} fill="#FF9F57" />
-          <path d={arc(s1, h1)} fill="#F2C744" opacity="0.9" />
-          <path d={arc(h1, rd)} fill="#8EC5FF" />
-          <circle cx={C} cy={C} r="64" fill="#0E1B3B" />
-          <text x={C} y="140" textAnchor="middle" fill="#A9B8D6" fontSize="13">
+          <path d={arc(0, b1)} fill="var(--sd-ink-5)" />
+          <path d={arc(b1, s1)} fill="var(--sd-amber)" />
+          <path d={arc(s1, h1)} fill="var(--sd-part-power)" opacity="0.9" />
+          <path d={arc(h1, rd)} fill="var(--sd-crt-hi)" />
+          <circle cx={C} cy={C} r="64" fill="var(--sd-crt)" />
+          <text x={C} y="140" textAnchor="middle" fill="var(--sd-crt-mid)" fontSize="13">
             {engineer ? 'P_sci' : 'Science'}
           </text>
-          <text x={C} y="168" textAnchor="middle" fill="#EAF0FA" fontFamily="JetBrains Mono, monospace" fontSize="24">
+          <text x={C} y="168" textAnchor="middle" fill="var(--sd-crt-hi)" fontFamily="VT323, monospace" fontSize="30">
             {engineer ? f.watts(sp.science_W) : f.pct(duty, 0)}
           </text>
           <circle className="ops-handle" cx={h1x} cy={h1y} r="11" onPointerDown={(e) => (e.currentTarget.ownerSVGElement?.setPointerCapture?.(e.pointerId), setDrag(1))} />

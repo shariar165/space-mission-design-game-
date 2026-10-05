@@ -40,9 +40,9 @@ describe('Rescue History: Mars Climate Orbiter', () => {
     expect(screen.getByRole('img', { name: /Planned 226 km, survivable 80 km, actual 57 km/ })).toBeTruthy();
   });
 
-  it('first try: 3 stars, saved to progress from the map', () => {
+  it('first try: 3 stars, saved to progress, opened from Home', () => {
     render(<App />);
-    fireEvent.click(screen.getByRole('button', { name: /Rescue History/ }));
+    fireEvent.click(screen.getByRole('button', { name: /RESCUE HISTORY/ }));
     fireEvent.click(screen.getByRole('button', { name: /Mars Climate Orbiter/ }));
     accuse('Thruster-firing file');
     expect(loadProgress()['rescue-mco']).toBe(3);

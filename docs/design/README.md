@@ -29,8 +29,10 @@ Imported through the claude_design MCP from the same project. Each copy in `sign
 | 01 Fly & Survive | `Signal Delay - Fly and Survive.dc.html` (1a, 1b) | `src/ui/screens/FlyAndSurvive.tsx`, `components/fly/*`, `styles/sd-fly.css` |
 | 02 Pack | `Signal Delay - Pack.dc.html` (2a, 2b) | `src/ui/screens/Pack.tsx`, `styles/sd-pack.css` |
 | 03 Mission Report | `Signal Delay - Mission Report.dc.html` (3a, 3b) | `src/ui/screens/MissionReport.tsx`, `components/report/ComicArt.tsx`, `styles/sd-report.css` |
-| 04 Home, 05 Daily share | `Signal Delay - Home.dc.html` (4a/4b, 5a/5b) | next pull request |
-| 06 Notebook | `Signal Delay - Notebook.dc.html` (6a, 6b) | next pull request |
+| 04 Home | `Signal Delay - Home.dc.html` (4a, 4b) | `src/ui/screens/Home.tsx`, `styles/sd-home.css` |
+| 05 Daily share | `Signal Delay - Home.dc.html` (5a, 5b) | `src/ui/screens/Daily.tsx`, `styles/sd-daily.css` |
+| 06 Notebook | `Signal Delay - Notebook.dc.html` (6a, 6b) | `src/ui/screens/Notebook.tsx`, `styles/sd-notebook.css` |
+| Mission map, Rescue History (no mockup) | the screens' chassis, panels, paper and type | `styles/sd-cadet.css` |
 | Icons | `SDIcon.dc.html` | `src/ui/components/sd/SDIcon.tsx` |
 | Tokens | all of the above | `src/ui/styles/theme.css` |
 
@@ -40,3 +42,6 @@ Differences from the mockups, on purpose:
 - Pack adds a weight scale beside the nose, because weight is a separate limit from volume.
 - The Mission Report compares launch date, planned science and mass/power/Δv, not burn length or actual lifetime (spec UI rule 5).
 - Responses with three choices put the third under the danger card. Every danger card offers "Let the robot decide".
+- Home's kicker reads "MISSION CONTROL · DEEP SPACE" (no year), and Home adds "Choose a mission" and the mode lever.
+- The Daily share card has one square per danger answered (held / cost you / hurt) rather than four placeholder squares. Its title comes from the first danger faced.
+- The Notebook holds the lessons the data can source (15), not 24.

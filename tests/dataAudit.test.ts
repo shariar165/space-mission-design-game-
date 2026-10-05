@@ -11,6 +11,7 @@ import lessons from '../src/data/lessons.json';
 import missions from '../src/data/missions.json';
 import operations from '../src/data/operations.json';
 import pack from '../src/data/pack.json';
+import notebookData from '../src/data/notebook.json';
 import orbitalElements from '../src/data/orbitalElements.json';
 import parts from '../src/data/parts.json';
 import rescueCases from '../src/data/rescueCases.json';
@@ -26,6 +27,7 @@ import type { Sourced } from '../src/engine/types';
 import { RISK_RUNS, RISK_SEED } from '../src/engine/ops/riskEstimate';
 import { CONSOLE_RULES } from '../src/engine/ops/console';
 import { FLY_RULES } from '../src/engine/ops/fly';
+import { DAILY_RULES } from '../src/engine/daily';
 
 interface Entry {
   path: string;
@@ -72,6 +74,7 @@ const DATA_FILES: Record<string, unknown> = {
   'operations.json': operations,
   'orbitalElements.json': orbitalElements,
   'pack.json': pack,
+  'notebook.json': notebookData,
   'parts.json': parts,
   'rescueCases.json': rescueCases,
   'rideshares.json': rideshares,
@@ -94,6 +97,7 @@ const ENGINE_VALUES: Record<string, Record<string, Sourced<unknown>>> = {
   'ops/console.ts CONSOLE_RULES': CONSOLE_RULES,
   'ops/fly.ts FLY_RULES': FLY_RULES,
   'scoring.ts STAR_RULES': STAR_RULES,
+  'daily.ts DAILY_RULES': DAILY_RULES,
 };
 
 const all: Entry[] = [];
