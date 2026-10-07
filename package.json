@@ -2,6 +2,7 @@
   "name": "signal-delay",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "description": "Signal Delay — a NASA space-mission game: keep a robot alive millions of km away where every order arrives late. Simulation engine + React UI. See docs/SCIENCE_SPEC.md.",
   "scripts": {
