@@ -33,6 +33,7 @@
 - [Known limitations](#known-limitations)
 - [Contributing](#contributing)
 - [Acknowledgements and disclaimer](#acknowledgements-and-disclaimer)
+- [License](#license)
 
 ---
 
@@ -52,7 +53,7 @@ It is designed for students and curious players first (**Cadet mode**), and for 
 
 - **Every number comes from physics or a cited source.** Distances come from JPL planetary positions, power from the inverse-square law calibrated on MAVEN, data rates from a link budget anchored to Mars Reconnaissance Orbiter, launch energy from a Lambert solver.
 - **Real missions are flown through the same model as the player.** MAVEN and OSIRIS-REx are loaded as ordinary designs and must reproduce their published numbers. If the model can't, the model is fixed, not the mission.
-- **Honest about guesses.** About two-thirds of the numbers a game needs (failure chances, part costs, hazard rates) have no public NASA source. Each of these is labelled **game estimate** in the game itself and listed in [`TODO_DATA.md`](TODO_DATA.md).
+- **Honest about guesses.** All physics and mission data are sourced. Values with no public source (failure chances, part costs, hazard rates) are labelled **game estimate** in the game itself and listed in [`TODO_DATA.md`](TODO_DATA.md).
 - **Light delay is the core mechanic.** Commands obey `t = d / c` using the real Earth–spacecraft distance on that mission day. Solar conjunctions black out the radio for about two weeks, as they do for real Mars missions.
 
 ---
@@ -303,4 +304,6 @@ This game is built on public data from NASA, JPL, the NSSDC, the Deep Space Netw
 
 **Signal Delay is an independent educational project. It is not affiliated with, sponsored by or endorsed by NASA, JPL or NOAA.** It does not use the NASA insignia or logotype. Mission names are used only to identify the real missions whose published data the game cites. The game's results are simplified models for learning, not mission analysis.
 
-No open-source licence has been chosen yet.
+## License
+
+The code is released under the [MIT License](LICENSE). Teachers and students may use, copy and adapt it freely. The NASA pictures in `public/postcards/` are public domain (see `src/data/postcards.json`), and NASA's own data keep their original terms.
