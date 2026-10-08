@@ -4,6 +4,7 @@ import type { PhaseWindow } from '../crisis';
 import type { HazardOption, OpsPhase } from '../data';
 import type { FullEvaluation } from '../index';
 import type { Design } from '../types';
+import type { RealStorm } from '../spaceWeather';
 
 export type { OpsPhase } from '../data';
 
@@ -190,6 +191,8 @@ export interface HazardRecord {
   endsAt: number;
   /** Uniform number drawn at the start for the outcome (same random numbers whatever the player does). */
   uOutcome: number;
+  /** The real DONKI storm behind this hazard (live Daily). */
+  real?: RealStorm;
   status: 'pending' | 'open' | 'resolved';
   /** Lifecycle steps already processed. */
   onsetDone: boolean;
@@ -273,6 +276,8 @@ export interface Candidate {
   t: number;
   uAccept: number;
   uOutcome: number;
+  /** A real DONKI storm (live Daily): always accepted, and named on its card. */
+  real?: RealStorm;
 }
 export interface RandomDraws {
   launch: number;

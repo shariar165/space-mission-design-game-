@@ -141,6 +141,8 @@ export interface FlyCard {
   /** Seconds until the deadline after which the craft decides by itself. */
   deadlineIn_s: number;
   options: FlyOption[];
+  /** Live Daily: the DONKI record of the real storm (ⓘ). */
+  realSource?: Sourced<string>;
 }
 
 /** A cost as a drop in segments, at least one segment (FLY_RULES.minimumChip). */
@@ -166,6 +168,7 @@ export function flyCard(s: OpsState, v: OpsConsoleView = consoleView(s)): FlyCar
     onsetIn_s: Math.max(0, a.onset - s.t) * DAY_S,
     orderTakes_s: Math.max(0, a.arrivesIfSent - s.t) * DAY_S,
     deadlineIn_s: Math.max(0, a.deadline - s.t) * DAY_S,
+    ...(a.realSource ? { realSource: a.realSource } : {}),
     options: a.options.map((o) => {
       const chips: FlyChip[] = [];
       if (o.fuel_kg > 0) chips.push({ gauge: 'fuel', delta: segmentDrop(fuelNow, segmentsFromFraction(loaded > 0 ? (propLeft - o.fuel_kg) / loaded : 0)) });

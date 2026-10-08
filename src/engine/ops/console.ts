@@ -24,6 +24,7 @@ import type {
   PowerPlan,
   ResponseSource,
 } from './types';
+import { stormSourced, type RealStorm } from '../spaceWeather';
 
 /** Game rules of the console's display (registered in the data audit). */
 export const CONSOLE_RULES = {
@@ -186,6 +187,9 @@ export interface ConsoleAlert {
   fallback: { optionId: string; by: Exclude<ResponseSource, 'player'> };
   standingOrder?: string;
   options: AlertOption[];
+  /** Live Daily: the real DONKI storm behind this card, and its ⓘ record. */
+  real?: RealStorm;
+  realSource?: Sourced<string>;
 }
 
 export interface ConsoleCommand {
@@ -456,6 +460,7 @@ function alertView(s: OpsState): ConsoleAlert | undefined {
     title: h.title,
     prompt: h.prompt,
     realHistory: h.realHistory,
+    ...(rec.real ? { real: rec.real, realSource: stormSourced(rec.real) } : {}),
     detectedBy: h.detectedBy,
     onset: rec.onset,
     knownAt: rec.knownAt,

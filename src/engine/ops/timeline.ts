@@ -47,6 +47,7 @@ import type {
   RandomDraws,
   ResponseSource,
 } from './types';
+import { stormCandidates, type RealStorm } from '../spaceWeather';
 
 const EPS = 1e-9;
 const YEAR = 365.25;
@@ -241,7 +242,7 @@ function boundRate(env: OpsEnvironment, type: string): number {
   }
 }
 
-export function drawRandom(env: OpsEnvironment, opts: { seed?: number; rng?: () => number }): RandomDraws {
+export function drawRandom(env: OpsEnvironment, opts: { seed?: number; rng?: () => number; storms?: RealStorm[] }): RandomDraws {
   const seed = opts.seed ?? 1;
   const stream = (name: string) => opts.rng ?? subRng(seed, name);
   const launch = stream('launch')();
@@ -250,7 +251,9 @@ export function drawRandom(env: OpsEnvironment, opts: { seed?: number; rng?: () 
   const candidates: RandomDraws['candidates'] = {};
   for (const type of STREAM_HAZARDS) {
     const bound = boundRate(env, type);
-    candidates[type] = { bound_perDay: bound, list: drawCandidates(stream(type), bound, env.horizonDay + 1) };
+    // A live Daily replays the real DONKI storms instead of drawing solar storms (spec UI rule 37).
+    const list = type === 'solar-storm' && opts.storms ? stormCandidates(env, opts.storms, stream(type)) : drawCandidates(stream(type), bound, env.horizonDay + 1);
+    candidates[type] = { bound_perDay: bound, list };
   }
   return { launch, insertion, candidates };
 }
@@ -469,7 +472,7 @@ function hazardRate(s: OpsState, type: string, t: number): number {
   }
 }
 
-function createHazard(s: OpsState, type: string, t: number, uOutcome: number) {
+function createHazard(s: OpsState, type: string, t: number, uOutcome: number, real?: RealStorm) {
   const h = HAZARDS[type]!;
   const n = s.hazards.filter((x) => x.type === type).length + 1;
   const onset = h.detectedBy === 'earth' ? t + h.warningLead_days.value : t;
@@ -482,6 +485,7 @@ function createHazard(s: OpsState, type: string, t: number, uOutcome: number) {
     deadline: onset + h.deadline_days.value,
     endsAt: onset + h.duration_days.value,
     uOutcome,
+    ...(real ? { real } : {}),
     status: 'pending',
     onsetDone: false,
     knownDone: false,
@@ -873,7 +877,8 @@ function processAt(s: OpsState, t: number) {
     let c = stream.list[s.cursors[type]!];
     while (c && c.t <= t + EPS) {
       s.cursors[type]! += 1;
-      if (s.status === 'flying' && c.uAccept < hazardRate(s, type, c.t) / stream.bound_perDay) createHazard(s, type, c.t, c.uOutcome);
+      // A real storm happened, so it is not thinned.
+      if (s.status === 'flying' && (c.real || c.uAccept < hazardRate(s, type, c.t) / stream.bound_perDay)) createHazard(s, type, c.t, c.uOutcome, c.real);
       c = stream.list[s.cursors[type]!];
     }
   }

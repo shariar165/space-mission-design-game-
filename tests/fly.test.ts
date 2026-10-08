@@ -10,6 +10,8 @@ import { comingUp, eclipseCard, flyCard, flyTiles, FLY_RULES, missionProgress, o
 import { pathAhead } from '../src/engine/flightMap';
 import type { OpsState } from '../src/engine/ops/types';
 import { starterDesign } from '../src/ui/starters';
+import { readFileSync } from 'node:fs';
+import { readSnapshot, realStorms, stormOnset, stormSourced } from '../src/engine/spaceWeather';
 
 const maven = presetDesign('maven');
 const DAY_S = 86_400;
@@ -401,5 +403,51 @@ describe('moments (what the flight screen celebrates)', () => {
   it('a launch failure is its own moment', () => {
     const s = ops.runOperations(maven, { rng: () => 0 }).state;
     expect(momentsSince(s, 0).map((x) => x.kind)).toEqual(['launch-failed']);
+  });
+});
+
+describe('live Daily: real DONKI storms replace the seeded solar-storm stream (spec UI rule 37)', () => {
+  const design = starterDesign('mars', '2026-10-08');
+  const storms = realStorms(readSnapshot(readFileSync(new URL('./fixtures/donki/documented-format-sample.json', import.meta.url), 'utf8'))!);
+  const env = ops.startOperations(design).env;
+
+  it('one solar-storm candidate per real storm, at its replayed time, and no seeded ones', () => {
+    const s = ops.startOperations(design, { seed: 7, storms });
+    const list = s.draws.candidates['solar-storm']!.list;
+    expect(list.map((c) => c.real?.id)).toEqual(storms.map((x) => x.id));
+    list.forEach((c, i) => expect(c.t).toBeCloseTo(stormOnset(env, storms[i]!) - 1, 9)); // warned 1 day before onset
+  });
+
+  it('every other hazard stream draws exactly what the seeded run draws', () => {
+    const live = ops.startOperations(design, { seed: 7, storms }).draws;
+    const seeded = ops.startOperations(design, { seed: 7 }).draws;
+    for (const type of Object.keys(seeded.candidates).filter((t) => t !== 'solar-storm')) expect(live.candidates[type]).toEqual(seeded.candidates[type]);
+    expect(live.launch).toBe(seeded.launch);
+    expect(live.insertion).toEqual(seeded.insertion);
+  });
+
+  it('with no bad luck, each real storm becomes exactly one solar-storm hazard at its onset, named by DONKI', () => {
+    // rng 0.999999 rejects every seeded candidate (u > λ/λ̄), so only the real storms strike.
+    const s = ops.finishOperations(ops.startOperations(design, { rng: () => 0.999999, storms }), { policy: 'safe' });
+    const hit = s.hazards.filter((h) => h.type === 'solar-storm');
+    expect(hit.map((h) => h.real?.id)).toEqual(storms.map((x) => x.id));
+    hit.forEach((h, i) => expect(h.onset).toBeCloseTo(stormOnset(env, storms[i]!), 9));
+  });
+
+  it('a replay from the seed, storms and action log rebuilds the same mission', () => {
+    const done = ops.runOperations(design, { seed: 11, storms, policy: 'safe' }).state;
+    const again = ops.replayOperations(design, { seed: 11, storms }, done.actions);
+    expect(again.hazards.map((h) => [h.id, h.onset, h.real?.id])).toEqual(done.hazards.map((h) => [h.id, h.onset, h.real?.id]));
+    expect(again.status).toBe(done.status);
+  });
+
+  it('the danger card carries the DONKI record for ⓘ', () => {
+    let s = ops.startOperations(design, { rng: () => 0.999999, storms });
+    while (s.status === 'flying' && !consoleView(s).alert) s = ops.advanceOperations(s);
+    const alert = consoleView(s).alert!;
+    expect(alert.type).toBe('solar-storm');
+    expect(alert.real?.id).toBe(storms[0]!.id);
+    expect(alert.realSource).toEqual(stormSourced(storms[0]!));
+    expect(flyCard(s)!.realSource?.url).toBe(storms[0]!.link);
   });
 });
