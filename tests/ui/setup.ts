@@ -12,11 +12,20 @@ beforeEach(() => {
   // jsdom has no layout: scrolling is a no-op, and every test starts from empty storage.
   window.scrollTo = vi.fn() as unknown as typeof window.scrollTo;
   localStorage.clear();
+  // No network in component tests: the DONKI snapshot cannot be read, so the Daily is offline (tests/ui/donki.test.ts
+  // stubs its own responses).
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => {
+      throw new TypeError('no network in tests');
+    }),
+  );
 });
 
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
+  vi.unstubAllGlobals();
 });
 
 /** Unlock the map up to Mars and open the Mars level from Home (Pack with every part). */

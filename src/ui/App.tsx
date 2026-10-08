@@ -28,7 +28,8 @@ import { MissionReport } from './screens/MissionReport';
 import { Notebook } from './screens/Notebook';
 import { Pack } from './screens/Pack';
 import { RescueCaseView, RescueSelect } from './screens/Rescue';
-import { BRIEFING, DAILY_BRIEFING, FREE_BRIEFING, LESSON_WORDS } from './sdWords';
+import { BRIEFING, DAILY_BRIEFING, FREE_BRIEFING, LESSON_WORDS, LIVE_WEATHER } from './sdWords';
+import { loadSpaceWeather, type SpaceWeather } from './donki';
 import { defaultMissionName, starterDesign, today } from './starters';
 
 const newSeed = () => Math.floor(Math.random() * 2 ** 31);
@@ -85,6 +86,12 @@ export function App() {
   const [daily, setDaily] = useState<DailySave>(loadDaily);
   /** The flight in progress is today's Daily mission. */
   const [dailyRun, setDailyRun] = useState(false);
+  /** Today's space weather (the DONKI snapshot, or offline); undefined while the file is still loading. */
+  const [weather, setWeather] = useState<SpaceWeather>();
+  const weatherReq = useRef<Promise<SpaceWeather> | undefined>(undefined);
+  /** The weather the Daily in progress was launched with. */
+  const [dailyWeather, setDailyWeather] = useState<SpaceWeather>();
+  const opening = useRef(false);
   /** Help already seen: level briefings and the flight coach. */
   const [seen, setSeen] = useState<string[]>(loadSeen);
   const [robotName, setRobotName] = useState<string>(loadRobotName);
@@ -128,6 +135,17 @@ export function App() {
       /* storage unavailable: mode is per-session only */
     }
   }, [mode]);
+
+  // Read today's space weather once, early, so the Daily key can say whether it is live.
+  useEffect(() => {
+    const req = loadSpaceWeather(todayIso);
+    weatherReq.current = req;
+    let alive = true;
+    void req.then((w) => alive && setWeather(w));
+    return () => {
+      alive = false;
+    };
+  }, [todayIso]);
 
   useEffect(() => saveProgress(progress), [progress]);
   useEffect(() => saveFlights(flights), [flights]);
@@ -243,13 +261,28 @@ export function App() {
   };
   const launch = () => ev.blockers.length === 0 && launchDesign(active);
 
-  /** Today's Daily: the same craft and seed for everyone; played once, then its card. */
-  const openDaily = () => {
-    if (daily.results[todayIso]) return go('daily');
+  /**
+   * Today's Daily: the same craft and seed for everyone; played once, then its card. With live weather the real
+   * DONKI storms replace the seeded ones and join the seed (spec UI rule 37).
+   */
+  const launchDaily = (w: SpaceWeather) => {
     setMissionName('Daily mission');
     setDailyRun(true);
-    setSeed(dailySeed(todayIso));
+    setDailyWeather(w);
+    setSeed(dailySeed(todayIso, w.status === 'live' ? w.storms : undefined));
     launchDesign(dailyDesign(starterDesign('mars', todayIso)));
+  };
+  const openDaily = () => {
+    if (daily.results[todayIso]) return go('daily');
+    if (weather) return launchDaily(weather);
+    // Still loading: wait for it (loadSpaceWeather gives up after its timeout and says offline).
+    if (opening.current) return;
+    opening.current = true;
+    void (weatherReq.current ?? loadSpaceWeather(todayIso)).then((w) => {
+      opening.current = false;
+      setWeather(w);
+      launchDaily(w);
+    });
   };
 
   const finish = (s: OpsState) => {
@@ -267,7 +300,7 @@ export function App() {
     setFlights(flightOnly);
     setFlown(s);
     if (dailyRun) {
-      setDaily((d) => ({ played: [...new Set([...d.played, todayIso])], results: { ...d.results, [todayIso]: dailyGrid(s) } }));
+      setDaily((d) => ({ played: [...new Set([...d.played, todayIso])], results: { ...d.results, [todayIso]: dailyGrid(s, dailyWeather?.status ?? 'offline') } }));
       go('daily');
     } else go('report');
   };
@@ -287,7 +320,7 @@ export function App() {
   /** The mission briefing: what to do on this level (or a free build, or today's Daily). */
   const briefFor = (forDaily: boolean) =>
     forDaily
-      ? { title: 'Daily mission', briefing: DAILY_BRIEFING }
+      ? { title: 'Daily mission', briefing: { ...DAILY_BRIEFING, tip: `${DAILY_BRIEFING.tip} ${dailyWeather?.status === 'live' ? LIVE_WEATHER.briefLive : LIVE_WEATHER.briefOffline}` } }
       : level
         ? { title: level.title, briefing: BRIEFING[level.id] ?? FREE_BRIEFING, concept: level.concept }
         : { title: 'Free build', briefing: FREE_BRIEFING };
@@ -315,7 +348,7 @@ export function App() {
           progress={progress}
           mode={mode}
           onMode={changeMode}
-          daily={{ number: dailyNumber(todayIso), played: daily.results[todayIso] !== undefined }}
+          daily={{ number: dailyNumber(todayIso), played: daily.results[todayIso] !== undefined, ...(weather ? { weather: weather.status } : {}) }}
           rescue={rescueProgress(progress)}
           notebook={notebookProgress(facts)}
           onPlay={playLevel}
@@ -389,6 +422,7 @@ export function App() {
         <FlyAndSurvive
           design={flyDesign}
           seed={seed}
+          {...(dailyRun && dailyWeather?.status === 'live' ? { storms: dailyWeather.storms } : {})}
           mode={mode}
           onMode={changeMode}
           missionName={missionName}

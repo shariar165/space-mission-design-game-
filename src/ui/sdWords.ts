@@ -416,6 +416,21 @@ export const DAILY_BRIEFING: Briefing = {
   tip: 'You only get one try a day, so read each danger card before you choose.',
 };
 
+/** The Daily's space weather (spec UI rule 37): real DONKI storms, or the seeded stand-in when the file can't be read. */
+export const LIVE_WEATHER = {
+  live: 'LIVE SUN · NASA DONKI',
+  offline: 'OFFLINE — SIMULATED WEATHER',
+  homeLive: 'Same mission for everyone today, with this week’s real solar storms.',
+  homeOffline: 'Same mission for everyone today. Offline — simulated weather.',
+  briefLive: 'The solar storms on this flight really happened on the Sun this week. NASA’s DONKI database recorded them; tap ⓘ on a storm card to see the record.',
+  briefOffline: 'Offline — simulated weather. The real space-weather file could not be read, so today’s storms are made up.',
+  realKicker: 'DANGER CARD · REAL SUN',
+  realEvent: 'REAL EVENT · NASA DONKI',
+  realOn: 'REAL',
+  shareLive: '☀️ real Sun · NASA DONKI',
+  shareOffline: '☁️ offline · simulated weather',
+};
+
 /** The four steps of every mission. */
 export const MISSION_STEPS_WORDS: { word: string; line: string }[] = [
   { word: 'PACK', line: 'Choose the parts that fit in the rocket nose.' },

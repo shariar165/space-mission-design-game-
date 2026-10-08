@@ -21,6 +21,7 @@ import {
   type PowerPlan,
 } from '../engine/ops/index';
 import type { Design } from '../engine/types';
+import type { RealStorm } from '../engine/spaceWeather';
 
 /** One clock step every quarter second; each step schedules the next. */
 export const OPS_TICK_MS = 250;
@@ -41,17 +42,17 @@ interface Saved {
   actions: OpsAction[];
 }
 
-function load(design: Design, seed: number, key: string): OpsState {
+function load(design: Design, seed: number, key: string, storms?: RealStorm[]): OpsState {
   try {
     const raw = localStorage.getItem(STORE);
     const saved = raw ? (JSON.parse(raw) as Saved) : undefined;
     if (saved && saved.key === key && saved.seed === seed && Array.isArray(saved.actions) && Number.isFinite(saved.t) && saved.t > 0) {
-      return replayOperations(design, { seed }, saved.actions, saved.t);
+      return replayOperations(design, { seed, ...(storms ? { storms } : {}) }, saved.actions, saved.t);
     }
   } catch {
     /* no saved session, or storage unavailable: start fresh */
   }
-  return startOperations(design, { seed });
+  return startOperations(design, { seed, ...(storms ? { storms } : {}) });
 }
 
 function save(s: Saved | undefined) {
@@ -117,8 +118,9 @@ export interface OpsSession {
   restart: () => void;
 }
 
-export function useOpsSession(design: Design, seed: number): OpsSession {
-  const key = useMemo(() => JSON.stringify(design), [design]);
+/** `storms`: a live Daily's real DONKI storms (spaceWeather.ts); they are part of the saved session's key. */
+export function useOpsSession(design: Design, seed: number, storms?: RealStorm[]): OpsSession {
+  const key = useMemo(() => JSON.stringify(design) + (storms ? `|donki|${storms.map((x) => x.id).join(',')}` : ''), [design, storms]);
   const [state, setState] = useState<OpsState>();
   const [error, setError] = useState<string>();
   const [speed, setSpeedRaw] = useState<OpsSpeed>(0);
@@ -142,12 +144,14 @@ export function useOpsSession(design: Design, seed: number): OpsSession {
     setDeferred([]);
     const id = setTimeout(() => {
       try {
-        setState(load(design, seed, key));
+        setState(load(design, seed, key, storms));
       } catch (e) {
         setError(e instanceof Error ? e.message : String(e));
       }
     }, 0);
     return () => clearTimeout(id);
+    // storms are folded into key.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [design, seed, key]);
 
   const view = useMemo(() => (state ? consoleView(state) : undefined), [state]);
@@ -299,7 +303,7 @@ export function useOpsSession(design: Design, seed: number): OpsSession {
       setDeferred([]);
       setNotice(undefined);
       setHold(false);
-      setState(startOperations(design, { seed }));
+      setState(startOperations(design, { seed, ...(storms ? { storms } : {}) }));
     },
   };
 }

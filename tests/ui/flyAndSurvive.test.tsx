@@ -8,6 +8,10 @@ import { advanceOperations, comingUp, consoleView, flyCard, flyTiles, startOpera
 import type { Mode } from '../../src/ui/components/sd/ModeLever';
 import * as f from '../../src/ui/format';
 import { FlyAndSurvive } from '../../src/ui/screens/FlyAndSurvive';
+import { readSnapshot, realStorms, stormSourced } from '../../src/engine/spaceWeather';
+import { LIVE_WEATHER } from '../../src/ui/sdWords';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import './setup';
 
 const maven = presetDesign('maven');
@@ -127,5 +131,23 @@ describe('Fly & Survive: Engineer mode', () => {
     expect(eqs).toContain(v.gauges.power.equation);
     expect(eqs).toContain(v.gauges.fuel.equation);
     expect(screen.getAllByRole('button', { name: /^Source of / }).length).toBeGreaterThan(8);
+  });
+});
+
+describe('Fly & Survive: a live Daily’s real storm (spec UI rule 37)', () => {
+  it('the danger card names the real DONKI event, and its ⓘ links the record', () => {
+    // vitest runs from the project root. The storm is moved to the start of the week, so it strikes first.
+    const sample = readSnapshot(readFileSync(join(process.cwd(), 'tests/fixtures/donki/documented-format-sample.json'), 'utf8'))!;
+    const storm = { ...realStorms(sample)[0]!, windowFraction: 0 };
+    vi.useFakeTimers();
+    render(<FlyAndSurvive design={maven} seed={2013} storms={[storm]} mode="cadet" onMode={vi.fn()} missionName="Daily mission" onHome={vi.fn()} onDone={vi.fn()} />);
+    pass(100);
+    const card = toDanger();
+    expect(card.getAttribute('aria-label')).toMatch(/REAL SUN/);
+    expect(within(card).getByText(LIVE_WEATHER.realEvent)).toBeTruthy();
+    const src = stormSourced(storm);
+    expect(within(card).getByText(src.value)).toBeTruthy();
+    fireEvent.click(within(card).getByRole('button', { name: `Source of ${LIVE_WEATHER.realEvent.toLowerCase()}` }));
+    expect(screen.getByRole('link', { name: /Open source/ }).getAttribute('href')).toBe(storm.link);
   });
 });

@@ -1,4 +1,6 @@
 // Shared steps for the screenshot specs.
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import type { Page } from '@playwright/test';
 
 /** Play a flight to its end: answer every card with its first choice, retire at the extension, open the report. */
@@ -34,3 +36,15 @@ export async function flyToEnd(page: Page, mobile: boolean) {
   throw new Error('mission did not end');
 }
 
+
+/**
+ * Serve data/donki-latest.json from the documented-format sample (tests/fixtures/donki), its dates moved so the
+ * week ends yesterday: the Daily flies live weather with the sample's storms on any day the shots are taken.
+ */
+export async function routeDonki(page: Page) {
+  const text = readFileSync(join(process.cwd(), 'tests/fixtures/donki/documented-format-sample.json'), 'utf8');
+  const today = Date.parse(`${new Date().toISOString().slice(0, 10)}T00:00:00Z`);
+  const shift = today - Date.parse('2030-01-08T00:00:00Z');
+  const moved = text.replace(/2030-01-(\d\d)/g, (d) => new Date(Date.parse(`${d}T00:00:00Z`) + shift).toISOString().slice(0, 10));
+  await page.route('**/data/donki-latest.json', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: moved }));
+}

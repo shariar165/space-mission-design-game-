@@ -49,7 +49,8 @@ const dayMs = (iso: string) => Date.parse(`${iso.slice(0, 10)}T00:00:00Z`);
 
 /** Fresh while the window ended no more than maxAge_days before today (and not after it). */
 export function isFresh(s: DonkiSnapshot, todayIso: string): boolean {
-  const age = Math.round((dayMs(todayIso) - dayMs(s.window.endDate)) / DAY_MS);
+  const { window: w } = s; // the snapshot's DONKI window (not the DOM)
+  const age = Math.round((dayMs(todayIso) - dayMs(w.endDate)) / DAY_MS);
   return age >= 0 && age <= SPACE_WEATHER.donki.maxAge_days.value;
 }
 
@@ -183,8 +184,9 @@ export function realStorms(s: DonkiSnapshot, opts: { maxStorms?: number } = {}):
     }
     group.set(e.id, members);
   }
-  const start = dayMs(s.window.startDate);
-  const length = dayMs(s.window.endDate) + DAY_MS - start;
+  const { window: w } = s;
+  const start = dayMs(w.startDate);
+  const length = dayMs(w.endDate) + DAY_MS - start;
   const storms = [...group.values()].map((m) => {
     const flare = m.filter((x) => x.kind === 'flare').sort((a, b) => b.tier - a.tier || b.strength - a.strength)[0];
     const cme = m.filter((x) => x.kind === 'cme').sort((a, b) => b.tier - a.tier || b.strength - a.strength)[0];

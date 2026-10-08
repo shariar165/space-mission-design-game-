@@ -71,3 +71,11 @@ export const loadPostcards = (): string[] => {
   return Array.isArray(v.earned) ? v.earned.filter((x): x is string => typeof x === 'string') : [];
 };
 export const savePostcards = (earned: string[]) => write(POSTCARDS_KEY, { earned });
+
+/** Today's DONKI snapshot (the file's text), so the Daily stays the same all day (ui/donki.ts). */
+const DONKI_KEY = 'sd.donki';
+export const loadDonkiCache = (todayIso: string): string | undefined => {
+  const v = read<{ date?: unknown; text?: unknown }>(DONKI_KEY, {});
+  return v.date === todayIso && typeof v.text === 'string' ? v.text : undefined;
+};
+export const saveDonkiCache = (date: string, text: string) => write(DONKI_KEY, { date, text });

@@ -7,7 +7,7 @@ import { BackButton } from '../components/sd/BackButton';
 import { ModeLever, type Mode } from '../components/sd/ModeLever';
 import { SDIcon } from '../components/sd/SDIcon';
 import { useIsPhone } from '../sdGeometry';
-import { DANGER_LOOK, dangerLook, GAME_NAME } from '../sdWords';
+import { DANGER_LOOK, dangerLook, GAME_NAME, LIVE_WEATHER } from '../sdWords';
 import { HAZARDS } from '../../engine/data';
 import * as f from '../format';
 
@@ -27,10 +27,14 @@ const RESULT_WORD: Record<DailyResult, string> = { held: 'held', cost: 'cost you
 
 const starLine = (stars: number) => '★'.repeat(stars) + '☆'.repeat(Math.max(0, 3 - stars));
 
+/** The card's weather line: live DONKI storms or the seeded stand-in (absent on results saved before live weather). */
+const weatherWord = (g: DailyGrid) => (g.weather === 'live' ? LIVE_WEATHER.live : g.weather === 'offline' ? LIVE_WEATHER.offline : undefined);
+
 export function shareText(n: number, g: DailyGrid): string {
-  const rows = g.rows.map((r) => `${ICON_EMOJI[r.type] ?? '⚠️'} ${EMOJI[r.result]}`);
+  const rows = g.rows.map((r) => `${ICON_EMOJI[r.type] ?? '⚠️'} ${EMOJI[r.result]}${r.realDate ? ` · ${LIVE_WEATHER.realOn.toLowerCase()} ${f.isoDate(r.realDate)}` : ''}`);
   const end = g.alive ? `🤖 alive · day ${f.num(g.endDay)}` : `💥 lost · day ${f.num(g.endDay)}`;
-  return [`${GAME_NAME} · DAILY #${f.num(n)}  ${starLine(g.stars)}`, ...(rows.length ? rows : ['🟦 a quiet flight']), end].join('\n');
+  const weather = g.weather === 'live' ? [LIVE_WEATHER.shareLive] : g.weather === 'offline' ? [LIVE_WEATHER.shareOffline] : [];
+  return [`${GAME_NAME} · DAILY #${f.num(n)}  ${starLine(g.stars)}`, ...weather, ...(rows.length ? rows : ['🟦 a quiet flight']), end].join('\n');
 }
 
 /** Draws the share card on a canvas (layout only) and returns a PNG data URL. */
@@ -55,7 +59,7 @@ function cardImage(n: number, date: string, title: string, g: DailyGrid, streak:
   x.textAlign = 'left';
   x.fillStyle = '#7a715c';
   x.font = '700 20px "Share Tech Mono", monospace';
-  x.fillText(`${date} · MARS`, 36, 116);
+  x.fillText(`${date} · MARS${weatherWord(g) ? ` · ${weatherWord(g)}` : ''}`, 36, 116);
   x.fillStyle = '#1b1a16';
   x.font = '900 44px Orbitron, sans-serif';
   x.fillText(title, 36, 180);
@@ -147,6 +151,7 @@ export function Daily({ number, date, grid, played, mode, onMode, onHome, onBack
         <div className="dl-title-row">
           <div className="dl-title-col">
             <span className="dl-date">{dateLabel} · MARS</span>
+            {weatherWord(grid) && <span className={`dl-weather ${grid.weather}`}>{weatherWord(grid)}</span>}
             <span className="dl-title">{title}</span>
           </div>
           <div className="dl-stars" aria-label={`${f.num(grid.stars)} of 3 stars`}>
@@ -158,11 +163,22 @@ export function Daily({ number, date, grid, played, mode, onMode, onHome, onBack
         <div className="dl-grid" role="list" aria-label="How each danger went">
           {grid.rows.length === 0 && <span className="dl-quiet">NO DANGER CARDS TODAY. A QUIET FLIGHT.</span>}
           {grid.rows.map((r, i) => (
-            <div key={i} className="dl-row" role="listitem" aria-label={`${dangerLook(r.type, HAZARDS[r.type]?.title ?? r.type).title}: ${RESULT_WORD[r.result]}`}>
+            <div
+              key={i}
+              className="dl-row"
+              role="listitem"
+              aria-label={`${dangerLook(r.type, HAZARDS[r.type]?.title ?? r.type).title}: ${RESULT_WORD[r.result]}${r.realDate ? `, real event of ${f.isoDate(r.realDate)}` : ''}`}
+            >
               <span className="dl-icon">
                 <SDIcon icon={dangerLook(r.type, HAZARDS[r.type]?.title ?? r.type).icon} size={phone ? 17 : 20} color="var(--sd-paper)" />
               </span>
               <span className="dl-sq" style={{ background: COLOR[r.result] }} />
+              {r.realDate && (
+                <span className="dl-real" title={f.isoDate(r.realDate)}>
+                  <b>{LIVE_WEATHER.realOn}</b>
+                  {!phone && <span> {f.isoDate(r.realDate)}</span>}
+                </span>
+              )}
               <span className="dl-day">
                 {phone ? 'D' : 'DAY '}
                 {f.num(r.day)}

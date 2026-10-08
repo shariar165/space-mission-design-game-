@@ -78,6 +78,10 @@ There is no lint step.
   - **Postcards:** `src/data/postcards.json` (NASA public-domain pictures, copies in `public/postcards/`, served under `import.meta.env.BASE_URL`), engine `postcards.ts` (`postcardsEarned`, `postcardAlbum`, `newPostcards`), `screens/Postcards.tsx`, `components/sd/PostcardView.tsx`, the flight toast and the report strip; saved as `sd.postcards`.
   - **Ranks and badges:** `src/data/ranks.json`, engine `ranks.ts` (`starTotals`, `rankFor`, `badges`, `newBadges`; badge facts in `notebook.ts` `flightFacts`), `components/sd/CrewFile.tsx` (Home plate and panel); the report shows PROMOTED! / NEW BADGE against the crew file at launch.
   - The screenshot specs pre-set `launch:*` in `sd.seen`; `tests/visual/storm.spec.ts` shoots the storm, `help.spec.ts` the countdown.
+- **Live NASA data** (spec UI rules 36–37):
+  - **Mars right now** (`marsNow`, `components/sd/MarsNowPlate.tsx`) is today's ephemeris: no network.
+  - **The Daily's real Sun.** The game reads only `public/data/donki-latest.json` (`src/ui/donki.ts` `loadSpaceWeather`, cached per day as `sd.donki`); it never calls CCMC. The snapshot comes from `.github/workflows/donki.yml` and `scripts/fetch-donki.mjs`. `spaceWeather.ts` turns it into storms (`realStorms`, `stormCandidates`, `stormSourced`); `StartOptions.storms` replaces only the solar-storm stream; `dailySeed(date, storms)` and `dailyGrid(s, weather)` record it. Words in `sdWords.ts` `LIVE_WEATHER` / `MARS_NOW`.
+  - **Tests.** `tests/ui/setup.ts` stubs `fetch` to fail, so component tests are offline. `tests/fixtures/donki/documented-format-sample.json` is hand-written (not a recording); the recorded 2024-05 week arrives from the Action's manual run. The screenshot specs route the snapshot (`helpers.ts` `routeDonki`).
 - Words live in `src/ui/sdWords.ts` (Signal Delay), with `opsWords.ts` for the drawers. Pixel layout lives in `src/ui/sdGeometry.ts`. Levels and saved stars are in `src/ui/levels.ts`. New display constants go in `FLY_RULES` / `CONSOLE_RULES` / `pack.json`, registered in the data audit.
 - **Component tests** (`tests/ui/*.test.tsx`) start with `// @vitest-environment jsdom` and import `./setup` (cleanup, empty storage, `openMarsLevel`). jsdom has no Web Worker, so `setup.ts` runs the Risk Monte Carlo inline with `TEST_RISK_RUNS` (20) runs. With fake timers, advance time in small slices: each animation step schedules the next.
 - English only for now; the language toggle is hidden.
@@ -86,7 +90,7 @@ There is no lint step.
 
 **Data flow.** `src/data/*.json` (Sourced values) → `src/engine/data.ts` (typed casts plus `lookup()`) → physics modules → `src/engine/index.ts` (and `compare.ts`), which the UI calls.
 
-**Signal Delay engine modules:** `pack.ts` (Pack: nose, part effects, danger deck, launch calendar), `ops/fly.ts` (Fly & Survive view model), `ops/voice.ts` (the robot's messages), `ops/report.ts` (Mission Report), `notebook.ts` (Engineer's Notebook), `daily.ts` (Daily mission), `postcards.ts` (Postcards) and `ranks.ts` (ranks and badges).
+**Signal Delay engine modules:** `pack.ts` (Pack: nose, part effects, danger deck, launch calendar), `ops/fly.ts` (Fly & Survive view model), `ops/voice.ts` (the robot's messages), `ops/report.ts` (Mission Report), `notebook.ts` (Engineer's Notebook), `daily.ts` (Daily mission), `postcards.ts` (Postcards), `ranks.ts` (ranks and badges), `marsNow.ts` (Mars right now on Home) and `spaceWeather.ts` (DONKI snapshot → the live Daily's real storms).
 
 **`index.ts`** has four main entry points (`previewCrisis` shows the crisis card a seed will draw, before `simulateMission` flies it):
 - `evaluateDesign(design)` runs the whole pipeline:

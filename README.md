@@ -165,6 +165,26 @@ All values below are stored in `src/data/*.json` or `src/engine/*.ts` with their
 | Solar cycle 24 (minimum Dec 2008, maximum Apr 2014) and cycle 25 (minimum Dec 2019, maximum Oct 2024) | Storms are likelier near solar maximum | [NOAA SWPC](https://www.swpc.noaa.gov/news/sun-solar-maximum-solar-cycle-24-seeing-second-higher-peak-sunspot-number-updated), [NASA/NOAA 2024](https://science.nasa.gov/science-research/heliophysics/nasa-noaa-sun-reaches-maximum-phase-in-11-year-solar-cycle/) |
 | Global dust storms about once every three Mars years | Mars dust-storm hazard rate | [NASA: The Fact and Fiction of Martian Dust Storms](https://www.nasa.gov/solar-system/the-fact-and-fiction-of-martian-dust-storms/) |
 
+### Live NASA data
+
+Two features follow the real sky day by day. Both stay deterministic and fully tested.
+
+| Feature | Data | How it works | Source |
+| --- | --- | --- | --- |
+| **Mars right now** (Home) | Today's Earth–Mars distance, one-way light time (d / c), and the next solar conjunction (Sun within 2° of Mars in Earth's sky) with its closest day | Computed in the browser from the JPL approximate elements above, for today's date. No API call. The closest day of the Jan 2026 conjunction (computed: Jan 9) falls inside NASA's published commanding pause, Dec 29, 2025 – Jan 16, 2026 | [JPL Approximate Positions of the Planets](https://ssd.jpl.nasa.gov/planets/approx_pos.html), [NASA MAVEN blog, Dec 2025](https://science.nasa.gov/blogs/maven/2025/12/23/nasa-works-maven-spacecraft-issue-ahead-of-solar-conjunction/) |
+| **The Daily's real Sun** | NASA DONKI solar flares (FLR) and coronal mass ejections (CME) from the 7 whole UTC days before today | See the steps below the table | [CCMC DONKI-API](https://ccmc.gsfc.nasa.gov/news/major-updates/) (base `https://ccmc.gsfc.nasa.gov/DONKI-API/get/`, no API key), [NOAA flare classes](https://www.swpc.noaa.gov/phenomena/solar-flares-radio-blackouts) |
+
+How the Daily's real Sun works:
+1. **The snapshot.** A GitHub Action ([`donki.yml`](.github/workflows/donki.yml)) runs daily at 00:20 UTC. It saves the week as [`public/data/donki-latest.json`](public/data/donki-latest.json), with the fetch time and source URLs, and redeploys. The game reads only that file and never calls NASA from your browser.
+2. **Which events become storm cards.** M- and X-class flares (≥ 10⁻⁵ W/m²) and CMEs at ≥ 1,000 km/s. A flare and a CME that DONKI links count as one storm. The 4 strongest are kept.
+3. **When they strike.** The real week is replayed across your flight: an event a fraction f into the week strikes the same fraction of the way from the start of cruise to the end of the prime mission.
+4. **What you see.** Each storm card names the real event, and its ⓘ opens the DONKI record.
+5. **The seed.** It is the date plus the DONKI event IDs, so everyone with the same snapshot flies the same Daily.
+6. **When the file can't be used.** If it is missing, unreadable or more than 2 days old, the Daily flies seeded storms and says **"offline — simulated weather"**.
+7. **The game rules.** The thresholds, the cap of 4, the 7-day window and the 2-day staleness limit are game rules, listed in [`TODO_DATA.md`](TODO_DATA.md).
+
+DONKI moved from `api.nasa.gov` to CCMC on Sept 30, 2026; the old URLs now redirect to CCMC's announcement.
+
 ### Physical constants
 
 Standard gravity, speed of light (SI definitions), the astronomical unit (IAU 2012), and the unit conversion behind the Mars Climate Orbiter case ([NIST SP 811](https://www.nist.gov/pml/special-publication-811)).
@@ -280,6 +300,7 @@ The models are simplified on purpose, using the standard first-order methods of 
 - **Communications.** Close-range data rates are optimistic, because coding and decoder caps aren't modelled. The 34 m station behind MRO's anchor figure is inferred.
 - **Operations.** Science orbits are fixed in inertial space (no J2 precession), shadows are cylindrical, hazards are independent Poisson processes, and the Moon has no conjunctions.
 - **Placeholder launch curves** for the Atlas V, as noted above.
+- **The live Daily** uses that day's DONKI snapshot. DONKI sometimes adds or revises records later, and a snapshot deployed mid-day can differ from the morning's. Each browser keeps the first snapshot it reads for the whole day. Players without the file fly the offline Daily, which has different storms. The storm cards are real events replayed on a game timeline; the model does not predict how a CME propagates.
 - **Scoring** uses `Σ wᵢsᵢ` on a 0–100 scale (the spec's `100 Σ wᵢsᵢ` was read this way).
 
 The full list is in the *Assumptions* section of [`docs/SCIENCE_SPEC.md`](docs/SCIENCE_SPEC.md) and in [`game_engine.md`](game_engine.md).
