@@ -17,6 +17,7 @@ import ranks from '../src/data/ranks.json';
 import orbitalElements from '../src/data/orbitalElements.json';
 import parts from '../src/data/parts.json';
 import rescueCases from '../src/data/rescueCases.json';
+import spaceWeather from '../src/data/spaceWeather.json';
 import { CADET_TIERS, COIN_FRACTION, DISH_SIZES, PHOTO_FRAME_Mbit } from '../src/engine/cadet';
 import { DSN_X_BAND_GAIN_DBI, REFERENCE_LINK } from '../src/engine/comms';
 import { CONSTANTS } from '../src/engine/constants';
@@ -83,6 +84,7 @@ const DATA_FILES: Record<string, unknown> = {
   'parts.json': parts,
   'rescueCases.json': rescueCases,
   'rideshares.json': rideshares,
+  'spaceWeather.json': spaceWeather,
 };
 
 const ENGINE_VALUES: Record<string, Record<string, Sourced<unknown>>> = {

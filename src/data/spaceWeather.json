@@ -1,0 +1,16 @@
+{
+  "donki": {
+    "apiBase": { "value": "https://ccmc.gsfc.nasa.gov/DONKI-API/get/", "unit": "URL", "source": "CCMC Announcements: the DONKI Web API moved to https://ccmc.gsfc.nasa.gov/DONKI-API/get/... (2026-09-30), replacing the api.nasa.gov and kauai.ccmc URLs; parameters and response format unchanged, no API key", "url": "https://ccmc.gsfc.nasa.gov/news/major-updates/", "isGameEstimate": false },
+    "viewerBase": { "value": "https://webtools.ccmc.gsfc.nasa.gov/DONKI/view/", "unit": "URL", "source": "CCMC DONKI record pages (webtools.ccmc.gsfc.nasa.gov/DONKI/view/<type>/<id>/<version>); used only when a record carries no link of its own", "url": "https://ccmc.gsfc.nasa.gov/news/major-updates/", "isGameEstimate": false },
+    "windowDays": { "value": 7, "unit": "days", "source": "Game rule (Daily): the snapshot covers the seven whole UTC days before the day it is fetched", "isGameEstimate": true },
+    "maxAge_days": { "value": 2, "unit": "days", "source": "Game rule (Daily): a snapshot whose window ended more than this many days before today is stale, and the Daily falls back to simulated weather", "isGameEstimate": true },
+    "loadTimeout_ms": { "value": 6000, "unit": "ms", "source": "Game rule (Daily): how long the game waits for the snapshot file before flying with simulated weather", "isGameEstimate": true }
+  },
+  "storms": {
+    "flareMinFlux_Wm2": { "value": 1e-5, "unit": "W/m² (GOES 0.1–0.8 nm peak flux)", "source": "NOAA SWPC, Solar Flares (Radio Blackouts): an M-class flare peaks at 10⁻⁵ W/m² or more. Game rule: M and X flares become storms", "url": "https://www.swpc.noaa.gov/phenomena/solar-flares-radio-blackouts", "isGameEstimate": false },
+    "xFlux_Wm2": { "value": 1e-4, "unit": "W/m² (GOES 0.1–0.8 nm peak flux)", "source": "NOAA SWPC, Solar Flares (Radio Blackouts): an X-class flare peaks at 10⁻⁴ W/m² or more", "url": "https://www.swpc.noaa.gov/phenomena/solar-flares-radio-blackouts", "isGameEstimate": false },
+    "cmeMinSpeed_kms": { "value": 1000, "unit": "km/s", "source": "Game estimate: a CME this fast becomes a storm card", "isGameEstimate": true },
+    "strongCmeSpeed_kms": { "value": 1500, "unit": "km/s", "source": "Game estimate: a CME this fast ranks with X flares when the deck keeps the strongest", "isGameEstimate": true },
+    "maxStorms": { "value": 4, "unit": "storms per Daily", "source": "Game rule (Daily): at most this many real storms, the strongest first", "isGameEstimate": true }
+  }
+}
