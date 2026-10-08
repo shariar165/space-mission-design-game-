@@ -17,6 +17,8 @@ test('home', async ({ page }, info) => {
   await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(4500); // the pitch types out
   await page.screenshot({ path: `test-results/shots/home-${info.project.name}.png` });
+  // The phone stacks MARS RIGHT NOW under the menu keys, below the fold.
+  if (info.project.name === 'mobile') await page.screenshot({ path: 'test-results/shots/home-full-mobile.png', fullPage: true });
 });
 
 test('notebook', async ({ page }, info) => {
