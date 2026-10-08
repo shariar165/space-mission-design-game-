@@ -33,10 +33,11 @@ Playwright (`@playwright/test`, a devDependency) keeps its browsers inside the v
 | Data audit (rewrites `TODO_DATA.md`) | `npm run todo-data` |
 | Typecheck | `npm run typecheck` (`tsc --noEmit`, TypeScript 7, strict, `noUncheckedIndexedAccess`) |
 | Screenshots | `npm run shots` (Playwright: game and design copies at 1440 × 900 and 390 × 844; `-- fly`, `-- pack`, `-- report`, `-- design`). App shots go to `test-results/shots/`, design shots to `docs/design/signal-delay/shots/`. Specs live in `tests/visual/` and are not part of `npm test`; Playwright starts its own Vite on port 5199 (or reuses one already there) |
+| DONKI snapshot (normally the daily Action does this) | `node scripts/fetch-donki.mjs` writes `public/data/donki-latest.json`; `--fixtures 2024-05-08 2024-05-14` records raw responses into `tests/fixtures/donki/`. CCMC may be unreachable from your network; the script then exits 1 and writes nothing |
 
 There is no lint step.
 
-**Deploy:** every push to `main` runs `.github/workflows/pages.yml` (npm ci, npm test, a build with `VITE_BASE=/<repo>/`) and publishes `dist/` to GitHub Pages: https://shariar165.github.io/space-mission-design-game-/ . Locally `base` stays `/`; in Git Bash set `MSYS_NO_PATHCONV=1` when you try a base path, or the path gets mangled.
+**Deploy:** every push to `main` runs `.github/workflows/pages.yml` (npm ci, npm test, a build with `VITE_BASE=/<repo>/`) and publishes `dist/` to GitHub Pages: https://shariar165.github.io/space-mission-design-game-/ . `.github/workflows/donki.yml` runs daily at 00:20 UTC (and on manual dispatch): it fetches NASA DONKI flares and CMEs from the CCMC DONKI-API (`src/data/spaceWeather.json` `donki.apiBase`, no key), commits `public/data/donki-latest.json` as `github-actions[bot]`, and calls `pages.yml` to deploy, because a bot push does not trigger it. A manual run also records the 2024-05-08 → 14 fixtures. The game reads only that static file and never calls CCMC. Locally `base` stays `/`; in Git Bash set `MSYS_NO_PATHCONV=1` when you try a base path, or the path gets mangled.
 
 **Generated files:** `docs/VALIDATION_RESULTS.md` and `TODO_DATA.md` are written by the tests' `afterAll` hooks. Never edit them by hand; change the data or code and rerun.
 

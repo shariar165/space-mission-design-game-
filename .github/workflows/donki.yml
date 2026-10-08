@@ -1,0 +1,50 @@
+# Fetch NASA DONKI solar flares and CMEs (CCMC DONKI-API) once a day and commit the snapshot the game reads,
+# public/data/donki-latest.json. The game never calls CCMC itself. A manual run also records the 2024-05-08 → 14
+# responses as test fixtures. A push made with GITHUB_TOKEN does not trigger pages.yml, so this workflow deploys.
+name: DONKI space weather
+
+on:
+  schedule:
+    - cron: '20 0 * * *' # 00:20 UTC, just after the Daily turns over
+  workflow_dispatch:
+
+concurrency:
+  group: donki
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.16.0
+      - name: Latest snapshot (the 7 days before today)
+        run: node scripts/fetch-donki.mjs
+      - name: Record the test fixtures (manual runs only)
+        if: github.event_name == 'workflow_dispatch'
+        run: node scripts/fetch-donki.mjs --fixtures 2024-05-08 2024-05-14
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/data/donki-latest.json
+          if [ -d tests/fixtures/donki ]; then git add tests/fixtures/donki; fi
+          if git diff --cached --quiet; then
+            echo 'Nothing new.'
+          else
+            git commit -m "data: DONKI snapshot $(date -u +%F)"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi
+
+  deploy:
+    needs: fetch
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/pages.yml

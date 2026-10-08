@@ -1,4 +1,5 @@
-# Build Signal Delay and publish it on GitHub Pages on every push to main.
+# Build Signal Delay and publish it on GitHub Pages on every push to main, and after each DONKI snapshot (donki.yml
+# calls this workflow, because its bot commit does not trigger a push run).
 # CI uses the runner's Node (same version as the venv's nodeenv); locally everything still lives in .venv.
 name: Deploy to GitHub Pages
 
@@ -6,6 +7,7 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: read
@@ -20,7 +22,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      # The branch tip, not the triggering commit: a run called by donki.yml must include the snapshot it just pushed.
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22.16.0
