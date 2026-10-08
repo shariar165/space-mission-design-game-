@@ -5,6 +5,9 @@ import { compareWithRealMission, designDelta, METER_KEYS, REAL_MISSION_FOR } fro
 import { crisisOrders, evaluateDesign, MONTE_CARLO_SEED, monteCarloMission, previewCrisis, simulateMission, standingOrderPolicy } from '../src/engine/index';
 import { applicableCards, availableOptions, safestOption } from '../src/engine/crisis';
 import { earthDistance, heliocentricPosition, julianDate } from '../src/engine/ephemeris';
+import { AU_M, C_MS } from '../src/engine/constants';
+import { marsNow } from '../src/engine/marsNow';
+import { bodySepAngle } from '../src/engine/ops/predictable';
 import { countdown, craftPosition, flightFrames, flightMap, frameOnDay, ghostFor, signalDelay } from '../src/engine/flightMap';
 import { presetDesign } from '../src/engine/missions';
 import { MAX_SCORE, nextStar, nextStarHint, SCORE_GRADES, scoreGrade } from '../src/engine/scoring';
@@ -1375,5 +1378,50 @@ describe('Rideshare (Moon: LRO 2009, the LCROSS secondary slot)', () => {
   it('the ride goes to the Moon only: on a Mars design it is a blocker', () => {
     const mars = { ...cadetBase('mars'), rideshareId: 'lro-lcross-2009' };
     expect(evaluateDesign(mars).blockers.some((b) => b.includes('goes to the Moon'))).toBe(true);
+  });
+});
+
+describe('Mars right now (Home): today’s ephemeris, light time and next solar conjunction', () => {
+  const now = marsNow('2026-10-08');
+
+  it('distance is |r_mars − r_earth| from the JPL elements, and light time is d / c', () => {
+    const jd = julianDate('2026-10-08');
+    const m = heliocentricPosition('mars', jd);
+    const e = heliocentricPosition('earth', jd);
+    expect(now.distance_m).toBeCloseTo(Math.hypot(m[0] - e[0], m[1] - e[1], m[2] - e[2]), 0);
+    expect(now.distance_m).toBeCloseTo(earthDistance('mars', jd), 0);
+    // c = 299 792.458 km/s exactly, so the light time is d / c_ms.
+    expect(now.lightTime_s).toBeCloseTo(now.distance_m / C_MS, 9);
+    expect(now.distance_AU).toBeCloseTo(now.distance_m / AU_M, 12);
+  });
+
+  it('the distance lies between the closest and farthest Earth–Mars geometry', () => {
+    // Mars a = 1.5237 AU, e = 0.0934 → q = 1.3814 AU, Q = 1.6660 AU; Earth 0.9833–1.0167 AU.
+    // So 1.3814 − 1.0167 = 0.3647 AU ≤ d ≤ 1.6660 + 1.0167 = 2.6827 AU.
+    expect(now.distance_AU).toBeGreaterThan(0.3647);
+    expect(now.distance_AU).toBeLessThan(2.6827);
+    // Light time then lies between 0.3647 AU / c = 182 s and 2.6827 AU / c = 1338 s.
+    expect(now.lightTime_s).toBeGreaterThan(182);
+    expect(now.lightTime_s).toBeLessThan(1338);
+  });
+
+  it('the next conjunction is one synodic period after the last one (Jan 2026)', () => {
+    // NASA paused commanding for the Jan 2026 conjunction (Dec 29 – Jan 16). From 2026-01-09 to 2026-10-08 is
+    // 272 days, and the synodic period is 1 / |1/365.256 − 1/686.98| = 779.9 days, so the next closest approach
+    // is about 779.9 − 272 = 507.9 days away. Mars's eccentric orbit moves single gaps by up to ~±25 days.
+    expect(now.conjunction.now).toBe(false);
+    expect(now.conjunction.inDays).toBeGreaterThan(507.9 - 30);
+    expect(now.conjunction.inDays).toBeLessThan(507.9 + 30);
+    expect(now.conjunction.closestDate > '2026-10-08').toBe(true);
+    expect(now.conjunction.startDate <= now.conjunction.closestDate && now.conjunction.closestDate <= now.conjunction.endDate).toBe(true);
+    // The Sun–Earth–Mars angle is below the 2° commanding threshold all through the window.
+    expect(bodySepAngle('mars', julianDate(now.conjunction.closestDate))).toBeLessThan(2);
+  });
+
+  it('a date inside the window says the conjunction is now', () => {
+    const inside = marsNow('2026-01-09');
+    expect(inside.conjunction.now).toBe(true);
+    expect(inside.conjunction.inDays).toBe(0);
+    expect(inside.conjunction.startDate <= '2026-01-09' && '2026-01-09' <= inside.conjunction.endDate).toBe(true);
   });
 });

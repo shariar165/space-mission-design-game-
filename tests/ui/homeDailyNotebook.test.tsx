@@ -2,7 +2,8 @@
 // HOME, DAILY share card and NOTEBOOK (Signal Delay screens 04–06): counts, grid, streak and lessons are engine output.
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { dailyGrid, dailyNumber, dailyStreak } from '../../src/engine/daily';
+import { dailyDate, dailyGrid, dailyNumber, dailyStreak } from '../../src/engine/daily';
+import { marsNow } from '../../src/engine/marsNow';
 import { presetDesign } from '../../src/engine/missions';
 import { emptyFacts, lessonText, NOTEBOOK, notebook } from '../../src/engine/notebook';
 import { runOperations } from '../../src/engine/ops/index';
@@ -25,6 +26,19 @@ describe('Home', () => {
     expect(screen.getByText('NEW TODAY')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: `Play: mission ${f.num(2)}, Heavy Lifting` }));
     expect(screen.getByRole('group', { name: /Nose:/ })).toBeTruthy();
+  });
+
+  it('MARS RIGHT NOW shows today’s distance, light time and next conjunction from the engine', () => {
+    render(<App />);
+    const m = marsNow(dailyDate(Date.now()));
+    const plate = screen.getByRole('region', { name: 'Mars right now' });
+    expect(within(plate).getByText(f.millionKm(m.distance_m))).toBeTruthy();
+    expect(within(plate).getByText(f.lightTime(m.lightTime_s))).toBeTruthy();
+    if (m.conjunction.now) expect(within(plate).getByText(/SOLAR CONJUNCTION NOW/)).toBeTruthy();
+    else {
+      expect(within(plate).getByText(f.isoDate(m.conjunction.closestDate))).toBeTruthy();
+      expect(within(plate).getByText(f.days(m.conjunction.inDays))).toBeTruthy();
+    }
   });
 
   it('the Notebook key opens the Notebook; HOME comes back', () => {

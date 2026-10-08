@@ -8,6 +8,8 @@ import { CoachCard } from '../components/sd/CoachCard';
 import { ModeLever, type Mode } from '../components/sd/ModeLever';
 import { SoundToggle } from '../components/sd/SoundToggle';
 import { CrewPlate, type Crew } from '../components/sd/CrewFile';
+import { MarsNowPlate } from '../components/sd/MarsNowPlate';
+import type { MarsNow } from '../../engine/marsNow';
 import { SDIcon, type SDIconName } from '../components/sd/SDIcon';
 import { Teletype } from '../components/sd/Teletype';
 import { useReducedMotion } from '../opsGeometry';
@@ -41,6 +43,8 @@ interface Props {
   postcards: { got: number; total: number };
   /** Rank and badges (the crew file). */
   crew?: Crew;
+  /** Mars right now: today's distance, light time and next conjunction (engine marsNow). */
+  mars: MarsNow;
   onPlay: (l: Level) => void;
   onMissions: () => void;
   onDaily: () => void;
@@ -55,7 +59,7 @@ export function nextToPlay(progress: Progress): { level: Level; index: number } 
   return open.find((x) => !(progress[x.level.id] ?? 0)) ?? open[open.length - 1]!;
 }
 
-export function Home({ progress, mode, onMode, daily, rescue, notebook, postcards, crew, onPlay, onMissions, onDaily, onRescue, onNotebook, onPostcards }: Props) {
+export function Home({ progress, mode, onMode, daily, rescue, notebook, postcards, crew, mars, onPlay, onMissions, onDaily, onRescue, onNotebook, onPostcards }: Props) {
   const phone = useIsPhone();
   const still = useReducedMotion();
   const cycle = useCycle(HOME_LOOP_MS, !still);
@@ -178,6 +182,7 @@ export function Home({ progress, mode, onMode, daily, rescue, notebook, postcard
         <span className="hm-count">{count}</span>
         <span>UNTIL THE ROBOT HEARS YOU</span>
       </div>
+      <MarsNowPlate mars={mars} />
     </div>
   );
 
@@ -198,6 +203,7 @@ export function Home({ progress, mode, onMode, daily, rescue, notebook, postcard
         {crt}
         {play}
         {menuEls}
+        <MarsNowPlate mars={mars} className="phone" />
         <button type="button" className="hm-missions" onClick={onMissions}>
           CHOOSE A MISSION ▸
         </button>

@@ -452,6 +452,18 @@ export const COACH: CoachPanel[] = [
 
 export const HOW_TO_PLAY = { label: 'HOW TO PLAY', sub: 'New here? Learn the game in one minute.' };
 
+/** MARS RIGHT NOW on Home (engine marsNow: today's JPL ephemeris, no internet needed). */
+export const MARS_NOW = {
+  title: 'MARS RIGHT NOW',
+  away: 'away',
+  takes: 'A message takes',
+  oneWay: 'one way',
+  next: 'Next solar conjunction',
+  in: 'in',
+  now: 'SOLAR CONJUNCTION NOW: the Sun is between Earth and Mars. Missions pause their orders.',
+  until: 'until',
+};
+
 /** The Pack launch checklist, in order. */
 export const LAUNCH_CHECKS = {
   packed: 'PACK PARTS THAT FIT',

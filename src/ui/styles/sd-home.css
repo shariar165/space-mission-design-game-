@@ -62,3 +62,10 @@
 .hm-foot-keys { display: flex; gap: 10px; flex-wrap: wrap; }
 .hm-howto { color: var(--sd-amber); border-color: var(--sd-amber-edge); }
 .hm-sound { align-self: center; padding: 8px 10px; }
+
+/* ---- MARS RIGHT NOW (rule 36): a CRT readout along the bottom of the screen; its own panel on phone ---- */
+.hm-now { position: absolute; left: 26px; right: 26px; bottom: 22px; z-index: 1; display: flex; flex-direction: column; gap: 6px; font: 400 22px/1.1 var(--sd-crt-font); color: var(--sd-crt-mid); text-transform: uppercase; }
+.hm-now b { font-weight: 400; color: var(--sd-crt-hi); }
+.hm-now-k { font: 700 12px/1 var(--sd-mono); letter-spacing: 0.26em; color: var(--sd-amber); }
+.hm-now-alert b, .hm-now-alert { color: var(--sd-amber); }
+.hm-now.phone { position: static; padding: 12px 14px; border-radius: 6px; background: var(--sd-crt); border: 1px solid var(--sd-line); font-size: 19px; }

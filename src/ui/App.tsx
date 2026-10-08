@@ -5,6 +5,7 @@
 // Every step has ◂ BACK: the steps visited are kept on a trail, and the browser's own Back button walks it too.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { dailyDate, dailyDesign, dailyGrid, dailyNumber, dailySeed, dailyStreak } from '../engine/daily';
+import { marsNow } from '../engine/marsNow';
 import { badges, newBadges, rankFor, starTotals, type RankDef } from '../engine/ranks';
 import { evaluateDesign } from '../engine/index';
 import { flightFacts, mergeFacts, newLessons, NOTEBOOK, notebook, notebookProgress, rescueProgress, type NotebookFacts } from '../engine/notebook';
@@ -106,6 +107,7 @@ export function App() {
   const ev = useMemo(() => evaluateDesign(active), [active]);
   const facts: NotebookFacts = useMemo(() => ({ ...flights, progress }), [flights, progress]);
   const todayIso = dailyDate(Date.now());
+  const mars = useMemo(() => marsNow(todayIso), [todayIso]);
 
   // ---- Crew file: rank from the stars across the levels, badges from deeds (engine ranks.ts) ----
   const levelMax = useMemo(() => Object.fromEntries(LEVELS.map((l) => [l.id, maxStars(l)])), []);
@@ -326,6 +328,7 @@ export function App() {
           onNotebook={() => go('notebook')}
           postcards={postcardAlbum(postcards)}
           crew={crewOf({ facts, postcards, played: daily.played })}
+          mars={mars}
           onPostcards={() => go('postcards')}
         />
       )}
