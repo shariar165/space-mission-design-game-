@@ -1,0 +1,14 @@
+{
+  "flr-2024-05-08_2024-05-14.json": {
+    "url": "https://ccmc.gsfc.nasa.gov/DONKI-API/get/FLR?startDate=2024-05-08&endDate=2024-05-14",
+    "status": 200,
+    "fetchedAt": "2026-10-08T05:13:56.968Z",
+    "records": 93
+  },
+  "cme-2024-05-08_2024-05-14.json": {
+    "url": "https://ccmc.gsfc.nasa.gov/DONKI-API/get/CME?startDate=2024-05-08&endDate=2024-05-14",
+    "status": 200,
+    "fetchedAt": "2026-10-08T05:13:56.968Z",
+    "records": 29
+  }
+}
