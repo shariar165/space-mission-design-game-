@@ -1,7 +1,7 @@
 {
   "donki": {
     "apiBase": { "value": "https://ccmc.gsfc.nasa.gov/DONKI-API/get/", "unit": "URL", "source": "CCMC Announcements: the DONKI Web API moved to https://ccmc.gsfc.nasa.gov/DONKI-API/get/... (2026-09-30), replacing the api.nasa.gov and kauai.ccmc URLs; parameters and response format unchanged, no API key", "url": "https://ccmc.gsfc.nasa.gov/news/major-updates/", "isGameEstimate": false },
-    "viewerBase": { "value": "https://webtools.ccmc.gsfc.nasa.gov/DONKI/view/", "unit": "URL", "source": "CCMC DONKI record pages (webtools.ccmc.gsfc.nasa.gov/DONKI/view/<type>/<id>/<version>); used only when a record carries no link of its own", "url": "https://ccmc.gsfc.nasa.gov/news/major-updates/", "isGameEstimate": false },
+    "viewerBase": { "value": "https://ccmc.gsfc.nasa.gov/DONKI/view/", "unit": "URL", "source": "CCMC DONKI record pages (ccmc.gsfc.nasa.gov/DONKI/view/<type>/<id>/<version>, as in the records' own link field since the 2026 move); used only when a record carries no link of its own", "url": "https://ccmc.gsfc.nasa.gov/news/major-updates/", "isGameEstimate": false },
     "windowDays": { "value": 7, "unit": "days", "source": "Game rule (Daily): the snapshot covers the seven whole UTC days before the day it is fetched", "isGameEstimate": true },
     "maxAge_days": { "value": 2, "unit": "days", "source": "Game rule (Daily): a snapshot whose window ended more than this many days before today is stale, and the Daily falls back to simulated weather", "isGameEstimate": true },
     "loadTimeout_ms": { "value": 6000, "unit": "ms", "source": "Game rule (Daily): how long the game waits for the snapshot file before flying with simulated weather", "isGameEstimate": true }

@@ -8,7 +8,8 @@ import { readSnapshot, realStorms } from '../../src/engine/spaceWeather';
 import { loadSpaceWeather, SNAPSHOT_PATH } from '../../src/ui/donki';
 import './setup';
 
-const sampleText = readFileSync(join(process.cwd(), 'tests/fixtures/donki/documented-format-sample.json'), 'utf8') // vitest runs from the project root;
+// vitest runs from the project root.
+const sampleText = readFileSync(join(process.cwd(), 'tests/fixtures/donki/documented-format-sample.json'), 'utf8');
 const storms = realStorms(readSnapshot(sampleText)!);
 // The sample's window ends 2030-01-07, so 2030-01-08 is the day after (fresh).
 const TODAY = '2030-01-08';

@@ -1,7 +1,7 @@
 // NASA DONKI records → the Daily's real solar storms (engine: src/engine/spaceWeather.ts; spec UI rule 37).
-// The first block runs on a hand-written snapshot in the documented DONKI record format (pending real fixture);
-// the second runs on the responses the DONKI GitHub Action records, once they are in tests/fixtures/donki/.
-import { existsSync, readFileSync } from 'node:fs';
+// The edge cases run on a hand-written snapshot in the documented DONKI record format (no real week has them all);
+// the recorded block runs on real CCMC responses the DONKI GitHub Action saved (tests/fixtures/donki/recorded.json).
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { dailyDesign } from '../src/engine/daily';
 import { HAZARDS } from '../src/engine/data';
@@ -24,7 +24,7 @@ const fixture = (name: string) => new URL(`./fixtures/donki/${name}`, import.met
 const sampleText = readFileSync(fixture('documented-format-sample.json'), 'utf8');
 const sample = readSnapshot(sampleText)!;
 
-describe('DONKI → storms (pending real fixture: documented-format sample)', () => {
+describe('DONKI → storms: edge cases (hand-written documented-format sample)', () => {
   it('reads a snapshot; anything else (a web page, bad JSON, a missing window) is no snapshot', () => {
     expect(sample.window).toEqual({ startDate: '2030-01-01', endDate: '2030-01-07' });
     expect(sample.flr.records.length).toBe(5);
@@ -153,9 +153,8 @@ describe('replaying the real week across the Daily flight', () => {
 
 const recordedFlr = fixture('flr-2024-05-08_2024-05-14.json');
 const recordedCme = fixture('cme-2024-05-08_2024-05-14.json');
-const recorded = existsSync(recordedFlr) && existsSync(recordedCme);
 
-describe.skipIf(!recorded)('recorded 2024-05-08 → 14 week, the Gannon storm (pending real fixture)', () => {
+describe('recorded 2024-05-08 → 14 week, the Gannon storm (real CCMC responses)', () => {
   const body = (u: URL) => {
     const t = readFileSync(u, 'utf8');
     return t.trim() === '' ? [] : (JSON.parse(t) as unknown[]);
@@ -188,5 +187,15 @@ describe.skipIf(!recorded)('recorded 2024-05-08 → 14 week, the Gannon storm (p
       expect(s.date >= '2024-05-08' && s.date <= '2024-05-14').toBe(true);
     }
     expect(realStorms(snapshot())).toEqual(storms);
+  });
+});
+
+describe('the committed live snapshot (public/data/donki-latest.json, refreshed daily by the Action)', () => {
+  it('reads as a snapshot with a 7-day window; its storms all link to DONKI (shape only: the content changes daily)', () => {
+    const live = readSnapshot(readFileSync(new URL('../public/data/donki-latest.json', import.meta.url), 'utf8'));
+    expect(live).toBeDefined();
+    // endDate − startDate = 6 days → a 7-day window.
+    expect((Date.parse(live!.window.endDate) - Date.parse(live!.window.startDate)) / 86_400_000).toBe(SPACE_WEATHER.donki.windowDays.value - 1);
+    for (const s of realStorms(live!)) expect(s.link).toMatch(/^https:\/\//);
   });
 });
