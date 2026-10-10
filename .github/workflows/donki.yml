@@ -1,50 +1,59 @@
-# Fetch NASA DONKI solar flares, CMEs and SEP events (CCMC DONKI-API) once a day and commit the snapshot the game reads,
-# public/data/donki-latest.json. The game never calls CCMC itself. A manual run also records the 2024-05-08 → 14
-# responses as test fixtures. A push made with GITHUB_TOKEN does not trigger pages.yml, so this workflow deploys.
-name: DONKI space weather
+# Record NASA DONKI responses (FLR, CME, SEP from the CCMC DONKI-API) as test fixtures, by hand only. The recording
+# goes on a new branch and arrives as a pull request; nothing is pushed to main. The daily snapshot the game reads is
+# not made here: pages.yml fetches it in the deploy build.
+# A pull request opened with the workflow token does not start other workflows, so this run starts CI on the branch
+# itself (workflow_dispatch is allowed), and the PR gets its "Typecheck and tests" result.
+name: DONKI fixtures
 
 on:
-  schedule:
-    - cron: '20 0 * * *' # 00:20 UTC, just after the Daily turns over
   workflow_dispatch:
+    inputs:
+      start_date:
+        description: First day of the week to record (YYYY-MM-DD)
+        default: '2024-05-08'
+        required: true
+      end_date:
+        description: Last day (YYYY-MM-DD; CCMC refuses ranges over 30 days)
+        default: '2024-05-14'
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
 
 concurrency:
-  group: donki
+  group: donki-fixtures
   cancel-in-progress: false
 
 jobs:
-  fetch:
+  record:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      START: ${{ inputs.start_date }}
+      END: ${{ inputs.end_date }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22.16.0
-      - name: Latest snapshot (the 7 days before today)
-        run: node scripts/fetch-donki.mjs
-      - name: Record the test fixtures (manual runs only)
-        if: github.event_name == 'workflow_dispatch'
-        run: node scripts/fetch-donki.mjs --fixtures 2024-05-08 2024-05-14
-      - name: Commit
+      - name: Record the responses
+        run: node scripts/fetch-donki.mjs --fixtures "$START" "$END"
+      - name: Open a pull request
         run: |
+          git add tests/fixtures/donki
+          if git diff --cached --quiet; then
+            echo "The recorded responses are unchanged: no pull request."
+            exit 0
+          fi
+          branch="donki-fixtures/${START}_${END}-${GITHUB_RUN_ID}"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add public/data/donki-latest.json
-          if [ -d tests/fixtures/donki ]; then git add tests/fixtures/donki; fi
-          if git diff --cached --quiet; then
-            echo 'Nothing new.'
-          else
-            git commit -m "data: DONKI snapshot $(date -u +%F)"
-            git push origin "HEAD:${GITHUB_REF_NAME}"
-          fi
-
-  deploy:
-    needs: fetch
-    if: github.ref == 'refs/heads/main'
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
-    uses: ./.github/workflows/pages.yml
+          git switch -c "$branch"
+          git commit -m "test: record DONKI fixtures ${START} → ${END}"
+          git push origin "$branch"
+          gh pr create --base main --head "$branch" \
+            --title "Record DONKI fixtures ${START} → ${END}" \
+            --body "Raw CCMC DONKI-API responses (FLR, CME, SEP) for ${START} → ${END}, recorded by the DONKI fixtures workflow (run ${GITHUB_RUN_ID}). See tests/fixtures/donki/recorded.json for URLs, HTTP status and fetch time."
+          gh workflow run ci.yml --ref "$branch"

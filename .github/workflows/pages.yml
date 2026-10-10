@@ -1,13 +1,16 @@
-# Build Signal Delay and publish it on GitHub Pages on every push to main, and after each DONKI snapshot (donki.yml
-# calls this workflow, because its bot commit does not trigger a push run).
+# Build Signal Delay and publish it on GitHub Pages on every push to main, and once a day so the Daily gets today's
+# NASA DONKI snapshot. The snapshot (public/data/donki-latest.json) is fetched here and published with the site; it
+# is never committed. If CCMC cannot be reached, the build keeps the snapshot that is live now (the game calls it
+# stale once its window is over 2 days old) and still deploys.
 # CI uses the runner's Node (same version as the venv's nodeenv); locally everything still lives in .venv.
 name: Deploy to GitHub Pages
 
 on:
   push:
     branches: [main]
+  schedule:
+    - cron: '20 0 * * *' # 00:20 UTC, just after the Daily turns over (GitHub may start it late)
   workflow_dispatch:
-  workflow_call:
 
 permissions:
   contents: read
@@ -22,15 +25,26 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      # The branch tip, not the triggering commit: a run called by donki.yml must include the snapshot it just pushed.
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.ref_name }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22.16.0
           cache: npm
       - run: npm ci
+      - name: Today's DONKI snapshot (published with the site, never committed)
+        env:
+          LIVE_SNAPSHOT: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/data/donki-latest.json
+        run: |
+          if ! node scripts/fetch-donki.mjs; then
+            echo "::warning::DONKI fetch failed; keeping the snapshot that is live now"
+            mkdir -p public/data
+            if curl -fsS "$LIVE_SNAPSHOT" -o /tmp/donki-live.json; then
+              mv /tmp/donki-live.json public/data/donki-latest.json
+            else
+              echo "::warning::No live snapshot either: the Daily flies offline (simulated weather) until the next run"
+            fi
+          fi
+      # The tests include a shape check of the snapshot just fetched, so a malformed one never deploys.
       - run: npm test
       - run: npm run build
         env:
