@@ -4,7 +4,7 @@
 // context, named on the card of the SEP or CME DONKI links them to.
 // The edge cases run on a hand-written snapshot in the documented DONKI record format (no real week has them all);
 // the recorded block runs on real CCMC responses the DONKI GitHub Action saved (tests/fixtures/donki/recorded.json).
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { dailyDesign } from '../src/engine/daily';
 import { HAZARDS } from '../src/engine/data';
@@ -262,9 +262,13 @@ describe('recorded 2024-05-08 → 14 week, the Gannon storm (real CCMC responses
   });
 });
 
-describe('the committed live snapshot (public/data/donki-latest.json, refreshed daily by the Action)', () => {
+// The Pages build fetches the day's snapshot just before it runs the tests (pages.yml), so a malformed one never
+// deploys. Pull requests and fresh clones have none (it is never committed): then there is nothing to check.
+const liveSnapshot = new URL('../public/data/donki-latest.json', import.meta.url);
+
+describe.skipIf(!existsSync(liveSnapshot))('the snapshot about to be deployed (fetched by the Pages build)', () => {
   it('reads as a snapshot with a 7-day window; its dangers all link to DONKI (shape only: the content changes daily)', () => {
-    const live = readSnapshot(readFileSync(new URL('../public/data/donki-latest.json', import.meta.url), 'utf8'));
+    const live = readSnapshot(readFileSync(liveSnapshot, 'utf8'));
     expect(live).toBeDefined();
     // endDate − startDate = 6 days → a 7-day window.
     expect((Date.parse(live!.window.endDate) - Date.parse(live!.window.startDate)) / DAY).toBe(SPACE_WEATHER.donki.windowDays.value - 1);

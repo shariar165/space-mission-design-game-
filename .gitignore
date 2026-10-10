@@ -4,3 +4,6 @@ dist/
 coverage/
 test-results/
 playwright-report/
+
+# The DONKI snapshot is fetched by the Pages build and published with the site, never committed.
+public/data/donki-latest.json

@@ -1,7 +1,8 @@
 // Fetch NASA DONKI solar flares (FLR), CMEs and solar energetic particle events (SEP) from CCMC and save them for
 // the game (spec: UI rules, live Daily).
-// The game never calls CCMC: this script runs in the daily GitHub Action (.github/workflows/donki.yml) and writes a
-// static snapshot, public/data/donki-latest.json, that the game reads from its own origin.
+// The game never calls CCMC: the Pages build (.github/workflows/pages.yml, on every deploy and daily) runs this
+// script and publishes the static snapshot, public/data/donki-latest.json, with the site; it is never committed.
+// The DONKI fixtures workflow (.github/workflows/donki.yml, by hand) runs --fixtures and opens a pull request.
 //
 //   node scripts/fetch-donki.mjs                                  latest snapshot (the 7 whole UTC days before today)
 //   node scripts/fetch-donki.mjs --today 2026-10-08               the same, as if today were that date
