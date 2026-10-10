@@ -21,6 +21,7 @@ import { opsRiskEstimate } from '../src/engine/ops/riskEstimate';
 import { riskMeter } from '../src/engine/risk';
 import { buildCadetDesign, defaultChoices, stepOptionIds } from '../src/engine/cadet';
 import { starterDesign } from '../src/ui/starters';
+import { marsNow } from '../src/engine/marsNow';
 
 const TOLERANCE = 0.1;
 
@@ -306,6 +307,19 @@ describe('Mission operations — Mars conjunctions, Ls, loss rate', () => {
       `${(100 * e.meter.used).toFixed(1)}% ± ${(100 * e.stdErr).toFixed(1)}`, `${(100 * formula).toFixed(1)}% (phase formula)`, 'hazard rates and response failure chances');
     expect(e.tally.lost).toBeLessThan(e.tally.runs);
   }, 120_000);
+});
+
+describe('Mars solar conjunction, Jan 2026 (Mars right now) — NASA MAVEN blog', () => {
+  it('the engine’s closest Sun–Mars approach falls inside NASA’s published commanding pause (Dec 29, 2025 – Jan 16, 2026)', () => {
+    // NASA, "NASA Works MAVEN Spacecraft Issue Ahead of Solar Conjunction" (Dec 23, 2025): no contact with any Mars
+    // mission from Monday, Dec. 29 until Friday, Jan. 16. The pause is an operations choice, so only the closest day
+    // is checked against it; the engine's 2° window is reported for information.
+    const c = marsNow('2026-01-01').conjunction;
+    const ok = c.closestDate >= '2025-12-29' && c.closestDate <= '2026-01-16';
+    flag('Mars (2026)', 'Closest Sun–Earth–Mars angle inside the NASA commanding pause', ok, c.closestDate, 'Dec 29, 2025 – Jan 16, 2026 (science.nasa.gov MAVEN blog)', 'JPL approximate elements; 2° threshold (JPL 2015)');
+    info('Mars (2026)', 'Engine 2° conjunction window vs the NASA commanding pause', `${c.startDate} → ${c.endDate}`, 'Dec 29, 2025 – Jan 16, 2026');
+    expect(ok).toBe(true);
+  });
 });
 
 describe('Moon rideshare (LRO 2009, the LCROSS secondary slot)', () => {

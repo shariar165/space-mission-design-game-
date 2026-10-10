@@ -9,8 +9,9 @@ export interface DonkiSnapshot {
   window: DonkiWindow;
   flr: { url: string; records: unknown[] };
   cme: { url: string; records: unknown[] };
+  sep: { url: string; records: unknown[] };
 }
 export function windowFor(todayIso: string, days?: number): DonkiWindow;
-export function donkiUrl(kind: 'FLR' | 'CME', startDate: string, endDate: string, base?: string): string;
+export function donkiUrl(kind: 'FLR' | 'CME' | 'SEP', startDate: string, endDate: string, base?: string): string;
 export function parseBody(body: string): unknown[];
 export function buildSnapshot(x: Omit<DonkiSnapshot, 'source'>): DonkiSnapshot;

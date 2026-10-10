@@ -47,6 +47,7 @@ import {
   optionShort,
   playNudge,
   quietLine,
+  LIVE_WEATHER,
   MOMENT_WORDS,
   POSTCARD_WORDS,
   robotNameOr,
@@ -59,10 +60,13 @@ import {
 } from '../sdWords';
 import { OPS_SPEEDS, useOpsSession, type OpsSpeed } from '../useOpsSession';
 import * as f from '../format';
+import type { RealStorm } from '../../engine/spaceWeather';
 
 interface Props {
   design: Design;
   seed: number;
+  /** A live Daily's real DONKI storms (they replace the seeded solar storms). */
+  storms?: RealStorm[];
   mode: Mode;
   onMode: (m: Mode) => void;
   missionName: string;
@@ -98,10 +102,10 @@ function chipViews(chips: FlyChip[]): ChipView[] {
   return chips.map((k) => ({ icon: CHIP_ICON[k.gauge], text: k.gauge === 'coins' ? `${f.signedInt(k.delta)} COINS` : f.signedInt(k.delta), tone: 'cost' as const }));
 }
 
-export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome, onDone, onBack, coach, onCoachSeen, brief, robotName, launchMoment, onLaunchSeen, onPostcards }: Props) {
+export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName, onHome, onDone, onBack, coach, onCoachSeen, brief, robotName, launchMoment, onLaunchSeen, onPostcards }: Props) {
   const name = robotNameOr(robotName);
   const engineer = mode === 'engineer';
-  const ops = useOpsSession(design, seed);
+  const ops = useOpsSession(design, seed, storms);
   const { state, view } = ops;
   const phone = useIsPhone();
   const still = useReducedMotion();
@@ -234,14 +238,22 @@ export function FlyAndSurvive({ design, seed, mode, onMode, missionName, onHome,
   const hazardCard: CardView | undefined =
     card && a
       ? {
-          icon: a.type === 'solar-storm' ? 'storm' : a.type === 'mars-dust-storm' ? 'dust' : a.type === 'debris' ? 'debris' : a.type === 'insertion-anomaly' ? 'orbit' : 'sys',
-          kicker: 'DANGER CARD',
+          icon: a.type === 'solar-storm' || a.type === 'cme-shock' ? 'storm' : a.type === 'mars-dust-storm' ? 'dust' : a.type === 'debris' ? 'debris' : a.type === 'insertion-anomaly' ? 'orbit' : 'sys',
+          kicker: card.realSource ? LIVE_WEATHER.realKicker : 'DANGER CARD',
           title: a.title.toUpperCase(),
-          line: a.prompt,
+          line: a.real?.flare ? `${a.prompt} ${LIVE_WEATHER.fromFlare(a.real.flare)}` : a.prompt,
           day: `DAY ${f.num(Math.floor(state!.t))}`,
-          hits: { k: 'DANGER ARRIVES', v: arrivesWords(card.onsetIn_s) },
+          hits: {
+            k: a.real?.arrival
+              ? `DANGER ARRIVES · ${a.real.arrival.isMinorImpact ? LIVE_WEATHER.severity.minor : a.real.arrival.isGlancingBlow ? LIVE_WEATHER.severity.glancing : LIVE_WEATHER.severity.direct}`
+              : 'DANGER ARRIVES',
+            v: arrivesWords(card.onsetIn_s),
+            ...(card.predictionSource ? { s: card.predictionSource } : {}),
+          },
           takes: { k: phone ? 'ORDER TAKES' : 'YOUR ORDER TAKES', v: f.durationWords(a.oneWay_s) },
-          history: { k: 'REAL HISTORY', s: a.realHistory, ...(a.realHistory.isGameEstimate ? { badge: 'TO VERIFY' } : {}) },
+          history: card.realSource
+            ? { k: LIVE_WEATHER.realEvent, s: card.realSource }
+            : { k: 'REAL HISTORY', s: a.realHistory, ...(a.realHistory.isGameEstimate ? { badge: 'TO VERIFY' } : {}) },
           choices: card.options.map((o): ChoiceView => {
             const chips = chipViews(o.chips);
             if (o.riskIncrease > 0) chips.push({ icon: EFFECT_ICON[o.failureEffect], text: `⚠ +${f.num(o.riskIncrease)} risk`, tone: 'risk', title: `If it fails, ${FAILURE_EFFECT[o.failureEffect]}` });

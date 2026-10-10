@@ -141,6 +141,9 @@ export interface FlyCard {
   /** Seconds until the deadline after which the craft decides by itself. */
   deadlineIn_s: number;
   options: FlyOption[];
+  /** Live Daily: the DONKI record of the real storm (ⓘ), and a real CME's WSA-ENLIL predicted arrival (ⓘ). */
+  realSource?: Sourced<string>;
+  predictionSource?: Sourced<string>;
 }
 
 /** A cost as a drop in segments, at least one segment (FLY_RULES.minimumChip). */
@@ -166,6 +169,8 @@ export function flyCard(s: OpsState, v: OpsConsoleView = consoleView(s)): FlyCar
     onsetIn_s: Math.max(0, a.onset - s.t) * DAY_S,
     orderTakes_s: Math.max(0, a.arrivesIfSent - s.t) * DAY_S,
     deadlineIn_s: Math.max(0, a.deadline - s.t) * DAY_S,
+    ...(a.realSource ? { realSource: a.realSource } : {}),
+    ...(a.predictionSource ? { predictionSource: a.predictionSource } : {}),
     options: a.options.map((o) => {
       const chips: FlyChip[] = [];
       if (o.fuel_kg > 0) chips.push({ gauge: 'fuel', delta: segmentDrop(fuelNow, segmentsFromFraction(loaded > 0 ? (propLeft - o.fuel_kg) / loaded : 0)) });
@@ -290,14 +295,17 @@ export interface StormFront {
   hitsIn_s: number;
 }
 
+/** Hazards that come from the Sun: drawn as a wave on the map, and a storm moment when they hit. */
+const FROM_THE_SUN = new Set(['solar-storm', 'cme-shock']);
+
 /**
- * The solar storm on the map (spec UI rules: storms come from the Sun). A solar-storm hazard is seen at knownAt,
- * reaches the craft at onset (hazards.json warningLead_days later) and lasts until endsAt. Progress is linear in
- * time between the two: a drawing, not a CME speed model.
+ * The solar storm on the map (spec UI rules: storms come from the Sun). A solar radiation storm or a CME shock is
+ * seen at knownAt, reaches the craft at onset (warningLead_days later, or a real CME's ENLIL transit) and lasts until
+ * endsAt. Progress is linear in time between the two: a drawing, not a CME speed model.
  */
 export function stormFront(s: OpsState): StormFront | undefined {
   if (s.status !== 'flying' && s.status !== 'awaiting-extension') return undefined;
-  const h = s.hazards.find((x) => x.type === 'solar-storm' && x.knownAt <= s.t + 1e-9 && s.t < x.endsAt);
+  const h = s.hazards.find((x) => FROM_THE_SUN.has(x.type) && x.knownAt <= s.t + 1e-9 && s.t < x.endsAt);
   if (!h) return undefined;
   if (s.t >= h.onset) return { hazardId: h.id, phase: 'hitting', progress: 1, hitsIn_s: 0 };
   const lead = h.onset - h.knownAt;
@@ -321,7 +329,7 @@ export function momentsSince(s: OpsState, from: number): { kind: MomentKind; t: 
     if (e.code === 'launch') out.push({ kind: 'launch', t: e.t });
     else if (e.code === 'launch-failed') out.push({ kind: 'launch-failed', t: e.t });
     else if (e.code === 'burn' && e.values.kind === 'arrival') out.push({ kind: 'arrived', t: e.t });
-    else if (e.code === 'hazard-onset' && e.values.type === 'solar-storm') out.push({ kind: 'storm-hit', t: e.t });
+    else if (e.code === 'hazard-onset' && FROM_THE_SUN.has(String(e.values.type))) out.push({ kind: 'storm-hit', t: e.t });
   }
   return out;
 }

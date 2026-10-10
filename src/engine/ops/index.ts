@@ -6,6 +6,7 @@ import { budgetScore, marginBandScore, missionSuccessScore, nextStar, scienceGoa
 import { crisisScore } from '../crisis';
 import { DESTINATIONS, HAZARDS, OPERATIONS } from '../data';
 import type { Design } from '../types';
+import type { RealStorm } from '../spaceWeather';
 import { END_MISSION } from './extension';
 import { defaultBooking, defaultPowerPlan, demand } from './resources';
 import {
@@ -44,6 +45,8 @@ export interface StartOptions {
   standingOrders?: Record<string, string>;
   /** Reuse an environment already prepared for this design (Monte Carlo). */
   env?: OpsEnvironment;
+  /** Live Daily: real DONKI storms replace the seeded solar storms (spaceWeather.ts). */
+  storms?: RealStorm[];
 }
 
 /** Day 0, before launch. The random draws are all made here. */

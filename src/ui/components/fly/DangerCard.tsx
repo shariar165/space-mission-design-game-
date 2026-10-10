@@ -33,7 +33,8 @@ export interface CardView {
   title: string;
   line: string;
   day: string;
-  hits: { k: string; v: string };
+  /** s: the ⓘ of the time (a real CME's WSA-ENLIL prediction). */
+  hits: { k: string; v: string; s?: Sourced<string> };
   takes: { k: string; v: string };
   history?: { k: string; s: Sourced<string>; badge?: string };
   choices: ChoiceView[];
@@ -98,7 +99,10 @@ function Paper({ card, engineer, phone, drag }: { card: CardView; engineer: bool
         <p className="dc-line">{card.line}</p>
         <div className="dc-facts">
           <div className="dc-fact">
-            <span className="dc-fact-k">{card.hits.k}</span>
+            <span className="dc-fact-k">
+              {card.hits.k}
+              {card.hits.s && <SourceInfo s={card.hits.s} title={card.hits.k.toLowerCase()} />}
+            </span>
             <span className="dc-fact-v hits">{card.hits.v}</span>
           </div>
           <div className="dc-fact">

@@ -1,4 +1,4 @@
-# Fetch NASA DONKI solar flares and CMEs (CCMC DONKI-API) once a day and commit the snapshot the game reads,
+# Fetch NASA DONKI solar flares, CMEs and SEP events (CCMC DONKI-API) once a day and commit the snapshot the game reads,
 # public/data/donki-latest.json. The game never calls CCMC itself. A manual run also records the 2024-05-08 → 14
 # responses as test fixtures. A push made with GITHUB_TOKEN does not trigger pages.yml, so this workflow deploys.
 name: DONKI space weather

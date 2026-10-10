@@ -58,3 +58,11 @@
 .dl.phone .dl-actions .dl-btn { height: 48px; font-size: 12px; }
 .dl.phone .dl-actions .dl-btn:nth-child(3) { grid-column: auto; }
 .dl.phone .dl-next { text-align: center; font-size: 18px; }
+
+/* ---- Live weather (rule 37): where the day's storms came from, and the real date of a real one ---- */
+.dl-weather { font: 700 11px/1 var(--sd-mono); letter-spacing: 0.16em; color: var(--sd-paper-mute); }
+.dl-weather.live { color: var(--sd-gold); }
+.dl-real { font: 700 11px/1 var(--sd-mono); letter-spacing: 0.12em; color: var(--sd-paper-mute); white-space: nowrap; }
+.dl-real b { color: var(--sd-gold); }
+.dl-row:has(.dl-real) { grid-template-columns: 34px 40px auto minmax(0, 1fr); }
+.dl.phone .dl-row:has(.dl-real) { grid-template-columns: 30px 34px auto minmax(0, 1fr); }

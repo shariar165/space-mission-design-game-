@@ -142,7 +142,8 @@ describe('the danger deck', () => {
     const ids = deck.map((d) => d.id);
     expect(ids.slice(0, 2)).toEqual(['eclipse', 'conjunction']);
     for (const [id, h] of Object.entries(HAZARDS)) {
-      if (h.options.length && h.destinations.includes('mars')) expect(ids).toContain(id);
+      // Live-only hazards (a live Daily's CME shock) have no seeded rate, so packing cannot plan for them.
+      if (h.options.length && h.destinations.includes('mars')) (h.liveOnly ? expect(ids).not : expect(ids)).toContain(id);
     }
     expect(deck.every((d) => d.stamp === 'none')).toBe(true);
   });

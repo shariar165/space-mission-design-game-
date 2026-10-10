@@ -7,8 +7,13 @@ import { presetDesign } from '../src/engine/missions';
 import { runOperations } from '../src/engine/ops/index';
 import { rescueCase, RESCUE_CASE_IDS } from '../src/engine/rescue';
 import { emptyFacts, flightFacts, lessonText, mergeFacts, newLessons, notebook, NOTEBOOK, rescueProgress } from '../src/engine/notebook';
-import { DAILY_RULES, dailyGrid, dailyNumber, dailySeed, dailyStreak, nextDailyIn_s } from '../src/engine/daily';
+import { DAILY_RULES, dailyDesign, dailyGrid, dailyNumber, dailySeed, dailyStreak, nextDailyIn_s } from '../src/engine/daily';
 import { fnv1a } from '../src/engine/ops/random';
+import { readFileSync } from 'node:fs';
+import { readSnapshot, realStorms } from '../src/engine/spaceWeather';
+import { starterDesign } from '../src/ui/starters';
+
+const sample = readSnapshot(readFileSync(new URL('./fixtures/donki/documented-format-sample.json', import.meta.url), 'utf8'))!;
 
 const maven = presetDesign('maven');
 
@@ -77,6 +82,32 @@ describe('the Daily mission', () => {
     expect(dailyNumber('2026-11-10')).toBe(1 + (Date.parse('2026-11-10') - Date.parse(e)) / 86_400_000);
     expect(dailySeed('2026-11-10')).toBe(fnv1a('signal-delay-daily-2026-11-10'));
     expect(dailySeed('2026-11-10')).not.toBe(dailySeed('2026-11-11'));
+  });
+
+  it('live weather: the seed hashes the date and the real storms’ DONKI ids, in any order', () => {
+    const storms = realStorms(sample);
+    const ids = storms.flatMap((x) => x.eventIds).sort().join(',');
+    expect(dailySeed('2026-11-10', storms)).toBe(fnv1a(`signal-delay-daily-2026-11-10|donki|${ids}`));
+    expect(dailySeed('2026-11-10', [...storms].reverse())).toBe(dailySeed('2026-11-10', storms));
+    const changed = storms.map((x, i) => (i === 0 ? { ...x, eventIds: ['2030-01-03T06:00:00-FLR-002'] } : x));
+    expect(dailySeed('2026-11-10', changed)).not.toBe(dailySeed('2026-11-10', storms));
+    // A live quiet week (no storms) is not the offline Daily, whose seed is the date alone.
+    expect(dailySeed('2026-11-10', [])).toBe(fnv1a('signal-delay-daily-2026-11-10|donki|'));
+    expect(dailySeed('2026-11-10', [])).not.toBe(dailySeed('2026-11-10'));
+  });
+
+  it('the grid records the weather and the real date of each real storm', () => {
+    const storms = realStorms(sample);
+    const design = dailyDesign(starterDesign('mars', '2026-11-10'));
+    const s = runOperations(design, { seed: dailySeed('2026-11-10', storms), storms, policy: 'safe', extension: 'end' }).state;
+    const live = dailyGrid(s, 'live');
+    expect(live.weather).toBe('live');
+    const real = s.hazards.filter((h) => h.choice && h.outcomeDone && h.real);
+    expect(real.length).toBeGreaterThan(0);
+    expect(live.rows.filter((r) => r.realDate).map((r) => r.realDate)).toEqual(real.map((h) => h.real!.date));
+    const off = dailyGrid(runOperations(design, { seed: dailySeed('2026-11-10'), policy: 'safe', extension: 'end' }).state, 'offline');
+    expect(off.weather).toBe('offline');
+    expect(off.rows.every((r) => r.realDate === undefined)).toBe(true);
   });
 
   it('streak: consecutive days played ending today (or yesterday, if today is not played yet)', () => {

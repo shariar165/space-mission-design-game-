@@ -1,0 +1,605 @@
+{
+  "_note": "NOT A RECORDING. Hand-written in the documented DONKI FLR/CME/SEP record format (flrID, peakTime, classType, linkedEvents; activityID, startTime, cmeAnalyses[].isMostAccurate/speed/enlilList[].modelCompletionTime/link/impactList[].location/arrivalTime/isGlancingBlow/isMinorImpact; sepID, eventTime, instruments), wrapped as a donki-latest.json snapshot. The week (2030-01-01 to 2030-01-07), IDs and links are invented to cover the rules no real week has all of: flares are context only (a B and a C flare, an X and an M flare linked one way or both); a CME with no Mars impact, one with no analyses, one whose Mars impact sits on an analysis that is not the most accurate, one with two ENLIL runs (the later run counts), direct / glancing / minor / glancing-and-minor impacts, three SEP records of which two (linked to the same flare, seen by two instruments) are one storm, and 7 qualifying storms against the cap of 4. The recorded fixtures (see recorded.json) come from the DONKI GitHub Action.",
+  "fetchedAt": "2030-01-08T00:20:00.000Z",
+  "source": {
+    "base": "https://ccmc.gsfc.nasa.gov/DONKI-API/get/",
+    "announcement": "https://ccmc.gsfc.nasa.gov/news/major-updates/"
+  },
+  "window": {
+    "startDate": "2030-01-01",
+    "endDate": "2030-01-07"
+  },
+  "flr": {
+    "url": "https://ccmc.gsfc.nasa.gov/DONKI-API/get/FLR?startDate=2030-01-01&endDate=2030-01-07",
+    "records": [
+      {
+        "flrID": "2030-01-01T12:00:00-FLR-001",
+        "catalog": "M2M_CATALOG",
+        "instruments": [
+          {
+            "displayName": "GOES-P: EXIS 1.0-8.0"
+          }
+        ],
+        "beginTime": "2030-01-01T11:50Z",
+        "peakTime": "2030-01-01T12:00Z",
+        "endTime": "2030-01-01T12:00Z",
+        "classType": "C9.9",
+        "sourceLocation": "S15W05",
+        "activeRegionNum": 99002,
+        "note": "",
+        "submissionTime": "2030-01-01T12:00Z",
+        "versionId": 1,
+        "link": "https://example.invalid/donki-sample/FLR/2030-01-01T12:00:00-FLR-001",
+        "linkedEvents": null
+      },
+      {
+        "flrID": "2030-01-03T06:00:00-FLR-001",
+        "catalog": "M2M_CATALOG",
+        "instruments": [
+          {
+            "displayName": "GOES-P: EXIS 1.0-8.0"
+          }
+        ],
+        "beginTime": "2030-01-03T05:40Z",
+        "peakTime": "2030-01-03T06:00Z",
+        "endTime": "2030-01-03T06:00Z",
+        "classType": "X2.1",
+        "sourceLocation": "S15W05",
+        "activeRegionNum": 99002,
+        "note": "",
+        "submissionTime": "2030-01-03T06:00Z",
+        "versionId": 1,
+        "link": "https://example.invalid/donki-sample/FLR/2030-01-03T06:00:00-FLR-001",
+        "linkedEvents": [
+          {
+            "activityID": "2030-01-03T06:24:00-CME-001"
+          },
+          {
+            "activityID": "2030-01-03T08:00:00-SEP-001"
+          },
+          {
+            "activityID": "2030-01-03T09:30:00-SEP-001"
+          }
+        ]
+      },
+      {
+        "flrID": "2030-01-05T00:00:00-FLR-001",
+        "catalog": "M2M_CATALOG",
+        "instruments": [
+          {
+            "displayName": "GOES-P: EXIS 1.0-8.0"
+          }
+        ],
+        "beginTime": "2030-01-04T23:45Z",
+        "peakTime": "2030-01-05T00:00Z",
+        "endTime": "2030-01-05T00:00Z",
+        "classType": "M5.0",
+        "sourceLocation": "S15W05",
+        "activeRegionNum": 99002,
+        "note": "",
+        "submissionTime": "2030-01-05T00:00Z",
+        "versionId": 1,
+        "link": "https://example.invalid/donki-sample/FLR/2030-01-05T00:00:00-FLR-001",
+        "linkedEvents": [
+          {
+            "activityID": "2030-01-05T00:00:00-CME-001"
+          }
+        ]
+      },
+      {
+        "flrID": "2030-01-06T03:00:00-FLR-001",
+        "catalog": "M2M_CATALOG",
+        "instruments": [
+          {
+            "displayName": "GOES-P: EXIS 1.0-8.0"
+          }
+        ],
+        "beginTime": "2030-01-06T02:55Z",
+        "peakTime": "2030-01-06T03:00Z",
+        "endTime": "2030-01-06T03:00Z",
+        "classType": "B5.0",
+        "sourceLocation": "S15W05",
+        "activeRegionNum": 99002,
+        "note": "",
+        "submissionTime": "2030-01-06T03:00Z",
+        "versionId": 1,
+        "link": null,
+        "linkedEvents": null
+      }
+    ]
+  },
+  "cme": {
+    "url": "https://ccmc.gsfc.nasa.gov/DONKI-API/get/CME?startDate=2030-01-01&endDate=2030-01-07",
+    "records": [
+      {
+        "activityID": "2030-01-01T18:00:00-CME-001",
+        "catalog": "M2M_CATALOG",
+        "startTime": "2030-01-01T18:00Z",
+        "instruments": [
+          {
+            "displayName": "SOHO: LASCO/C2"
+          }
+        ],
+        "sourceLocation": "",
+        "activeRegionNum": null,
+        "note": "Fast but misses Mars: no card.",
+        "submissionTime": "2030-01-01T18:00Z",
+        "versionId": 1,
+        "link": "https://example.invalid/donki-sample/CME/2030-01-01T18:00:00-CME-001",
+        "cmeAnalyses": [
+          {
+            "isMostAccurate": true,
+            "time21_5": null,
+            "latitude": 0,
+            "longitude": 0,
+            "halfAngle": 40,
+            "speed": 999,
+            "type": "C",
+            "featureCode": "LE",
+            "measurementTechnique": "SWPC_CAT",
+            "levelOfData": 1,
+            "link": "https://example.invalid/donki-sample/CMEA/1",
+            "enlilList": [
+              {
+                "modelCompletionTime": "2030-01-01T22:00Z",
+                "au": 2.0,
+                "estimatedShockArrivalTime": null,
+                "estimatedDuration": null,
+                "rmin_re": null,
+                "kp_18": null,
+                "kp_90": null,
+                "kp_135": null,
+                "kp_180": null,
+                "isEarthGB": false,
+                "isEarthMinorImpact": false,
+                "link": "https://example.invalid/donki-sample/WSA-ENLIL/1",
+                "impactList": [
+                  {
+                    "location": "STEREO A",
+                    "arrivalTime": "2030-01-04T00:00Z",
+                    "isGlancingBlow": false,
+                    "isMinorImpact": false
+                  }
+                ],
+                "cmeIDs": []
+              }
+            ]
+          }
+        ],
+        "linkedEvents": null
+      },
+      {
+        "activityID": "2030-01-02T00:00:00-CME-001",
+        "catalog": "M2M_CATALOG",
+        "startTime": "2030-01-02T00:00Z",
+        "instruments": [
+          {
+            "displayName": "SOHO: LASCO/C2"
+          }
+        ],
+        "sourceLocation": "",
+        "activeRegionNum": null,
+        "note": "Glancing and minor: the smaller factor counts.",
+        "submissionTime": "2030-01-02T00:00Z",
+        "versionId": 1,
+        "link": "https://example.invalid/donki-sample/CME/2030-01-02T00:00:00-CME-001",
+        "cmeAnalyses": [
+          {
+            "isMostAccurate": true,
+            "time21_5": null,
+            "latitude": 0,
+            "longitude": 0,
+            "halfAngle": 40,
+            "speed": 520,
+            "type": "C",
+            "featureCode": "LE",
+            "measurementTechnique": "SWPC_CAT",
+            "levelOfData": 1,
+            "link": "https://example.invalid/donki-sample/CMEA/7",
+            "enlilList": [
+              {
+                "modelCompletionTime": "2030-01-02T04:00Z",
+                "au": 2.0,
+                "estimatedShockArrivalTime": null,
+                "estimatedDuration": null,
+                "rmin_re": null,
+                "kp_18": null,
+                "kp_90": null,
+                "kp_135": null,
+                "kp_180": null,
+                "isEarthGB": false,
+                "isEarthMinorImpact": false,
+                "link": "https://example.invalid/donki-sample/WSA-ENLIL/7",
+                "impactList": [
+                  {
+                    "location": "Mars",
+                    "arrivalTime": "2030-01-05T00:00Z",
+                    "isGlancingBlow": true,
+                    "isMinorImpact": true
+                  }
+                ],
+                "cmeIDs": []
+              }
+            ]
+          }
+        ],
+        "linkedEvents": null
+      },
+      {
+        "activityID": "2030-01-03T06:24:00-CME-001",
+        "catalog": "M2M_CATALOG",
+        "startTime": "2030-01-03T06:24Z",
+        "instruments": [
+          {
+            "displayName": "SOHO: LASCO/C2"
+          }
+        ],
+        "sourceLocation": "",
+        "activeRegionNum": null,
+        "note": "Halo CME from the X2.1 flare; the later ENLIL run counts.",
+        "submissionTime": "2030-01-03T06:24Z",
+        "versionId": 1,
+        "link": "https://example.invalid/donki-sample/CME/2030-01-03T06:24:00-CME-001",
+        "cmeAnalyses": [
+          {
+            "isMostAccurate": false,
+            "time21_5": null,
+            "latitude": 0,
+            "longitude": 0,
+            "halfAngle": 40,
+            "speed": 1500,
+            "type": "C",
+            "featureCode": "LE",
+            "measurementTechnique": "SWPC_CAT",
+            "levelOfData": 1,
+            "link": "https://example.invalid/donki-sample/CMEA/2a",
+            "enlilList": [
+              {
+                "modelCompletionTime": "2030-01-03T08:00Z",
+                "au": 2.0,
+                "estimatedShockArrivalTime": null,
+                "estimatedDuration": null,
+                "rmin_re": null,
+                "kp_18": null,
+                "kp_90": null,
+                "kp_135": null,
+                "kp_180": null,
+                "isEarthGB": false,
+                "isEarthMinorImpact": false,
+                "link": "https://example.invalid/donki-sample/WSA-ENLIL/2a",
+                "impactList": [
+                  {
+                    "location": "Mars",
+                    "arrivalTime": "2030-01-04T00:00Z",
+                    "isGlancingBlow": false,
+                    "isMinorImpact": false
+                  }
+                ],
+                "cmeIDs": []
+              }
+            ]
+          },
+          {
+            "isMostAccurate": true,
+            "time21_5": null,
+            "latitude": 0,
+            "longitude": 0,
+            "halfAngle": 40,
+            "speed": 1800,
+            "type": "C",
+            "featureCode": "LE",
+            "measurementTechnique": "SWPC_CAT",
+            "levelOfData": 1,
+            "link": "https://example.invalid/donki-sample/CMEA/2b",
+            "enlilList": [
+              {
+                "modelCompletionTime": "2030-01-03T10:00Z",
+                "au": 2.0,
+                "estimatedShockArrivalTime": null,
+                "estimatedDuration": null,
+                "rmin_re": null,
+                "kp_18": null,
+                "kp_90": null,
+                "kp_135": null,
+                "kp_180": null,
+                "isEarthGB": false,
+                "isEarthMinorImpact": false,
+                "link": "https://example.invalid/donki-sample/WSA-ENLIL/2b",
+                "impactList": [
+                  {
+                    "location": "Mars",
+                    "arrivalTime": "2030-01-05T06:24Z",
+                    "isGlancingBlow": false,
+                    "isMinorImpact": false
+                  }
+                ],
+                "cmeIDs": []
+              },
+              {
+                "modelCompletionTime": "2030-01-03T14:00Z",
+                "au": 2.0,
+                "estimatedShockArrivalTime": null,
+                "estimatedDuration": null,
+                "rmin_re": null,
+                "kp_18": null,
+                "kp_90": null,
+                "kp_135": null,
+                "kp_180": null,
+                "isEarthGB": false,
+                "isEarthMinorImpact": false,
+                "link": "https://example.invalid/donki-sample/WSA-ENLIL/2c",
+                "impactList": [
+                  {
+                    "location": "Psyche",
+                    "arrivalTime": "2030-01-06T00:00Z",
+                    "isGlancingBlow": true,
+                    "isMinorImpact": false
+                  },
+                  {
+                    "location": "Mars",
+                    "arrivalTime": "2030-01-05T12:24Z",
+                    "isGlancingBlow": false,
+                    "isMinorImpact": false
+                  }
+                ],
+                "cmeIDs": []
+              }
+            ]
+          }
+        ],
+        "linkedEvents": [
+          {
+            "activityID": "2030-01-03T06:00:00-FLR-001"
+          }
+        ]
+      },
+      {
+        "activityID": "2030-01-04T00:00:00-CME-001",
+        "catalog": "M2M_CATALOG",
+        "startTime": "2030-01-04T00:00Z",
+        "instruments": [
+          {
+            "displayName": "SOHO: LASCO/C2"
+          }
+        ],
+        "sourceLocation": "",
+        "activeRegionNum": null,
+        "note": "",
+        "submissionTime": "2030-01-04T00:00Z",
+        "versionId": 1,
+        "link": "https://example.invalid/donki-sample/CME/2030-01-04T00:00:00-CME-001",
+        "cmeAnalyses": [
+          {
+            "isMostAccurate": true,
+            "time21_5": null,
+            "latitude": 0,
+            "longitude": 0,
+            "halfAngle": 40,
+            "speed": 600,
+            "type": "C",
+            "featureCode": "LE",
+            "measurementTechnique": "SWPC_CAT",
+            "levelOfData": 1,
+            "link": "https://example.invalid/donki-sample/CMEA/3",
+            "enlilList": [
+              {
+                "modelCompletionTime": "2030-01-04T05:00Z",
+                "au": 2.0,
+                "estimatedShockArrivalTime": null,
+                "estimatedDuration": null,
+                "rmin_re": null,
+                "kp_18": null,
+                "kp_90": null,
+                "kp_135": null,
+                "kp_180": null,
+                "isEarthGB": false,
+                "isEarthMinorImpact": false,
+                "link": "https://example.invalid/donki-sample/WSA-ENLIL/3",
+                "impactList": [
+                  {
+                    "location": "Mars",
+                    "arrivalTime": "2030-01-08T00:00Z",
+                    "isGlancingBlow": true,
+                    "isMinorImpact": false
+                  }
+                ],
+                "cmeIDs": []
+              }
+            ]
+          }
+        ],
+        "linkedEvents": null
+      },
+      {
+        "activityID": "2030-01-05T00:00:00-CME-001",
+        "catalog": "M2M_CATALOG",
+        "startTime": "2030-01-05T00:00Z",
+        "instruments": [
+          {
+            "displayName": "SOHO: LASCO/C2"
+          }
+        ],
+        "sourceLocation": "",
+        "activeRegionNum": null,
+        "note": "Linked to the M5.0 flare only from the flare side.",
+        "submissionTime": "2030-01-05T00:00Z",
+        "versionId": 1,
+        "link": "https://example.invalid/donki-sample/CME/2030-01-05T00:00:00-CME-001",
+        "cmeAnalyses": [
+          {
+            "isMostAccurate": true,
+            "time21_5": null,
+            "latitude": 0,
+            "longitude": 0,
+            "halfAngle": 40,
+            "speed": 450,
+            "type": "C",
+            "featureCode": "LE",
+            "measurementTechnique": "SWPC_CAT",
+            "levelOfData": 1,
+            "link": "https://example.invalid/donki-sample/CMEA/4",
+            "enlilList": [
+              {
+                "modelCompletionTime": "2030-01-05T06:00Z",
+                "au": 2.0,
+                "estimatedShockArrivalTime": null,
+                "estimatedDuration": null,
+                "rmin_re": null,
+                "kp_18": null,
+                "kp_90": null,
+                "kp_135": null,
+                "kp_180": null,
+                "isEarthGB": false,
+                "isEarthMinorImpact": false,
+                "link": "https://example.invalid/donki-sample/WSA-ENLIL/4",
+                "impactList": [
+                  {
+                    "location": "Mars",
+                    "arrivalTime": "2030-01-09T12:00Z",
+                    "isGlancingBlow": false,
+                    "isMinorImpact": true
+                  }
+                ],
+                "cmeIDs": []
+              }
+            ]
+          }
+        ],
+        "linkedEvents": null
+      },
+      {
+        "activityID": "2030-01-06T00:00:00-CME-001",
+        "catalog": "M2M_CATALOG",
+        "startTime": "2030-01-06T00:00Z",
+        "instruments": [
+          {
+            "displayName": "SOHO: LASCO/C2"
+          }
+        ],
+        "sourceLocation": "",
+        "activeRegionNum": null,
+        "note": "Seen but not yet analysed.",
+        "submissionTime": "2030-01-06T00:00Z",
+        "versionId": 1,
+        "link": "https://example.invalid/donki-sample/CME/2030-01-06T00:00:00-CME-001",
+        "cmeAnalyses": null,
+        "linkedEvents": null
+      },
+      {
+        "activityID": "2030-01-06T06:00:00-CME-001",
+        "catalog": "M2M_CATALOG",
+        "startTime": "2030-01-06T06:00Z",
+        "instruments": [
+          {
+            "displayName": "SOHO: LASCO/C2"
+          }
+        ],
+        "sourceLocation": "",
+        "activeRegionNum": null,
+        "note": "",
+        "submissionTime": "2030-01-06T06:00Z",
+        "versionId": 1,
+        "link": "https://example.invalid/donki-sample/CME/2030-01-06T06:00:00-CME-001",
+        "cmeAnalyses": [
+          {
+            "isMostAccurate": true,
+            "time21_5": null,
+            "latitude": 0,
+            "longitude": 0,
+            "halfAngle": 40,
+            "speed": 1200,
+            "type": "C",
+            "featureCode": "LE",
+            "measurementTechnique": "SWPC_CAT",
+            "levelOfData": 1,
+            "link": "https://example.invalid/donki-sample/CMEA/6",
+            "enlilList": [
+              {
+                "modelCompletionTime": "2030-01-06T09:00Z",
+                "au": 2.0,
+                "estimatedShockArrivalTime": null,
+                "estimatedDuration": null,
+                "rmin_re": null,
+                "kp_18": null,
+                "kp_90": null,
+                "kp_135": null,
+                "kp_180": null,
+                "isEarthGB": false,
+                "isEarthMinorImpact": false,
+                "link": "https://example.invalid/donki-sample/WSA-ENLIL/6",
+                "impactList": [
+                  {
+                    "location": "Mars",
+                    "arrivalTime": "2030-01-08T06:00Z",
+                    "isGlancingBlow": false,
+                    "isMinorImpact": false
+                  },
+                  {
+                    "location": "Juice",
+                    "arrivalTime": "2030-01-12T00:00Z",
+                    "isGlancingBlow": false,
+                    "isMinorImpact": true
+                  }
+                ],
+                "cmeIDs": []
+              }
+            ]
+          }
+        ],
+        "linkedEvents": null
+      }
+    ]
+  },
+  "sep": {
+    "url": "https://ccmc.gsfc.nasa.gov/DONKI-API/get/SEP?startDate=2030-01-01&endDate=2030-01-07",
+    "records": [
+      {
+        "sepID": "2030-01-03T08:00:00-SEP-001",
+        "eventTime": "2030-01-03T08:00Z",
+        "instruments": [
+          {
+            "displayName": "GOES-P: SEISS >10 MeV"
+          }
+        ],
+        "submissionTime": "2030-01-03T08:00Z",
+        "versionId": 1,
+        "link": "https://example.invalid/donki-sample/SEP/2030-01-03T08:00:00-SEP-001",
+        "linkedEvents": [
+          {
+            "activityID": "2030-01-03T06:00:00-FLR-001"
+          }
+        ]
+      },
+      {
+        "sepID": "2030-01-03T09:30:00-SEP-001",
+        "eventTime": "2030-01-03T09:30Z",
+        "instruments": [
+          {
+            "displayName": "STEREO A: IMPACT 13-100 MeV"
+          }
+        ],
+        "submissionTime": "2030-01-03T09:30Z",
+        "versionId": 1,
+        "link": "https://example.invalid/donki-sample/SEP/2030-01-03T09:30:00-SEP-001",
+        "linkedEvents": [
+          {
+            "activityID": "2030-01-03T06:00:00-FLR-001"
+          }
+        ]
+      },
+      {
+        "sepID": "2030-01-06T12:00:00-SEP-001",
+        "eventTime": "2030-01-06T12:00Z",
+        "instruments": [
+          {
+            "displayName": "GOES-P: SEISS >10 MeV"
+          }
+        ],
+        "submissionTime": "2030-01-06T12:00Z",
+        "versionId": 1,
+        "link": "https://example.invalid/donki-sample/SEP/2030-01-06T12:00:00-SEP-001",
+        "linkedEvents": null
+      }
+    ]
+  }
+}

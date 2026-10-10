@@ -61,18 +61,25 @@ describe('launch countdown', () => {
 
 describe('arrival banner', () => {
   it('the arrival burn at Mars: IN ORBIT AT MARS!', () => {
+    // Reach the arrival burn the cheap way: jump event to event and let the robot answer each danger card (the clock
+    // runs on, so no order animation plays), spending one 100 ms slice per step. Sending orders here played their
+    // light-time animations: ~85 steps of 4 slices, each re-rendering the whole flight screen, which ran past the 20 s
+    // test timeout under the full parallel suite. Orders and their animations are tested in flyAndSurvive.test.tsx.
     open();
     const banner = () => screen.queryByText(MOMENT_WORDS.arrived('MARS', false));
-    for (let i = 0; i < 300 && !banner(); i++) {
-      const card = document.querySelector('.dc-choice:not([disabled])');
+    let steps = 0;
+    for (; steps < 60 && !banner(); steps++) {
+      const decide = screen.queryByRole('button', { name: /^LET THE ROBOT DECIDE/ });
       const cont = screen.queryByRole('button', { name: 'CONTINUE ▸' });
       const next = screen.queryByRole('button', { name: 'Next event' }) as HTMLButtonElement | null;
-      if (card) act(() => fireEvent.click(card));
+      if (decide) act(() => fireEvent.click(decide));
       else if (cont) act(() => fireEvent.click(cont));
       else if (next && !next.disabled) act(() => fireEvent.click(next));
-      pass(400, 100);
+      pass(100, 100);
     }
     expect(banner()).not.toBeNull();
+    // MAVEN, seed 2013: 10 event jumps, 3 cards and their 3 results (measured 16 steps); a guard against creeping back.
+    expect(steps).toBeLessThan(30);
   });
 });
 

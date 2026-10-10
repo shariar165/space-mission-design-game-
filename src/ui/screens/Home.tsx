@@ -8,13 +8,15 @@ import { CoachCard } from '../components/sd/CoachCard';
 import { ModeLever, type Mode } from '../components/sd/ModeLever';
 import { SoundToggle } from '../components/sd/SoundToggle';
 import { CrewPlate, type Crew } from '../components/sd/CrewFile';
+import { MarsNowPlate } from '../components/sd/MarsNowPlate';
+import type { MarsNow } from '../../engine/marsNow';
 import { SDIcon, type SDIconName } from '../components/sd/SDIcon';
 import { Teletype } from '../components/sd/Teletype';
 import { useReducedMotion } from '../opsGeometry';
 import { along, ring, useCycle, useIsPhone } from '../sdGeometry';
 import { isUnlocked, LEVELS, type Level, type Progress } from '../levels';
 import * as f from '../format';
-import { HOW_TO_PLAY, POSTCARD_WORDS } from '../sdWords';
+import { HOW_TO_PLAY, LIVE_WEATHER, POSTCARD_WORDS } from '../sdWords';
 
 /** The demo order loops every 6 s: 5 s of flight, then a second of RECEIVED (design). */
 export const HOME_LOOP_MS = 6000;
@@ -35,12 +37,15 @@ interface Props {
   progress: Progress;
   mode: Mode;
   onMode: (m: Mode) => void;
-  daily: { number: number; played: boolean };
+  /** weather: today's space weather once the DONKI snapshot has been read (spec UI rule 37). */
+  daily: { number: number; played: boolean; weather?: 'live' | 'offline' };
   rescue: { solved: number; total: number };
   notebook: { got: number; total: number };
   postcards: { got: number; total: number };
   /** Rank and badges (the crew file). */
   crew?: Crew;
+  /** Mars right now: today's distance, light time and next conjunction (engine marsNow). */
+  mars: MarsNow;
   onPlay: (l: Level) => void;
   onMissions: () => void;
   onDaily: () => void;
@@ -55,7 +60,7 @@ export function nextToPlay(progress: Progress): { level: Level; index: number } 
   return open.find((x) => !(progress[x.level.id] ?? 0)) ?? open[open.length - 1]!;
 }
 
-export function Home({ progress, mode, onMode, daily, rescue, notebook, postcards, crew, onPlay, onMissions, onDaily, onRescue, onNotebook, onPostcards }: Props) {
+export function Home({ progress, mode, onMode, daily, rescue, notebook, postcards, crew, mars, onPlay, onMissions, onDaily, onRescue, onNotebook, onPostcards }: Props) {
   const phone = useIsPhone();
   const still = useReducedMotion();
   const cycle = useCycle(HOME_LOOP_MS, !still);
@@ -72,7 +77,7 @@ export function Home({ progress, mode, onMode, daily, rescue, notebook, postcard
   const [howTo, setHowTo] = useState(false);
 
   const menu: MenuItem[] = [
-    { label: 'DAILY MISSION', sub: `Daily #${f.num(daily.number)}. Same mission for everyone today.`, icon: 'calendar', tag: daily.played ? 'DONE ✓' : 'NEW TODAY', hot: !daily.played, onClick: onDaily },
+    { label: 'DAILY MISSION', sub: `Daily #${f.num(daily.number)}. ${daily.weather === 'live' ? LIVE_WEATHER.homeLive : daily.weather === 'offline' ? LIVE_WEATHER.homeOffline : 'Same mission for everyone today.'}`, icon: 'calendar', tag: daily.played ? 'DONE ✓' : 'NEW TODAY', hot: !daily.played, onClick: onDaily },
     { label: 'RESCUE HISTORY', sub: 'Real robots that nearly died. Try to save them.', icon: 'rescue', tag: `${f.num(rescue.solved)} OF ${f.num(rescue.total)}`, hot: false, onClick: onRescue },
     { label: 'NOTEBOOK', sub: 'Real lessons you have earned.', icon: 'book', tag: `${f.num(notebook.got)} OF ${f.num(notebook.total)}`, hot: false, onClick: onNotebook },
     { label: POSTCARD_WORDS.menu, sub: POSTCARD_WORDS.menuSub, icon: 'postcard', tag: `${f.num(postcards.got)} OF ${f.num(postcards.total)}`, hot: false, onClick: onPostcards },
@@ -178,6 +183,7 @@ export function Home({ progress, mode, onMode, daily, rescue, notebook, postcard
         <span className="hm-count">{count}</span>
         <span>UNTIL THE ROBOT HEARS YOU</span>
       </div>
+      <MarsNowPlate mars={mars} />
     </div>
   );
 
@@ -198,6 +204,7 @@ export function Home({ progress, mode, onMode, daily, rescue, notebook, postcard
         {crt}
         {play}
         {menuEls}
+        <MarsNowPlate mars={mars} className="phone" />
         <button type="button" className="hm-missions" onClick={onMissions}>
           CHOOSE A MISSION ▸
         </button>

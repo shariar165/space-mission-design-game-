@@ -38,9 +38,12 @@ export function affordableResponses(options: HazardOption[], spare: Spare, oneTi
   return options.filter((o) => optionBlockers(o, spare, oneTimeUsed).length === 0);
 }
 
-/** A response's failure chance with the packed protections (Signal Delay kit): data value × the hazard's factor. */
-export function effectiveFailureChance(design: Design, hazardType: string, failureChance: number): number {
-  return Math.min(1, failureChance * (design.kit?.hazardFactor?.[hazardType] ?? 1));
+/**
+ * A response's failure chance with the packed protections (Signal Delay kit): data value × the hazard's factor ×
+ * the real event's severity (a live Daily's glancing or minor CME impact; 1 otherwise).
+ */
+export function effectiveFailureChance(design: Design, hazardType: string, failureChance: number, severity = 1): number {
+  return Math.min(1, failureChance * (design.kit?.hazardFactor?.[hazardType] ?? 1) * severity);
 }
 
 /** The safe choice: the lowest failure chance. */

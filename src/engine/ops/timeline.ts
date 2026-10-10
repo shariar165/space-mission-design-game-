@@ -47,6 +47,7 @@ import type {
   RandomDraws,
   ResponseSource,
 } from './types';
+import { stormCandidates, type RealStorm } from '../spaceWeather';
 
 const EPS = 1e-9;
 const YEAR = 365.25;
@@ -241,16 +242,20 @@ function boundRate(env: OpsEnvironment, type: string): number {
   }
 }
 
-export function drawRandom(env: OpsEnvironment, opts: { seed?: number; rng?: () => number }): RandomDraws {
+export function drawRandom(env: OpsEnvironment, opts: { seed?: number; rng?: () => number; storms?: RealStorm[] }): RandomDraws {
   const seed = opts.seed ?? 1;
   const stream = (name: string) => opts.rng ?? subRng(seed, name);
   const launch = stream('launch')();
   const ins = stream('insertion-anomaly');
   const insertion = { uAccept: ins(), uOutcome: ins() };
   const candidates: RandomDraws['candidates'] = {};
+  // A live Daily replays real DONKI dangers in their hazards' streams instead of drawing them (spec UI rule 37).
+  const realStreams = { 'solar-storm': stream('solar-storm'), 'cme-shock': stream('cme-shock') };
+  const real = opts.storms ? stormCandidates(env, opts.storms, (h) => realStreams[h]()) : undefined;
   for (const type of STREAM_HAZARDS) {
     const bound = boundRate(env, type);
-    candidates[type] = { bound_perDay: bound, list: drawCandidates(stream(type), bound, env.horizonDay + 1) };
+    const list = real && type in real ? real[type as keyof typeof real] : drawCandidates(stream(type), bound, env.horizonDay + 1);
+    candidates[type] = { bound_perDay: bound, list };
   }
   return { launch, insertion, candidates };
 }
@@ -469,10 +474,11 @@ function hazardRate(s: OpsState, type: string, t: number): number {
   }
 }
 
-function createHazard(s: OpsState, type: string, t: number, uOutcome: number) {
+function createHazard(s: OpsState, type: string, t: number, uOutcome: number, real?: RealStorm) {
   const h = HAZARDS[type]!;
   const n = s.hazards.filter((x) => x.type === type).length + 1;
-  const onset = h.detectedBy === 'earth' ? t + h.warningLead_days.value : t;
+  // A real CME strikes its ENLIL transit after Earth sees it erupt (spaceWeather.ts).
+  const onset = real?.arrival ? t + real.arrival.transit_days : h.detectedBy === 'earth' ? t + h.warningLead_days.value : t;
   const knownAt = h.detectedBy === 'earth' ? t : newsArrival(s.env, onset);
   const rec: HazardRecord = {
     id: `${type}-${n}`,
@@ -482,6 +488,7 @@ function createHazard(s: OpsState, type: string, t: number, uOutcome: number) {
     deadline: onset + h.deadline_days.value,
     endsAt: onset + h.duration_days.value,
     uOutcome,
+    ...(real ? { real } : {}),
     status: 'pending',
     onsetDone: false,
     knownDone: false,
@@ -577,7 +584,7 @@ function resolveOutcome(s: OpsState, rec: HazardRecord, t: number) {
   rec.outcomeDone = true;
   if (!rec.choice) return;
   const option = HAZARDS[rec.type]!.options.find((o) => o.id === rec.choice!.optionId)!;
-  const bad = rec.uOutcome < effectiveFailureChance(s.env.design, rec.type, option.failureChance.value);
+  const bad = rec.uOutcome < effectiveFailureChance(s.env.design, rec.type, option.failureChance.value, rec.real?.severity);
   rec.choice.badOutcome = bad;
   emit(s, t, 'response-outcome', { hazardId: rec.id, optionId: option.id, bad });
   if (!bad) return;
@@ -873,7 +880,8 @@ function processAt(s: OpsState, t: number) {
     let c = stream.list[s.cursors[type]!];
     while (c && c.t <= t + EPS) {
       s.cursors[type]! += 1;
-      if (s.status === 'flying' && c.uAccept < hazardRate(s, type, c.t) / stream.bound_perDay) createHazard(s, type, c.t, c.uOutcome);
+      // A real storm happened, so it is not thinned.
+      if (s.status === 'flying' && (c.real || c.uAccept < hazardRate(s, type, c.t) / stream.bound_perDay)) createHazard(s, type, c.t, c.uOutcome, c.real);
       c = stream.list[s.cursors[type]!];
     }
   }
