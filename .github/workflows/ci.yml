@@ -1,0 +1,34 @@
+# Check every pull request to main: typecheck and the whole test suite (engine, validation, data audit, jsdom
+# component tests). pages.yml runs the same tests after a push to main and only then deploys, so a red PR here is
+# one that would have blocked the Pages deploy. Separate from pages.yml: no build artifact, no deploy.
+# CI uses the runner's Node (same version as the venv's nodeenv); locally everything still lives in .venv.
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Typecheck and tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.16.0
+          cache: npm
+      - run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Tests
+        run: npm test

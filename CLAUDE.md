@@ -37,6 +37,8 @@ Playwright (`@playwright/test`, a devDependency) keeps its browsers inside the v
 
 There is no lint step.
 
+**CI:** every pull request to `main` runs `.github/workflows/ci.yml` (npm ci, `npm run typecheck`, `npm test`; no build, no deploy). Keep PRs green: the Pages deploy runs the same tests and stops on a failure.
+
 **Deploy:** every push to `main` runs `.github/workflows/pages.yml` (npm ci, npm test, a build with `VITE_BASE=/<repo>/`) and publishes `dist/` to GitHub Pages: https://shariar165.github.io/space-mission-design-game-/ . `.github/workflows/donki.yml` runs daily at 00:20 UTC (and on manual dispatch): it fetches NASA DONKI flares, CMEs and SEP events from the CCMC DONKI-API (`src/data/spaceWeather.json` `donki.apiBase`, no key), commits `public/data/donki-latest.json` as `github-actions[bot]`, and calls `pages.yml` to deploy, because a bot push does not trigger it. A manual run also records the 2024-05-08 → 14 fixtures. The game reads only that static file and never calls CCMC. Locally `base` stays `/`; in Git Bash set `MSYS_NO_PATHCONV=1` when you try a base path, or the path gets mangled.
 
 **Generated files:** `docs/VALIDATION_RESULTS.md` and `TODO_DATA.md` are written by the tests' `afterAll` hooks. Never edit them by hand; change the data or code and rerun.
