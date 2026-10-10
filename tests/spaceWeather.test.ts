@@ -4,7 +4,7 @@
 // context, named on the card of the SEP or CME DONKI links them to.
 // The edge cases run on a hand-written snapshot in the documented DONKI record format (no real week has them all);
 // the recorded block runs on real CCMC responses the DONKI GitHub Action saved (tests/fixtures/donki/recorded.json).
-import { existsSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { dailyDesign } from '../src/engine/daily';
 import { HAZARDS } from '../src/engine/data';
@@ -33,7 +33,7 @@ describe('DONKI → dangers: edge cases (hand-written documented-format sample)'
     expect(sample.window).toEqual({ startDate: '2030-01-01', endDate: '2030-01-07' });
     expect(sample.flr.records.length).toBe(4);
     expect(sample.cme.records.length).toBe(7);
-    expect(sample.sep.records.length).toBe(2);
+    expect(sample.sep.records.length).toBe(3);
     expect(readSnapshot('<!DOCTYPE html><html><body>Signal Delay</body></html>')).toBeUndefined(); // Vite's fallback page
     expect(readSnapshot('{"window": 3}')).toBeUndefined();
     expect(readSnapshot('')).toBeUndefined();
@@ -120,9 +120,18 @@ describe('DONKI → dangers: edge cases (hand-written documented-format sample)'
 
   it('an SEP is a radiation storm at its event time, with the linked flare and the instruments that saw it', () => {
     const s = realStorms(sample).find((x) => x.id === '2030-01-03T08:00:00-SEP-001')!;
-    expect(s).toMatchObject({ kind: 'sep', hazard: 'solar-storm', severity: 1, flare: 'X2.1', time: '2030-01-03T08:00Z', instruments: ['GOES-P: SEISS >10 MeV'] });
+    expect(s).toMatchObject({ kind: 'sep', hazard: 'solar-storm', severity: 1, flare: 'X2.1', time: '2030-01-03T08:00Z' });
     expect(s.arrival).toBeUndefined();
     expect(s.link).toBe('https://example.invalid/donki-sample/SEP/2030-01-03T08:00:00-SEP-001');
+  });
+
+  it('SEP records DONKI links to the same flare (one per instrument) are one radiation storm', () => {
+    // 08:00 (GOES) and 09:30 (STEREO A) both link to the X2.1 flare: one storm at the earlier time, both instruments.
+    const seps = realStorms(sample, { maxStorms: 99 }).filter((x) => x.kind === 'sep');
+    expect(seps.map((x) => x.id)).toEqual(['2030-01-03T08:00:00-SEP-001', '2030-01-06T12:00:00-SEP-001']);
+    const s = seps[0]!;
+    expect(s.instruments).toEqual(['GOES-P: SEISS >10 MeV', 'STEREO A: IMPACT 13-100 MeV']);
+    expect(s.eventIds).toEqual(['2030-01-03T06:00:00-FLR-001', '2030-01-03T08:00:00-SEP-001', '2030-01-03T09:30:00-SEP-001']);
   });
 
   it('ⓘ: the DONKI record for what was observed, and a separate WSA-ENLIL record for the predicted arrival', () => {
@@ -211,7 +220,7 @@ describe('recorded 2024-05-08 → 14 week, the Gannon storm (real CCMC responses
         window: { startDate: '2024-05-08', endDate: '2024-05-14' },
         flr: { url: 'recorded', records: body(fixture('flr-2024-05-08_2024-05-14.json')) },
         cme: { url: 'recorded', records: body(fixture('cme-2024-05-08_2024-05-14.json')) },
-        ...(existsSync(recordedSep) ? { sep: { url: 'recorded', records: body(recordedSep) } } : {}),
+        sep: { url: 'recorded', records: body(recordedSep) },
       }),
     )!;
 
@@ -237,9 +246,19 @@ describe('recorded 2024-05-08 → 14 week, the Gannon storm (real CCMC responses
     expect(realStorms(snapshot())).toEqual(storms);
   });
 
-  it.skipIf(!existsSync(recordedSep))('the recorded SEP events become radiation storms (pending the SEP recording)', () => {
-    const storms = realStorms(snapshot(), { maxStorms: 99 });
-    expect(storms.some((s) => s.kind === 'sep' && s.hazard === 'solar-storm')).toBe(true);
+  it('the 14 recorded SEP records are 4 radiation storms: one per flare DONKI links them to', () => {
+    // From the recorded IDs and links: May 9 13:59 + 14:25 (X2.2), May 10 12:59 + 13:02 + 13:35 + 14:50 (X3.9),
+    // May 11 02:10 + 04:07 (X5.8), May 13 12:44 … 18:07 (six records, M6.6).
+    const seps = realStorms(snapshot(), { maxStorms: 99 }).filter((s) => s.kind === 'sep');
+    expect(body(recordedSep).length).toBe(14);
+    expect(seps.map((s) => [s.id, s.flare])).toEqual([
+      ['2024-05-09T13:59:00-SEP-001', 'X2.2'],
+      ['2024-05-10T12:59:00-SEP-001', 'X3.9'],
+      ['2024-05-11T02:10:00-SEP-001', 'X5.8'],
+      ['2024-05-13T12:44:00-SEP-001', 'M6.6'],
+    ]);
+    expect(seps.every((s) => s.hazard === 'solar-storm' && s.link.startsWith('https://'))).toBe(true);
+    expect(seps.map((s) => s.eventIds.filter((id) => id.includes('SEP')).length)).toEqual([2, 4, 2, 6]);
   });
 });
 

@@ -1,5 +1,5 @@
 {
-  "_note": "NOT A RECORDING. Hand-written in the documented DONKI FLR/CME/SEP record format (flrID, peakTime, classType, linkedEvents; activityID, startTime, cmeAnalyses[].isMostAccurate/speed/enlilList[].modelCompletionTime/link/impactList[].location/arrivalTime/isGlancingBlow/isMinorImpact; sepID, eventTime, instruments), wrapped as a donki-latest.json snapshot. The week (2030-01-01 to 2030-01-07), IDs and links are invented to cover the rules no real week has all of: flares are context only (a B and a C flare, an X and an M flare linked one way or both); a CME with no Mars impact, one with no analyses, one whose Mars impact sits on an analysis that is not the most accurate, one with two ENLIL runs (the later run counts), direct / glancing / minor / glancing-and-minor impacts, two SEP events, and 7 qualifying storms against the cap of 4. The recorded fixtures (see recorded.json) come from the DONKI GitHub Action.",
+  "_note": "NOT A RECORDING. Hand-written in the documented DONKI FLR/CME/SEP record format (flrID, peakTime, classType, linkedEvents; activityID, startTime, cmeAnalyses[].isMostAccurate/speed/enlilList[].modelCompletionTime/link/impactList[].location/arrivalTime/isGlancingBlow/isMinorImpact; sepID, eventTime, instruments), wrapped as a donki-latest.json snapshot. The week (2030-01-01 to 2030-01-07), IDs and links are invented to cover the rules no real week has all of: flares are context only (a B and a C flare, an X and an M flare linked one way or both); a CME with no Mars impact, one with no analyses, one whose Mars impact sits on an analysis that is not the most accurate, one with two ENLIL runs (the later run counts), direct / glancing / minor / glancing-and-minor impacts, three SEP records of which two (linked to the same flare, seen by two instruments) are one storm, and 7 qualifying storms against the cap of 4. The recorded fixtures (see recorded.json) come from the DONKI GitHub Action.",
   "fetchedAt": "2030-01-08T00:20:00.000Z",
   "source": {
     "base": "https://ccmc.gsfc.nasa.gov/DONKI-API/get/",
@@ -56,6 +56,9 @@
           },
           {
             "activityID": "2030-01-03T08:00:00-SEP-001"
+          },
+          {
+            "activityID": "2030-01-03T09:30:00-SEP-001"
           }
         ]
       },
@@ -561,6 +564,23 @@
         "submissionTime": "2030-01-03T08:00Z",
         "versionId": 1,
         "link": "https://example.invalid/donki-sample/SEP/2030-01-03T08:00:00-SEP-001",
+        "linkedEvents": [
+          {
+            "activityID": "2030-01-03T06:00:00-FLR-001"
+          }
+        ]
+      },
+      {
+        "sepID": "2030-01-03T09:30:00-SEP-001",
+        "eventTime": "2030-01-03T09:30Z",
+        "instruments": [
+          {
+            "displayName": "STEREO A: IMPACT 13-100 MeV"
+          }
+        ],
+        "submissionTime": "2030-01-03T09:30Z",
+        "versionId": 1,
+        "link": "https://example.invalid/donki-sample/SEP/2030-01-03T09:30:00-SEP-001",
         "linkedEvents": [
           {
             "activityID": "2030-01-03T06:00:00-FLR-001"

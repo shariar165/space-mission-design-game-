@@ -117,7 +117,7 @@ export interface RealStorm {
   severity: number;
   /** The DONKI record page of the SEP or CME. */
   link: string;
-  /** The SEP or CME and its linked flare, sorted. */
+  /** The SEP records (one per instrument) or the CME, and the linked flare, sorted. */
   eventIds: string[];
   /** Where the event falls in the snapshot's window, 0 (start) to 1 (end). */
   windowFraction: number;
@@ -206,28 +206,41 @@ export function realStorms(s: DonkiSnapshot, opts: { maxStorms?: number; destina
   const all = flares(s);
   const out: { storm: RealStorm; ms: number }[] = [];
 
-  for (const r of s.sep.records.filter(isObj)) {
-    const id = str(r.sepID);
-    const time = str(r.eventTime);
-    const ms = timeMs(time);
-    if (!id || !time || Number.isNaN(ms)) continue;
-    const flare = linkedFlare(all, id, linkedIds(r));
+  // DONKI logs an SEP once per instrument or energy channel: records linked to the same flare (or, failing that, the
+  // same CME) are one radiation storm, at the earliest time, with every instrument and id.
+  const seps = new Map<string, { id: string; time: string; ms: number; link: string; flare?: Flare; instruments: string[]; ids: string[] }>();
+  const sepRecords = s.sep.records
+    .filter(isObj)
+    .map((r) => ({ r, id: str(r.sepID), time: str(r.eventTime), ms: timeMs(r.eventTime) }))
+    .filter((x): x is { r: Record<string, unknown>; id: string; time: string; ms: number } => !!x.id && !!x.time && !Number.isNaN(x.ms))
+    .sort((x, y) => x.ms - y.ms || x.id.localeCompare(y.id));
+  for (const { r, id, time, ms } of sepRecords) {
+    const links = linkedIds(r);
+    const flare = linkedFlare(all, id, links);
+    const key = flare?.id ?? links.find((x) => x.includes('-CME-')) ?? id;
     const instruments = Array.isArray(r.instruments) ? r.instruments.filter(isObj).map((x) => str(x.displayName)).filter((x): x is string => !!x) : [];
+    const g = seps.get(key);
+    if (g) {
+      g.ids.push(id);
+      for (const i of instruments) if (!g.instruments.includes(i)) g.instruments.push(i);
+    } else seps.set(key, { id, time, ms, link: linkOf(r, 'SEP'), ...(flare ? { flare } : {}), instruments, ids: [id] });
+  }
+  for (const g of seps.values()) {
     out.push({
-      ms,
+      ms: g.ms,
       storm: {
-        id,
+        id: g.id,
         kind: 'sep',
         hazard: 'solar-storm',
-        time,
-        date: new Date(ms).toISOString().slice(0, 10),
-        ...(flare ? { flare: flare.classType } : {}),
-        ...(instruments.length ? { instruments } : {}),
+        time: g.time,
+        date: new Date(g.ms).toISOString().slice(0, 10),
+        ...(g.flare ? { flare: g.flare.classType } : {}),
+        ...(g.instruments.length ? { instruments: g.instruments } : {}),
         impacts: [],
         severity: 1,
-        link: linkOf(r, 'SEP'),
-        eventIds: [id, ...(flare ? [flare.id] : [])].sort(),
-        windowFraction: fraction(ms),
+        link: g.link,
+        eventIds: [...g.ids, ...(g.flare ? [g.flare.id] : [])].sort(),
+        windowFraction: fraction(g.ms),
       },
     });
   }
