@@ -40,7 +40,7 @@ test('solar storm comes from the Sun', async ({ page }, info) => {
   for (let i = 0; i < 60; i++) {
     const card = page.getByRole('dialog', { name: /DANGER CARD|PLAN AHEAD/ });
     if (await card.isVisible()) {
-      if (/SOLAR STORM/.test((await card.textContent()) ?? '')) break;
+      if (/SOLAR RADIATION STORM/.test((await card.textContent()) ?? '')) break;
       await page.locator('.dc-choice:not([disabled])').first().click();
       await page.waitForTimeout(400);
       continue;
@@ -51,7 +51,7 @@ test('solar storm comes from the Sun', async ({ page }, info) => {
     if ((await next.isVisible()) && (await next.isEnabled())) await next.click();
     await page.waitForTimeout(300);
   }
-  await expect(page.getByRole('dialog', { name: /DANGER CARD/ })).toContainText('SOLAR STORM');
+  await expect(page.getByRole('dialog', { name: /DANGER CARD/ })).toContainText('SOLAR RADIATION STORM');
   await page.screenshot({ path: `${OUT}storm-card-${p}.png` });
   await page.locator('.dc-choice:not([disabled])').first().click();
   // The order crosses to the robot, then the wave crosses from the Sun at 10×.

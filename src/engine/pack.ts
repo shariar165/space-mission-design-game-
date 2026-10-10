@@ -211,7 +211,7 @@ export function dangerDeck(destination: DestinationId, packed: Packed): DeckCard
   if (dest.missionType === 'orbiter') cards.push({ id: 'eclipse', kind: 'eclipse' });
   if (destination !== 'moon') cards.push({ id: 'conjunction', kind: 'conjunction' });
   for (const [id, h] of Object.entries(HAZARDS)) {
-    if (h.options.length && h.destinations.includes(destination)) cards.push({ id, kind: 'hazard', detectedBy: h.detectedBy });
+    if (h.options.length && !h.liveOnly && h.destinations.includes(destination)) cards.push({ id, kind: 'hazard', detectedBy: h.detectedBy });
   }
   return cards.map((c) => {
     const parts = packed.map((q) => q.id).filter((id) => part(id).covers.includes(c.id));

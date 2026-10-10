@@ -11,7 +11,8 @@ import { pathAhead } from '../src/engine/flightMap';
 import type { OpsState } from '../src/engine/ops/types';
 import { starterDesign } from '../src/ui/starters';
 import { readFileSync } from 'node:fs';
-import { readSnapshot, realStorms, stormOnset, stormSourced } from '../src/engine/spaceWeather';
+import { predictionSourced, readSnapshot, realStorms, stormOnset, stormSourced } from '../src/engine/spaceWeather';
+import { HAZARDS } from '../src/engine/data';
 
 const maven = presetDesign('maven');
 const DAY_S = 86_400;
@@ -406,32 +407,41 @@ describe('moments (what the flight screen celebrates)', () => {
   });
 });
 
-describe('live Daily: real DONKI storms replace the seeded solar-storm stream (spec UI rule 37)', () => {
+describe('live Daily: real DONKI dangers replace the seeded solar-storm and CME streams (spec UI rule 37)', () => {
   const design = starterDesign('mars', '2026-10-08');
   const storms = realStorms(readSnapshot(readFileSync(new URL('./fixtures/donki/documented-format-sample.json', import.meta.url), 'utf8'))!);
   const env = ops.startOperations(design).env;
+  const of = (h: string) => storms.filter((x) => x.hazard === h);
 
-  it('one solar-storm candidate per real storm, at its replayed time, and no seeded ones', () => {
+  it('one candidate per real danger in its hazard’s stream: SEPs warned a day ahead, CMEs at eruption', () => {
     const s = ops.startOperations(design, { seed: 7, storms });
-    const list = s.draws.candidates['solar-storm']!.list;
-    expect(list.map((c) => c.real?.id)).toEqual(storms.map((x) => x.id));
-    list.forEach((c, i) => expect(c.t).toBeCloseTo(stormOnset(env, storms[i]!) - 1, 9)); // warned 1 day before onset
+    const sep = s.draws.candidates['solar-storm']!.list;
+    const cme = s.draws.candidates['cme-shock']!.list;
+    expect(sep.map((c) => c.real?.id)).toEqual(of('solar-storm').map((x) => x.id));
+    expect(cme.map((c) => c.real?.id)).toEqual(of('cme-shock').map((x) => x.id));
+    sep.forEach((c, i) => expect(c.t).toBeCloseTo(stormOnset(env, of('solar-storm')[i]!) - 1, 9)); // warned 1 day before onset
+    cme.forEach((c, i) => expect(c.t).toBeCloseTo(stormOnset(env, of('cme-shock')[i]!) - of('cme-shock')[i]!.arrival!.transit_days, 9));
   });
 
-  it('every other hazard stream draws exactly what the seeded run draws', () => {
+  it('every other hazard stream draws exactly what the seeded run draws; seeded play has no CME shocks', () => {
     const live = ops.startOperations(design, { seed: 7, storms }).draws;
     const seeded = ops.startOperations(design, { seed: 7 }).draws;
-    for (const type of Object.keys(seeded.candidates).filter((t) => t !== 'solar-storm')) expect(live.candidates[type]).toEqual(seeded.candidates[type]);
+    for (const type of Object.keys(seeded.candidates).filter((t) => t !== 'solar-storm' && t !== 'cme-shock')) expect(live.candidates[type]).toEqual(seeded.candidates[type]);
+    expect(seeded.candidates['cme-shock']!.list).toEqual([]);
     expect(live.launch).toBe(seeded.launch);
     expect(live.insertion).toEqual(seeded.insertion);
   });
 
-  it('with no bad luck, each real storm becomes exactly one solar-storm hazard at its onset, named by DONKI', () => {
-    // rng 0.999999 rejects every seeded candidate (u > λ/λ̄), so only the real storms strike.
+  it('with no bad luck, each real danger becomes exactly one hazard at its onset, named by DONKI', () => {
+    // rng 0.999999 rejects every seeded candidate (u > λ/λ̄), so only the real dangers strike.
     const s = ops.finishOperations(ops.startOperations(design, { rng: () => 0.999999, storms }), { policy: 'safe' });
-    const hit = s.hazards.filter((h) => h.type === 'solar-storm');
-    expect(hit.map((h) => h.real?.id)).toEqual(storms.map((x) => x.id));
-    hit.forEach((h, i) => expect(h.onset).toBeCloseTo(stormOnset(env, storms[i]!), 9));
+    for (const h of ['solar-storm', 'cme-shock']) {
+      const hit = s.hazards.filter((x) => x.type === h);
+      expect(hit.map((x) => x.real?.id)).toEqual(of(h).map((x) => x.id));
+      hit.forEach((x, i) => expect(x.onset).toBeCloseTo(stormOnset(env, of(h)[i]!), 9));
+    }
+    // A CME shock arrives its ENLIL transit after Earth learns of it.
+    for (const x of s.hazards.filter((h) => h.type === 'cme-shock')) expect(x.onset - x.knownAt).toBeCloseTo(x.real!.arrival!.transit_days, 9);
   });
 
   it('a replay from the seed, storms and action log rebuilds the same mission', () => {
@@ -441,13 +451,32 @@ describe('live Daily: real DONKI storms replace the seeded solar-storm stream (s
     expect(again.status).toBe(done.status);
   });
 
-  it('the danger card carries the DONKI record for ⓘ', () => {
+  it('the first card is the real CME: its DONKI record and its WSA-ENLIL arrival for ⓘ, "arrives in" = the ENLIL transit', () => {
     let s = ops.startOperations(design, { rng: () => 0.999999, storms });
     while (s.status === 'flying' && !consoleView(s).alert) s = ops.advanceOperations(s);
     const alert = consoleView(s).alert!;
-    expect(alert.type).toBe('solar-storm');
-    expect(alert.real?.id).toBe(storms[0]!.id);
-    expect(alert.realSource).toEqual(stormSourced(storms[0]!));
-    expect(flyCard(s)!.realSource?.url).toBe(storms[0]!.link);
+    const first = storms[0]!;
+    expect(first.kind).toBe('cme');
+    expect(alert.type).toBe('cme-shock');
+    expect(alert.real?.id).toBe(first.id);
+    expect(alert.realSource).toEqual(stormSourced(first));
+    expect(alert.predictionSource).toEqual(predictionSourced(first));
+    const card = flyCard(s)!;
+    expect(card.realSource?.url).toBe(first.link);
+    expect(card.predictionSource?.url).toBe(first.arrival!.link);
+    // Earth sees it erupt as the decision opens, so the shock is 2.25 days (ENLIL) away: 2.25 × 86 400 s.
+    expect(card.onsetIn_s).toBeCloseTo(first.arrival!.transit_days * DAY_S - (s.t - alert.knownAt) * DAY_S, 3);
+  });
+
+  it('a glancing or minor impact scales every response’s failure chance (×0.5 / ×0.25, game estimates)', () => {
+    const minor = storms.map((x) => (x.kind === 'cme' ? { ...x, severity: 0.25, arrival: { ...x.arrival!, isMinorImpact: true } } : x));
+    let s = ops.startOperations(design, { rng: () => 0.999999, storms: minor });
+    while (s.status === 'flying' && !consoleView(s).alert) s = ops.advanceOperations(s);
+    const alert = consoleView(s).alert!;
+    for (const o of alert.options) {
+      const base = HAZARDS['cme-shock']!.options.find((x) => x.id === o.id)!.failureChance.value;
+      expect(o.failureChance.value).toBeCloseTo(base * 0.25, 12);
+      expect(o.failureChance.source).toMatch(/WSA-ENLIL minor impact/);
+    }
   });
 });

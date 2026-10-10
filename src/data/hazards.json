@@ -1,6 +1,6 @@
 {
   "solar-storm": {
-    "title": "Solar storm",
+    "title": "Solar radiation storm",
     "destinations": [
       "moon",
       "venus",
@@ -40,7 +40,7 @@
       "isGameEstimate": true,
       "url": "https://science.nasa.gov/mission/mars-odyssey/"
     },
-    "prompt": "Solar observatories saw a big eruption heading your way. Protect the instruments?",
+    "prompt": "Energetic particles from the Sun are on their way: a solar radiation storm. Protect the instruments?",
     "options": [
       {
         "id": "shelter",
@@ -67,6 +67,79 @@
         "cost": {},
         "failureChance": {
           "value": 0.08,
+          "unit": "probability",
+          "source": "Game estimate",
+          "isGameEstimate": true
+        },
+        "failureEffect": "instrument"
+      }
+    ]
+  },
+  "cme-shock": {
+    "title": "CME shock",
+    "liveOnly": true,
+    "destinations": [
+      "mars"
+    ],
+    "phases": [
+      "cruise",
+      "science",
+      "extended",
+      "return"
+    ],
+    "detectedBy": "earth",
+    "warningLead_days": {
+      "value": 3,
+      "unit": "days",
+      "source": "Game estimate, used only when a CME has no predicted transit: a live Daily takes the real eruption-to-Mars time from NASA's WSA-ENLIL prediction",
+      "isGameEstimate": true
+    },
+    "deadline_days": {
+      "value": 0,
+      "unit": "days after onset",
+      "source": "Game rule: a protective command must reach the craft before the shock arrives",
+      "isGameEstimate": true
+    },
+    "duration_days": {
+      "value": 2,
+      "unit": "days",
+      "source": "Game estimate: the shock and the plasma cloud behind it take about a day or two to pass",
+      "isGameEstimate": true
+    },
+    "realHistory": {
+      "value": "In September 2017 a strong CME reached Mars. MAVEN saw a global aurora, and the radiation dose at the surface measured by Curiosity doubled.",
+      "unit": "",
+      "source": "Summary from general knowledge; to verify against NASA source",
+      "isGameEstimate": true,
+      "url": "https://science.nasa.gov/mission/maven/"
+    },
+    "prompt": "A coronal mass ejection is heading for Mars. NASA's model predicts when its shock arrives. Ride it out?",
+    "options": [
+      {
+        "id": "safe-mode",
+        "label": "Put the craft in safe mode until the shock passes",
+        "cost": {
+          "scienceDays": {
+            "value": 2,
+            "unit": "days",
+            "source": "Game estimate",
+            "isGameEstimate": true
+          }
+        },
+        "failureChance": {
+          "value": 0.01,
+          "unit": "probability",
+          "source": "Game estimate",
+          "isGameEstimate": true
+        },
+        "failureEffect": "instrument"
+      },
+      {
+        "id": "keep-observing",
+        "label": "Keep observing the shock hit Mars",
+        "cost": {},
+        "failureChance": {
+          "value": 0.06,
           "unit": "probability",
           "source": "Game estimate",
           "isGameEstimate": true

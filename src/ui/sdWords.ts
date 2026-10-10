@@ -26,6 +26,8 @@ export const TILE: Record<TileKey, { name: string; icon: SDIconName; help: strin
 export const OPTION_SHORT: Record<string, string> = {
   'solar-storm.shelter': 'SHIELD UP',
   'solar-storm.keep-observing': 'KEEP WORKING',
+  'cme-shock.safe-mode': 'SAFE MODE',
+  'cme-shock.keep-observing': 'WATCH IT HIT',
   'mars-dust-storm.raise-periapsis': 'CLIMB HIGHER',
   'mars-dust-storm.wait-it-out': 'WAIT IT OUT',
   'mars-dust-storm.carry-on': 'CARRY ON',
@@ -145,7 +147,8 @@ export const SCIENCE_PARTS: PartId[] = ['camera', 'spectrometer', 'magnetometer'
 export const DANGER_LOOK: Record<string, { title: string; short: string; line: string; icon: SDIconName }> = {
   eclipse: { title: 'ECLIPSE SEASON', short: 'ECLIPSE', line: 'The planet hides the Sun. Power runs low.', icon: 'eclipse' },
   conjunction: { title: 'SUN IN THE WAY', short: 'SUN', line: 'No calls home for about two weeks.', icon: 'conj' },
-  'solar-storm': { title: 'SOLAR STORM', short: 'STORM', line: 'The Sun spits particles that fry electronics.', icon: 'storm' },
+  'solar-storm': { title: 'RADIATION STORM', short: 'STORM', line: 'The Sun spits fast particles that fry electronics.', icon: 'storm' },
+  'cme-shock': { title: 'CME SHOCK', short: 'CME', line: 'A cloud of solar plasma slams into Mars.', icon: 'storm' },
   'mars-dust-storm': { title: 'DUST STORM', short: 'DUST', line: 'Mars air swells and drags on low orbits.', icon: 'dust' },
   debris: { title: 'COMET DUST', short: 'DEBRIS', line: 'Tiny grains hit faster than bullets.', icon: 'debris' },
   'reaction-wheel': { title: 'WHEEL FAILURE', short: 'WHEEL', line: 'A spinning wheel that points the robot wears out.', icon: 'sys' },
@@ -247,6 +250,7 @@ export function panelWords(
 
 export const PANEL_SOUND: Partial<Record<string, string>> = {
   'solar-storm': 'ZZZT!',
+  'cme-shock': 'WHUMP!',
   'mars-dust-storm': 'WHOOOSH',
   debris: 'PING!',
   'reaction-wheel': 'GRRRK',
@@ -342,6 +346,7 @@ export const LESSON_WORDS: Record<string, { title: string; body: string }> = {
 /** How a hazard reads after "Face …" in an unlock hint. */
 const HAZARD_PHRASE: Record<string, string> = {
   'solar-storm': 'a solar storm',
+  'cme-shock': 'a CME shock',
   'mars-dust-storm': 'a dust storm',
   debris: 'comet dust',
   'reaction-wheel': 'a wheel failure',
@@ -419,6 +424,12 @@ export const DAILY_BRIEFING: Briefing = {
 /** The Daily's space weather (spec UI rule 37): real DONKI storms, or the seeded stand-in when the file can't be read. */
 export const LIVE_WEATHER = {
   live: 'LIVE SUN · NASA DONKI',
+  /** The danger card's "arrives in" ⓘ title for a real CME. */
+  prediction: 'NASA WSA-ENLIL MODEL PREDICTION',
+  /** ENLIL severity on a real CME card. */
+  severity: { direct: 'DIRECT HIT', glancing: 'GLANCING BLOW', minor: 'MINOR IMPACT' },
+  /** Context: the flare a real storm came from. */
+  fromFlare: (cls: string) => `From a ${cls} flare.`,
   offline: 'OFFLINE — SIMULATED WEATHER',
   homeLive: 'Same mission for everyone today, with this week’s real solar storms.',
   homeOffline: 'Same mission for everyone today. Offline — simulated weather.',
@@ -565,6 +576,7 @@ export const ROBOT_WORDS = {
 type Line = (dest: string) => string;
 const HIT_LINES: Record<string, Line[]> = {
   'solar-storm': [() => 'Storm’s here! Particles are pinging off my panels!', () => 'Another solar storm. I can feel it in my circuits.'],
+  'cme-shock': [() => 'The CME just hit! Mars is glowing with aurora under me.', () => 'Shock wave from the Sun. Everything is rattling.'],
   'mars-dust-storm': [() => 'Dust storm below! The air is puffing up toward my orbit.'],
   debris: [() => 'Whoa! Something tiny just went whizzing past me!'],
   'reaction-wheel': [() => 'One of my spinning wheels is grinding. Ouch.'],

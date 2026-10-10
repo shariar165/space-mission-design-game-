@@ -20,7 +20,16 @@ export async function flyToEnd(page: Page, mobile: boolean) {
       continue;
     }
     if (await page.getByRole('dialog', { name: /DANGER CARD|PLAN AHEAD/ }).isVisible()) {
-      if (mobile) await page.locator('.dc-choice:not([disabled])').first().click();
+      // In a solar conjunction no order can be sent: every choice is disabled, so the robot decides.
+      const decide = page.getByRole('button', { name: /^LET THE ROBOT DECIDE/ });
+      if ((await page.locator('.dc-choice:not([disabled])').count()) === 0 && (await decide.isVisible())) {
+        await decide.click();
+        await page.waitForTimeout(300);
+        continue;
+      }
+      // ← picks the left choice on a desktop; when that one cannot be paid for (a used spare), click the first that can.
+      const leftOpen = await page.locator('.dc-choice.side-0:not([disabled])').count();
+      if (mobile || leftOpen === 0) await page.locator('.dc-choice:not([disabled])').first().click();
       else await page.keyboard.press('ArrowLeft');
       await page.waitForTimeout(300);
       continue;

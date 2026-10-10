@@ -18,6 +18,8 @@ describe('fetch-donki script', () => {
     expect(url).toBe('https://ccmc.gsfc.nasa.gov/DONKI-API/get/FLR?startDate=2024-05-08&endDate=2024-05-14');
     expect(url.startsWith(spaceWeather.donki.apiBase.value)).toBe(true);
     expect(url).not.toMatch(/api_key/);
+    // Solar energetic particle events (radiation storms) come from the same base.
+    expect(donkiUrl('SEP', '2024-05-08', '2024-05-14')).toBe('https://ccmc.gsfc.nasa.gov/DONKI-API/get/SEP?startDate=2024-05-08&endDate=2024-05-14');
   });
 
   it('an empty 200 means no events; a web page or an object is an error', () => {
@@ -35,7 +37,9 @@ describe('fetch-donki script', () => {
       window: { startDate: '2026-10-01', endDate: '2026-10-07' },
       flr: { url: 'f', records: [] },
       cme: { url: 'c', records: [] },
+      sep: { url: 's', records: [] },
     });
+    expect(s.sep.url).toBe('s');
     expect(s.source).toEqual({ base: spaceWeather.donki.apiBase.value, announcement: 'https://ccmc.gsfc.nasa.gov/news/major-updates/' });
     expect(s.window.endDate).toBe('2026-10-07');
   });

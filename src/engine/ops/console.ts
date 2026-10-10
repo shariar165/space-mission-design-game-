@@ -24,7 +24,7 @@ import type {
   PowerPlan,
   ResponseSource,
 } from './types';
-import { stormSourced, type RealStorm } from '../spaceWeather';
+import { predictionSourced, stormSourced, type RealStorm } from '../spaceWeather';
 
 /** Game rules of the console's display (registered in the data audit). */
 export const CONSOLE_RULES = {
@@ -190,6 +190,8 @@ export interface ConsoleAlert {
   /** Live Daily: the real DONKI storm behind this card, and its ⓘ record. */
   real?: RealStorm;
   realSource?: Sourced<string>;
+  /** A real CME: NASA's WSA-ENLIL predicted arrival (a model prediction, not an observation). */
+  predictionSource?: Sourced<string>;
 }
 
 export interface ConsoleCommand {
@@ -450,8 +452,10 @@ function alertView(s: OpsState): ConsoleAlert | undefined {
   const offeredIds = new Set(offered.map((o) => o.id));
   // Packed protections (Signal Delay kit) scale the failure chance; the data value is kept when there are none.
   const chance = (o: (typeof h.options)[number]): Sourced<number> => {
-    const v = effectiveFailureChance(s.env.design, rec.type, o.failureChance.value);
-    return v === o.failureChance.value ? o.failureChance : derived(v, o.failureChance.unit, `${o.failureChance.source} × the packed protection`);
+    const v = effectiveFailureChance(s.env.design, rec.type, o.failureChance.value, rec.real?.severity);
+    return v === o.failureChance.value
+      ? o.failureChance
+      : derived(v, o.failureChance.unit, `${o.failureChance.source}${s.env.design.kit?.hazardFactor?.[rec.type] !== undefined ? ' × the packed protection' : ''}${rec.real && rec.real.severity !== 1 ? ` × ${rec.real.severity} (WSA-ENLIL ${rec.real.arrival?.isMinorImpact ? 'minor impact' : 'glancing blow'})` : ''}`);
   };
   return {
     decisionId: dec.id,
@@ -460,7 +464,7 @@ function alertView(s: OpsState): ConsoleAlert | undefined {
     title: h.title,
     prompt: h.prompt,
     realHistory: h.realHistory,
-    ...(rec.real ? { real: rec.real, realSource: stormSourced(rec.real) } : {}),
+    ...(rec.real ? { real: rec.real, realSource: stormSourced(rec.real), ...(rec.real.arrival ? { predictionSource: predictionSourced(rec.real)! } : {}) } : {}),
     detectedBy: h.detectedBy,
     onset: rec.onset,
     knownAt: rec.knownAt,

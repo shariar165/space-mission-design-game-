@@ -1,4 +1,5 @@
-// Fetch NASA DONKI solar flares (FLR) and CMEs from CCMC and save them for the game (spec: UI rules, live Daily).
+// Fetch NASA DONKI solar flares (FLR), CMEs and solar energetic particle events (SEP) from CCMC and save them for
+// the game (spec: UI rules, live Daily).
 // The game never calls CCMC: this script runs in the daily GitHub Action (.github/workflows/donki.yml) and writes a
 // static snapshot, public/data/donki-latest.json, that the game reads from its own origin.
 //
@@ -14,7 +15,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SETTINGS = JSON.parse(readFileSync(join(ROOT, 'src/data/spaceWeather.json'), 'utf8')).donki;
-const KINDS = /** @type {const} */ (['FLR', 'CME']);
+const KINDS = /** @type {const} */ (['FLR', 'CME', 'SEP']);
 const DAY_MS = 86_400_000;
 const REQUEST_TIMEOUT_MS = 60_000;
 
@@ -41,13 +42,14 @@ export function parseBody(body) {
 }
 
 /** The snapshot the game reads. */
-export function buildSnapshot({ fetchedAt, window, flr, cme }) {
+export function buildSnapshot({ fetchedAt, window, flr, cme, sep }) {
   return {
     fetchedAt,
     source: { base: SETTINGS.apiBase.value, announcement: SETTINGS.apiBase.url },
     window,
     flr,
     cme,
+    sep,
   };
 }
 
@@ -67,7 +69,7 @@ async function latest(todayIso) {
     out[kind.toLowerCase()] = { url, records };
     console.log(`${kind} ${window.startDate} → ${window.endDate}: ${records.length} records`);
   }
-  const snapshot = buildSnapshot({ fetchedAt: new Date().toISOString(), window, flr: out.flr, cme: out.cme });
+  const snapshot = buildSnapshot({ fetchedAt: new Date().toISOString(), window, flr: out.flr, cme: out.cme, sep: out.sep });
   const file = join(ROOT, 'public/data/donki-latest.json');
   mkdirSync(dirname(file), { recursive: true });
   writeFileSync(file, `${JSON.stringify(snapshot, null, 2)}\n`);

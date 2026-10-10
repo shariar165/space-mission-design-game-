@@ -238,12 +238,18 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
   const hazardCard: CardView | undefined =
     card && a
       ? {
-          icon: a.type === 'solar-storm' ? 'storm' : a.type === 'mars-dust-storm' ? 'dust' : a.type === 'debris' ? 'debris' : a.type === 'insertion-anomaly' ? 'orbit' : 'sys',
+          icon: a.type === 'solar-storm' || a.type === 'cme-shock' ? 'storm' : a.type === 'mars-dust-storm' ? 'dust' : a.type === 'debris' ? 'debris' : a.type === 'insertion-anomaly' ? 'orbit' : 'sys',
           kicker: card.realSource ? LIVE_WEATHER.realKicker : 'DANGER CARD',
           title: a.title.toUpperCase(),
-          line: a.prompt,
+          line: a.real?.flare ? `${a.prompt} ${LIVE_WEATHER.fromFlare(a.real.flare)}` : a.prompt,
           day: `DAY ${f.num(Math.floor(state!.t))}`,
-          hits: { k: 'DANGER ARRIVES', v: arrivesWords(card.onsetIn_s) },
+          hits: {
+            k: a.real?.arrival
+              ? `DANGER ARRIVES · ${a.real.arrival.isMinorImpact ? LIVE_WEATHER.severity.minor : a.real.arrival.isGlancingBlow ? LIVE_WEATHER.severity.glancing : LIVE_WEATHER.severity.direct}`
+              : 'DANGER ARRIVES',
+            v: arrivesWords(card.onsetIn_s),
+            ...(card.predictionSource ? { s: card.predictionSource } : {}),
+          },
           takes: { k: phone ? 'ORDER TAKES' : 'YOUR ORDER TAKES', v: f.durationWords(a.oneWay_s) },
           history: card.realSource
             ? { k: LIVE_WEATHER.realEvent, s: card.realSource }

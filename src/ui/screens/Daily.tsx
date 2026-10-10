@@ -16,6 +16,7 @@ const CANVAS_COLOR: Record<DailyResult, string> = { held: '#2f8a4a', cost: '#d8a
 const EMOJI: Record<DailyResult, string> = { held: '🟩', cost: '🟨', hurt: '🟥' };
 const ICON_EMOJI: Record<string, string> = {
   'solar-storm': '☀️',
+  'cme-shock': '💥',
   'mars-dust-storm': '🌪️',
   debris: '☄️',
   'reaction-wheel': '⚙️',

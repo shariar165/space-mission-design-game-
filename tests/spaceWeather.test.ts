@@ -1,14 +1,17 @@
-// NASA DONKI records → the Daily's real solar storms (engine: src/engine/spaceWeather.ts; spec UI rule 37).
+// NASA DONKI records → the live Daily's real dangers (engine: src/engine/spaceWeather.ts; spec UI rule 37).
+// A solar energetic particle event (SEP) is a solar radiation storm; a CME is a danger only when NASA's WSA-ENLIL
+// model predicts it reaches Mars, and then it is a CME shock that arrives at the predicted time. Flares are only
+// context, named on the card of the SEP or CME DONKI links them to.
 // The edge cases run on a hand-written snapshot in the documented DONKI record format (no real week has them all);
 // the recorded block runs on real CCMC responses the DONKI GitHub Action saved (tests/fixtures/donki/recorded.json).
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { dailyDesign } from '../src/engine/daily';
 import { HAZARDS } from '../src/engine/data';
 import { prepareOps } from '../src/engine/ops/timeline';
 import {
-  flareFlux_Wm2,
   isFresh,
+  predictionSourced,
   readSnapshot,
   realStorms,
   SPACE_WEATHER,
@@ -23,12 +26,14 @@ import { starterDesign } from '../src/ui/starters';
 const fixture = (name: string) => new URL(`./fixtures/donki/${name}`, import.meta.url);
 const sampleText = readFileSync(fixture('documented-format-sample.json'), 'utf8');
 const sample = readSnapshot(sampleText)!;
+const DAY = 86_400_000;
 
-describe('DONKI → storms: edge cases (hand-written documented-format sample)', () => {
+describe('DONKI → dangers: edge cases (hand-written documented-format sample)', () => {
   it('reads a snapshot; anything else (a web page, bad JSON, a missing window) is no snapshot', () => {
     expect(sample.window).toEqual({ startDate: '2030-01-01', endDate: '2030-01-07' });
-    expect(sample.flr.records.length).toBe(5);
-    expect(sample.cme.records.length).toBe(5);
+    expect(sample.flr.records.length).toBe(4);
+    expect(sample.cme.records.length).toBe(7);
+    expect(sample.sep.records.length).toBe(2);
     expect(readSnapshot('<!DOCTYPE html><html><body>Signal Delay</body></html>')).toBeUndefined(); // Vite's fallback page
     expect(readSnapshot('{"window": 3}')).toBeUndefined();
     expect(readSnapshot('')).toBeUndefined();
@@ -36,8 +41,17 @@ describe('DONKI → storms: edge cases (hand-written documented-format sample)',
     expect(readSnapshot(JSON.stringify(noWindow))).toBeUndefined();
   });
 
-  it('a quiet week (no records) is a live snapshot with no storms, not an offline one', () => {
-    const quiet = readSnapshot(JSON.stringify({ ...JSON.parse(sampleText), flr: { url: 'f', records: [] }, cme: { url: 'c', records: [] } }))!;
+  it('a snapshot from before SEP was fetched still reads, with no SEP events', () => {
+    const { sep: _s, ...old } = JSON.parse(sampleText) as DonkiSnapshot;
+    const s = readSnapshot(JSON.stringify(old))!;
+    expect(s.sep.records).toEqual([]);
+    expect(realStorms(s).every((x) => x.hazard === 'cme-shock')).toBe(true);
+  });
+
+  it('a quiet week (no records) is a live snapshot with no dangers, not an offline one', () => {
+    const quiet = readSnapshot(
+      JSON.stringify({ ...JSON.parse(sampleText), flr: { url: 'f', records: [] }, cme: { url: 'c', records: [] }, sep: { url: 's', records: [] } }),
+    )!;
     expect(quiet).toBeDefined();
     expect(realStorms(quiet)).toEqual([]);
   });
@@ -53,62 +67,79 @@ describe('DONKI → storms: edge cases (hand-written documented-format sample)',
     expect(isFresh(sample, '2030-01-06')).toBe(false);
   });
 
-  it('flare class → GOES peak flux: M = 10⁻⁵ W/m², X = 10⁻⁴, each letter a factor of ten', () => {
-    expect(flareFlux_Wm2('M1.0')).toBeCloseTo(1e-5, 15);
-    expect(flareFlux_Wm2('M2.3')).toBeCloseTo(2.3e-5, 15);
-    expect(flareFlux_Wm2('X2.1')).toBeCloseTo(2.1e-4, 15);
-    expect(flareFlux_Wm2('C9.9')).toBeCloseTo(9.9e-6, 15);
-    expect(flareFlux_Wm2('B5')).toBeCloseTo(5e-7, 15);
-    expect(flareFlux_Wm2('nonsense')).toBeUndefined();
-  });
-
-  it('filters, merges linked pairs, keeps the 4 strongest and returns them in time order', () => {
-    // Qualifying (M/X flares at peak time, CMEs ≥ 1000 km/s at start time; strength = value / tier threshold):
-    //   M1.0 Jan 2 00:00 (1.0), X2.1 Jan 3 06:00 + linked CME 1800 km/s (tier X: max(2.1, 1800/1500 = 1.2) = 2.1),
-    //   CME 1000 km/s Jan 4 (1.0), M5.0 Jan 5 (5.0), CME 1600 km/s Jan 6 00:00 (first analysis, none marked most
-    //   accurate; tier X: 1600/1500 = 1.07), M1.2 Jan 6 12:00 (1.2).
-    // Dropped: C9.9 (below 10⁻⁵), CME 999 km/s, CME with no analyses.
-    // Rank: X2.1+CME, CME 1600, M5.0, M1.2 | M1.0, CME 1000 (cap 4). In time order:
-    const storms = realStorms(sample);
-    expect(SPACE_WEATHER.storms.maxStorms.value).toBe(4);
-    expect(storms.map((s) => s.id)).toEqual([
-      '2030-01-03T06:00:00-FLR-001',
-      '2030-01-05T00:00:00-FLR-001',
-      '2030-01-06T00:00:00-CME-001',
-      '2030-01-06T12:00:00-FLR-001',
-    ]);
-    const [x, m5, cme, m12] = storms as [RealStorm, RealStorm, RealStorm, RealStorm];
-    expect(x).toMatchObject({ kind: 'flare+cme', classType: 'X2.1', speed_kms: 1800, time: '2030-01-03T06:00Z', date: '2030-01-03', link: 'https://example.invalid/donki-sample/FLR/3' });
-    expect(x.eventIds).toEqual(['2030-01-03T06:00:00-FLR-001', '2030-01-03T06:24:00-CME-001']);
-    expect(m5).toMatchObject({ kind: 'flare', classType: 'M5.0', date: '2030-01-05' });
-    expect(m5.speed_kms).toBeUndefined();
-    expect(cme).toMatchObject({ kind: 'cme', speed_kms: 1600, date: '2030-01-06', link: 'https://example.invalid/donki-sample/CME/4' });
-    expect(m12).toMatchObject({ kind: 'flare', classType: 'M1.2' });
-    // Position in the 7-day window: Jan 3 06:00 is 2.25 d after Jan 1 00:00 → 2.25 / 7.
-    expect(x.windowFraction).toBeCloseTo(2.25 / 7, 12);
-    expect(m12.windowFraction).toBeCloseTo(5.5 / 7, 12);
-  });
-
-  it('the thresholds sit exactly on the edges: M1.0 and 1000 km/s are kept, C9.9 and 999 km/s are not', () => {
-    // With the cap lifted, every qualifying storm shows: 6 of them.
+  it('dangers: every SEP, and each CME the most-accurate analysis’s ENLIL run predicts at Mars; never a flare', () => {
+    // Qualifying, with severity (direct 1, glancing 0.5, minor 0.25, both → the smaller):
+    //   CME Jan 2 00:00 (glancing + minor → 0.25), CME Jan 3 06:24 (direct, 1), SEP Jan 3 08:00 (1),
+    //   CME Jan 4 00:00 (glancing, 0.5), CME Jan 5 00:00 (minor, 0.25), CME Jan 6 06:00 (direct, 1), SEP Jan 6 12:00 (1).
+    // Not dangers: the four flares (context only), the 999 km/s CME that misses Mars, the CME with no analyses.
     const all = realStorms(sample, { maxStorms: 99 });
-    const ids = all.map((s) => s.id);
-    expect(ids).toContain('2030-01-02T00:00:00-FLR-001'); // M1.0
-    expect(ids).toContain('2030-01-04T00:00:00-CME-001'); // 1000 km/s
-    expect(ids).not.toContain('2030-01-01T12:00:00-FLR-001'); // C9.9
-    expect(ids).not.toContain('2030-01-01T18:00:00-CME-001'); // 999 km/s
-    expect(ids).not.toContain('2030-01-07T09:00:00-CME-001'); // no analysis
-    expect(all.length).toBe(6);
+    expect(all.map((s) => s.id)).toEqual([
+      '2030-01-02T00:00:00-CME-001',
+      '2030-01-03T06:24:00-CME-001',
+      '2030-01-03T08:00:00-SEP-001',
+      '2030-01-04T00:00:00-CME-001',
+      '2030-01-05T00:00:00-CME-001',
+      '2030-01-06T06:00:00-CME-001',
+      '2030-01-06T12:00:00-SEP-001',
+    ]);
+    expect(all.map((s) => s.severity)).toEqual([0.25, 1, 1, 0.5, 0.25, 1, 1]);
+    expect(all.map((s) => s.hazard)).toEqual(['cme-shock', 'cme-shock', 'solar-storm', 'cme-shock', 'cme-shock', 'cme-shock', 'solar-storm']);
+    expect(all.some((s) => s.id.includes('FLR'))).toBe(false);
   });
 
-  it('ⓘ: a Sourced record that names the DONKI events and links the record', () => {
-    const src = stormSourced(realStorms(sample)[0]!);
-    expect(src.url).toBe('https://example.invalid/donki-sample/FLR/3');
-    expect(src.isGameEstimate).toBe(false);
-    expect(src.source).toContain('NASA DONKI');
-    expect(src.source).toContain('2030-01-03T06:00:00-FLR-001');
-    expect(src.source).toContain('2030-01-03T06:24:00-CME-001');
-    expect(src.value).toContain('X2.1');
+  it('the cap keeps the 4 most severe (ties: earlier first), in time order', () => {
+    // Severity 1: CME Jan 3 06:24, SEP Jan 3 08:00, CME Jan 6 06:00, SEP Jan 6 12:00 — exactly four.
+    expect(SPACE_WEATHER.storms.maxStorms.value).toBe(4);
+    expect(realStorms(sample).map((s) => s.id)).toEqual([
+      '2030-01-03T06:24:00-CME-001',
+      '2030-01-03T08:00:00-SEP-001',
+      '2030-01-06T06:00:00-CME-001',
+      '2030-01-06T12:00:00-SEP-001',
+    ]);
+  });
+
+  it('a CME arrives when the latest ENLIL run of its most-accurate analysis says, never from another analysis', () => {
+    const c = realStorms(sample).find((s) => s.id === '2030-01-03T06:24:00-CME-001')!;
+    // Two runs (10:00 and 14:00); the 14:00 run's Mars arrival 2030-01-05T12:24Z counts. The 1500 km/s analysis that is
+    // not the most accurate (arrival Jan 4) is ignored. Transit = Jan 5 12:24 − Jan 3 06:24 = 2 d 6 h = 2.25 d.
+    expect(c).toMatchObject({ kind: 'cme', hazard: 'cme-shock', speed_kms: 1800, flare: 'X2.1', time: '2030-01-03T06:24Z', date: '2030-01-03' });
+    expect(c.arrival).toMatchObject({ location: 'Mars', time: '2030-01-05T12:24Z', isGlancingBlow: false, isMinorImpact: false, link: 'https://example.invalid/donki-sample/WSA-ENLIL/2c' });
+    expect(c.arrival!.transit_days).toBeCloseTo(2.25, 12);
+    // Every tracked location of that run is kept for future levels.
+    expect(c.impacts.map((i) => i.location).sort()).toEqual(['Mars', 'Psyche']);
+    expect(c.eventIds).toEqual(['2030-01-03T06:00:00-FLR-001', '2030-01-03T06:24:00-CME-001']);
+    // Position in the 7-day window: Jan 3 06:24 is 2 d 6 h 24 min after Jan 1 00:00.
+    expect(c.windowFraction).toBeCloseTo((2 + 6.4 / 24) / 7, 12);
+  });
+
+  it('a flare linked only from its own side is still named on the CME card', () => {
+    const all = realStorms(sample, { maxStorms: 99 });
+    expect(all.find((s) => s.id === '2030-01-05T00:00:00-CME-001')!.flare).toBe('M5.0');
+    expect(all.find((s) => s.id === '2030-01-04T00:00:00-CME-001')!.flare).toBeUndefined();
+  });
+
+  it('an SEP is a radiation storm at its event time, with the linked flare and the instruments that saw it', () => {
+    const s = realStorms(sample).find((x) => x.id === '2030-01-03T08:00:00-SEP-001')!;
+    expect(s).toMatchObject({ kind: 'sep', hazard: 'solar-storm', severity: 1, flare: 'X2.1', time: '2030-01-03T08:00Z', instruments: ['GOES-P: SEISS >10 MeV'] });
+    expect(s.arrival).toBeUndefined();
+    expect(s.link).toBe('https://example.invalid/donki-sample/SEP/2030-01-03T08:00:00-SEP-001');
+  });
+
+  it('ⓘ: the DONKI record for what was observed, and a separate WSA-ENLIL record for the predicted arrival', () => {
+    const [cme, sep] = realStorms(sample) as [RealStorm, RealStorm];
+    const obs = stormSourced(cme);
+    expect(obs.url).toBe(cme.link);
+    expect(obs.isGameEstimate).toBe(false);
+    expect(obs.source).toContain('NASA DONKI');
+    expect(obs.source).toContain('2030-01-03T06:24:00-CME-001');
+    expect(obs.value).toContain('X2.1');
+    const pred = predictionSourced(cme)!;
+    expect(pred.source).toContain('NASA WSA-ENLIL model prediction');
+    expect(pred.source).toMatch(/not an observation/);
+    expect(pred.url).toBe('https://example.invalid/donki-sample/WSA-ENLIL/2c');
+    expect(pred.value).toContain('2030-01-05 12:24 UTC');
+    expect(predictionSourced(sep)).toBeUndefined();
+    expect(stormSourced(sep).value).toMatch(/solar energetic particle/i);
   });
 });
 
@@ -118,55 +149,69 @@ describe('replaying the real week across the Daily flight', () => {
   const span = env.primeEndDay - cruiseStart;
   const lead = HAZARDS['solar-storm']!.warningLead_days.value;
   const allowed = HAZARDS['solar-storm']!.phases;
-  const at = (windowFraction: number): RealStorm => ({ ...realStorms(sample)[0]!, windowFraction });
+  const storms = realStorms(sample);
+  const sep = storms.find((s) => s.kind === 'sep')!;
+  const cme = storms.find((s) => s.kind === 'cme')!;
+  const at = (s: RealStorm, windowFraction: number): RealStorm => ({ ...s, windowFraction });
 
-  it('an event halfway through the week strikes halfway from the start of cruise to the end of the prime mission', () => {
+  it('an SEP halfway through the week strikes halfway from the start of cruise to the end of the prime mission', () => {
     // onset = cruiseStart + 0.5 × (primeEndDay − cruiseStart); Earth is warned warningLead_days (1 d) before.
     const onset = cruiseStart + 0.5 * span;
     expect(allowed).toContain(env.days[Math.floor(onset)]!.phase);
-    expect(stormOnset(env, at(0.5))).toBeCloseTo(onset, 9);
-    expect(stormOnset(env, at(0))).toBeCloseTo(cruiseStart, 9);
-    const [c] = stormCandidates(env, [at(0.5)], () => 0.25);
-    expect(c!.t).toBeCloseTo(onset - lead, 9);
-    expect(c!.uAccept).toBe(0);
-    expect(c!.uOutcome).toBe(0.25);
-    expect(c!.real?.id).toBe('2030-01-03T06:00:00-FLR-001');
+    expect(stormOnset(env, at(sep, 0.5))).toBeCloseTo(onset, 9);
+    expect(stormOnset(env, at(sep, 0))).toBeCloseTo(cruiseStart, 9);
+    const c = stormCandidates(env, [at(sep, 0.5)], () => 0.25)['solar-storm']![0]!;
+    expect(c.t).toBeCloseTo(onset - lead, 9);
+    expect(c.uAccept).toBe(0);
+    expect(c.uOutcome).toBe(0.25);
+    expect(c.real?.id).toBe(sep.id);
+  });
+
+  it('a CME is seen when it erupts (its replayed time) and strikes after its real ENLIL transit, unscaled', () => {
+    // Eruption at f = 0.5 → Earth sees it at cruiseStart + 0.5 × span; the shock arrives 2.25 days later (ENLIL).
+    const seen = cruiseStart + 0.5 * span;
+    expect(stormOnset(env, at(cme, 0.5))).toBeCloseTo(seen + 2.25, 9);
+    const c = stormCandidates(env, [at(cme, 0.5)], () => 0.5)['cme-shock']![0]!;
+    expect(c.t).toBeCloseTo(seen, 9);
   });
 
   it('an onset on a day storms cannot strike (the arrival burn) moves to the next day they can', () => {
     expect(allowed).not.toContain(env.days[env.arrivalDay]!.phase);
-    const f = (env.arrivalDay + 0.25 - cruiseStart) / span;
     const next = env.days.find((d) => d.day > env.arrivalDay && allowed.includes(d.phase))!.day;
-    expect(stormOnset(env, at(f))).toBe(next);
+    expect(stormOnset(env, at(sep, (env.arrivalDay + 0.25 - cruiseStart) / span))).toBe(next);
+    // A CME keeps its real transit: the warning moves with the onset.
+    const f = (env.arrivalDay + 0.25 - 2.25 - cruiseStart) / span;
+    expect(stormOnset(env, at(cme, f))).toBe(next);
+    expect(stormCandidates(env, [at(cme, f)], () => 0.5)['cme-shock']![0]!.t).toBeCloseTo(next - 2.25, 9);
   });
 
-  it('candidates come in time order, one per storm, each with its own outcome draw', () => {
-    const storms = realStorms(sample);
+  it('candidates: one per storm, per hazard, in time order, each with its own outcome draw', () => {
     const draws = [0.1, 0.2, 0.3, 0.4];
     let i = 0;
     const cs = stormCandidates(env, storms, () => draws[i++]!);
-    expect(cs.map((c) => c.real!.id)).toEqual(storms.map((s) => s.id));
-    expect(cs.map((c) => c.uOutcome)).toEqual(draws);
-    for (let k = 1; k < cs.length; k++) expect(cs[k]!.t).toBeGreaterThanOrEqual(cs[k - 1]!.t);
+    expect(cs['solar-storm']!.map((c) => c.real!.id)).toEqual(storms.filter((s) => s.kind === 'sep').map((s) => s.id));
+    expect(cs['cme-shock']!.map((c) => c.real!.id)).toEqual(storms.filter((s) => s.kind === 'cme').map((s) => s.id));
+    expect([...cs['solar-storm']!, ...cs['cme-shock']!].map((c) => c.uOutcome).sort()).toEqual(draws);
+    for (const list of Object.values(cs)) for (let k = 1; k < list.length; k++) expect(list[k]!.t).toBeGreaterThanOrEqual(list[k - 1]!.t);
   });
 });
 
-const recordedFlr = fixture('flr-2024-05-08_2024-05-14.json');
-const recordedCme = fixture('cme-2024-05-08_2024-05-14.json');
+const body = (u: URL) => {
+  const t = readFileSync(u, 'utf8');
+  return t.trim() === '' ? [] : (JSON.parse(t) as unknown[]);
+};
+const recordedSep = fixture('sep-2024-05-08_2024-05-14.json');
 
 describe('recorded 2024-05-08 → 14 week, the Gannon storm (real CCMC responses)', () => {
-  const body = (u: URL) => {
-    const t = readFileSync(u, 'utf8');
-    return t.trim() === '' ? [] : (JSON.parse(t) as unknown[]);
-  };
   const snapshot = () =>
     readSnapshot(
       JSON.stringify({
         fetchedAt: '2024-05-15T00:20:00.000Z',
         source: { base: SPACE_WEATHER.donki.apiBase.value, announcement: SPACE_WEATHER.donki.apiBase.url },
         window: { startDate: '2024-05-08', endDate: '2024-05-14' },
-        flr: { url: 'recorded', records: body(recordedFlr) },
-        cme: { url: 'recorded', records: body(recordedCme) },
+        flr: { url: 'recorded', records: body(fixture('flr-2024-05-08_2024-05-14.json')) },
+        cme: { url: 'recorded', records: body(fixture('cme-2024-05-08_2024-05-14.json')) },
+        ...(existsSync(recordedSep) ? { sep: { url: 'recorded', records: body(recordedSep) } } : {}),
       }),
     )!;
 
@@ -177,25 +222,33 @@ describe('recorded 2024-05-08 → 14 week, the Gannon storm (real CCMC responses
     expect(s.cme.records.length).toBeGreaterThan(0);
   });
 
-  it('the week of the May 2024 storms gives the full deck of 4, led by X flares, each linked to DONKI', () => {
-    // NOAA: several X-class flares from region 3664 between May 8 and May 14, 2024.
+  it('the week of the May 2024 storms fills the deck; each CME card has a predicted Mars arrival after its eruption', () => {
     const storms = realStorms(snapshot());
     expect(storms.length).toBe(SPACE_WEATHER.storms.maxStorms.value);
-    expect(storms.some((s) => s.classType?.startsWith('X'))).toBe(true);
     for (const s of storms) {
       expect(s.link).toMatch(/^https:\/\//);
       expect(s.date >= '2024-05-08' && s.date <= '2024-05-14').toBe(true);
+      if (s.kind === 'cme') {
+        expect(s.arrival!.location).toBe('Mars');
+        expect(Date.parse(s.arrival!.time)).toBeGreaterThan(Date.parse(s.time));
+        expect(s.arrival!.transit_days).toBeCloseTo((Date.parse(s.arrival!.time) - Date.parse(s.time)) / DAY, 9);
+      }
     }
     expect(realStorms(snapshot())).toEqual(storms);
+  });
+
+  it.skipIf(!existsSync(recordedSep))('the recorded SEP events become radiation storms (pending the SEP recording)', () => {
+    const storms = realStorms(snapshot(), { maxStorms: 99 });
+    expect(storms.some((s) => s.kind === 'sep' && s.hazard === 'solar-storm')).toBe(true);
   });
 });
 
 describe('the committed live snapshot (public/data/donki-latest.json, refreshed daily by the Action)', () => {
-  it('reads as a snapshot with a 7-day window; its storms all link to DONKI (shape only: the content changes daily)', () => {
+  it('reads as a snapshot with a 7-day window; its dangers all link to DONKI (shape only: the content changes daily)', () => {
     const live = readSnapshot(readFileSync(new URL('../public/data/donki-latest.json', import.meta.url), 'utf8'));
     expect(live).toBeDefined();
     // endDate − startDate = 6 days → a 7-day window.
-    expect((Date.parse(live!.window.endDate) - Date.parse(live!.window.startDate)) / 86_400_000).toBe(SPACE_WEATHER.donki.windowDays.value - 1);
+    expect((Date.parse(live!.window.endDate) - Date.parse(live!.window.startDate)) / DAY).toBe(SPACE_WEATHER.donki.windowDays.value - 1);
     for (const s of realStorms(live!)) expect(s.link).toMatch(/^https:\/\//);
   });
 });

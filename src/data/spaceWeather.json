@@ -7,10 +7,10 @@
     "loadTimeout_ms": { "value": 6000, "unit": "ms", "source": "Game rule (Daily): how long the game waits for the snapshot file before flying with simulated weather", "isGameEstimate": true }
   },
   "storms": {
-    "flareMinFlux_Wm2": { "value": 1e-5, "unit": "W/m² (GOES 0.1–0.8 nm peak flux)", "source": "NOAA SWPC, Solar Flares (Radio Blackouts): an M-class flare peaks at 10⁻⁵ W/m² or more. Game rule: M and X flares become storms", "url": "https://www.swpc.noaa.gov/phenomena/solar-flares-radio-blackouts", "isGameEstimate": false },
-    "xFlux_Wm2": { "value": 1e-4, "unit": "W/m² (GOES 0.1–0.8 nm peak flux)", "source": "NOAA SWPC, Solar Flares (Radio Blackouts): an X-class flare peaks at 10⁻⁴ W/m² or more", "url": "https://www.swpc.noaa.gov/phenomena/solar-flares-radio-blackouts", "isGameEstimate": false },
-    "cmeMinSpeed_kms": { "value": 1000, "unit": "km/s", "source": "Game estimate: a CME this fast becomes a storm card", "isGameEstimate": true },
-    "strongCmeSpeed_kms": { "value": 1500, "unit": "km/s", "source": "Game estimate: a CME this fast ranks with X flares when the deck keeps the strongest", "isGameEstimate": true },
-    "maxStorms": { "value": 4, "unit": "storms per Daily", "source": "Game rule (Daily): at most this many real storms, the strongest first", "isGameEstimate": true }
+    "enlilLocation": { "value": { "mars": "Mars" }, "unit": "destination → WSA-ENLIL impactList location", "source": "NASA DONKI CME analyses: WSA-ENLIL runs list predicted impacts by location (Mars, Psyche, OSIRIS-APEX, Europa Clipper, Juice, …). Only Mars is flown so far", "url": "https://ccmc.gsfc.nasa.gov/news/major-updates/", "isGameEstimate": false },
+    "trackedLocations": { "value": ["Mars", "Psyche", "OSIRIS-APEX", "Europa Clipper", "Juice"], "unit": "WSA-ENLIL impactList locations", "source": "Game rule: predicted impacts kept on each storm for future levels", "isGameEstimate": true },
+    "glancingFactor": { "value": 0.5, "unit": "× failure chance", "source": "Game estimate: a glancing blow (ENLIL isGlancingBlow) halves every response's failure chance", "isGameEstimate": true },
+    "minorFactor": { "value": 0.25, "unit": "× failure chance", "source": "Game estimate: a minor impact (ENLIL isMinorImpact) quarters every response's failure chance", "isGameEstimate": true },
+    "maxStorms": { "value": 4, "unit": "storms per Daily", "source": "Game rule (Daily): at most this many real storms, the most severe first", "isGameEstimate": true }
   }
 }

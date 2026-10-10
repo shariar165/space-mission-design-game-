@@ -98,6 +98,8 @@ export const RISK_WORD = ['', 'VERY LOW', 'LOW', 'MEDIUM', 'HIGH', 'VERY HIGH'] 
 export const OPTION_BLURB: Record<string, string> = {
   'solar-storm.shelter': 'Switch the instruments off and wait it out.',
   'solar-storm.keep-observing': 'Measure the storm up close. An instrument might be damaged.',
+  'cme-shock.safe-mode': 'Shut down to the basics until the shock has passed.',
+  'cme-shock.keep-observing': 'Watch the shock hit Mars, as MAVEN did. An instrument might be damaged.',
   'mars-dust-storm.raise-periapsis': 'Burn a little fuel to stay above the swelling air.',
   'mars-dust-storm.wait-it-out': 'Stop taking pictures until the dust settles.',
   'mars-dust-storm.carry-on': 'Keep flying as planned and hope the air stays thin.',

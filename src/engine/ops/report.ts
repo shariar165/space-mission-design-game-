@@ -38,7 +38,7 @@ function endDay(s: OpsState): number {
 
 const answered = (s: OpsState) => s.hazards.filter((h): h is HazardRecord & { choice: NonNullable<HazardRecord['choice']> } => !!h.choice && h.outcomeDone);
 const chanceOf = (s: OpsState, h: HazardRecord & { choice: NonNullable<HazardRecord['choice']> }) =>
-  effectiveFailureChance(s.env.design, h.type, HAZARDS[h.type]!.options.find((o) => o.id === h.choice.optionId)?.failureChance.value ?? 0);
+  effectiveFailureChance(s.env.design, h.type, HAZARDS[h.type]!.options.find((o) => o.id === h.choice.optionId)?.failureChance.value ?? 0, h.real?.severity);
 
 /**
  * Four key moments in time order: launch first, the end last (lost or prime mission complete), and the two most
