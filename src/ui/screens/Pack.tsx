@@ -1,28 +1,22 @@
 // PACK (Signal Delay design, screen 02; spec UI rules, Pack). The rocket nose is a backpack: every part takes
 // squares, and weight is a separate limit on the scale beside it. The Danger Deck shows what is coming, so you pack
-// for it, then pick a green launch day, arm, and launch. Every number comes from the engine (pack.ts,
+// for it, then arm and launch on the best day (or change it on the Launch Day step; Engineer always goes there). Every number comes from the engine (pack.ts,
 // evaluateDesign, cadetGauges); this screen only lays them out.
-import { useEffect, useMemo, useState } from 'react';
+import { useState } from 'react';
 import { cadetGauges } from '../../engine/cadet';
 import { DESTINATIONS, HAZARDS, LESSONS } from '../../engine/data';
-import { evaluateDesign } from '../../engine/index';
 import {
-  buildPackDesign,
-  calendarTransfers,
   coversOf,
   dangerDeck,
-  dayQuality,
   fitPart,
   footprint,
   initialPack,
   noseSquares,
-  onDay,
   PACK,
   packBlockers,
   packPart,
   partsCovering,
   unpackPart,
-  type CalendarDay,
   type Packed,
   type PartId,
 } from '../../engine/pack';
@@ -34,6 +28,7 @@ import { NameTag } from '../components/sd/NameTag';
 import { MissionSteps } from '../components/sd/MissionSteps';
 import { ModeLever, type Mode } from '../components/sd/ModeLever';
 import { SDIcon } from '../components/sd/SDIcon';
+import { useLaunchPlan } from '../launchPlan';
 import { useIsPhone } from '../sdGeometry';
 import {
   DAY_WORDS,
@@ -41,7 +36,7 @@ import {
   deckWhen,
   GAME_NAME,
   LAUNCH_CHECKS,
-  monthSpan,
+  LAUNCH_DAY_WORDS,
   NAV,
   NO_ROOM,
   PACK_BLOCKER,
@@ -74,41 +69,38 @@ interface Props {
   /** The robot's name (empty: the default) and its setter. */
   robotName?: string;
   onRobotName?: (name: string) => void;
+  /** The packing so far (kept by App while the player visits the Launch Day step), and its setter. */
+  packed?: Packed;
+  onPacked?: (p: Packed) => void;
+  /** The player's launch day (calendar index); none: the best day. */
+  pick?: number;
+  /** Open the Launch Day step (CHANGE ▸). */
+  onDays?: () => void;
 }
 
 type Hl = { dangers: string[]; parts: PartId[] } | undefined;
 
-export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLesson, onHome, onLaunch, onBack, brief, onBriefSeen, robotName, onRobotName }: Props) {
+export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLesson, onHome, onLaunch, onBack, brief, onBriefSeen, robotName, onRobotName, packed: kept, onPacked, pick, onDays }: Props) {
   const engineer = mode === 'engineer';
   const phone = useIsPhone();
   const dest = DESTINATIONS[base.destination];
-  const [packed, setPacked] = useState<Packed>(() => initialPack(base, shelf));
+  const [packed, setPackedRaw] = useState<Packed>(() => kept ?? initialPack(base, shelf));
+  const setPacked = (p: Packed) => {
+    setPackedRaw(p);
+    onPacked?.(p);
+  };
   const [hl, setHl] = useState<Hl>();
   const [armed, setArmed] = useState(false);
   const [noRoom, setNoRoom] = useState<PartId>();
-  const [days, setDays] = useState<CalendarDay[]>();
-  const [dayIdx, setDayIdx] = useState(PACK.calendar.before.value);
   const [briefOpen, setBriefOpen] = useState(!!brief?.open);
 
-  // The calendar's transfers are worked out once per level, one tick after the screen paints.
-  useEffect(() => {
-    setDays(undefined);
-    const id = setTimeout(() => setDays(calendarTransfers(base.destination, base.launchDate)), 0);
-    return () => clearTimeout(id);
-  }, [base.destination, base.launchDate]);
-
-  const day = days?.[dayIdx];
-  const design = useMemo(() => {
-    const d = buildPackDesign(base, packed);
-    return day ? onDay(d, day) : d;
-  }, [base, packed, day]);
-  const ev = useMemo(() => evaluateDesign(design), [design]);
+  // The launch day: the best one (engine bestLaunchDay) unless the player picked one on the Launch Day step.
+  const plan = useLaunchPlan(base, packed, pick);
+  const { days, day, design, ev, q } = plan;
   const blockers = packBlockers(packed, ev);
   const deck = dangerDeck(base.destination, packed);
   const sq = noseSquares(packed);
   const weight = cadetGauges(ev).weight;
-  const quality = days ? days.map((t) => dayQuality(design, ev, t)) : [];
-  const q = quality[dayIdx];
   const packedIds = new Set(packed.map((p) => p.id));
   const tray = shelf.filter((id) => !packedIds.has(id) && id !== 'computer' && id !== 'engine');
   const trayFits = tray.map((id) => ({ id, fits: fitPart(packed, id) !== undefined }));
@@ -279,38 +271,20 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
     </div>
   );
 
+  // The launch day in one line: the day it flies and how good it is; CHANGE ▸ opens the Launch Day step.
   const calendar = (
-    <div className="pk-cal">
-      <div className="pk-cal-head">
-        <span className="sd-label">{days ? `LAUNCH DAY · ${monthSpan(days[0]!.date, days[days.length - 1]!.date)}` : 'LAUNCH DAY'}</span>
-        <span className={`pk-cal-msg ${q?.quality ?? ''}`}>
-          {!days || !day || !q
-            ? 'WORKING OUT THE LAUNCH DAYS…'
-            : `${shortDate(day.date)} · ${engineer && day.c3 !== undefined ? `C3 = ${f.c3(day.c3)}` : phone ? DAY_WORDS[q.quality].short : DAY_WORDS[q.quality].msg(dest.name)}`}
-        </span>
-      </div>
-      <div className="pk-cal-days" role="radiogroup" aria-label="Launch day">
-        {(days ?? []).map((t, i) => (
-          <button
-            key={t.date}
-            type="button"
-            role="radio"
-            aria-checked={i === dayIdx}
-            aria-label={`${shortDate(t.date)}: ${DAY_WORDS[quality[i]!.quality].short}`}
-            className={`pk-day ${quality[i]!.quality}${i === dayIdx ? ' on' : ''}`}
-            title={shortDate(t.date)}
-            onClick={() => setDayIdx(i)}
-          />
-        ))}
-      </div>
-      {!phone && days && (
-        <div className="pk-cal-ticks">
-          {days
-            .filter((_, i) => i % 7 === 0)
-            .map((t) => (
-              <span key={t.date}>{shortDate(t.date)}</span>
-            ))}
-        </div>
+    <div className="pk-cal pk-dayline">
+      <span className="sd-label">{LAUNCH_DAY_WORDS.line}</span>
+      <span className={`pk-cal-msg ${q?.quality ?? ''}`}>
+        {!days || !day || !q
+          ? LAUNCH_DAY_WORDS.working
+          : `${shortDate(day.date)} · ${engineer && day.c3 !== undefined ? `C3 = ${f.c3(day.c3)}` : phone ? DAY_WORDS[q.quality].short : DAY_WORDS[q.quality].msg(dest.name)}`}
+      </span>
+      {days && <span className="pk-dayline-who">{plan.auto ? LAUNCH_DAY_WORDS.auto : LAUNCH_DAY_WORDS.yours}</span>}
+      {onDays && (
+        <button type="button" className="sd-ghost-btn pk-change" onClick={onDays} disabled={!days}>
+          {LAUNCH_DAY_WORDS.change}
+        </button>
       )}
     </div>
   );

@@ -286,6 +286,24 @@ export function dayQuality(design: Design, ev: FullEvaluation, day: CalendarDay)
   return { quality: QUALITY[marginStatus(worst)], massMargin: launch.meter.margin, deltaVMargin: dvMargin, capacity_kg: launch.meter.limit };
 }
 
+const QUALITY_RANK: Record<DayQuality['quality'], number> = { good: 0, soso: 1, bad: 2 };
+
+/**
+ * The day the Cadet flies unless they pick one (the Launch Day step): the best quality, then the widest of the two
+ * margins (launch mass and Δv, the worse of the pair), then the day nearest `preferred` (the starter's day).
+ */
+export function bestLaunchDay(qualities: DayQuality[], preferred: number): number {
+  const worse = (q: DayQuality) => Math.min(q.massMargin ?? -Infinity, q.deltaVMargin ?? -Infinity);
+  let best = Math.min(Math.max(0, preferred), Math.max(0, qualities.length - 1));
+  qualities.forEach((q, i) => {
+    const b = qualities[best]!;
+    const better =
+      QUALITY_RANK[q.quality] - QUALITY_RANK[b.quality] || worse(b) - worse(q) || Math.abs(i - preferred) - Math.abs(best - preferred);
+    if (better < 0) best = i;
+  });
+  return best;
+}
+
 /** The design flown from a calendar day. */
 export function onDay(design: Design, day: CalendarDay): Design {
   return { ...design, launchDate: day.date, arrivalDate: day.arrivalDate ?? day.date };

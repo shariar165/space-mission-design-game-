@@ -187,6 +187,23 @@ export const DAY_WORDS: Record<'good' | 'soso' | 'bad', { msg: (dest: string) =>
   bad: { msg: (d) => `BAD DAY · ${d.toUpperCase()} IS OUT OF REACH`, short: 'BAD' },
 };
 
+/** The Launch Day step, and the one-line launch day on Pack (spec UI rules 24 and 26). */
+export const LAUNCH_DAY_WORDS = {
+  title: 'LAUNCH DAY',
+  sub: 'Six weeks of launch days. Green: an easy trip. Amber: little to spare. Red: out of reach.',
+  line: 'LAUNCH DAY',
+  auto: 'BEST DAY · PICKED FOR YOU',
+  yours: 'YOUR PICK',
+  change: 'CHANGE ▸',
+  arrives: 'ARRIVES',
+  flight: 'FLIGHT',
+  best: 'BEST DAY',
+  useBest: 'USE THE BEST DAY',
+  working: 'WORKING OUT THE LAUNCH DAYS…',
+  c3: 'C3 · v∞ ARRIVAL',
+  margins: 'MARGINS · MASS · Δv',
+};
+
 export const WEIGHT_WORDS: Record<'ok' | 'warning' | 'over', string> = {
   ok: 'LIGHT ENOUGH',
   warning: 'NEARLY TOO HEAVY',

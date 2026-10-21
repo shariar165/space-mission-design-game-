@@ -18,7 +18,7 @@ test('report', async ({ page }, info) => {
   await page.goto('/?seed=2013');
   await page.getByRole('button', { name: 'CHOOSE A MISSION ▸' }).click();
   await page.getByRole('button', { name: /^Red Planet/ }).click();
-  await expect(page.getByRole('radiogroup', { name: 'Launch day' }).getByRole('radio').first()).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByRole('button', { name: 'CHANGE ▸' })).toBeEnabled({ timeout: 60_000 }); // the launch days are worked out
   for (const name of ['Pack Radiation shield', 'Pack Extra solar panel', 'Pack Big battery', 'Pack Autopilot chip']) {
     const b = page.getByRole('button', { name, exact: true });
     if (await b.isVisible()) await b.click();

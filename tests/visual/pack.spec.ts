@@ -1,4 +1,4 @@
-// Game shots of PACK (Mars level), at the project's size. Run: npm run shots -- pack
+// Game shots of PACK (Mars level) and its Launch Day step, at the project's size. Run: npm run shots -- pack
 import { expect, test } from '@playwright/test';
 
 test('pack', async ({ page }, info) => {
@@ -14,7 +14,7 @@ test('pack', async ({ page }, info) => {
   await page.goto('/?seed=2013');
   await page.getByRole('button', { name: 'CHOOSE A MISSION ▸' }).click();
   await page.getByRole('button', { name: /^Red Planet/ }).click();
-  await expect(page.getByRole('radiogroup', { name: 'Launch day' }).getByRole('radio').first()).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByRole('button', { name: 'CHANGE ▸' })).toBeEnabled({ timeout: 60_000 }); // the launch days are worked out
   // pack the design's starter extras: shield, solar, battery, autopilot
   for (const name of ['Pack Radiation shield', 'Pack Extra solar panel', 'Pack Big battery', 'Pack Autopilot chip']) {
     const b = page.getByRole('button', { name, exact: true });
@@ -24,4 +24,9 @@ test('pack', async ({ page }, info) => {
   await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(800);
   await page.screenshot({ path: `test-results/shots/pack-${info.project.name}.png`, fullPage: info.project.name === 'mobile' });
+  // CHANGE ▸: the Launch Day step
+  await page.getByRole('button', { name: 'CHANGE ▸' }).click();
+  await expect(page.getByRole('radiogroup', { name: 'Launch day' }).getByRole('radio').first()).toBeVisible();
+  await page.waitForTimeout(600);
+  await page.screenshot({ path: `test-results/shots/launch-day-${info.project.name}.png`, fullPage: info.project.name === 'mobile' });
 });

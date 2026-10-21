@@ -1,0 +1,41 @@
+/* LAUNCH DAY (spec UI rules 24 and 26): the short step after packing. No Claude Design screen yet: it reuses the
+   Pack chassis, panels, calendar, checklist and ARM / LAUNCH keys (sd-pack.css), only bigger days. */
+
+.ld { grid-template-rows: 60px minmax(0, 1fr) auto; }
+.ld-main { display: flex; flex-direction: column; justify-content: center; gap: 22px; padding: 28px 32px; min-height: 0; }
+.ld-head { display: flex; flex-direction: column; gap: 8px; }
+.ld-title { margin: 0; font: 900 30px/1 var(--sd-display); color: var(--sd-ink); letter-spacing: 0.04em; }
+.ld-sub { margin: 0; font: 400 15px/1.4 var(--sd-body); color: var(--sd-ink-3); }
+.ld .pk-cal { gap: 12px; }
+.ld .pk-cal-msg { font-size: 28px; }
+.ld .pk-cal-days { min-height: 72px; gap: 4px; }
+.ld .pk-day { height: 72px; border-radius: 3px; }
+.ld .pk-cal-ticks { font-size: 18px; }
+.ld-facts { margin: 0; display: flex; flex-wrap: wrap; gap: 14px 34px; }
+.ld-facts > div { display: flex; flex-direction: column; gap: 6px; }
+.ld-facts dt { font: 700 11px/1 var(--sd-mono); letter-spacing: 0.16em; color: var(--sd-ink-4); }
+.ld-facts dd { margin: 0; font: 400 30px/1 var(--sd-crt-font); color: var(--sd-crt-hi); }
+.ld-facts dd.good { color: var(--sd-crt-hi); }
+.ld-facts dd.soso { color: var(--sd-amber); }
+.ld-facts dd.bad { color: var(--sd-alarm); }
+.ld-facts .eng dd { color: var(--sd-crt-mid); font-size: 24px; }
+.ld-best { align-self: flex-start; }
+.ld-block { margin: 0; font: 400 22px/1.1 var(--sd-crt-font); color: var(--sd-alarm); }
+.ld-foot { display: grid; grid-template-columns: minmax(0, 1fr) 470px; gap: 14px; align-items: center; padding: 14px 18px; }
+
+.ld.phone .ld-main { padding: 16px 14px; gap: 14px; justify-content: flex-start; }
+.ld.phone .ld-title { font-size: 22px; }
+.ld.phone .ld-sub { font-size: 13px; }
+.ld.phone .pk-cal-msg { font-size: 19px; }
+.ld.phone .pk-cal-days { min-height: 44px; gap: 1.5px; }
+.ld.phone .pk-day { height: 44px; border-radius: 1px; }
+.ld.phone .ld-facts { gap: 12px 22px; }
+.ld.phone .ld-facts dd { font-size: 24px; }
+.ld.phone .ld-foot { grid-template-columns: 1fr; padding: 12px; }
+
+/* Pack: the launch day in one line, with CHANGE ▸ */
+.pk-cal-panel:has(.pk-dayline) { display: flex; flex-direction: column; justify-content: center; }
+.pk-dayline { flex-direction: row; align-items: center; flex-wrap: wrap; gap: 8px 14px; }
+.pk-dayline-who { font: 700 10px/1 var(--sd-mono); letter-spacing: 0.14em; color: var(--sd-ink-4); }
+.pk-change { margin-left: auto; }
+.pk.phone .pk-dayline .pk-cal-msg { font-size: 17px; }

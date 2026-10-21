@@ -9,6 +9,7 @@ import { App } from '../../src/ui/App';
 import * as f from '../../src/ui/format';
 import { LEVELS, loadProgress, shelfOf } from '../../src/ui/levels';
 import { starterDesign, today } from '../../src/ui/starters';
+import { LAUNCH_DAY_WORDS } from '../../src/ui/sdWords';
 import './setup';
 
 function pass(ms: number, step = 50) {
@@ -80,24 +81,50 @@ describe('Pack: weight, launch day, arm and launch', () => {
     expect(screen.getByText('LIGHT ENOUGH')).toBeTruthy();
   });
 
-  it('LAUNCH needs the arm lever and a day that is not bad; it flies the packed craft in Fly & Survive', () => {
+  it('LAUNCH needs the arm lever; a Cadet flies on the best day, picked for them', () => {
     openLevel(/^Red Planet/, MARS);
+    expect(screen.getByText(LAUNCH_DAY_WORDS.auto)).toBeTruthy();
+    expect(screen.queryByRole('radiogroup', { name: 'Launch day' })).toBeNull(); // the calendar is its own step
     const go = screen.getByRole('button', { name: 'LAUNCH' }) as HTMLButtonElement;
     expect(go.disabled).toBe(true);
     fireEvent.click(screen.getByRole('switch', { name: 'Arm' }));
-    expect(go.disabled).toBe(false); // the best day (selected) is good
-    // a bad day disarms the launch
+    expect(go.disabled).toBe(false); // the best day is good
+    fireEvent.click(go);
+    pass(100);
+    expect(screen.getByRole('list', { name: 'Robot resources' })).toBeTruthy();
+  });
+
+  it('CHANGE ▸ opens the Launch Day step: six weeks of days; a bad day blocks LAUNCH; the pick is kept on Pack', () => {
+    openLevel(/^Red Planet/, MARS);
+    fireEvent.click(screen.getByRole('button', { name: LAUNCH_DAY_WORDS.change }));
+    pass(100);
     const days = within(screen.getByRole('radiogroup', { name: 'Launch day' })).getAllByRole('radio');
     expect(days.length).toBe(42);
+    fireEvent.click(screen.getByRole('switch', { name: 'Arm' }));
+    const go = screen.getByRole('button', { name: 'LAUNCH' }) as HTMLButtonElement;
+    expect(go.disabled).toBe(false);
     const bad = days.find((d) => /BAD$/.test(d.getAttribute('aria-label')!));
     if (bad) {
       fireEvent.click(bad);
       expect(go.disabled).toBe(true);
-      fireEvent.click(days[20]!);
     }
-    fireEvent.click(go);
+    fireEvent.click(days[20]!);
+    expect(screen.getAllByText(LAUNCH_DAY_WORDS.yours).length).toBeGreaterThan(0);
+    // ◂ BACK to packing: the picked day is shown as yours
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
     pass(100);
-    expect(screen.getByRole('list', { name: 'Robot resources' })).toBeTruthy();
+    expect(screen.getByText(LAUNCH_DAY_WORDS.yours)).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Pack Big battery' })).toBeTruthy();
+  });
+
+  it('the Launch Day step shows the Engineer numbers when the lever is flipped there', () => {
+    openLevel(/^Red Planet/, MARS);
+    fireEvent.click(screen.getByRole('button', { name: LAUNCH_DAY_WORDS.change }));
+    pass(100);
+    fireEvent.click(screen.getByRole('switch', { name: 'Engineer mode' }));
+    pass(100);
+    expect(screen.getByRole('radiogroup', { name: 'Launch day' })).toBeTruthy();
+    expect(screen.getByText(LAUNCH_DAY_WORDS.c3)).toBeTruthy();
   });
 });
 
