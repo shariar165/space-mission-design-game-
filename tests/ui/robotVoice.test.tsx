@@ -4,13 +4,13 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { presetDesign } from '../../src/engine/missions';
-import { heardMessages, runOperations } from '../../src/engine/ops/index';
+import { runOperations } from '../../src/engine/ops/index';
+import { finalTransmission } from '../../src/engine/ops/report';
 import { App } from '../../src/ui/App';
 import * as f from '../../src/ui/format';
 import { FlyAndSurvive } from '../../src/ui/screens/FlyAndSurvive';
 import { MissionReport } from '../../src/ui/screens/MissionReport';
-import { ROBOT_NAMES, ROBOT_WORDS, robotSays, TX_WORDS } from '../../src/ui/sdWords';
-import { voiceContext } from '../../src/ui/voiceContext';
+import { FINAL_WORDS, finalLines, ROBOT_NAMES, ROBOT_WORDS, TX_WORDS } from '../../src/ui/sdWords';
 import './setup';
 
 const maven = presetDesign('maven');
@@ -62,21 +62,28 @@ describe('Fly & Survive: the robot talks', () => {
   });
 });
 
-describe('Mission Report: the last message', () => {
-  it('a finished flight shows the robot’s last message in its words, with the light time it took', () => {
+describe('Mission Report: the final transmission', () => {
+  it('a finished flight: the robot’s last message prints line by line, with how long it took to arrive', () => {
     const s = runOperations(maven, { rng: () => 0.999999 }).state;
-    const last = heardMessages(s).latest!;
+    const ft = finalTransmission(s)!;
     render(<MissionReport state={s} design={maven} mode="cadet" onMode={vi.fn()} missionName="Orbiter-1" onFlyAgain={vi.fn()} onHome={vi.fn()} homeLabel="HOME" robotName="ZED" />);
-    const note = screen.getByRole('note', { name: ROBOT_WORDS.lastMessage('ZED') });
-    expect(note.textContent).toContain(robotSays(last, voiceContext('Mars', 'ZED')));
-    expect(note.textContent).toContain(ROBOT_WORDS.took('MARS', f.durationWords(last.delay_s)));
+    const sheet = screen.getByRole('region', { name: FINAL_WORDS.label });
+    expect(sheet.textContent).toContain(FINAL_WORDS.title('ZED'));
+    expect(sheet.textContent).toContain(FINAL_WORDS.sent(f.durationWords(ft.delay_s)));
+    for (const line of finalLines(ft, { dest: 'Mars', name: 'ZED', title: (t) => t, label: (_t, o) => o })) if (!line.includes('{')) expect(sheet.textContent).toContain(line.slice(0, 12));
+    expect(sheet.textContent).toContain('PRIMARY MISSION COMPLETE. ZED OUT.');
   });
 
-  it('a lost robot’s last words cite Opportunity (ⓘ)', () => {
+  it('a lost robot: the last line breaks off, then SIGNAL LOST, citing Opportunity (ⓘ)', () => {
+    vi.useFakeTimers();
     const s = runOperations(maven, { seed: 6, policy: 'default' }).state;
     render(<MissionReport state={s} design={maven} mode="cadet" onMode={vi.fn()} missionName="Orbiter-1" onFlyAgain={vi.fn()} onHome={vi.fn()} homeLabel="HOME" />);
-    const note = screen.getByRole('note', { name: ROBOT_WORDS.lastMessage(ROBOT_NAMES[0]!) });
-    expect(note.textContent).toContain('BATTERY IS LOW');
-    expect(note.querySelector('button')).not.toBeNull();
+    const sheet = screen.getByRole('region', { name: FINAL_WORDS.label });
+    expect(sheet.textContent).toContain(FINAL_WORDS.cutOff);
+    expect(sheet.textContent).not.toContain(FINAL_WORDS.lost); // still printing
+    pass(12_000, 33); // one character per 33 ms tick
+    expect(sheet.textContent).toContain(FINAL_WORDS.lost);
+    expect(sheet.querySelector('.ft-lost button')).not.toBeNull();
+    expect(screen.queryByRole('note', { name: ROBOT_WORDS.lastMessage(ROBOT_NAMES[0]!) })).toBeNull();
   });
 });

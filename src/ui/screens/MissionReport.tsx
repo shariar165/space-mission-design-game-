@@ -1,15 +1,17 @@
-// MISSION REPORT (Signal Delay design, screen 03). The teletype prints your mission as a 4-panel comic. Then: stars,
+// MISSION REPORT (Signal Delay design, screen 03). First the robot's FINAL TRANSMISSION comes off the teletype; then
+// the paper feeds up and prints your mission as a 4-panel comic. Then: stars,
 // what saved you, what hurt you, how the real NASA mission did, and a real lesson from the flight. Engineer mode adds
 // the score breakdown, every comparison row with its ⓘ, the star rules and the Mission operations risk.
 // Every number comes from the engine (operationsDebrief, ops/report.ts, compare.ts); this screen lays them out.
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { DESTINATIONS, HAZARDS, LAUNCH_VEHICLES, RIDESHARES } from '../../engine/data';
 import { heardMessages, operationsDebrief, VOICE_RULES, type OpsState } from '../../engine/ops/index';
-import { reportCompare, reportPanels, reportVerdict } from '../../engine/ops/report';
+import { finalTransmission, reportCompare, reportPanels, reportVerdict } from '../../engine/ops/report';
 import { MAX_SCORE, MARGIN_BAND, scoreGrade, STAR_RULES } from '../../engine/scoring';
 import type { CompareMetric } from '../../engine/compare';
 import type { Design } from '../../engine/types';
 import { ComicArt } from '../components/report/ComicArt';
+import { FinalTransmission } from '../components/report/FinalTransmission';
 import { PostcardView, postcardSrc } from '../components/sd/PostcardView';
 import { POSTCARDS, postcardsEarned } from '../../engine/postcards';
 import type { RankDef } from '../../engine/ranks';
@@ -25,6 +27,7 @@ import { useIsPhone } from '../sdGeometry';
 import {
   CATEGORY_NAME,
   dangerLook,
+  finalLines,
   GAME_NAME,
   hurtWords,
   optionShort,
@@ -91,19 +94,27 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
   const verdict = useMemo(() => reportVerdict(state), [state]);
   const compare = useMemo(() => reportCompare(design, ev), [design, ev]);
   const risk = useOpsRisk(design);
+  const ft = useMemo(() => finalTransmission(state), [state]);
   const [t, setT] = useState(0);
+  /** The comic prints once the final transmission has (or the paper is fed by hand). */
+  const [printing, setPrinting] = useState(!ft);
+  const reportTop = useRef<HTMLDivElement>(null);
+  const feed = () => {
+    setPrinting(true);
+    reportTop.current?.scrollIntoView?.({ behavior: still ? 'auto' : 'smooth', block: 'start' });
+  };
 
   useEffect(() => {
-    if (still || t > PANEL_STEP_MS * panels.length + 2000) return;
+    if (still || !printing || t > PANEL_STEP_MS * panels.length + 2000) return;
     const id = setTimeout(() => setT((x) => x + TICK_MS), TICK_MS);
     return () => clearTimeout(id);
-  }, [t, still, panels.length]);
+  }, [t, still, printing, panels.length]);
 
   const type = (h: string) => HAZARDS[h]?.title ?? h;
   const label = (h: string, o: string) => optionShort(h, o, HAZARDS[h]?.options.find((x) => x.id === o)?.label ?? o);
   const rocket = design.rideshareId ? RIDESHARES[design.rideshareId]?.name ?? design.launchVehicleId : LAUNCH_VEHICLES[design.launchVehicleId]?.name ?? design.launchVehicleId;
   const ctx = { dest: dest.name, rocket, label, title: type, autopilot: !!design.kit?.autopilot, sent_Gbit: d.downlinked_Gbit };
-  const stampKey = state.status === 'lost' ? 'lost' : state.status === 'not-launched' ? 'not-launched' : 'complete';
+  const stampKey = state.status === 'lost' ? 'lost' : state.status === 'not-launched' ? 'not-launched' : ft?.ending === 'extended' ? 'extended' : 'complete';
   const stamp = REPORT_STAMP[stampKey];
   const saved = savedWords(verdict.saved, { label, title: type });
   const hurt = hurtWords(verdict.hurt, { label, title: type });
@@ -294,7 +305,19 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
   );
 
   const name = robotNameOr(robotName);
-  const last = heardMessages(state).latest;
+  // The final transmission holds the robot's last words; only a robot that never flew has just its pad message here.
+  const last = ft ? undefined : heardMessages(state).latest;
+  const finalEl = ft && (
+    <FinalTransmission
+      ft={ft}
+      lines={finalLines(ft, { dest: dest.name, name, title: type, label })}
+      name={name}
+      phone={phone}
+      {...(onBack && !phone ? { back: <BackButton onBack={onBack} className="rp-back ft-back" /> } : {})}
+      onPrinted={() => setPrinting(true)}
+      onFeed={feed}
+    />
+  );
   const lastEl = last && (
     <div className={`rp-radio${last.kind === 'last-words' || last.kind === 'launch-failed' ? ' bad' : ''}`} role="note" aria-label={ROBOT_WORDS.lastMessage(name)}>
       <span className="rp-radio-k">
@@ -399,7 +422,8 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
       <div className={`sd rp phone${engineer ? ' eng' : ''}`}>
         <div className="rp-sheet">
           {onBack && <BackButton onBack={onBack} className="rp-back" />}
-          <div className="rp-phone-head">
+          {finalEl}
+          <div className="rp-phone-head" ref={reportTop}>
             <div>
               <span className="rp-kicker">
                 {missionName.toUpperCase()} · DAY {f.num(panels.at(-1)!.day)}
@@ -431,9 +455,10 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
       <div className="rp-sheet">
         <div className="rp-holes left" />
         <div className="rp-holes right" />
-        <header className="rp-head">
+        {finalEl}
+        <header className="rp-head" ref={reportTop as React.RefObject<HTMLElement | null>}>
           <div className="rp-head-l">
-            {onBack && <BackButton onBack={onBack} className="rp-back" />}
+            {onBack && !ft && <BackButton onBack={onBack} className="rp-back" />}
             <span className="rp-kicker">
               TELETYPE · {missionName.toUpperCase()} · {dest.name.toUpperCase()} · DAY 000–{f.dayPad(panels.at(-1)!.day)}
             </span>

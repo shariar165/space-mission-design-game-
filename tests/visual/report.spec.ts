@@ -1,4 +1,4 @@
-// Game shots of the MISSION REPORT after a whole flown mission (Mars, seed 2013). Run: npm run shots -- report
+// Game shots of the MISSION REPORT after a whole flown mission (Mars, seed 2013): the final transmission, then the report. Run: npm run shots -- report
 import { expect, test } from '@playwright/test';
 import { flyToEnd } from './helpers';
 
@@ -27,8 +27,11 @@ test('report', async ({ page }, info) => {
   await page.getByRole('button', { name: 'LAUNCH', exact: true }).click();
   await expect(page.getByRole('img', { name: /Map: your robot/ })).toBeVisible({ timeout: 60_000 });
   await flyToEnd(page, mobile);
-  await expect(page.getByRole('heading', { name: /MISSION/ })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Final transmission' })).toBeVisible();
   await page.evaluate(() => document.fonts.ready);
+  await page.waitForTimeout(15_000); // the robot's last words print line by line
+  await page.screenshot({ path: `test-results/shots/report-final-${info.project.name}.png` });
+  await page.getByRole('button', { name: /FEED THE PAPER/ }).click();
   await page.waitForTimeout(11_000); // the comic prints panel by panel
   await page.screenshot({ path: `test-results/shots/report-${info.project.name}.png`, fullPage: mobile });
   if (!mobile) {

@@ -3,7 +3,7 @@
 import type { FailureEffect, OpsPhase } from '../engine/data';
 import type { ComingUpKind, ConsoleOutcome, FlyChip, RobotMessage, VoiceKind } from '../engine/ops/index';
 import type { DeckCard, PackBlockerCode, PartId } from '../engine/pack';
-import type { Hurt, ReportPanel, Saved } from '../engine/ops/report';
+import type { FinalTransmission, Hurt, ReportPanel, Saved } from '../engine/ops/report';
 import type { Category } from '../engine/scoring';
 import type { LessonCategory, LessonUnlock } from '../engine/notebook';
 import type { SDIconName } from './components/sd/SDIcon';
@@ -306,11 +306,117 @@ export function hurtWords(v: Hurt, ctx: { label: (type: string, id: string) => s
   }
 }
 
-export const REPORT_STAMP: Record<'complete' | 'lost' | 'not-launched', { word: string[]; color: string }> = {
+export const REPORT_STAMP: Record<'complete' | 'extended' | 'lost' | 'not-launched', { word: string[]; color: string }> = {
   complete: { word: ['MISSION', 'COMPLETE'], color: 'var(--sd-ok)' },
+  extended: { word: ['MISSION', 'EXTENDED'], color: 'var(--sd-soso)' },
   lost: { word: ['ROBOT', 'LOST'], color: 'var(--sd-red)' },
   'not-launched': { word: ['NOT', 'LAUNCHED'], color: 'var(--sd-red)' },
 };
+
+/**
+ * FINAL TRANSMISSION (Mission Report, design TELETYPE 03): the robot's last message, line by line (engine
+ * finalTransmission). Templates with named slots, like the robot's voice: {day} {dest} {name} {science} {hazard}
+ * {when} {option} {part} {dv} {days} {fuel} {years} {delay}.
+ */
+export const FINAL_WORDS = {
+  kicker: (day: string) => `TELETYPE 03 · RECEIVED DAY ${day}`,
+  incomplete: 'INCOMPLETE',
+  sent: (delay: string) => `SENT ${delay} BEFORE IT PRINTED`,
+  title: (name: string) => `FINAL TRANSMISSION — ${name}`,
+  opening: {
+    complete: 'DAY {day}. I SAW {dest} FOR {science} DAYS.',
+    lost: 'DAY {day}. THIS IS {name}. ARE YOU THERE?',
+    extended: 'DAY {day}. PRIMARY MISSION COMPLETE. THE EXTENSION TOO.',
+  },
+  hurt: 'THE {hazard} ON DAY {when} HURT ME. {effect}',
+  effect: {
+    craft: 'I NEARLY DID NOT MAKE IT.',
+    instrument: 'ONE INSTRUMENT NEVER WOKE UP.',
+    'stored-data': 'THE DATA I WAS HOLDING IS GONE.',
+    'safe-mode': 'I HID IN SAFE MODE FOR DAYS.',
+  } satisfies Record<FailureEffect, string>,
+  saved: {
+    part: 'THE {part} TOOK THE {hazard} FOR ME.',
+    autopilot: 'NO ORDER COULD REACH ME IN TIME. THE AUTOPILOT CHIP FLEW ME THROUGH THE {hazard}.',
+    choice: 'ON DAY {when} YOU CHOSE {option}. IT SAVED ME.',
+  },
+  arrival: 'YOU SENT ME IN WITH A {dv} BURN. {dest} CAUGHT ME ON THE FIRST TRY.',
+  conjunction: 'FOR {days} DAYS THE SUN STOOD BETWEEN US. I FLEW MYSELF.',
+  quiet: 'NOTHING BROKE. NOT ONCE.',
+  fuel: '{fuel} OF FUEL LEFT. BATTERY HOLDING.',
+  extension: 'EXTENSION FLOWN: {years} MORE THAN PLANNED.',
+  signOff: 'PRIMARY MISSION COMPLETE. {name} OUT.',
+  cause: {
+    hazard: 'THE {hazard} WAS TOO MUCH. SYSTEMS FAILING.',
+    fuel: 'MY TANK IS EMPTY. I CANNOT HOLD MY COURSE.',
+    power: 'NO POWER FOR {days} DAYS. BATTERY ALMOST GONE.',
+    unknown: 'SOMETHING IS WRONG. SYSTEMS FAILING.',
+  },
+  /** Broken off mid-word on purpose: the signal ends here. */
+  cutOff: 'TURNING MY ANTENNA TO WHERE EARTH SHOULD B',
+  lost: '— SIGNAL LOST —',
+  still: 'STILL HERE.',
+  foot: {
+    complete: 'The last words were already {delay} old when the paper moved.',
+    lost: 'The Deep Space Network kept listening. Nothing else came.',
+    extended: 'Not a goodbye after all: the mission is over, the robot is not.',
+  },
+  feed: 'FEED THE PAPER · MISSION REPORT ▾',
+  label: 'Final transmission',
+};
+
+/** Every line of a final transmission, in words. */
+export function finalLines(
+  ft: FinalTransmission,
+  ctx: { dest: string; name: string; title: (type: string) => string; label: (type: string, id: string) => string },
+): string[] {
+  const W = FINAL_WORDS;
+  const years = (n: number) => `${f.num(n)} ${n === 1 ? 'YEAR' : 'YEARS'}`;
+  return ft.lines.map((l) => {
+    const v = l.values;
+    const hazard = v.hazardType ? hazardTitle(v.hazardType, ctx.title(v.hazardType)).toUpperCase() : '';
+    const slots: Record<string, string> = {
+      dest: ctx.dest.toUpperCase(),
+      name: ctx.name.toUpperCase(),
+      hazard,
+      ...(v.day !== undefined ? { day: f.dayPad(v.day), when: f.num(v.day) } : {}),
+      ...(v.scienceDays !== undefined ? { science: f.num(v.scienceDays) } : {}),
+      ...(v.dv_ms !== undefined ? { dv: f.speed(v.dv_ms).toUpperCase() } : {}),
+      ...(v.days !== undefined ? { days: f.num(v.days) } : {}),
+      ...(v.propellantLeft_kg !== undefined ? { fuel: f.kg(v.propellantLeft_kg).toUpperCase() } : {}),
+      ...(v.years !== undefined ? { years: years(v.years) } : {}),
+    };
+    switch (l.kind) {
+      case 'opening':
+        return fill(W.opening[ft.ending], slots);
+      case 'hurt':
+        return fill(W.hurt, { ...slots, effect: v.effect ? W.effect[v.effect] : '' }).trim();
+      case 'saved': {
+        const s = v.saved!;
+        if (s.code === 'part') return fill(W.saved.part, { ...slots, part: PART_LOOK[s.part].name.toUpperCase(), hazard: hazardTitle(s.hazardType, ctx.title(s.hazardType)).toUpperCase() });
+        if (s.code === 'autopilot') return fill(W.saved.autopilot, { ...slots, hazard: hazardTitle(s.hazardType, ctx.title(s.hazardType)).toUpperCase() });
+        if (s.code === 'choice') return fill(W.saved.choice, { ...slots, option: ctx.label(s.hazardType, s.optionId).toUpperCase() });
+        return W.quiet;
+      }
+      case 'arrival':
+        return fill(W.arrival, slots);
+      case 'conjunction':
+        return fill(W.conjunction, slots);
+      case 'quiet':
+        return W.quiet;
+      case 'fuel':
+        return fill(W.fuel, slots);
+      case 'extension':
+        return fill(W.extension, slots);
+      case 'sign-off':
+        return fill(W.signOff, slots);
+      case 'cause':
+        return fill(W.cause[v.cause ?? 'unknown'], slots);
+      case 'cut-off':
+        return W.cutOff;
+    }
+  });
+}
 
 // ---------------------------------------------------------------------------
 // Notebook
