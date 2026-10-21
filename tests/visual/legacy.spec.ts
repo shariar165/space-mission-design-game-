@@ -18,8 +18,8 @@ test('map, rescue, build bay', async ({ page }, info) => {
   await page.waitForTimeout(400);
   await page.screenshot({ path: `test-results/shots/rescue-${info.project.name}.png`, fullPage: true });
   await page.goto('/');
-  const mobile = info.project.name === 'mobile';
-  await page.getByRole(mobile ? 'button' : 'switch', { name: mobile ? 'Engineer mode (short)' : 'Engineer mode' }).click();
+  // Home's second row carries the full Cadet / Engineer lever on both sizes.
+  await page.getByRole('switch', { name: 'Engineer mode' }).click();
   await page.waitForTimeout(1500);
   await page.screenshot({ path: `test-results/shots/buildbay-${info.project.name}.png` });
 });
