@@ -12,6 +12,8 @@ beforeEach(() => {
   // jsdom has no layout: scrolling is a no-op, and every test starts from empty storage.
   window.scrollTo = vi.fn() as unknown as typeof window.scrollTo;
   localStorage.clear();
+  // The robot already has a name screen behind it (tests/ui/nameRobot.test.tsx clears this to see the screen).
+  localStorage.setItem('sd.seen', JSON.stringify(['name']));
   // No network in component tests: the DONKI snapshot cannot be read, so the Daily is offline (tests/ui/donki.test.ts
   // stubs its own responses).
   vi.stubGlobal(

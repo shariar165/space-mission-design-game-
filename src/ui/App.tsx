@@ -1,6 +1,7 @@
 // App state: the player's Design and the current step. The engine is called here and in the screens;
 // the UI never computes a number itself. One flight model everywhere (the Mission operations engine):
 // Cadet: Home → (mission map) → Pack → Fly & Survive → Mission Report; Daily mission; Notebook; Rescue History.
+// Before the first Cadet mission (or Daily) the robot gets a name: Name Your Robot.
 // Engineer: Build Bay → Fly & Survive → Mission Report (with Engineer details).
 // Every step has ◂ BACK: the steps visited are kept on a trail, and the browser's own Back button walks it too.
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -25,6 +26,7 @@ import { FlyAndSurvive } from './screens/FlyAndSurvive';
 import { Home } from './screens/Home';
 import { LevelMap } from './screens/LevelMap';
 import { MissionReport } from './screens/MissionReport';
+import { NameRobot } from './screens/NameRobot';
 import { Notebook } from './screens/Notebook';
 import { Pack } from './screens/Pack';
 import { RescueCaseView, RescueSelect } from './screens/Rescue';
@@ -108,6 +110,10 @@ export function App() {
   };
 
   const cadetMode = mode === 'cadet';
+  /** Name Your Robot comes first: a Cadet who has never named the robot (nor skipped the screen). */
+  const needsName = cadetMode && !robotName && !seen.includes('name');
+  /** Where the name screen goes on to. */
+  const afterName = useRef<'build' | 'daily'>('build');
   const level = levelById(cadet.levelId);
   /** The design being built: Cadet packs on top of the level's starter, Engineer edits it directly. */
   const active = cadetMode ? cadet.base : design;
@@ -178,6 +184,7 @@ export function App() {
     while (rest.length) {
       const s = rest.pop()!;
       if (s === step) continue;
+      if (s === 'name' && !needsName) continue;
       if (s === 'fly' && (step === 'report' || step === 'daily' || step === 'fly' || !flyDesign)) continue;
       if (s === 'report' && !flown) continue;
       if (s === 'daily' && !daily.results[todayIso]) continue;
@@ -249,7 +256,10 @@ export function App() {
     setMissionName(defaultMissionName(l.destination));
     setFlown(undefined);
     setDailyRun(false);
-    go('build');
+    if (needsName) {
+      afterName.current = 'build';
+      go('name');
+    } else go('build');
   };
 
   /** Launch: Fly & Survive flies the pinned craft with this seed. */
@@ -272,8 +282,12 @@ export function App() {
     setSeed(dailySeed(todayIso, w.status === 'live' ? w.storms : undefined));
     launchDesign(dailyDesign(starterDesign('mars', todayIso)));
   };
-  const openDaily = () => {
+  const openDaily = (named = false) => {
     if (daily.results[todayIso]) return go('daily');
+    if (needsName && !named) {
+      afterName.current = 'daily';
+      return go('name');
+    }
     if (weather) return launchDaily(weather);
     // Still loading: wait for it (loadSpaceWeather gives up after its timeout and says offline).
     if (opening.current) return;
@@ -315,7 +329,7 @@ export function App() {
   const next = level && cadetMode && (progress[level.id] ?? 0) >= 1 ? nextLevel(level.id) : undefined;
   const home = () => go('home');
   const firstNew = fresh.length ? notebook(facts).find((c) => c.id === fresh[0]) : undefined;
-  const fullScreen = step === 'fly' || step === 'report' || step === 'home' || step === 'daily' || step === 'notebook' || step === 'postcards' || (step === 'build' && cadetMode);
+  const fullScreen = step === 'name' || step === 'fly' || step === 'report' || step === 'home' || step === 'daily' || step === 'notebook' || step === 'postcards' || (step === 'build' && cadetMode);
 
   /** The mission briefing: what to do on this level (or a free build, or today's Daily). */
   const briefFor = (forDaily: boolean) =>
@@ -353,7 +367,7 @@ export function App() {
           notebook={notebookProgress(facts)}
           onPlay={playLevel}
           onMissions={() => go('map')}
-          onDaily={openDaily}
+          onDaily={() => openDaily()}
           onRescue={() => {
             setRescueId(undefined);
             go('rescue');
@@ -363,6 +377,24 @@ export function App() {
           crew={crewOf({ facts, postcards, played: daily.played })}
           mars={mars}
           onPostcards={() => go('postcards')}
+        />
+      )}
+      {step === 'name' && (
+        <NameRobot
+          name={robotName}
+          mode={mode}
+          onMode={changeMode}
+          mars={mars}
+          onName={(n) => {
+            nameRobot(n);
+            markSeen('name');
+          }}
+          onDone={() => {
+            markSeen('name');
+            if (afterName.current === 'daily') openDaily(true);
+            else go('build');
+          }}
+          onBack={back}
         />
       )}
       {step === 'map' && (

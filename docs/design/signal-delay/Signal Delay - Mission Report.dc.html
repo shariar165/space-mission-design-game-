@@ -19,9 +19,14 @@
     <div style="display:flex;flex-direction:column;gap:8px">
       <div style="font:400 14px/1 'B612 Mono',monospace;letter-spacing:.2em;color:#8a8270">SIGNAL DELAY · SCREEN 03 OF 06</div>
       <h1 style="margin:0;font:800 56px/1 'Big Shoulders Display',sans-serif;color:#efe6cf;letter-spacing:.02em">MISSION REPORT</h1>
-      <p style="margin:0;max-width:640px;font:400 16px/1.5 'B612',sans-serif;color:#a49b84;text-wrap:pretty">The teletype prints your mission as a 4-panel comic. Then: stars, what saved you, what hurt you, how the real NASA mission did, and one new card for your Notebook.</p>
+      <p style="margin:0;max-width:640px;font:400 16px/1.5 'B612',sans-serif;color:#a49b84;text-wrap:pretty">First the robot’s last words come off the teletype. Then the paper feeds up and prints your mission as a 4-panel comic. Then: stars, what saved you, what hurt you, how the real NASA mission did, and one new card for your Notebook.</p>
     </div>
-    <div style="display:flex;gap:10px;align-items:center">
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <span style="font:400 12px/1 'B612 Mono',monospace;letter-spacing:.16em;color:#8a8270">ENDING</span>
+      <sc-for list="{{ outs }}" as="o" hint-placeholder-count="3">
+        <button onClick="{{ o.go }}" style="cursor:pointer;padding:10px 14px;border-radius:4px;border:1px solid {{ o.bd }};background:{{ o.bg }};color:{{ o.fg }};font:700 12px/1 'B612 Mono',monospace;letter-spacing:.1em;white-space:nowrap">{{ o.label }}</button>
+      </sc-for>
+      <span style="width:1px;height:26px;background:#3a3d33"></span>
       <button onClick="{{ replay }}" style="cursor:pointer;padding:10px 16px;border-radius:4px;border:1px solid #ffb547;background:#ffb547;color:#1b1a16;font:700 12px/1 'B612 Mono',monospace;letter-spacing:.1em;white-space:nowrap">▸ REPLAY PRINT-OUT</button>
       <button onClick="{{ toggleMode }}" style="cursor:pointer;padding:10px 16px;border-radius:4px;border:1px solid #3a3d33;background:#1c1e18;color:{{ engLbl }};font:700 12px/1 'B612 Mono',monospace;letter-spacing:.1em;white-space:nowrap">{{ modeBtn }}</button>
     </div>
@@ -31,13 +36,36 @@
     <div id="3a" style="display:flex;flex-direction:column;gap:12px">
       <div style="display:flex;gap:10px;align-items:center"><span style="padding:4px 9px;border-radius:3px;background:#ffb547;color:#1b1a16;font:700 13px/1 'B612 Mono',monospace">3a</span><span style="font:400 13px/1 'B612 Mono',monospace;color:#8a8270;letter-spacing:.1em;white-space:nowrap">DESKTOP · 1440 × 900</span></div>
       <div style="width:1440px;height:900px;box-sizing:border-box;padding:18px;background:#1c1e18;border-radius:10px;box-shadow:0 30px 80px rgba(0,0,0,.55),inset 0 1px 0 #34372e;display:flex">
-        <div style="flex:1;position:relative;background:#efe6cf;border-radius:4px;padding:22px 64px 24px;display:grid;grid-template-rows:auto auto minmax(0,1fr);gap:18px;overflow:hidden">
+        <div style="flex:1;position:relative;background:#efe6cf;border-radius:4px;overflow:hidden">
+          <div style="position:absolute;left:0;right:0;top:0;height:1728px;transform:translateY({{ rollY }}px);transition:transform 1.6s cubic-bezier(.6,0,.2,1)">
           <div style="position:absolute;left:0;top:0;bottom:0;width:40px;border-right:1px dashed #c4b897;background-image:radial-gradient(circle,#1c1e18 6px,transparent 7px);background-size:40px 36px;background-position:center 10px"></div>
           <div style="position:absolute;right:0;top:0;bottom:0;width:40px;border-left:1px dashed #c4b897;background-image:radial-gradient(circle,#1c1e18 6px,transparent 7px);background-size:40px 36px;background-position:center 10px"></div>
+          <div style="position:relative;height:864px;box-sizing:border-box;padding:46px 150px 40px;display:flex;flex-direction:column;gap:30px;border-bottom:2px dashed #b9ad8c">
+            <div style="display:flex;flex-direction:column;gap:12px;padding-bottom:18px;border-bottom:3px solid #1b1a16">
+              <div style="display:flex;justify-content:space-between;gap:20px;font:700 12px/1 'B612 Mono',monospace;letter-spacing:.2em;color:#7a715c"><span>TELETYPE 03 · {{ recv }}</span><span>{{ sent }}</span></div>
+              <span style="font:900 78px/0.9 'Big Shoulders Display',sans-serif;color:#1b1a16;letter-spacing:.01em">FINAL TRANSMISSION — {{ nameU }}</span>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;gap:16px">
+              <sc-for list="{{ logLines }}" as="l" hint-placeholder-count="4">
+                <div style="min-height:42px;font:700 30px/1.4 'B612 Mono',monospace;color:#1b1a16;text-wrap:pretty">{{ l.text }}<span style="opacity:{{ l.curO }}">█</span></div>
+              </sc-for>
+              <sc-if value="{{ showLost }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-top:22px;display:flex;align-items:center;gap:24px;color:#b23a22"><span style="flex:1;border-top:3px solid #b23a22"></span><span style="font:900 48px/1 'Big Shoulders Display',sans-serif;letter-spacing:.14em;white-space:nowrap">— SIGNAL LOST —</span><span style="flex:1;border-top:3px solid #b23a22"></span></div>
+              </sc-if>
+              <sc-if value="{{ showStill }}" hint-placeholder-val="{{ false }}">
+                <div style="margin-top:18px;font:700 64px/1 'B612 Mono',monospace;color:#1b1a16;letter-spacing:.02em">{{ stillText }}<span style="opacity:{{ stillCur }}">█</span></div>
+              </sc-if>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:20px">
+              <span style="font:400 14px/1.4 'B612',sans-serif;color:#7a715c;max-width:620px;text-wrap:pretty">{{ foot }}</span>
+              <button onClick="{{ toReport }}" style="cursor:pointer;height:54px;padding:0 24px;border-radius:5px;border:2px solid #1b1a16;border-bottom-width:5px;background:#efe6cf;font:800 18px/1 'Big Shoulders Display',sans-serif;letter-spacing:.1em;color:#1b1a16;white-space:nowrap">FEED THE PAPER · MISSION REPORT ▾</button>
+            </div>
+          </div>
+          <div style="position:relative;height:864px;box-sizing:border-box;padding:22px 64px 24px;display:grid;grid-template-rows:auto auto minmax(0,1fr);gap:18px">
 
           <div style="display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:36px;align-items:center;padding:0 12px">
             <div style="display:flex;flex-direction:column;gap:6px">
-              <span style="font:700 12px/1 'B612 Mono',monospace;letter-spacing:.2em;color:#7a715c">TELETYPE 03 · ORBITER-1 · MARS · DAY 001–672</span>
+              <span style="font:700 12px/1 'B612 Mono',monospace;letter-spacing:.2em;color:#7a715c">TELETYPE 03 · {{ nameU }} · MARS · DAY 001–{{ recvDay }}</span>
               <span style="font:900 54px/0.9 'Big Shoulders Display',sans-serif;color:#1b1a16;letter-spacing:.01em">MISSION REPORT</span>
             </div>
             <div style="display:flex;gap:18px">
@@ -49,7 +77,7 @@
                 </div>
               </sc-for>
             </div>
-            <div style="padding:10px 16px;border:4px solid #2f8a4a;border-radius:4px;transform:rotate(-4deg);font:900 30px/0.9 'Big Shoulders Display',sans-serif;letter-spacing:.06em;color:#2f8a4a;text-align:center">MISSION<br>COMPLETE</div>
+            <div style="padding:10px 16px;border:4px solid {{ stampCol }};border-radius:4px;transform:rotate(-4deg);font:900 30px/0.9 'Big Shoulders Display',sans-serif;letter-spacing:.06em;color:{{ stampCol }};text-align:center">{{ stampA }}<br>{{ stampB }}</div>
           </div>
 
           <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;padding:14px;background:#1b1a16;border-radius:3px">
@@ -145,6 +173,8 @@
               </div>
             </div>
           </div>
+          </div>
+          </div>
         </div>
       </div>
     </div>
@@ -154,9 +184,25 @@
       <div style="display:flex;gap:10px;align-items:center"><span style="padding:4px 9px;border-radius:3px;background:#ffb547;color:#1b1a16;font:700 13px/1 'B612 Mono',monospace">3b</span><span style="font:400 13px/1 'B612 Mono',monospace;color:#8a8270;letter-spacing:.1em;white-space:nowrap">MOBILE · 390 × 844 · SCROLLS</span></div>
       <div style="width:390px;height:844px;box-sizing:border-box;padding:10px;background:#1c1e18;border-radius:34px;box-shadow:0 30px 80px rgba(0,0,0,.55),0 0 0 8px #0f100c;display:flex;overflow:hidden">
         <div style="flex:1;background:#efe6cf;border-radius:24px;overflow-y:auto;scrollbar-width:none;padding:18px 16px 24px;display:grid;grid-template-columns:minmax(0,1fr);align-content:start;gap:16px">
+          <div style="display:flex;flex-direction:column;gap:12px;padding-bottom:20px;border-bottom:2px dashed #b9ad8c">
+            <div style="display:flex;flex-direction:column;gap:8px;padding-bottom:12px;border-bottom:2px solid #1b1a16">
+              <span style="font:700 9px/1.3 'B612 Mono',monospace;letter-spacing:.14em;color:#7a715c">TELETYPE 03 · {{ recv }}</span>
+              <span style="font:900 36px/0.9 'Big Shoulders Display',sans-serif;color:#1b1a16">FINAL TRANSMISSION — {{ nameU }}</span>
+              <span style="font:700 9px/1 'B612 Mono',monospace;letter-spacing:.14em;color:#7a715c">{{ sent }}</span>
+            </div>
+            <sc-for list="{{ logLines }}" as="l" hint-placeholder-count="4">
+              <div style="min-height:22px;font:700 16px/1.45 'B612 Mono',monospace;color:#1b1a16;text-wrap:pretty">{{ l.text }}<span style="opacity:{{ l.curO }}">█</span></div>
+            </sc-for>
+            <sc-if value="{{ showLost }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:6px;display:flex;align-items:center;gap:10px;color:#b23a22"><span style="flex:1;border-top:2px solid #b23a22"></span><span style="font:900 24px/1 'Big Shoulders Display',sans-serif;letter-spacing:.12em;white-space:nowrap">— SIGNAL LOST —</span><span style="flex:1;border-top:2px solid #b23a22"></span></div>
+            </sc-if>
+            <sc-if value="{{ showStill }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:4px;font:700 34px/1 'B612 Mono',monospace;color:#1b1a16">{{ stillText }}<span style="opacity:{{ stillCur }}">█</span></div>
+            </sc-if>
+          </div>
           <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
-            <div style="display:flex;flex-direction:column;gap:4px"><span style="font:700 10px/1 'B612 Mono',monospace;letter-spacing:.16em;color:#7a715c">ORBITER-1 · DAY 672</span><span style="font:900 38px/0.9 'Big Shoulders Display',sans-serif;color:#1b1a16">MISSION<br>REPORT</span></div>
-            <div style="padding:6px 9px;border:3px solid #2f8a4a;border-radius:3px;transform:rotate(-5deg);font:900 17px/0.9 'Big Shoulders Display',sans-serif;color:#2f8a4a;text-align:center">MISSION<br>COMPLETE</div>
+            <div style="display:flex;flex-direction:column;gap:4px"><span style="font:700 10px/1 'B612 Mono',monospace;letter-spacing:.16em;color:#7a715c">{{ nameU }} · DAY {{ recvDay }}</span><span style="font:900 38px/0.9 'Big Shoulders Display',sans-serif;color:#1b1a16">MISSION<br>REPORT</span></div>
+            <div style="padding:6px 9px;border:3px solid {{ stampCol }};border-radius:3px;transform:rotate(-5deg);font:900 17px/0.9 'Big Shoulders Display',sans-serif;color:{{ stampCol }};text-align:center">{{ stampA }}<br>{{ stampB }}</div>
           </div>
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
             <sc-for list="{{ stars }}" as="s" hint-placeholder-count="3"><div style="display:flex;flex-direction:column;align-items:center;gap:4px"><dc-import name="SDIcon" icon="star" size="34" color="{{ s.col }}" fill="{{ s.fill }}" sw="1.6" hint-size="34px,34px"></dc-import><span style="font:700 9px/1.2 'B612 Mono',monospace;letter-spacing:.08em;color:#3a372e;text-align:center">{{ s.label }}</span></div></sc-for>
@@ -199,32 +245,58 @@
   </div>
 </section>
 </x-dc>
-<script type="text/x-dc" data-dc-script>
+<script type="text/x-dc" data-dc-script data-props="{&quot;outcome&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;complete&quot;,&quot;lost&quot;,&quot;extended&quot;],&quot;default&quot;:&quot;complete&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Ending&quot;},&quot;robotName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;VOYA&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Robot&quot;}}">
 const PANELS=[
  {day:'DAY 0 · LIFTOFF',text:'Off from Florida. Shield, battery and autopilot packed.',eng:'NOV 18 · C3 12.2 km²/s²'},
  {day:'DAY 214 · SOLAR STORM',text:'You kept science on. The star tracker blinked, then rebooted.',eng:'SEU ×1 · SYS 5 → 4'},
  {day:'DAY 307 · ARRIVE AT MARS',text:'A 34-minute burn. Mars caught you.',eng:'Δv 1.2 km/s · FUEL 4 → 2'},
  {day:'DAY 424 · SUN IN THE WAY',text:'No radio for two weeks. The autopilot flew alone.',eng:'SEP < 2° · 14 d autonomous'}
 ];
-const STEP=2.4,CPS=38;
+const STEP=2.4,CPS=38,LCPS=30,STILL='STILL HERE.';
+const OUT={
+ complete:{label:'COMPLETE',recvDay:672,recv:'RECEIVED DAY 672 · DSN CANBERRA',sent:'SENT 20 MIN BEFORE IT PRINTED',
+  lines:n=>['DAY 672. I SAW MARS FOR 365 DAYS.','THE STORM ON DAY 214 NEARLY ENDED ME. MY STAR TRACKER NEVER FULLY WOKE UP.','YOU CHOSE THE LONG BURN. MARS CAUGHT ME ON THE FIRST TRY.','FOR 14 DAYS THE SUN STOOD BETWEEN US. I FLEW MYSELF.','PRIMARY MISSION COMPLETE. '+n+' OUT.'],
+  foot:'The last words were already 20 minutes old when the paper moved.',stamp:['MISSION','COMPLETE'],col:'#2f8a4a',stars:[1,1,0],lasted:'1 YEAR AT MARS',ended:'PRIMARY MISSION DONE'},
+ lost:{label:'LOST',recvDay:438,recv:'RECEIVED DAY 438 · DSN GOLDSTONE · INCOMPLETE',sent:'SENT 21 MIN BEFORE IT PRINTED',lost:true,
+  lines:()=>['DAY 438. THE SUN HAS MOVED ASIDE. I CAN HEAR YOU AGAIN.','THE BIG PLAN HAD ONE BAD LINE. I HAVE BEEN IN SAFE MODE 6 DAYS.','BATTERY 9%. HEATERS OFF TO SAVE WHAT IS LEFT.','TURNING MY ANTENNA TO WHERE EARTH SHOULD B'],
+  foot:'Goldstone listened for 30 more days. Nothing else came.',stamp:['SIGNAL','LOST'],col:'#b23a22',stars:[0,1,0],lasted:'438 DAYS',ended:'LOST AFTER SAFE MODE'},
+ extended:{label:'EXTENDED',recvDay:672,recv:'RECEIVED DAY 672 · DSN MADRID',sent:'SENT 20 MIN BEFORE IT PRINTED',still:true,
+  lines:()=>['DAY 672. PRIMARY MISSION COMPLETE.','I SAW MARS FOR 365 DAYS. THE STORM ON DAY 214 NEARLY ENDED ME.','FUEL 2 OF 5. BATTERY HOLDING. ENOUGH FOR ANOTHER YEAR.','EXTENSION ORDER RECEIVED. 20 MIN LATE, AS ALWAYS.'],
+  foot:'Not a final transmission after all. The next one is up to you.',stamp:['MISSION','EXTENDED'],col:'#a8620a',stars:[1,1,0],lasted:'STILL FLYING',ended:'—'}
+};
 class Component extends DCLogic {
-  state={t:0,mode:'cadet'};
-  componentDidMount(){this.last=performance.now();this.iv=setInterval(()=>{const n=performance.now();const dt=(n-this.last)/1000;this.last=n;if(this.state.t<STEP*4+2)this.setState({t:this.state.t+dt});},40);}
+  state={t:0,mode:'cadet',outcome:null,sheet:null,name:'',blink:true};
+  componentDidMount(){let nm='';try{nm=localStorage.getItem('sd.robotName')||'';}catch(_){}this.setState({name:nm});
+    this.last=performance.now();this.iv=setInterval(()=>{const n=performance.now();const dt=(n-this.last)/1000;this.last=n;this.setState(s=>({t:s.t+dt,blink:Math.floor(n/450)%2===0}));},40);}
   componentWillUnmount(){clearInterval(this.iv);}
   renderVals(){
-    const s=this.state,eng=s.mode==='eng';
-    const panels=PANELS.map((p,i)=>{const lt=s.t-i*STEP;const on=lt>0;
+    const s=this.state,eng=s.mode==='eng',key=s.outcome||this.props.outcome||'complete',o=OUT[key]||OUT.complete;
+    const nameU=String(s.name||this.props.robotName||'VOYA').toUpperCase().slice(0,12);
+    const lines=o.lines(nameU);let acc=.9;
+    const logLines=lines.map((tx,i)=>{const st=acc,dur=tx.length/LCPS;acc+=dur+.5;const k=Math.max(0,Math.min(tx.length,Math.floor((s.t-st)*LCPS)));
+      const on=s.t>=st,typing=on&&k<tx.length,tail=i===lines.length-1&&!o.lost&&!o.still&&on;
+      return {text:tx.slice(0,k),curO:(typing||tail)&&s.blink?1:0};});
+    const lostAt=acc+.7,stillAt=acc+.4,stillK=Math.max(0,Math.min(STILL.length,Math.floor((s.t-stillAt)*LCPS*.5)));
+    const end=o.lost?lostAt:o.still?stillAt+STILL.length/(LCPS*.5):acc;
+    const feedAt=end+2.8;this._feedAt=feedAt;
+    const stage=s.sheet!=null?s.sheet:(s.t>=feedAt?1:0),tc=s.t-(feedAt+1.4);
+    const panels=PANELS.map((p,i)=>{const lt=tc-i*STEP;const on=lt>0;
       return {...p,is1:i===0,is2:i===1,is3:i===2,is4:i===3,op:on?1:.12,text:on?p.text.slice(0,Math.floor(lt*CPS)):''};});
-    return {eng,panels,
-      stars:[{label:'ROBOT SURVIVED',rule:'SYS > 0 at day 672',fill:true,col:'#d8a21c'},{label:'SCIENCE GOAL',rule:'DATA ≥ 4',fill:true,col:'#d8a21c'},{label:'NO DAMAGE',rule:'SYS = 5 at end',fill:false,col:'#a49b84'}],
+    const labs=[['ROBOT SURVIVED','SYS > 0 at end'],['SCIENCE GOAL','DATA ≥ 4'],['NO DAMAGE','SYS = 5 at end']];
+    return {eng,panels,nameU,recv:o.recv,recvDay:o.recvDay,sent:o.sent,foot:o.foot,logLines,
+      showLost:!!o.lost&&s.t>=lostAt,showStill:!!o.still&&s.t>=stillAt,stillText:STILL.slice(0,stillK),stillCur:s.blink?1:0,
+      rollY:stage?-864:0,toReport:()=>this.setState({sheet:1,t:Math.max(s.t,this._feedAt)}),
+      stampCol:o.col,stampA:o.stamp[0],stampB:o.stamp[1],
+      outs:Object.entries(OUT).map(([k,v])=>{const on=k===key;return {label:v.label,go:()=>this.setState({outcome:k,t:0,sheet:null}),bg:on?'#ffb547':'#1c1e18',fg:on?'#1b1a16':'#cbbf9f',bd:on?'#ffb547':'#3a3d33'};}),
+      stars:labs.map(([l,r],i)=>({label:l,rule:r,fill:!!o.stars[i],col:o.stars[i]?'#d8a21c':'#a49b84'})),
       compare:[
         {k:'LAUNCH',you:'NOV 18',nasa:'NOV 18, 2013',nasaShort:'MAVEN · NOV 18, 2013'},
         {k:'MARS ARRIVAL BURN',you:'34 MIN',nasa:'33 MIN (SEP 2014)',nasaShort:'MAVEN · 33 MIN'},
         {k:'PLANNED TO LAST',you:'1 YEAR',nasa:'1 YEAR',nasaShort:'MAVEN · 1 YEAR'},
-        {k:'ACTUALLY LASTED',you:'STILL FLYING',nasa:'11 YEARS',nasaShort:'MAVEN · 11 YEARS'},
-        {k:'HOW IT ENDED',you:'—',nasa:'SPUN, BATTERY DIED · DEC 2025',nasaShort:'SPIN DRAINED BATTERY'}
+        {k:'ACTUALLY LASTED',you:o.lasted,nasa:'11 YEARS',nasaShort:'MAVEN · 11 YEARS'},
+        {k:'HOW IT ENDED',you:o.ended,nasa:'SPUN, BATTERY DIED · DEC 2025',nasaShort:'SPIN DRAINED BATTERY'}
       ],
-      replay:()=>this.setState({t:0}),
+      replay:()=>this.setState({t:0,sheet:null}),
       toggleMode:()=>this.setState({mode:eng?'cadet':'eng'}),modeBtn:eng?'ENGINEER MODE ON':'CADET MODE · SWITCH',engLbl:eng?'#ffb547':'#cbbf9f'};
   }
 }

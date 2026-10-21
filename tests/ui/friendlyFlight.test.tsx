@@ -131,7 +131,7 @@ describe('Pack: briefing and launch checklist', () => {
 
   it('the checklist ticks itself off and lights the next thing to do', () => {
     vi.useFakeTimers();
-    localStorage.setItem('sd.seen', JSON.stringify(['brief:moon-1']));
+    localStorage.setItem('sd.seen', JSON.stringify(['name', 'brief:moon-1']));
     render(<App />);
     fireEvent.click(screen.getByRole('button', { name: /^Play: mission/ }));
     pass(100);
@@ -149,7 +149,7 @@ describe('Pack: briefing and launch checklist', () => {
 describe('◂ BACK on every step', () => {
   it('map, rescue, notebook and pack all go back the way you came', () => {
     vi.useFakeTimers();
-    localStorage.setItem('sd.seen', JSON.stringify(['brief:moon-1']));
+    localStorage.setItem('sd.seen', JSON.stringify(['name', 'brief:moon-1']));
     render(<App />);
     const home = () => screen.getByRole('button', { name: /^Play: mission/ });
     // Home → map → back
@@ -177,7 +177,7 @@ describe('◂ BACK on every step', () => {
 
   it('Back from a flight (after the warning) returns to Pack; Back from the report skips the finished flight', () => {
     vi.useFakeTimers();
-    localStorage.setItem('sd.seen', JSON.stringify(['brief:mars', 'coach']));
+    localStorage.setItem('sd.seen', JSON.stringify(['name', 'brief:mars', 'coach']));
     localStorage.setItem('mdt.progress', JSON.stringify({ 'moon-1': 1, 'moon-2': 1, 'moon-3': 1 }));
     render(<App />);
     fireEvent.click(screen.getByRole('button', { name: 'CHOOSE A MISSION ▸' }));

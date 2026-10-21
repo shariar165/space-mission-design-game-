@@ -2,6 +2,7 @@
 // Notebook's flight facts and the Daily results. Every read and write survives missing storage.
 import type { DailyGrid } from '../engine/daily';
 import { emptyFacts, type NotebookFacts } from '../engine/notebook';
+import { cleanRobotName } from './sdWords';
 
 const NOTEBOOK_KEY = 'sd.notebook';
 const DAILY_KEY = 'sd.daily';
@@ -51,11 +52,11 @@ export const loadSeen = (): string[] => {
 };
 export const saveSeen = (seen: string[]) => write(SEEN_KEY, seen);
 
-/** The robot's name, chosen on Pack (empty means the default). */
+/** The robot's name, chosen on the name screen or Pack (empty means the default); cleaned again when read. */
 const ROBOT_KEY = 'sd.robot';
 export const loadRobotName = (): string => {
   const v = read<{ name?: unknown }>(ROBOT_KEY, {});
-  return typeof v.name === 'string' ? v.name : '';
+  return typeof v.name === 'string' ? cleanRobotName(v.name) : '';
 };
 export const saveRobotName = (name: string) => write(ROBOT_KEY, { name });
 

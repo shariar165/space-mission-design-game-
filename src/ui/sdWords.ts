@@ -548,15 +548,19 @@ export const stormLine = (phase: 'coming' | 'hitting', name: string, hitsIn: str
 
 /** Names the 🎲 button cycles through on Pack (the first is the default). */
 export const ROBOT_NAMES = ['PIP', 'NOVA', 'ZIPPY', 'BOLT', 'COMET', 'SPARKY', 'ORBIT', 'BEEP', 'ASTRO', 'DOT', 'RUSTY', 'TWINKLE'];
-/** Longest robot name (letters), so it fits over the robot on the map. */
-export const ROBOT_NAME_MAX = 10;
+/** Longest robot name (letters): the twelve cells of the name screen, and still short enough for the map. */
+export const ROBOT_NAME_MAX = 12;
 
-/** A typed name made safe for the map: capitals, letters, digits, spaces and dashes, at most ROBOT_NAME_MAX. */
+/**
+ * A typed name made safe for the map: capitals, letters, digits, spaces and dashes, no leading space, at most
+ * ROBOT_NAME_MAX. Saved names are cleaned again when read back (saves.ts), so storage can't smuggle anything in.
+ */
 export const cleanRobotName = (raw: string) =>
   raw
     .toUpperCase()
     .replace(/[^A-Z0-9 -]/g, '')
     .replace(/\s+/g, ' ')
+    .replace(/^ +/, '')
     .slice(0, ROBOT_NAME_MAX);
 
 /** The name to show: the player's, or the default when the field was left empty. */
@@ -571,6 +575,29 @@ export const ROBOT_WORDS = {
   radio: (name: string) => `${name} SAYS`,
   took: (dest: string, delay: string) => `FROM ${dest} · TOOK ${delay} TO REACH YOU`,
   lastMessage: (name: string) => `LAST MESSAGE FROM ${name}`,
+};
+
+/** NAME YOUR ROBOT (design screen 00), before the first mission. */
+export const NAME_WORDS = {
+  kicker: 'PAD 39A · PRE-LAUNCH',
+  intro1: '> A NEW ROBOT IS WAITING ON THE PAD.',
+  intro2: '> GIVE IT A NAME.',
+  count: (n: string, max: string) => `NAME · ${n} / ${max}`,
+  input: 'Robot name',
+  /** The design's three suggestions. */
+  suggestions: ['VOYA', 'TALLY', 'KESTREL'],
+  suggestion: (n: string) => `SUGGESTION ${n}`,
+  launch: 'LAUNCH INTO TODAY’S SKY',
+  firstHead: (name: string, day: string) => `${name} · DAY ${day} · SENT JUST NOW`,
+  noDelay: 'THE LAST TIME THERE IS NO DELAY',
+  firstWords: 'SYSTEMS ON. FUEL FULL. READY WHEN YOU ARE.',
+  load: (name: string) => `LOAD ${name}`,
+  loadSub: 'Next: the packing bay',
+  skip: (name: string) => `SKIP · CALL IT ${name}`,
+  sky: 'TODAY’S SKY',
+  skyLine: (date: string, minutes: string) => `TODAY · ${date} · MARS IS ${minutes} LIGHT-MINUTES AWAY`,
+  skyPhone: (minutes: string) => `MARS IS ${minutes} LIGHT-MINUTES AWAY`,
+  skyEng: (au: string, mkm: string, t: string) => `${au} · ${mkm} · t = d / c = ${t}`,
 };
 
 type Line = (dest: string) => string;

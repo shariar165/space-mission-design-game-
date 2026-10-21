@@ -29,8 +29,8 @@ describe('Pack: name your robot', () => {
     expect(input.value).toBe('');
     expect(input.placeholder).toBe(ROBOT_NAMES[0]);
     fireEvent.change(input, { target: { value: 'rover-7! the brave' } });
-    expect(input.value).toBe('ROVER-7 TH'); // at most ten characters, "!" dropped
-    expect(JSON.parse(localStorage.getItem('sd.robot')!)).toEqual({ name: 'ROVER-7 TH' });
+    expect(input.value).toBe('ROVER-7 THE '); // at most twelve characters, "!" dropped
+    expect(JSON.parse(localStorage.getItem('sd.robot')!)).toEqual({ name: 'ROVER-7 THE ' });
   });
 
   it('🎲 suggests the next name on the list', () => {

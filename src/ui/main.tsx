@@ -9,6 +9,7 @@ import './styles/sd-fly.css';
 import './styles/sd-pack.css';
 import './styles/sd-report.css';
 import './styles/sd-home.css';
+import './styles/sd-name.css';
 import './styles/sd-daily.css';
 import './styles/sd-notebook.css';
 import './styles/sd-moments.css';
