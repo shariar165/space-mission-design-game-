@@ -82,11 +82,12 @@ test('solar storm comes from the Sun', async ({ page }, info) => {
   if (await pause.isEnabled()) await pause.click({ timeout: 2000 }).catch(() => undefined);
   await page.waitForTimeout(mobile ? 500 : 300);
   await page.screenshot({ path: `${OUT}storm-hit-${p}.png` });
-  // The robot's own report of the hit reaches Earth one light time later: its radio bubble.
+  // The robot's own report of the hit reaches Earth one light time later: a line on the transmissions teletype.
   for (let i = 0; i < 40; i++) {
     const cont = page.getByRole('button', { name: 'CONTINUE ▸' });
     if (await cont.isVisible()) await cont.click();
-    if (await page.locator('.fly-radio').isVisible()) break;
+    const latest = mobile ? page.locator('.tx-strip-text') : page.locator('.tx-line.robot .tx-text').first();
+    if (/STORM|CME|PARTICLES/.test((await latest.textContent()) ?? '')) break;
     const ten = page.getByRole('button', { name: '10× speed' });
     if ((await ten.isEnabled()) && (await ten.getAttribute('aria-pressed')) !== 'true') await ten.click();
     await page.waitForTimeout(100);

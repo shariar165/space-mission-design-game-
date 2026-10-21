@@ -34,7 +34,7 @@ export async function flyToEnd(page: Page, mobile: boolean) {
       await page.waitForTimeout(300);
       continue;
     }
-    if (await page.locator('.fly-transit').isVisible()) {
+    if ((await page.locator('.fly-transit').isVisible()) || (await page.locator('.fly-reply').isVisible())) {
       await page.waitForTimeout(400);
       continue;
     }

@@ -5,14 +5,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { DESTINATIONS, HAZARDS, PARTS } from '../../engine/data';
 import { flightMap, ghostFor, pathAhead } from '../../engine/flightMap';
-import { comingUp, eclipseCard, flyCard, flyTiles, FLY_RULES, heardMessages, missionProgress, momentsSince, outcomeIn_s, stormFront, type FlyChip, type MomentKind, type OpsState } from '../../engine/ops/index';
+import { comingUp, eclipseCard, flyCard, flyTiles, FLY_RULES, missionProgress, momentsSince, outcomeIn_s, stormFront, transmissionFeed, type FeedEntry, type FlyChip, type MomentKind, type OpsState } from '../../engine/ops/index';
 import type { Design, Sourced } from '../../engine/types';
 import { SPEED_OF_LIGHT } from '../../engine/constants';
 import { BookCall } from '../components/ops/BookCall';
 import { BlackoutPanel, CommandQueue, ExtensionDecision, NoticeToast, SafeModePanel } from '../components/ops/OpsPanels';
 import { PowerDial } from '../components/ops/PowerDial';
 import { CrtMap } from '../components/fly/CrtMap';
-import { RobotRadio } from '../components/fly/RobotRadio';
+import { Transmissions, txLine } from '../components/fly/Transmissions';
 import { BANNER_MS, LaunchCountdown, MomentBanner } from '../components/fly/Moment';
 import { SoundToggle } from '../components/sd/SoundToggle';
 import { PostcardView, postcardSrc } from '../components/sd/PostcardView';
@@ -52,6 +52,7 @@ import {
   POSTCARD_WORDS,
   robotNameOr,
   stormLine,
+  TX_WORDS,
   RESULT_EFFECT_CHIP,
   resultLines,
   TILE,
@@ -60,6 +61,7 @@ import {
 } from '../sdWords';
 import { OPS_SPEEDS, useOpsSession, type OpsSpeed } from '../useOpsSession';
 import * as f from '../format';
+import { voiceContext } from '../voiceContext';
 import type { RealStorm } from '../../engine/spaceWeather';
 
 interface Props {
@@ -91,6 +93,8 @@ interface Props {
 }
 
 type Panel = 'power' | 'call' | 'queue' | 'eqs';
+/** The robot's reply to an order stays on screen this long (and holds the clock), then the outcome shows. */
+export const REPLY_SHOW_MS = 4000;
 /** Overlays that hold the clock while they are open. */
 type Overlay = 'coach' | 'info' | 'finish' | 'leave';
 
@@ -124,7 +128,8 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
 
   const tiles = state && view ? flyTiles(state, view) : undefined;
   const storm = state ? stormFront(state) : undefined;
-  const radio = state ? heardMessages(state).latest : undefined;
+  const voice = useMemo(() => voiceContext(dest.name, robotName), [dest.name, robotName]);
+  const feed = useMemo(() => (state ? transmissionFeed(state) : undefined), [state]);
   const card = state && view && ops.showAlert ? flyCard(state, view) : undefined;
   const coming = state ? comingUp(state) : undefined;
   const ahead = useMemo(() => (ev && view ? pathAhead(design, view.map.frame.day, ev) : []), [design, ev, view?.map.frame.day]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -172,6 +177,27 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
     if (over) play(state?.status === 'lost' || state?.status === 'not-launched' ? 'sad' : 'fanfare');
   }, [over]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ---- The robot's lines: a radio blip for each new one; its reply to an order gets the reply box ----
+  const robotLines = feed?.entries.filter((e) => e.from === 'robot');
+  const lastHeard = robotLines?.[robotLines.length - 1];
+  const heardKey = useRef<string | undefined>(undefined);
+  const [reply, setReply] = useState<FeedEntry>();
+  useEffect(() => {
+    if (!lastHeard) return;
+    const k = `${lastHeard.at}:${lastHeard.message!.kind}`;
+    if (heardKey.current === k) return;
+    const first = heardKey.current === undefined && (state?.t ?? 0) > 1;
+    heardKey.current = k;
+    if (first || over) return;
+    if (lastHeard.message!.kind !== 'status') play('radio');
+    if (lastHeard.roundTrip_s !== undefined) setReply(lastHeard);
+  }, [lastHeard, over]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!reply) return;
+    const id = setTimeout(() => setReply(undefined), REPLY_SHOW_MS);
+    return () => clearTimeout(id);
+  }, [reply]);
+
   // ---- Postcards: a toast when the science opens a new one (the clock runs on); tap it for the full card ----
   const earned = useMemo(() => (state ? postcardsEarned(state) : []), [state]);
   const earnedKey = earned.join(',');
@@ -197,7 +223,7 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
   const openPostcard = POSTCARDS.find((c) => c.id === cardOpen);
 
   // An eclipse planning card, an overlay, an open postcard or the launch countdown holds the clock like a danger card does.
-  const held = eclipseOpen || overlay !== undefined || launching || openPostcard !== undefined;
+  const held = eclipseOpen || overlay !== undefined || launching || openPostcard !== undefined || reply !== undefined;
   useEffect(() => {
     ops.setHold(held);
   }, [held]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -350,7 +376,7 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
       </div>
     );
 
-  if (!state || !view || !map || !tiles || !coming)
+  if (!state || !view || !map || !tiles || !coming || !feed)
     return (
       <div className="sd sd-loading" aria-busy="true">
         <Teletype text="PREPARING THE MISSION. WORKING OUT EVERY DAY: DISTANCES, LIGHT TIME, ECLIPSES." prefix="> " />
@@ -370,7 +396,9 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
     ? `${hazardCard ? 'DANGER AHEAD' : 'PLAN AHEAD'}: ${openCard.title}.`
     : flying
       ? `ORDER SENT: ${shortLabel(flying.hazardId!, flying.optionId!)}.`
-      : ops.transit
+      : ops.transit && feed.entries.some((e) => e.from === 'earth' && e.order!.hazardId === ops.transit!.hazardId && e.order!.status === 'reply-inbound')
+        ? `${TX_WORDS.heard(name.toUpperCase())}.`
+        : ops.transit
         ? 'ORDER RECEIVED BY THE ROBOT.'
         : ops.result
         ? 'SIGNAL RECEIVED.'
@@ -471,7 +499,27 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
     </div>
   );
 
-  const waitFor = !flying && ops.transit ? outcomeIn_s(state, ops.transit.hazardId) : undefined;
+  // After the order lands, the robot's reply crosses space back to Earth: nothing is known here until it arrives.
+  const mine = ops.transit ? feed?.entries.find((e) => e.from === 'earth' && e.order!.kind === 'respond' && e.order!.hazardId === ops.transit!.hazardId)?.order : undefined;
+  const returning = !flying && mine?.status === 'reply-inbound' ? mine : undefined;
+  const returnBox = returning && (
+    <div className="fly-transit back" role="status" aria-live="polite">
+      {!phone && <span className="fly-transit-k">{TX_WORDS.heard(name.toUpperCase())}</span>}
+      <span className="fly-transit-q">{TX_WORDS.replyReaches}</span>
+      <span className="fly-countdown">{f.mmss(returning.replyIn_s ?? 0)}</span>
+      {!phone && <span className="fly-transit-foot">{TX_WORDS.alreadyActed}</span>}
+    </div>
+  );
+
+  const replyBox = reply && !openCard && (
+    <div className="fly-reply" role="status" aria-label={TX_WORDS.replyFrom(name.toUpperCase(), f.durationWords(reply.message!.delay_s))}>
+      <span className="fly-reply-k">{TX_WORDS.replyFrom(name.toUpperCase(), f.durationWords(reply.message!.delay_s))}</span>
+      <Teletype className="fly-reply-v" text={txLine(reply, voice).text} />
+      {!phone && <span className="fly-reply-foot">{engineer ? TX_WORDS.roundTripEng(f.mmss(reply.roundTrip_s!), name.toUpperCase()) : TX_WORDS.roundTrip(f.durationWords(reply.roundTrip_s!))}</span>}
+    </div>
+  );
+
+  const waitFor = !flying && !returning && !reply && ops.transit ? outcomeIn_s(state, ops.transit.hazardId) : undefined;
   const waitBox = waitFor !== undefined && ops.transit && (
     <div className="fly-transit" role="status" aria-live="polite">
       {!phone && <span className="fly-transit-k">ORDER “{shortLabel(ops.transit.hazardId, ops.transit.optionId)}” CARRIED OUT</span>}
@@ -481,7 +529,7 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
     </div>
   );
 
-  const resultBox = ops.result && (
+  const resultBox = ops.result && !reply && (
     <div className="fly-result" role="dialog" aria-label="Incoming message">
       <div className="fly-result-head">
         <span>INCOMING · FROM {missionName.toUpperCase()}</span>
@@ -504,7 +552,7 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
     </div>
   );
 
-  const actions = !openCard && !flying && !ops.result && !awaitingExt && !debrief && (
+  const actions = !openCard && !flying && !returning && !reply && !ops.result && !awaitingExt && !debrief && (
     <div className="fly-actions">
       <button type="button" className="fly-action" aria-pressed={panel === 'power'} onClick={() => setPanel((p) => (p === 'power' ? undefined : 'power'))}>
         <SDIcon icon="power" size={16} />
@@ -610,7 +658,7 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
         destination={design.destination}
         destName={dest.name}
         {...(g ? { ghost: g } : {})}
-        {...(flying ? { pulse: flying.progress } : {})}
+        {...(flying ? { pulse: flying.progress } : returning ? { pulse: returning.progress, pulseBack: true } : {})}
         ringPhase={ringPhase}
         {...(storm ? { storm } : {})}
         robotName={name}
@@ -618,7 +666,6 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
         lost={state.status === 'lost'}
       />
       <Teletype className="fly-log sd-crt-text" text={logText} prefix="> " />
-      <RobotRadio {...(radio ? { message: radio } : {})} name={name} destName={dest.name} hidden={!!openCard || debrief} />
       {!phone && <span className="fly-goal">{FLY_GOAL}</span>}
       {!phone && (
         <div className="fly-legend">
@@ -657,6 +704,8 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
         />
       )}
       {transitBox}
+      {returnBox}
+      {replyBox}
       {waitBox}
       {!phone && resultBox}
       {!phone && openCard && <DangerCard card={openCard} engineer={engineer} phone={false} onPick={pickCard} />}
@@ -770,6 +819,7 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
           <ModeLever mode={mode} onMode={onMode} />
         </div>
         {resources}
+        <Transmissions feed={feed!} voice={voice} oneWay_s={view.clock.oneWay_s} phone {...(reply ? { hot: reply } : {})} />
         {crt}
         <div className="fly-bottom">
           <div className="fly-clock-row">
@@ -804,7 +854,10 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
           <ModeLever mode={mode} onMode={onMode} />
         </div>
       </header>
-      {crt}
+      <div className="fly-mid">
+        {crt}
+        <Transmissions feed={feed!} voice={voice} oneWay_s={view.clock.oneWay_s} phone={false} {...(reply ? { hot: reply } : {})} />
+      </div>
       <footer className="fly-bottom">
         <div className="fly-clock">
           <div className="fly-day sd-well" aria-label={`Day ${f.num(view.clock.day)}`}>

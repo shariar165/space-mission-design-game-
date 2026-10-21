@@ -293,13 +293,54 @@
 .fly-status:has(.sd-back) .sd-lever { margin-left: auto; }
 .fly-status .fly-help { margin-left: 0; }
 
-/* The robot's radio: its latest message, and how long it took to cross space */
-.fly-radio { position: absolute; left: 22px; top: 64px; z-index: 1; max-width: 430px; display: flex; flex-direction: column; gap: 6px; padding: 10px 14px 11px; border: 1px solid var(--sd-crt-line); border-left: 4px solid var(--sd-crt-hi); border-radius: 4px; background: rgba(5, 12, 7, 0.82); animation: fly-radio-in 0.35s ease-out; }
-.fly-radio.bad { border-left-color: var(--sd-amber); }
-.fly-radio-k { font: 400 17px/1 var(--sd-crt-font); letter-spacing: 0.08em; color: var(--sd-crt-mid); }
-.fly-radio-v { font: 400 23px/1.1 var(--sd-crt-font); color: var(--sd-crt-hi); }
-.fly-radio.bad .fly-radio-v { color: var(--sd-amber-hi); }
-.fly-radio-t { font: 400 15px/1 var(--sd-crt-font); letter-spacing: 0.06em; color: var(--sd-crt-mid); opacity: 0.85; }
-@keyframes fly-radio-in { from { opacity: 0; transform: translateY(-6px); } }
-.fly.phone .fly-radio { left: 12px; right: 12px; top: 50px; max-width: none; padding: 8px 10px; }
-.fly.phone .fly-radio-v { font-size: 20px; }
+/* ---- TRANSMISSIONS (design: the paper teletype beside the CRT; on phone a strip and a log sheet) ---- */
+.fly-mid .fly-legend { bottom: 66px; }
+.fly-mid { display: grid; grid-template-columns: minmax(0, 1fr) 392px; gap: 14px; min-height: 0; }
+.tx { position: relative; min-height: 0; background: var(--sd-paper); border-radius: 4px; overflow: hidden; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; }
+.tx::before, .tx::after { content: ''; position: absolute; top: 0; bottom: 0; width: 24px; background-image: radial-gradient(circle, var(--sd-chassis) 4px, transparent 5px); background-size: 24px 26px; background-position: center 8px; }
+.tx::before { left: 0; border-right: 1px dashed var(--sd-paper-line); }
+.tx::after { right: 0; border-left: 1px dashed var(--sd-paper-line); }
+.tx-head { padding: 14px 38px 11px; border-bottom: 2px dashed var(--sd-paper-line); display: flex; justify-content: space-between; align-items: flex-end; gap: 10px; }
+.tx-head-l { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.tx-kicker { font: 700 10px/1 var(--sd-mono); letter-spacing: 0.18em; color: var(--sd-paper-mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tx-title { font: 900 22.5px/0.9 var(--sd-display); color: var(--sd-paper-ink); letter-spacing: 0.03em; }
+.tx-key { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; font: 700 10px/1.1 var(--sd-mono); letter-spacing: 0.1em; white-space: nowrap; }
+.tx-key .robot { color: var(--sd-paper-ink); }
+.tx-key .earth { color: var(--sd-red-ink); }
+.tx-list { margin: 0; list-style: none; min-height: 0; overflow-y: auto; scrollbar-width: none; display: flex; flex-direction: column-reverse; gap: 4px; padding: 8px 30px; }
+.tx-line { flex: none; display: flex; flex-direction: column; gap: 5px; padding: 8px 8px 9px; border-radius: 2px; border-bottom: 1px dotted var(--sd-paper-line); }
+.tx-meta { display: flex; justify-content: space-between; gap: 8px; font: 700 10px/1.1 var(--sd-mono); letter-spacing: 0.1em; color: var(--sd-paper-mute); }
+.tx-stamp { white-space: nowrap; }
+.tx-text { font: 700 15px/1.4 var(--sd-mono); color: var(--sd-paper-ink); text-wrap: pretty; }
+.tx-line.earth .tx-meta, .tx-line.earth .tx-text { color: var(--sd-red-ink); }
+.tx-line.hot { background: var(--sd-amber); }
+.tx-line.hot .tx-meta { color: var(--sd-amber-ink); }
+.tx-empty { padding: 8px; font: 700 13px/1.4 var(--sd-mono); color: var(--sd-paper-mute); }
+.tx-foot { padding: 10px 38px 12px; border-top: 2px dashed var(--sd-paper-line); font: 400 13px/1.35 var(--sd-body); color: var(--sd-paper-ink-2); text-wrap: pretty; }
+.tx-strip { cursor: pointer; position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 0 12px 0 14px; border: none; border-radius: 6px; background: var(--sd-paper); text-align: left; box-shadow: inset 0 -2px 0 var(--sd-paper-line); min-width: 0; }
+.tx-strip.hot { background: var(--sd-amber); }
+.tx-strip-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.tx-strip-meta { font: 700 9px/1 var(--sd-mono); letter-spacing: 0.12em; color: var(--sd-paper-mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tx-strip-text { font: 700 13px/1.1 var(--sd-mono); color: var(--sd-paper-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tx-strip-meta.earth, .tx-strip-text.earth { color: var(--sd-red-ink); }
+.tx-strip-chev { font: 700 10px/1 var(--sd-mono); letter-spacing: 0.1em; color: var(--sd-paper-ink); white-space: nowrap; }
+.tx-sheet { position: absolute; left: 10px; right: 10px; top: 182px; height: 340px; z-index: 6; box-sizing: border-box; background: var(--sd-paper); border-radius: 0 0 8px 8px; box-shadow: 0 24px 40px rgba(0, 0, 0, 0.65); display: flex; }
+.tx-sheet .tx-list { flex: 1; padding: 6px 12px 12px; gap: 2px; }
+.tx-sheet .tx-line { padding: 7px 6px 8px; }
+.tx-sheet .tx-meta { font-size: 8px; }
+.tx-sheet .tx-text { font-size: 13px; }
+.fly.phone { grid-template-rows: 34px 70px 46px minmax(0, 1fr) 196px; }
+
+/* The robot's reply to an order (design: ROBOT REPLIES), and its pulse back to Earth */
+.fly-reply { position: absolute; left: 50%; top: 64px; transform: translateX(-50%); min-width: 520px; max-width: calc(100% - 48px); box-sizing: border-box; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 20px 34px 18px; background: rgba(5, 12, 7, 0.9); border: 2px solid var(--sd-amber); border-radius: 6px; box-shadow: 0 0 50px rgba(255, 181, 71, 0.22); z-index: 3; }
+.fly-reply-k { font: 400 22px/1 var(--sd-crt-font); color: var(--sd-amber); letter-spacing: 0.08em; text-align: center; }
+.fly-reply-v { min-height: 96px; white-space: pre-wrap; text-align: center; font: 400 46px/1.05 var(--sd-crt-font); color: var(--sd-amber-hi); text-shadow: 0 0 14px rgba(255, 181, 71, 0.55); margin: 0; }
+.fly-reply-foot { font: 400 18px/1 var(--sd-crt-font); color: var(--sd-crt-dim); text-align: center; }
+.fly.phone .fly-reply { left: 12px; right: 12px; top: auto; bottom: 14px; transform: none; min-width: 0; max-width: none; gap: 6px; padding: 12px 14px; box-shadow: 0 0 30px rgba(255, 181, 71, 0.2); }
+.fly.phone .fly-reply-k { font-size: 16px; letter-spacing: 0; }
+.fly.phone .fly-reply-v { min-height: 62px; font-size: 30px; line-height: 1.03; text-shadow: 0 0 10px rgba(255, 181, 71, 0.5); }
+.fly-transit.back .fly-countdown { color: var(--sd-crt-hi); text-shadow: 0 0 18px rgba(140, 255, 158, 0.6); }
+.crt-pulse.back .crt-pulse-line { stroke: var(--sd-crt-hi); }
+.crt-pulse.back .crt-pulse-ring { stroke: var(--sd-crt-hi); }
+.crt-pulse.back .crt-pulse-dot { fill: var(--sd-crt-hi); }
+.crt-pulse.back .crt-order-label { fill: var(--sd-crt-hi); }
