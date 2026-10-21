@@ -585,6 +585,11 @@ export const COACH: CoachPanel[] = [
 export const HOW_TO_PLAY = { label: 'HOW TO PLAY', sub: 'New here? Learn the game in one minute.' };
 
 /** MARS RIGHT NOW on Home (engine marsNow: today's JPL ephemeris, no internet needed). */
+/** Home's second row (spec UI rule 28): the smaller keys after PLAY and the DAILY. */
+export const HOME_WORDS = {
+  more: 'More',
+};
+
 export const MARS_NOW = {
   title: 'MARS RIGHT NOW',
   away: 'away',
