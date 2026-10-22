@@ -8,7 +8,7 @@ import { reportCompare, reportPanels } from '../../src/engine/ops/report';
 import type { Mode } from '../../src/ui/components/sd/ModeLever';
 import * as f from '../../src/ui/format';
 import { MissionReport, PANEL_STEP_MS } from '../../src/ui/screens/MissionReport';
-import { CATEGORY_NAME, panelWords } from '../../src/ui/sdWords';
+import { CATEGORY_NAME, panelWords, FINAL_WORDS } from '../../src/ui/sdWords';
 import './setup';
 
 const maven = presetDesign('maven');
@@ -45,6 +45,10 @@ describe('Mission Report', () => {
     expect(figs.length).toBe(panels.length);
     const ctx = { dest: 'Mars', rocket: 'Atlas V 401', label: () => '', title: () => '', autopilot: false, sent_Gbit: d.downlinked_Gbit };
     panels.forEach((p, i) => expect(within(figs[i]!).getByText(panelWords(p, ctx).head)).toBeTruthy());
+    // The final transmission prints first; feeding the paper starts the comic.
+    act(() => vi.advanceTimersByTime(100));
+    expect(figs[0]!.className).not.toContain('on');
+    fireEvent.click(screen.getByRole('button', { name: FINAL_WORDS.feed }));
     act(() => vi.advanceTimersByTime(100));
     expect(figs[0]!.className).toContain('on');
     expect(figs[3]!.className).not.toContain('on');

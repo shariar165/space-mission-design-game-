@@ -10,6 +10,7 @@ import type { Design, Sourced } from '../types';
 import { effectiveFailureChance } from './responses';
 import type { HazardRecord, OpsState, ResponseSource } from './types';
 import { operationsDebrief } from './index';
+import { robotMessages } from './voice';
 
 export type PanelKind = 'launch' | 'launch-failed' | 'not-launched' | 'hazard' | 'arrival' | 'conjunction' | 'lost' | 'complete';
 
@@ -149,4 +150,101 @@ export function reportCompare(design: Design, ev: FullEvaluation): ReportCompare
     rows: c.rows,
     biggestGap: c.biggestGap,
   };
+}
+
+// ---------------------------------------------------------------------------
+// FINAL TRANSMISSION (design: TELETYPE 03): the robot's last message, printed before the report. Three to five lines
+// of codes and values, built from the mission and the report verdict; the words are the UI's (sdWords FINAL_WORDS).
+
+export type FinalEnding = 'complete' | 'lost' | 'extended';
+export type FinalLineKind = 'opening' | 'hurt' | 'saved' | 'arrival' | 'conjunction' | 'quiet' | 'fuel' | 'extension' | 'sign-off' | 'cause' | 'cut-off';
+
+export interface FinalLine {
+  kind: FinalLineKind;
+  values: {
+    /** The mission day the line is about (opening: the day it was sent). */
+    day?: number;
+    scienceDays?: number;
+    hazardType?: string;
+    effect?: FailureEffect;
+    saved?: Saved;
+    dv_ms?: number;
+    /** Conjunction: days without radio. Loss by power: days of brownout. */
+    days?: number;
+    propellantLeft_kg?: number;
+    years?: number;
+    /** Lost: what ended it. */
+    cause?: 'hazard' | 'fuel' | 'power' | 'unknown';
+  };
+}
+
+export interface FinalTransmission {
+  ending: FinalEnding;
+  /** Mission time the robot sent it, and when it reached Earth (days); the light time on the way (s). */
+  sentAt: number;
+  receivedAt: number;
+  delay_s: number;
+  lines: FinalLine[];
+  /** Lost: the last line breaks off mid-word. */
+  cutOff: boolean;
+}
+
+/** The middle lines: the mission's moments, the most telling first, at most `room` of them, then in time order. */
+function moments(s: OpsState, room: number): FinalLine[] {
+  const v = reportVerdict(s);
+  const end = endDay(s);
+  const out: { line: FinalLine; rank: number }[] = [];
+  if (v.hurt.code === 'bad-outcome') {
+    const type = v.hurt.hazardType;
+    const h = answered(s).find((x) => x.type === type && x.choice.badOutcome);
+    out.push({ line: { kind: 'hurt', values: { hazardType: type, effect: v.hurt.effect, day: Math.floor(h?.onset ?? 0) } }, rank: 0 });
+  }
+  const burn = s.env.burns.find((b) => b.kind === 'arrival');
+  if (burn && end >= s.env.arrivalDay) out.push({ line: { kind: 'arrival', values: { dv_ms: burn.dv_ms, day: s.env.arrivalDay } }, rank: 1 });
+  const conj = s.env.conjunctions.find((w) => w.startDay <= end);
+  if (conj) out.push({ line: { kind: 'conjunction', values: { days: conj.endDay - conj.startDay + 1, day: conj.startDay } }, rank: 2 });
+  if (v.saved.code !== 'quiet') {
+    const type = v.saved.hazardType;
+    const h = answered(s).find((x) => x.type === type && !x.choice.badOutcome);
+    out.push({ line: { kind: 'saved', values: { saved: v.saved, day: Math.floor(h?.onset ?? 0) } }, rank: 3 });
+  }
+  const picked = out
+    .sort((a, b) => a.rank - b.rank)
+    .slice(0, room)
+    .map((x) => x.line)
+    .sort((a, b) => (a.values.day ?? 0) - (b.values.day ?? 0));
+  return picked.length ? picked : [{ kind: 'quiet', values: {} }];
+}
+
+/** What ended a lost mission: the events at the moment of loss. */
+function lossCause(s: OpsState): FinalLine['values'] {
+  const t = s.failureT ?? s.t;
+  const at = s.events.filter((e) => Math.abs(e.t - t) < 1e-9);
+  if (at.some((e) => e.code === 'out-of-propellant')) return { cause: 'fuel' };
+  const bad = [...at].reverse().find((e) => e.code === 'response-outcome' && e.values.bad);
+  const type = bad && s.hazards.find((h) => h.id === bad.values.hazardId)?.type;
+  if (type) return { cause: 'hazard', hazardType: type };
+  const brown = [...at].reverse().find((e) => e.code === 'brownout');
+  if (brown) return { cause: 'power', days: Number(brown.values.streak) };
+  return { cause: 'unknown' };
+}
+
+/** The final transmission, or nothing when the robot never flew (launch failure, not launched). */
+export function finalTransmission(s: OpsState): FinalTransmission | undefined {
+  if (s.status === 'not-launched' || s.events.some((e) => e.code === 'launch-failed')) return undefined;
+  const last = robotMessages(s).at(-1);
+  if (!last) return undefined;
+  const day = Math.floor(last.sentAt);
+  const opening: FinalLine = { kind: 'opening', values: { day, scienceDays: Math.floor(s.scienceDaysAchieved) } };
+  const base = { sentAt: last.sentAt, receivedAt: last.receivedAt, delay_s: last.delay_s };
+  if (s.status === 'lost') {
+    const cause: FinalLine = { kind: 'cause', values: lossCause(s) };
+    const hurt = moments(s, 1).filter((l) => l.kind === 'hurt' && l.values.hazardType !== cause.values.hazardType);
+    return { ending: 'lost', ...base, cutOff: true, lines: [opening, cause, ...hurt, { kind: 'cut-off', values: {} }] };
+  }
+  if (s.extension) {
+    const fuel: FinalLine = { kind: 'fuel', values: { propellantLeft_kg: s.mass_kg - s.env.dryMass_kg } };
+    return { ending: 'extended', ...base, cutOff: false, lines: [opening, ...moments(s, 1), fuel, { kind: 'extension', values: { years: s.extension.years } }] };
+  }
+  return { ending: 'complete', ...base, cutOff: false, lines: [opening, ...moments(s, 3), { kind: 'sign-off', values: {} }] };
 }

@@ -5,7 +5,9 @@ import { compareWithRealMission } from '../src/engine/compare';
 import { evaluateDesign } from '../src/engine/index';
 import { presetDesign } from '../src/engine/missions';
 import { advanceOperations, decide, operationsDebrief, runOperations, startOperations, type OpsState } from '../src/engine/ops/index';
-import { reportCompare, reportPanels, reportVerdict } from '../src/engine/ops/report';
+import { finalTransmission, reportCompare, reportPanels, reportVerdict } from '../src/engine/ops/report';
+import { oneWayAt } from '../src/engine/ops/commands';
+import { robotMessages } from '../src/engine/ops/voice';
 import { STAR_RULES, stars } from '../src/engine/scoring';
 import { buildPackDesign, initialPack, packPart, shelfFor } from '../src/engine/pack';
 import { starterDesign } from '../src/ui/starters';
@@ -97,5 +99,81 @@ describe('you vs the real one', () => {
     expect(c.rows).toEqual(compareWithRealMission(maven, ev)!.rows);
     const venus = starterDesign('venus', '2026-10-05');
     expect(reportCompare(venus, evaluateDesign(venus))).toBeUndefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// FINAL TRANSMISSION: the robot's last words come off the teletype before the report (design screen 03).
+
+describe('final transmission', () => {
+  const maven = presetDesign('maven');
+  const DAY_S = 86_400;
+
+  it('a complete mission: opening, its moments in time order, then the sign-off; 3–5 lines', () => {
+    const s = runOperations(maven, { rng: () => 0.999999 }).state;
+    const ft = finalTransmission(s)!;
+    expect(ft.ending).toBe('complete');
+    expect(ft.lines.length).toBeGreaterThanOrEqual(3);
+    expect(ft.lines.length).toBeLessThanOrEqual(5);
+    expect(ft.lines[0]!.kind).toBe('opening');
+    expect(ft.lines.at(-1)!.kind).toBe('sign-off');
+    // The opening says the day it was sent and the science days flown.
+    expect(ft.lines[0]!.values.day).toBe(Math.floor(ft.sentAt));
+    expect(ft.lines[0]!.values.scienceDays).toBe(Math.floor(s.scienceDaysAchieved));
+    const middleDays = ft.lines.slice(1, -1).map((l) => l.values.day ?? 0);
+    expect([...middleDays].sort((a, b) => a - b)).toEqual(middleDays);
+    // A calm MAVEN: the arrival burn (its Δv) and the first conjunction (its length) are its moments.
+    const arrival = ft.lines.find((l) => l.kind === 'arrival')!;
+    expect(arrival.values.dv_ms).toBe(s.env.burns.find((b) => b.kind === 'arrival')!.dv_ms);
+    const conj = ft.lines.find((l) => l.kind === 'conjunction')!;
+    const w = s.env.conjunctions[0]!;
+    expect(conj.values.days).toBe(w.endDay - w.startDay + 1);
+  });
+
+  it('it is the robot’s last message: sent when it signed off, received one light time later', () => {
+    const s = runOperations(maven, { rng: () => 0.999999 }).state;
+    const ft = finalTransmission(s)!;
+    const last = robotMessages(s).at(-1)!;
+    expect(last.kind).toBe('signing-off');
+    expect(ft.sentAt).toBe(last.sentAt);
+    expect(ft.receivedAt).toBeCloseTo(ft.sentAt + oneWayAt(s.env, ft.sentAt) / DAY_S, 12);
+    expect(ft.delay_s).toBeCloseTo(oneWayAt(s.env, ft.sentAt), 6);
+  });
+
+  it('a lost robot: what happened, then a line cut off mid-word', () => {
+    // Seed 6: lost in the science phase after a missed deadline (the robot's default answer failed).
+    const s = runOperations(maven, { seed: 6, policy: 'default' }).state;
+    expect(s.status).toBe('lost');
+    const ft = finalTransmission(s)!;
+    expect(ft.ending).toBe('lost');
+    expect(ft.cutOff).toBe(true);
+    expect(ft.sentAt).toBeCloseTo(s.failureT!, 9);
+    expect(ft.lines.length).toBeGreaterThanOrEqual(3);
+    expect(ft.lines.length).toBeLessThanOrEqual(5);
+    expect(ft.lines.at(-1)!.kind).toBe('cut-off');
+    const cause = ft.lines.find((l) => l.kind === 'cause')!;
+    const bad = s.events.find((e) => e.code === 'response-outcome' && e.values.bad && Math.abs(e.t - s.failureT!) < 1e-9);
+    expect(cause.values.cause).toBe(bad ? 'hazard' : cause.values.cause);
+    if (bad) expect(cause.values.hazardType).toBe(s.hazards.find((h) => h.id === bad.values.hazardId)!.type);
+  });
+
+  it('an extended mission: fuel left, the years flown, and STILL HERE', () => {
+    const s = runOperations(maven, { rng: () => 0.999999, extension: 'longest' }).state;
+    const ft = finalTransmission(s)!;
+    expect(ft.ending).toBe('extended');
+    expect(ft.cutOff).toBe(false);
+    const ext = ft.lines.find((l) => l.kind === 'extension')!;
+    expect(ext.values.years).toBe(s.extension!.years);
+    const fuel = ft.lines.find((l) => l.kind === 'fuel')!;
+    expect(fuel.values.propellantLeft_kg).toBeCloseTo(s.mass_kg - s.env.dryMass_kg, 9);
+    expect(ft.lines.length).toBeLessThanOrEqual(5);
+  });
+
+  it('a launch failure sends nothing', () => {
+    expect(finalTransmission(runOperations(maven, { rng: () => 0 }).state)).toBeUndefined();
+  });
+
+  it('the same flight gives the same transmission', () => {
+    expect(finalTransmission(runOperations(maven, { seed: 2013 }).state)).toEqual(finalTransmission(runOperations(maven, { seed: 2013 }).state));
   });
 });
