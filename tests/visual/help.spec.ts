@@ -1,4 +1,4 @@
-// Game shots of the help a new player gets: the mission briefing (Pack), the how-to-fly coach and the
+// Game shots of the help a new player gets: naming the robot, the mission briefing (Pack), the how-to-fly coach and the
 // "leave this flight?" confirmation (Fly). Run: npm run shots -- help
 import { expect, test } from '@playwright/test';
 
@@ -18,6 +18,15 @@ test('briefing, coach and back', async ({ page }, info) => {
   await page.goto('/?seed=2013');
   await page.evaluate(() => document.fonts.ready);
   await page.getByRole('button', { name: /^Play: mission/ }).click();
+  // A new player names the robot first (design screen 00).
+  await expect(page.getByRole('textbox', { name: 'Robot name' })).toBeAttached();
+  await page.waitForTimeout(2500);
+  await page.screenshot({ path: `${OUT}name-${p}.png` });
+  await page.getByRole('button', { name: /^SUGGESTION 1|^VOYA$/ }).click();
+  await page.getByRole('button', { name: /LAUNCH INTO TODAY/ }).click();
+  await page.waitForTimeout(2000);
+  await page.screenshot({ path: `${OUT}name-launched-${p}.png` });
+  await page.getByRole('button', { name: /^LOAD / }).click();
   await expect(page.getByRole('dialog', { name: 'Mission briefing' })).toBeVisible();
   await page.waitForTimeout(500);
   await page.screenshot({ path: `${OUT}help-briefing-${p}.png` });

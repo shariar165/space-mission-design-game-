@@ -22,27 +22,59 @@ async function shoot(page: Page, id: string, name: string, project: string) {
 }
 
 const SCREENS: { file: string; name: string; desk: string; phone: string; jumps?: string[] }[] = [
-  { file: 'Signal Delay - Fly and Survive.dc.html', name: 'fly', desk: '1a', phone: '1b', jumps: ['CRUISE', 'DANGER CARD', 'SIGNAL IN FLIGHT', 'RESULT ARRIVES'] },
+  { file: 'Signal Delay - Fly and Survive.dc.html', name: 'fly', desk: '1a', phone: '1b', jumps: ['CRUISE', 'DANGER CARD', 'ORDER IN FLIGHT', 'ROBOT REPLIES', 'RESULT'] },
   { file: 'Signal Delay - Pack.dc.html', name: 'pack', desk: '2a', phone: '2b' },
-  { file: 'Signal Delay - Mission Report.dc.html', name: 'report', desk: '3a', phone: '3b' },
   { file: 'Signal Delay - Home.dc.html', name: 'home', desk: '4a', phone: '4b' },
   { file: 'Signal Delay - Home.dc.html', name: 'daily', desk: '5a', phone: '5b' },
   { file: 'Signal Delay - Notebook.dc.html', name: 'notebook', desk: '6a', phone: '6b' },
 ];
+
+/** Fly jump buttons → shot names (kept the same as the game shots in fly.spec.ts). */
+const JUMP_SHOT: Record<string, string> = { 'ORDER IN FLIGHT': 'signal-in-flight', 'ROBOT REPLIES': 'robot-replies', RESULT: 'result-arrives' };
 
 for (const s of SCREENS) {
   test(`design ${s.name}`, async ({ page }, info) => {
     await open(page, s.file);
     const id = info.project.name === 'mobile' ? s.phone : s.desk;
     if (!s.jumps) {
-      if (s.name === 'report') await page.waitForTimeout(12_000); // the comic prints panel by panel
       await shoot(page, id, s.name, info.project.name);
       return;
     }
     for (const j of s.jumps) {
       await page.getByRole('button', { name: j, exact: true }).click();
-      await page.waitForTimeout(j === 'RESULT ARRIVES' ? 4000 : 1200);
-      await shoot(page, id, `${s.name}-${j.toLowerCase().replace(/\s+/g, '-')}`, info.project.name);
+      await page.waitForTimeout(j === 'RESULT' ? 4000 : 1200);
+      await shoot(page, id, `${s.name}-${JUMP_SHOT[j] ?? j.toLowerCase().replace(/\s+/g, '-')}`, info.project.name);
     }
   });
 }
+
+// Name Your Robot (screen 00): the typed intro, then a suggestion launched and its first words.
+test('design name', async ({ page }, info) => {
+  await open(page, 'Signal Delay - Name Your Robot.dc.html');
+  const id = info.project.name === 'mobile' ? '0b' : '0a';
+  await page.waitForTimeout(1500);
+  await shoot(page, id, 'name', info.project.name);
+  const f = frame(page, id);
+  await f.getByRole('button', { name: /VOYA/ }).click();
+  await f.getByRole('button', { name: /LAUNCH INTO TODAY/ }).click();
+  await page.waitForTimeout(2500);
+  await shoot(page, id, 'name-launched', info.project.name);
+});
+
+// Mission Report (screen 03): the FINAL TRANSMISSION teletype for each ending, then the report under it.
+test('design report', async ({ page }, info) => {
+  await open(page, 'Signal Delay - Mission Report.dc.html');
+  const mobile = info.project.name === 'mobile';
+  const id = mobile ? '3b' : '3a';
+  for (const ending of ['LOST', 'EXTENDED', 'COMPLETE']) {
+    await page.getByRole('button', { name: ending, exact: true }).click();
+    await page.waitForTimeout(11_000); // the lines type one after another
+    await shoot(page, id, `report-final${ending === 'COMPLETE' ? '' : `-${ending.toLowerCase()}`}`, info.project.name);
+  }
+  if (mobile) {
+    // The phone frame scrolls: bring the report under the transmission into view.
+    await frame(page, id).locator(':scope > div').evaluate((el) => (el.scrollTop = (el.firstElementChild as HTMLElement).offsetHeight + 16));
+  } else await page.getByRole('button', { name: /FEED THE PAPER/ }).click();
+  await page.waitForTimeout(12_000); // the comic prints panel by panel
+  await shoot(page, id, 'report', info.project.name);
+});

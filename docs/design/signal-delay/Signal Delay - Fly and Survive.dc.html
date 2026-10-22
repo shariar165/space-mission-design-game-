@@ -19,7 +19,7 @@
     <div style="display:flex;flex-direction:column;gap:8px">
       <div style="font:400 14px/1 'B612 Mono',monospace;letter-spacing:.2em;color:#8a8270">SIGNAL DELAY · SCREEN 01 OF 06</div>
       <h1 style="margin:0;font:800 56px/1 'Big Shoulders Display',sans-serif;color:#efe6cf;letter-spacing:.02em">FLY &amp; SURVIVE</h1>
-      <p style="margin:0;max-width:640px;font:400 16px/1.5 'B612',sans-serif;color:#a49b84;text-wrap:pretty">The robot cruises on its own. Danger cards pause time. You pick, the order flies to the robot at light speed, and you wait to hear back.</p>
+      <p style="margin:0;max-width:640px;font:400 16px/1.5 'B612',sans-serif;color:#a49b84;text-wrap:pretty">The robot cruises on its own and talks to you on the teletype, always minutes late. Danger cards pause time. You pick, the order crawls out at light speed, and the robot’s reply crawls back.</p>
     </div>
     <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-end">
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -42,7 +42,7 @@
         <div style="display:grid;grid-template-columns:240px minmax(0,1fr) 240px;align-items:center;gap:16px">
           <div style="display:flex;flex-direction:column;gap:4px">
             <div style="font:900 30px/1 'Big Shoulders Display',sans-serif;color:#efe6cf;letter-spacing:.06em">SIGNAL DELAY</div>
-            <div style="font:400 11px/1 'B612 Mono',monospace;color:#8a8270;letter-spacing:.18em">ORBITER-1 · TO MARS</div>
+            <div style="font:400 11px/1 'B612 Mono',monospace;color:#8a8270;letter-spacing:.18em">{{ nameU }} · TO MARS</div>
           </div>
           <div style="display:flex;justify-content:center;gap:14px">
             <sc-for list="{{ res }}" as="r" hint-placeholder-count="4">
@@ -69,7 +69,7 @@
           </div>
         </div>
 
-        <!-- CRT map -->
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) 392px;gap:14px;min-height:0">
         <div style="position:relative;border-radius:22px;border:10px solid #2c2f27;background:#050c07;box-shadow:inset 0 0 60px rgba(0,0,0,.9),0 0 0 1px #3a3d33;overflow:hidden">
           <svg viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid meet" style="position:absolute;inset:0;width:100%;height:100%">
             <line x1="0" y1="300" x2="1000" y2="300" stroke="#0f2a18" stroke-width="1"></line>
@@ -98,21 +98,20 @@
             </g>
             <sc-if value="{{ isTransit }}" hint-placeholder-val="{{ false }}">
               <line x1="{{ e0x }}" y1="{{ e0y }}" x2="{{ c0x }}" y2="{{ c0y }}" stroke="#ffb547" stroke-opacity="0.4" stroke-width="1.5" stroke-dasharray="2 6"></line>
-              <circle cx="{{ px }}" cy="{{ py }}" r="{{ ringR }}" fill="none" stroke="#ffb547" stroke-opacity="{{ ringO }}" stroke-width="2"></circle>
-              <circle cx="{{ px }}" cy="{{ py }}" r="7" fill="#ffd28a"></circle>
+              <circle cx="{{ px }}" cy="{{ py }}" r="{{ ringR }}" fill="none" stroke="{{ pulseCol }}" stroke-opacity="{{ ringO }}" stroke-width="2"></circle>
+              <circle cx="{{ px }}" cy="{{ py }}" r="7" fill="{{ pulseCol }}"></circle>
             </sc-if>
             <g transform="{{ craftT }}">
               <rect x="-27" y="-6" width="17" height="12" fill="#3a6fd8" stroke="#bcd3ff" stroke-width="1.2"></rect>
               <rect x="10" y="-6" width="17" height="12" fill="#3a6fd8" stroke="#bcd3ff" stroke-width="1.2"></rect>
               <rect x="-8" y="-8" width="16" height="16" rx="2" fill="#f2c94c" stroke="#8a6a12" stroke-width="1.2"></rect>
               <path d="M-7 -8 q7 -10 14 0 z" fill="#efe6cf"></path>
-              <text y="-22" text-anchor="middle" fill="#ffb547" font-family="VT323, monospace" font-size="22">YOU</text>
+              <text y="-22" text-anchor="middle" fill="#ffb547" font-family="VT323, monospace" font-size="22">{{ nameU }}</text>
             </g>
           </svg>
           <div style="position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.22) 0 1px,transparent 1px 3px)"></div>
 
-          <div style="position:absolute;left:22px;top:18px;max-width:560px;font:400 26px/1.15 'VT323',monospace;color:#8cff9e;text-shadow:0 0 8px rgba(140,255,158,.55)">&gt; {{ logText }}<span style="opacity:{{ cursorO }}">█</span></div>
-          <div style="position:absolute;left:22px;bottom:16px;display:flex;gap:22px;font:400 20px/1 'VT323',monospace;color:#47c96b">
+                    <div style="position:absolute;left:22px;bottom:16px;display:flex;gap:22px;font:400 20px/1 'VT323',monospace;color:#47c96b">
             <span style="display:flex;align-items:center;gap:8px"><span style="width:28px;height:4px;background:#ffb547;border-radius:2px"></span>YOUR PATH</span>
             <sc-if value="{{ showGhost }}" hint-placeholder-val="{{ true }}"><span style="display:flex;align-items:center;gap:8px"><span style="width:28px;height:0;border-top:4px dotted #8cff9e;opacity:.6"></span>REAL NASA PATH</span></sc-if>
           </div>
@@ -127,16 +126,24 @@
 
           <sc-if value="{{ isTransit }}" hint-placeholder-val="{{ false }}">
             <div style="position:absolute;left:50%;top:70px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;padding:16px 30px;background:rgba(5,12,7,.82);border:1px solid #1f5a32;border-radius:6px">
-              <span style="font:400 22px/1 'VT323',monospace;color:#47c96b;letter-spacing:.08em">ORDER “{{ chLabel }}” IS ON ITS WAY</span>
-              <span style="font:400 22px/1 'VT323',monospace;color:#8cff9e">SIGNAL REACHES ROBOT IN</span>
-              <span style="font:400 96px/0.9 'VT323',monospace;color:#ffb547;text-shadow:0 0 18px rgba(255,181,71,.6)">{{ countdown }}</span>
-              <span style="font:400 18px/1 'VT323',monospace;color:#1f9a4a">NOTHING YOU CAN DO NOW BUT WAIT</span>
+              <span style="font:400 22px/1 'VT323',monospace;color:#47c96b;letter-spacing:.08em">{{ flTop }}</span>
+              <span style="font:400 22px/1 'VT323',monospace;color:#8cff9e">{{ flMid }}</span>
+              <span style="font:400 96px/0.9 'VT323',monospace;color:{{ pulseCol }};text-shadow:0 0 18px {{ pulseGlow }}">{{ countdown }}</span>
+              <span style="font:400 18px/1 'VT323',monospace;color:#1f9a4a">{{ flBot }}</span>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isAck }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute;left:50%;top:64px;transform:translateX(-50%);min-width:520px;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:12px;padding:20px 34px 18px;background:rgba(5,12,7,.9);border:2px solid #ffb547;border-radius:6px;box-shadow:0 0 50px rgba(255,181,71,.22)">
+              <span style="font:400 22px/1 'VT323',monospace;color:#ffb547;letter-spacing:.08em">REPLY FROM {{ nameU }} · SENT {{ ltMinN }} MIN AGO</span>
+              <span style="min-height:96px;white-space:pre-wrap;text-align:center;font:400 46px/1.05 'VT323',monospace;color:#ffd28a;text-shadow:0 0 14px rgba(255,181,71,.55)">{{ ackShown }}<span style="opacity:{{ cursorO }}">█</span></span>
+              <span style="font:400 18px/1 'VT323',monospace;color:#1f9a4a">{{ rtLine }}</span>
             </div>
           </sc-if>
 
           <sc-if value="{{ isResult }}" hint-placeholder-val="{{ false }}">
             <div style="position:absolute;right:24px;bottom:24px;width:560px;box-sizing:border-box;padding:20px 24px;background:rgba(5,12,7,.92);border:1px solid #47c96b;border-radius:6px;box-shadow:0 0 30px rgba(140,255,158,.15);display:flex;flex-direction:column;gap:14px">
-              <div style="display:flex;justify-content:space-between;font:400 18px/1 'VT323',monospace;color:#47c96b;letter-spacing:.08em"><span>INCOMING · FROM ORBITER-1</span><span>DAY {{ dayInt }}</span></div>
+              <div style="display:flex;justify-content:space-between;font:400 18px/1 'VT323',monospace;color:#47c96b;letter-spacing:.08em"><span>INCOMING · FROM {{ nameU }}</span><span>DAY {{ dayInt }}</span></div>
               <div style="min-height:120px;white-space:pre-wrap;font:400 30px/1.1 'VT323',monospace;color:#8cff9e;text-shadow:0 0 8px rgba(140,255,158,.55)">{{ resultText }}<span style="opacity:{{ cursorO }}">█</span></div>
               <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
                 <div style="display:flex;gap:8px">
@@ -150,10 +157,10 @@
           </sc-if>
 
           <sc-if value="{{ isCard }}" hint-placeholder-val="{{ false }}">
-            <div style="position:absolute;inset:0;background:rgba(3,6,4,.72);display:flex;align-items:center;justify-content:center;gap:22px">
-              <button onClick="{{ pickL }}" style="cursor:pointer;width:270px;padding:20px;box-sizing:border-box;text-align:left;border-radius:8px;border:2px solid #4a4d42;border-bottom-width:6px;background:#23251f;display:flex;flex-direction:column;gap:12px" style-hover="border-color:#ffb547;background:#2b2d25">
+            <div style="position:absolute;inset:0;background:rgba(3,6,4,.72);display:flex;align-items:center;justify-content:center;gap:16px">
+              <button onClick="{{ pickL }}" style="cursor:pointer;width:226px;padding:20px;box-sizing:border-box;text-align:left;border-radius:8px;border:2px solid #4a4d42;border-bottom-width:6px;background:#23251f;display:flex;flex-direction:column;gap:12px" style-hover="border-color:#ffb547;background:#2b2d25">
                 <span style="font:400 22px/1 'VT323',monospace;color:#47c96b">◂ SWIPE LEFT / ← KEY</span>
-                <span style="font:800 36px/0.95 'Big Shoulders Display',sans-serif;color:#efe6cf;letter-spacing:.03em">{{ cA.label }}</span>
+                <span style="font:800 32px/0.95 'Big Shoulders Display',sans-serif;color:#efe6cf;letter-spacing:.03em">{{ cA.label }}</span>
                 <span style="font:400 16px/1.35 'B612',sans-serif;color:#cbbf9f">{{ cA.sub }}</span>
                 <div style="display:flex;gap:8px;flex-wrap:wrap">
                   <sc-for list="{{ cA.chips }}" as="k" hint-placeholder-count="1"><span style="display:flex;align-items:center;gap:6px;padding:6px 9px;border-radius:4px;border:1.5px {{ k.bs }} {{ k.col }};font:400 22px/1 'VT323',monospace;color:{{ k.col }}"><dc-import name="SDIcon" icon="{{ k.icon }}" size="18" color="{{ k.col }}" hint-size="18px,18px"></dc-import>{{ k.v }}</span></sc-for>
@@ -161,13 +168,13 @@
                 <sc-if value="{{ eng }}" hint-placeholder-val="{{ false }}"><span style="font:400 12px/1.4 'B612 Mono',monospace;color:#47c96b">{{ cA.eng }}</span></sc-if>
               </button>
 
-              <div style="width:480px;border-radius:10px;background:#efe6cf;box-shadow:0 24px 60px rgba(0,0,0,.6);overflow:hidden;display:flex;flex-direction:column">
+              <div style="width:430px;border-radius:10px;background:#efe6cf;box-shadow:0 24px 60px rgba(0,0,0,.6);overflow:hidden;display:flex;flex-direction:column">
                 <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:#d8432b">
                   <span style="display:flex;align-items:center;gap:10px;font:700 13px/1 'B612 Mono',monospace;letter-spacing:.18em;color:#efe6cf"><dc-import name="SDIcon" icon="{{ card.icon }}" size="22" color="#efe6cf" hint-size="22px,22px"></dc-import>DANGER CARD</span>
                   <span style="font:700 13px/1 'B612 Mono',monospace;letter-spacing:.14em;color:#efe6cf">DAY {{ dayInt }}</span>
                 </div>
                 <div style="padding:22px 26px 24px;display:flex;flex-direction:column;gap:16px">
-                  <div style="font:900 64px/0.9 'Big Shoulders Display',sans-serif;color:#1b1a16;letter-spacing:.01em">{{ card.title }}</div>
+                  <div style="font:900 56px/0.9 'Big Shoulders Display',sans-serif;color:#1b1a16;letter-spacing:.01em">{{ card.title }}</div>
                   <div style="font:400 20px/1.4 'B612',sans-serif;color:#1b1a16;text-wrap:pretty">{{ card.line }}</div>
                   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
                     <div style="padding:10px 12px;border-radius:5px;background:#1b1a16;display:flex;flex-direction:column;gap:4px"><span style="font:700 10px/1 'B612 Mono',monospace;letter-spacing:.16em;color:#a49b84">DANGER ARRIVES</span><span style="font:400 26px/1 'VT323',monospace;color:#ff8a6d">{{ card.hits }}</span></div>
@@ -181,9 +188,9 @@
                 </div>
               </div>
 
-              <button onClick="{{ pickR }}" style="cursor:pointer;width:270px;padding:20px;box-sizing:border-box;text-align:left;border-radius:8px;border:2px solid #4a4d42;border-bottom-width:6px;background:#23251f;display:flex;flex-direction:column;gap:12px" style-hover="border-color:#ffb547;background:#2b2d25">
+              <button onClick="{{ pickR }}" style="cursor:pointer;width:226px;padding:20px;box-sizing:border-box;text-align:left;border-radius:8px;border:2px solid #4a4d42;border-bottom-width:6px;background:#23251f;display:flex;flex-direction:column;gap:12px" style-hover="border-color:#ffb547;background:#2b2d25">
                 <span style="font:400 22px/1 'VT323',monospace;color:#47c96b;text-align:right;width:100%">→ KEY / SWIPE RIGHT ▸</span>
-                <span style="font:800 36px/0.95 'Big Shoulders Display',sans-serif;color:#efe6cf;letter-spacing:.03em">{{ cB.label }}</span>
+                <span style="font:800 32px/0.95 'Big Shoulders Display',sans-serif;color:#efe6cf;letter-spacing:.03em">{{ cB.label }}</span>
                 <span style="font:400 16px/1.35 'B612',sans-serif;color:#cbbf9f">{{ cB.sub }}</span>
                 <div style="display:flex;gap:8px;flex-wrap:wrap">
                   <sc-for list="{{ cB.chips }}" as="k" hint-placeholder-count="2"><span style="display:flex;align-items:center;gap:6px;padding:6px 9px;border-radius:4px;border:1.5px {{ k.bs }} {{ k.col }};font:400 22px/1 'VT323',monospace;color:{{ k.col }}"><dc-import name="SDIcon" icon="{{ k.icon }}" size="18" color="{{ k.col }}" hint-size="18px,18px"></dc-import>{{ k.v }}</span></sc-for>
@@ -192,6 +199,24 @@
               </button>
             </div>
           </sc-if>
+        </div>
+
+        <div style="position:relative;background:#efe6cf;border-radius:4px;overflow:hidden;display:grid;grid-template-rows:auto minmax(0,1fr) auto">
+          <div style="position:absolute;left:0;top:0;bottom:0;width:24px;border-right:1px dashed #c4b897;background-image:radial-gradient(circle,#1c1e18 4px,transparent 5px);background-size:24px 26px;background-position:center 8px"></div><div style="position:absolute;right:0;top:0;bottom:0;width:24px;border-left:1px dashed #c4b897;background-image:radial-gradient(circle,#1c1e18 4px,transparent 5px);background-size:24px 26px;background-position:center 8px"></div>
+          <div style="padding:14px 38px 11px;border-bottom:2px dashed #c4b897;display:flex;justify-content:space-between;align-items:flex-end;gap:10px">
+            <div style="display:flex;flex-direction:column;gap:6px"><span style="font:700 10px/1 'B612 Mono',monospace;letter-spacing:.18em;color:#7a715c">TELETYPE 02 · {{ nameU }} ⇄ EARTH</span><span style="font:900 30px/0.9 'Big Shoulders Display',sans-serif;color:#1b1a16;letter-spacing:.03em">TRANSMISSIONS</span></div>
+            <span style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;font:700 10px/1.1 'B612 Mono',monospace;letter-spacing:.1em"><span style="color:#1b1a16">BLACK · {{ nameU }}</span><span style="color:#b23a22">RED · YOU</span></span>
+          </div>
+          <div style="min-height:0;overflow-y:auto;scrollbar-width:none;display:flex;flex-direction:column-reverse;gap:4px;padding:8px 30px">
+            <sc-for list="{{ feedRev }}" as="f" hint-placeholder-count="4">
+              <div style="flex:none;display:flex;flex-direction:column;gap:5px;padding:8px 8px 9px;border-radius:2px;background:{{ f.bg }};border-bottom:1px dotted #c4b897">
+                <div style="display:flex;justify-content:space-between;gap:8px;font:700 10px/1.1 'B612 Mono',monospace;letter-spacing:.1em;color:{{ f.meta }}"><span>{{ f.who }} · DAY {{ f.day }}</span><span style="white-space:nowrap">{{ f.stamp }}</span></div>
+                <div style="font:700 15px/1.4 'B612 Mono',monospace;color:{{ f.col }};text-wrap:pretty">{{ f.text }}<span style="opacity:{{ f.curO }}">█</span></div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="padding:10px 38px 12px;border-top:2px dashed #c4b897;font:400 13px/1.35 'B612',sans-serif;color:#3a372e;text-wrap:pretty">Everything {{ nameU }} says is <b>{{ ltWords }} old</b> by the time it prints here.</div>
+        </div>
         </div>
 
         <!-- bottom: clock + ribbon -->
@@ -232,7 +257,7 @@
     <!-- MOBILE -->
     <div id="1b" style="display:flex;flex-direction:column;gap:12px">
       <div style="display:flex;gap:10px;align-items:center"><span style="padding:4px 9px;border-radius:3px;background:#ffb547;color:#1b1a16;font:700 13px/1 'B612 Mono',monospace">1b</span><span style="font:400 13px/1 'B612 Mono',monospace;color:#8a8270;letter-spacing:.1em;white-space:nowrap">MOBILE · 390 × 844</span></div>
-      <div style="width:390px;height:844px;box-sizing:border-box;padding:12px 10px 14px;background:#1c1e18;border-radius:34px;box-shadow:0 30px 80px rgba(0,0,0,.55),0 0 0 8px #0f100c;display:grid;grid-template-rows:30px 70px minmax(0,1fr) 168px;gap:10px;position:relative;overflow:hidden">
+      <div style="width:390px;height:844px;box-sizing:border-box;padding:12px 10px 14px;background:#1c1e18;border-radius:34px;box-shadow:0 30px 80px rgba(0,0,0,.55),0 0 0 8px #0f100c;display:grid;grid-template-rows:30px 70px 46px minmax(0,1fr) 168px;gap:10px;position:relative;overflow:hidden">
         <div style="display:flex;justify-content:space-between;align-items:center;padding:0 14px;font:700 12px/1 'B612 Mono',monospace;color:#8a8270"><span>9:41</span><span style="font:900 16px/1 'Big Shoulders Display',sans-serif;color:#efe6cf;letter-spacing:.08em">SIGNAL DELAY</span><button onClick="{{ toggleMode }}" style="cursor:pointer;padding:5px 8px;border-radius:4px;border:1px solid #4a4d42;background:#0f100c;color:{{ engLbl }};font:700 10px/1 'B612 Mono',monospace;letter-spacing:.1em">ENG</button></div>
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
           <sc-for list="{{ res }}" as="r" hint-placeholder-count="4">
@@ -244,6 +269,13 @@
             </div>
           </sc-for>
         </div>
+        <button onClick="{{ toggleStrip }}" style="cursor:pointer;position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;padding:0 12px 0 14px;border:none;border-radius:6px;background:{{ stripBg }};text-align:left;box-shadow:inset 0 -2px 0 #c4b897">
+          <span style="display:flex;flex-direction:column;gap:4px;min-width:0">
+            <span style="font:700 9px/1 'B612 Mono',monospace;letter-spacing:.12em;color:{{ latest.meta }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ latest.who }} · DAY {{ latest.day }} · {{ latest.stamp }}</span>
+            <span style="font:700 13px/1.1 'B612 Mono',monospace;color:{{ latest.col }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ latest.text }}<span style="opacity:{{ latest.curO }}">█</span></span>
+          </span>
+          <span style="font:700 10px/1 'B612 Mono',monospace;letter-spacing:.1em;color:#1b1a16;white-space:nowrap">{{ stripChev }}</span>
+        </button>
         <div style="position:relative;border-radius:16px;border:6px solid #2c2f27;background:#050c07;box-shadow:inset 0 0 40px rgba(0,0,0,.9);overflow:hidden">
           <svg viewBox="250 50 500 500" preserveAspectRatio="xMidYMid meet" style="position:absolute;inset:0;width:100%;height:100%">
             <circle cx="500" cy="300" r="150" fill="none" stroke="#1f5a32" stroke-width="2" stroke-dasharray="4 7"></circle>
@@ -256,24 +288,29 @@
             <g transform="{{ marsT }}"><circle r="15" fill="#d6603a"></circle><circle cx="-5" cy="-2" r="4" fill="#9e3a1f"></circle><path d="M-7 -12 q7 -5 14 0 z" fill="#f4eee0"></path><text y="38" text-anchor="middle" fill="#8cff9e" font-family="VT323, monospace" font-size="26">MARS</text></g>
             <sc-if value="{{ isTransit }}" hint-placeholder-val="{{ false }}">
               <line x1="{{ e0x }}" y1="{{ e0y }}" x2="{{ c0x }}" y2="{{ c0y }}" stroke="#ffb547" stroke-opacity="0.4" stroke-width="2" stroke-dasharray="3 7"></line>
-              <circle cx="{{ px }}" cy="{{ py }}" r="{{ ringR }}" fill="none" stroke="#ffb547" stroke-opacity="{{ ringO }}" stroke-width="3"></circle>
-              <circle cx="{{ px }}" cy="{{ py }}" r="9" fill="#ffd28a"></circle>
+              <circle cx="{{ px }}" cy="{{ py }}" r="{{ ringR }}" fill="none" stroke="{{ pulseCol }}" stroke-opacity="{{ ringO }}" stroke-width="3"></circle>
+              <circle cx="{{ px }}" cy="{{ py }}" r="9" fill="{{ pulseCol }}"></circle>
             </sc-if>
             <g transform="{{ craftTm }}">
               <rect x="-27" y="-6" width="17" height="12" fill="#3a6fd8" stroke="#bcd3ff" stroke-width="1.2"></rect>
               <rect x="10" y="-6" width="17" height="12" fill="#3a6fd8" stroke="#bcd3ff" stroke-width="1.2"></rect>
               <rect x="-8" y="-8" width="16" height="16" rx="2" fill="#f2c94c" stroke="#8a6a12" stroke-width="1.2"></rect>
               <path d="M-7 -8 q7 -10 14 0 z" fill="#efe6cf"></path>
-              <text y="-20" text-anchor="middle" fill="#ffb547" font-family="VT323, monospace" font-size="20">YOU</text>
+              <text y="-20" text-anchor="middle" fill="#ffb547" font-family="VT323, monospace" font-size="20">{{ nameU }}</text>
             </g>
           </svg>
           <div style="position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.22) 0 1px,transparent 1px 3px)"></div>
-          <div style="position:absolute;left:14px;right:14px;top:12px;font:400 22px/1.1 'VT323',monospace;color:#8cff9e;text-shadow:0 0 8px rgba(140,255,158,.55)">&gt; {{ logText }}<span style="opacity:{{ cursorO }}">█</span></div>
           <sc-if value="{{ eng }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;left:14px;bottom:10px;font:400 17px/1.1 'VT323',monospace;color:#ffb547">t = d / c = {{ dEarth }} AU / c = {{ ltFmt }}</div></sc-if>
           <sc-if value="{{ isTransit }}" hint-placeholder-val="{{ false }}">
             <div style="position:absolute;left:50%;bottom:16px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 22px;background:rgba(5,12,7,.85);border:1px solid #1f5a32;border-radius:6px;white-space:nowrap">
-              <span style="font:400 18px/1 'VT323',monospace;color:#8cff9e">ORDER REACHES ROBOT IN</span>
-              <span style="font:400 64px/0.9 'VT323',monospace;color:#ffb547;text-shadow:0 0 14px rgba(255,181,71,.6)">{{ countdown }}</span>
+              <span style="font:400 18px/1 'VT323',monospace;color:#8cff9e">{{ flMidM }}</span>
+              <span style="font:400 64px/0.9 'VT323',monospace;color:{{ pulseCol }};text-shadow:0 0 14px {{ pulseGlow }}">{{ countdown }}</span>
+            </div>
+          </sc-if>
+          <sc-if value="{{ isAck }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute;left:12px;right:12px;bottom:14px;display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 14px;background:rgba(5,12,7,.92);border:2px solid #ffb547;border-radius:6px;box-shadow:0 0 30px rgba(255,181,71,.2)">
+              <span style="font:400 16px/1 'VT323',monospace;color:#ffb547">REPLY FROM {{ nameU }} · SENT {{ ltMinN }} MIN AGO</span>
+              <span style="min-height:62px;white-space:pre-wrap;text-align:center;font:400 30px/1.03 'VT323',monospace;color:#ffd28a;text-shadow:0 0 10px rgba(255,181,71,.5)">{{ ackShown }}<span style="opacity:{{ cursorO }}">█</span></span>
             </div>
           </sc-if>
         </div>
@@ -299,7 +336,7 @@
         </div>
 
         <sc-if value="{{ isCard }}" hint-placeholder-val="{{ false }}">
-          <div style="position:absolute;left:0;right:0;top:120px;bottom:0;background:rgba(3,6,4,.85);display:flex;flex-direction:column;align-items:center;gap:14px;padding:6px 18px 20px;box-sizing:border-box">
+          <div style="position:absolute;left:0;right:0;top:184px;bottom:0;background:rgba(3,6,4,.85);display:flex;flex-direction:column;align-items:center;gap:14px;padding:6px 18px 20px;box-sizing:border-box">
             <div onPointerDown="{{ dragDown }}" onPointerMove="{{ dragMove }}" onPointerUp="{{ dragUp }}" onPointerCancel="{{ dragUp }}" style="touch-action:none;cursor:grab;user-select:none;width:330px;border-radius:12px;background:#efe6cf;box-shadow:0 20px 50px rgba(0,0,0,.6);overflow:hidden;transform:translateX({{ dragX }}px) rotate({{ dragRot }}deg)">
               <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#d8432b"><span style="display:flex;align-items:center;gap:8px;font:700 11px/1 'B612 Mono',monospace;letter-spacing:.16em;color:#efe6cf"><dc-import name="SDIcon" icon="{{ card.icon }}" size="18" color="#efe6cf" hint-size="18px,18px"></dc-import>DANGER CARD</span><span style="font:700 11px/1 'B612 Mono',monospace;color:#efe6cf">DAY {{ dayInt }}</span></div>
               <div style="padding:16px 18px 18px;display:flex;flex-direction:column;gap:12px">
@@ -327,9 +364,20 @@
           </div>
         </sc-if>
 
+        <sc-if value="{{ stripOpen }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;left:10px;right:10px;top:180px;height:340px;box-sizing:border-box;background:#efe6cf;border-radius:0 0 8px 8px;box-shadow:0 24px 40px rgba(0,0,0,.65);display:flex;flex-direction:column-reverse;gap:2px;padding:6px 12px 12px;overflow-y:auto;scrollbar-width:none">
+            <sc-for list="{{ feedRevM }}" as="f" hint-placeholder-count="5">
+              <div style="flex:none;display:flex;flex-direction:column;gap:5px;padding:7px 6px 8px;border-radius:2px;background:{{ f.bg }};border-bottom:1px dotted #c4b897">
+                <div style="display:flex;justify-content:space-between;gap:8px;font:700 8px/1.1 'B612 Mono',monospace;letter-spacing:.1em;color:{{ f.meta }}"><span>{{ f.who }} · DAY {{ f.day }}</span><span style="white-space:nowrap">{{ f.stamp }}</span></div>
+                <div style="font:700 13px/1.4 'B612 Mono',monospace;color:{{ f.col }};text-wrap:pretty">{{ f.text }}<span style="opacity:{{ f.curO }}">█</span></div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
         <sc-if value="{{ isResult }}" hint-placeholder-val="{{ false }}">
           <div style="position:absolute;left:10px;right:10px;bottom:14px;padding:16px;box-sizing:border-box;background:#050c07;border:1px solid #47c96b;border-radius:14px;box-shadow:0 -10px 40px rgba(0,0,0,.7);display:flex;flex-direction:column;gap:12px">
-            <div style="display:flex;justify-content:space-between;font:400 16px/1 'VT323',monospace;color:#47c96b"><span>INCOMING · ORBITER-1</span><span>DAY {{ dayInt }}</span></div>
+            <div style="display:flex;justify-content:space-between;font:400 16px/1 'VT323',monospace;color:#47c96b"><span>INCOMING · {{ nameU }}</span><span>DAY {{ dayInt }}</span></div>
             <div style="min-height:104px;white-space:pre-wrap;font:400 25px/1.1 'VT323',monospace;color:#8cff9e;text-shadow:0 0 8px rgba(140,255,158,.55)">{{ resultText }}<span style="opacity:{{ cursorO }}">█</span></div>
             <div style="display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ fxChips }}" as="f" hint-placeholder-count="2"><span style="display:flex;align-items:center;gap:5px;padding:5px 8px;border-radius:4px;border:1px solid {{ f.col }};font:400 20px/1 'VT323',monospace;color:{{ f.col }}"><dc-import name="SDIcon" icon="{{ f.icon }}" size="16" color="{{ f.col }}" hint-size="16px,16px"></dc-import>{{ f.v }}</span></sc-for></div>
             <button onClick="{{ cont }}" style="cursor:pointer;height:52px;border-radius:6px;border:none;border-bottom:4px solid #9a6514;background:#ffb547;color:#1b1a16;font:800 22px/1 'Big Shoulders Display',sans-serif;letter-spacing:.08em">CONTINUE ▸</button>
@@ -340,7 +388,7 @@
   </div>
 </section>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;showGhost&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Map&quot;},&quot;typeSpeed&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;slow&quot;,&quot;normal&quot;,&quot;fast&quot;],&quot;default&quot;:&quot;normal&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Teletype&quot;},&quot;startMode&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;cadet&quot;,&quot;engineer&quot;],&quot;default&quot;:&quot;cadet&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Mode&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;robotName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;VOYA&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Robot&quot;},&quot;showGhost&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Map&quot;},&quot;typeSpeed&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;slow&quot;,&quot;normal&quot;,&quot;fast&quot;],&quot;default&quot;:&quot;normal&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Teletype&quot;},&quot;startMode&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;cadet&quot;,&quot;engineer&quot;],&quot;default&quot;:&quot;cadet&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Mode&quot;}}">
 const T=307,CX=500,CY=300,RE=150,RM=230,TH0=200*Math.PI/180,WE=2*Math.PI/365.25,WM=2*Math.PI/687,WIN=150;
 const YOU={a:190,e:40/190,th:TH0},GHOST={a:193,e:43/193,th:TH0+0.08};
 function kep(t,e){if(t>=1)return Math.PI;const M=Math.PI*t;let E=M;for(let i=0;i<10;i++)E-=(E-e*Math.sin(E)-M)/(1-e*Math.cos(E));return 2*Math.atan(Math.sqrt((1+e)/(1-e))*Math.tan(E/2));}
@@ -354,22 +402,22 @@ const BASE={power:4,fuel:4,data:2,sys:5};
 const EVENTS=[
  {id:'storm',day:214,card:true,surprise:true,icon:'storm',title:'SOLAR STORM',line:'A blast of particles from the Sun is heading your way.',hits:'IN 30 HOURS',
   history:'Oct 2003: a storm like this fried the radiation sensor on NASA’s Mars Odyssey. It never worked again.',source:'NASA JPL · Mars Odyssey MARIE instrument, 28 Oct 2003 (to verify)',
-  choices:[{label:'SHIELD UP',sub:'Switch science off. Wait it out.',costs:[{i:'data',v:'−1'}],eng:'Instruments → SAFE · ≈2 d science lost (−0.8 Gb)',fx:{data:-1},result:['STORM PASSED.','ALL INSTRUMENTS SAFE.','YOU MISSED 2 DAYS OF SCIENCE.']},
-           {label:'KEEP WORKING',sub:'Leave science on. Catch the storm on camera.',costs:[{i:'data',v:'+1'},{i:'sys',v:'−2?',risk:true}],eng:'P(upset) ≈ 0.35 · storm data +0.8 Gb',fx:{data:1,sys:-1},result:['STORM HIT AT 04:10.','STAR TRACKER BLINDED 6 HOURS.','REBOOT OK. SOME DAMAGE.','STORM DATA SENT HOME.']}]},
- {id:'tcm',day:248,icon:'burn',label:'Course fix',short:'FIX',log:'COURSE FIX BURN DONE. ON TARGET FOR MARS.'},
+  choices:[{label:'SHIELD UP',sub:'Switch science off. Wait it out.',costs:[{i:'data',v:'−1'}],eng:'Instruments → SAFE · ≈2 d science lost (−0.8 Gb)',fx:{data:-1},ack:'ORDER RECEIVED. SCIENCE OFF. SHIELD TO THE SUN.',result:['STORM PASSED.','ALL INSTRUMENTS SAFE.','YOU MISSED 2 DAYS OF SCIENCE.']},
+           {label:'KEEP WORKING',sub:'Leave science on. Catch the storm on camera.',costs:[{i:'data',v:'+1'},{i:'sys',v:'−2?',risk:true}],eng:'P(upset) ≈ 0.35 · storm data +0.8 Gb',fx:{data:1,sys:-1},ack:'ORDER RECEIVED. CAMERAS STAY ON. BRACING.',result:['STORM HIT AT 04:10.','STAR TRACKER BLINDED 6 HOURS.','REBOOT OK. SOME DAMAGE.','STORM DATA SENT HOME.']}]},
+ {id:'tcm',day:248,icon:'burn',label:'Course fix',short:'FIX',log:'COURSE FIX BURN DONE. 9 SECONDS. ON TARGET FOR MARS.'},
  {id:'moi',day:307,card:true,icon:'orbit',label:'Arrive at Mars',short:'MARS',title:'ARRIVE AT MARS',line:'Fire the engine to get caught by Mars, or fly past it forever.',hits:'BURN IN 6 HOURS',
   history:'Sep 2014: NASA’s MAVEN fired its engines for 33 minutes. Earth heard it worked 12 minutes later.',source:'NASA · MAVEN orbit insertion, 21 Sep 2014 (to verify)',
-  choices:[{label:'SAFE ORBIT',sub:'Long burn. Wide, easy orbit.',costs:[{i:'fuel',v:'−2'}],eng:'Δv ≈ 1.2 km/s · capture margin high',fx:{fuel:-2},result:['ENGINE FIRED 34 MIN.','CAUGHT BY MARS.','WIDE ORBIT. ALL SAFE.']},
-           {label:'TIGHT ORBIT',sub:'Short burn. Skim the air to slow down.',costs:[{i:'fuel',v:'−1'},{i:'sys',v:'−1?',risk:true}],eng:'Δv ≈ 0.8 km/s + aerobraking passes',fx:{fuel:-1,sys:-1},result:['ENGINE FIRED 22 MIN.','AIR DRAG DID THE REST.','HEAT PANELS SCORCHED.','CLOSE ORBIT. MORE SCIENCE.']}]},
+  choices:[{label:'SAFE ORBIT',sub:'Long burn. Wide, easy orbit.',costs:[{i:'fuel',v:'−2'}],eng:'Δv ≈ 1.2 km/s · capture margin high',fx:{fuel:-2},ack:'ORDER RECEIVED. LONG BURN ARMED. 34 MIN.',result:['ENGINE FIRED 34 MIN.','CAUGHT BY MARS.','WIDE ORBIT. ALL SAFE.']},
+           {label:'TIGHT ORBIT',sub:'Short burn. Skim the air to slow down.',costs:[{i:'fuel',v:'−1'},{i:'sys',v:'−1?',risk:true}],eng:'Δv ≈ 0.8 km/s + aerobraking passes',fx:{fuel:-1,sys:-1},ack:'ORDER RECEIVED. SHORT BURN. AIR DOES THE REST.',result:['ENGINE FIRED 22 MIN.','AIR DRAG DID THE REST.','HEAT PANELS SCORCHED.','CLOSE ORBIT. MORE SCIENCE.']}]},
  {id:'ecl',day:352,card:true,icon:'eclipse',label:'Eclipse season',short:'DARK',title:'ECLIPSE SEASON',line:'Mars will block the Sun for 40 minutes every orbit. No sun, no power.',hits:'IN 2 DAYS',
   history:'Every Mars orbiter plans for this. The batteries must last through the dark.',source:'NASA · MAVEN eclipse seasons (to verify)',
-  choices:[{label:'SAVE POWER',sub:'Turn the heaters down. Shiver.',costs:[{i:'sys',v:'−1?',risk:true}],eng:'Heater duty 40% · battery DoD 22%',fx:{sys:-1},result:['ECLIPSES DONE.','IT GOT COLD. ONE PART CRACKED.','POWER STILL HEALTHY.']},
-           {label:'USE BATTERY',sub:'Keep everything warm.',costs:[{i:'power',v:'−2'}],eng:'Heater duty 100% · battery DoD 48%',fx:{power:-2},result:['ECLIPSES DONE.','ROBOT STAYED WARM.','BATTERY WORN DOWN.']}]},
- {id:'dust',day:380,icon:'dust',label:'Dust storm season',short:'DUST',log:'DUST STORM SEASON STARTS. MARS AIR IS SWELLING.'},
+  choices:[{label:'SAVE POWER',sub:'Turn the heaters down. Shiver.',costs:[{i:'sys',v:'−1?',risk:true}],eng:'Heater duty 40% · battery DoD 22%',fx:{sys:-1},ack:'ORDER RECEIVED. HEATERS DOWN. IT WILL BE COLD.',result:['ECLIPSES DONE.','IT GOT COLD. ONE PART CRACKED.','POWER STILL HEALTHY.']},
+           {label:'USE BATTERY',sub:'Keep everything warm.',costs:[{i:'power',v:'−2'}],eng:'Heater duty 100% · battery DoD 48%',fx:{power:-2},ack:'ORDER RECEIVED. HEATERS ON BATTERY.',result:['ECLIPSES DONE.','STAYED WARM.','BATTERY WORN DOWN.']}]},
+ {id:'dust',day:380,icon:'dust',label:'Dust storm season',short:'DUST',log:'MARS AIR IS SWELLING. DUST SEASON STARTS. WATCHING IT.'},
  {id:'conj',day:424,card:true,icon:'conj',label:'Sun blocks radio',short:'SUN',title:'SUN IN THE WAY',line:'The Sun will sit between you and Earth for 2 weeks. No calls home.',hits:'IN 3 DAYS',
   history:'About every 26 months, NASA stops sending commands to Mars for roughly two weeks.',source:'NASA · Mars solar conjunction command pause (to verify)',
-  choices:[{label:'LOCK IT DOWN',sub:'Send a simple 2-week plan.',costs:[{i:'data',v:'−1'}],eng:'Command moratorium · 14 d autonomous',fx:{data:-1},result:['SUN MOVED ASIDE.','ROBOT KEPT ITSELF SAFE.','LIGHT SCIENCE ONLY.']},
-           {label:'BIG PLAN',sub:'Upload a busy 2-week plan.',costs:[{i:'data',v:'+2'},{i:'sys',v:'−2?',risk:true}],eng:'Corrupt-uplink risk at SEP < 2°',fx:{data:2,sys:-1},result:['SUN MOVED ASIDE.','ONE ORDER ARRIVED GARBLED.','ROBOT HID IN SAFE MODE.','STILL GOT GOOD DATA.']}]}
+  choices:[{label:'LOCK IT DOWN',sub:'Send a simple 2-week plan.',costs:[{i:'data',v:'−1'}],eng:'Command moratorium · 14 d autonomous',fx:{data:-1},ack:'ORDER RECEIVED. SIMPLE PLAN STORED. GOING QUIET.',result:['SUN MOVED ASIDE.','KEPT MYSELF SAFE.','LIGHT SCIENCE ONLY.']},
+           {label:'BIG PLAN',sub:'Upload a busy 2-week plan.',costs:[{i:'data',v:'+2'},{i:'sys',v:'−2?',risk:true}],eng:'Corrupt-uplink risk at SEP < 2°',fx:{data:2,sys:-1},ack:'ORDER RECEIVED. 14-DAY PLAN LOADED.',result:['SUN MOVED ASIDE.','ONE ORDER ARRIVED GARBLED.','HID IN SAFE MODE.','STILL GOT GOOD DATA.']}]}
 ];
 const STORM=EVENTS[0];
 const ICON_OF={power:'power',fuel:'fuel',data:'data',sys:'sys'};
@@ -379,10 +427,30 @@ const applyFx=(r,fx)=>{const o={...r};Object.entries(fx).forEach(([k,v])=>o[k]=c
 const mmss=x=>{const t=Math.max(0,Math.round(x));return String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');};
 const TYPE={slow:18,normal:34,fast:70};
 
+const BATT=[4,22,39,55,71,88];
+const ltSec=d=>{const e=earth(d),c=craft(d);return Math.hypot(e[0]-c[0],e[1]-c[1])/150*499;};
+const ltMin=d=>Math.max(1,Math.round(ltSec(d)/60));
+const ALERT={storm:r=>'SUN ACTIVE. CME INBOUND, 30 HRS. BATTERY '+BATT[r.power]+'%. AWAITING ORDERS.',
+ moi:r=>'MARS AHEAD. BURN WINDOW IN 6 HRS. FUEL '+r.fuel*328+' KG. AWAITING ORDERS.',
+ ecl:r=>'ECLIPSE SEASON IN 2 DAYS. 40 MIN DARK EACH ORBIT. BATTERY '+BATT[r.power]+'%. AWAITING ORDERS.',
+ conj:()=>'SUN MOVING BETWEEN US. RADIO GOES QUIET IN 3 DAYS. AWAITING ORDERS.'};
+const PINGS=[(d,r)=>d<T?'CRUISE NOMINAL. BATTERY '+BATT[r.power]+'%. '+Math.ceil(T-d)+' DAYS TO MARS.':'ORBIT NOMINAL. BATTERY '+BATT[r.power]+'%. MAPPING.',
+ ()=>'STAR TRACKER LOCKED. ALL QUIET.',
+ (d,r)=>'HEATERS CYCLING. FUEL '+r.fuel*328+' KG. HOLDING COURSE.'];
+let FID=0;
+const msg=(w,day,t,kind)=>({id:++FID,w,day:Math.floor(day),t,kind:kind||'msg',lt:ltMin(day)});
+const seed=d=>[msg('bot',d-30,PINGS[0](d-30,BASE)),msg('bot',d-14,PINGS[1](d-14,BASE))];
+const CH=STORM.choices[1];
+function stormFeed(n){const f=seed(214),o={};f.push(msg('bot',214,ALERT.storm(BASE)));
+  if(n>0){o.order=msg('earth',214,'ORDER: '+CH.label+'.','order');f.push(o.order);}
+  if(n>1){o.ack=msg('bot',214,CH.ack,'ack');f.push(o.ack);}
+  if(n>2)f.push(msg('bot',214,CH.result.join(' ')));return {f,o};}
+
 class Component extends DCLogic {
-  state={day:200,speed:10,phase:'cruise',mode:'cadet',ev:null,ch:null,tp:0,typed:0,logT:0,log:'CRUISING TO MARS. ALL QUIET.',res:{...BASE},fired:{},dragX:0,flash:{},blink:true,jump:'live'};
+  state={day:200,speed:10,phase:'cruise',mode:'cadet',ev:null,ch:null,tp:0,tp2:0,ackT:0,typed:0,ft:99,res:{...BASE},fired:{},nextPing:212,feed:seed(200),orderId:0,ackId:0,strip:false,name:'',dragX:0,flash:{},blink:true,jump:'live'};
   componentDidMount(){
-    if(this.props.startMode==='engineer')this.setState({mode:'eng'});
+    let nm='';try{nm=localStorage.getItem('sd.robotName')||'';}catch(_){}
+    this.setState({name:nm,mode:this.props.startMode==='engineer'?'eng':'cadet'});
     this.last=performance.now();
     this.iv=setInterval(()=>this.tick(),33);
     this.kd=e=>{if(this.state.phase!=='card')return;if(e.key==='ArrowLeft')this.choose(0);if(e.key==='ArrowRight')this.choose(1);};
@@ -391,34 +459,45 @@ class Component extends DCLogic {
   componentWillUnmount(){clearInterval(this.iv);window.removeEventListener('keydown',this.kd);}
   tick(){
     const now=performance.now(),dt=Math.min(.1,(now-this.last)/1000);this.last=now;
-    const s=this.state,cps=TYPE[this.props.typeSpeed]||34,u={logT:s.logT+dt*cps,blink:Math.floor(now/450)%2===0};
+    const s=this.state,cps=TYPE[this.props.typeSpeed]||34,u={ft:s.ft+dt*cps*1.4,blink:Math.floor(now/450)%2===0};
+    let feed=null;const add=m=>{feed=(feed||s.feed).concat([m]);u.ft=0;return m;};
     if(s.phase==='cruise'&&s.speed>0){
       let nd=s.day+s.speed*dt;const fired={...s.fired};
       for(const ev of EVENTS){if(fired[ev.id]||ev.day<=s.day||ev.day>nd)continue;fired[ev.id]=1;
-        if(ev.card){nd=ev.day;u.phase='card';u.ev=ev;u.log='DANGER AHEAD: '+ev.title+'.';u.logT=0;break;}
-        u.log=ev.log;u.logT=0;}
-      if(nd>=470&&!u.phase){nd=470;u.speed=0;u.log='FIRST YEAR AT MARS COMPLETE.';u.logT=0;}
+        if(ev.card){nd=ev.day;u.phase='card';u.ev=ev;u.strip=false;add(msg('bot',ev.day,ALERT[ev.id](s.res)));break;}
+        add(msg('bot',ev.day,ev.log));}
+      if(!u.phase&&nd>=s.nextPing&&s.nextPing<470){add(msg('bot',s.nextPing,PINGS[Math.floor(s.nextPing/18)%3](s.nextPing,s.res)));u.nextPing=s.nextPing+18;}
+      if(nd>=470&&!u.phase){nd=470;u.speed=0;if(!fired.end){fired.end=1;add(msg('bot',470,'DAY 470. ORBIT STABLE. HOLDING FOR THE NEXT PLAN.'));}}
       u.day=nd;u.fired=fired;
     }
-    if(s.phase==='transit'){u.tp=s.tp+dt/5.5;if(u.tp>=1){u.tp=1;u.phase='result';u.typed=0;u.res=applyFx(s.res,s.ch.fx);u.flash=s.ch.fx;u.log='SIGNAL RECEIVED.';u.logT=0;}}
+    if(s.phase==='transit'){u.tp=s.tp+dt/5.5;if(u.tp>=1){u.tp=1;u.phase='reply';u.tp2=0;}}
+    if(s.phase==='reply'){u.tp2=s.tp2+dt/4.2;if(u.tp2>=1){u.tp2=1;u.phase='ack';u.ackT=0;u.ackId=add(msg('bot',s.day,s.ch.ack,'ack')).id;}}
+    if(s.phase==='ack'){u.ackT=s.ackT+dt;if(u.ackT>3.6&&s.jump!=='ack'){u.phase='result';u.typed=0;u.res=applyFx(s.res,s.ch.fx);u.flash=s.ch.fx;}}
     if(s.phase==='result')u.typed=s.typed+dt*cps;
+    if(feed)u.feed=feed.slice(-30);
     this.setState(u);
   }
-  choose(i){const ev=this.state.ev;if(!ev)return;const ch=ev.choices[i];this.setState({phase:'transit',ch,tp:0,dragX:0,log:'ORDER SENT: '+ch.label+'.',logT:0});}
-  cont(){this.setState({phase:'cruise',ev:null,ch:null,flash:{},log:'BACK TO CRUISING.',logT:0,jump:'live'});}
+  choose(i){const s=this.state,ev=s.ev;if(!ev||s.phase!=='card')return;const ch=ev.choices[i],m=msg('earth',s.day,'ORDER: '+ch.label+'.','order');
+    this.setState({phase:'transit',ch,tp:0,tp2:0,dragX:0,orderId:m.id,feed:s.feed.concat([m]).slice(-30),ft:0});}
+  cont(){const s=this.state,m=s.ch?msg('bot',s.day,s.ch.result.join(' ')):null;
+    this.setState({phase:'cruise',ev:null,ch:null,flash:{},jump:'live',ackId:0,feed:m?s.feed.concat([m]).slice(-30):s.feed,ft:0});}
+  live(){this.setState({jump:'live',day:200,speed:10,phase:'cruise',ev:null,ch:null,fired:{},res:{...BASE},flash:{},feed:seed(200),nextPing:212,ft:99,orderId:0,ackId:0,strip:false});}
   jumpTo(k){
-    const b={fired:{storm:1},dragX:0,flash:{},logT:99,jump:k};
-    if(k==='cruise')this.setState({...b,day:232,phase:'cruise',ev:null,ch:null,speed:1,res:{...BASE},log:'COURSE CHECK OK. ALL QUIET.'});
-    if(k==='card')this.setState({...b,day:214,phase:'card',ev:STORM,ch:null,speed:10,res:{...BASE},log:'DANGER AHEAD: SOLAR STORM.'});
-    if(k==='transit')this.setState({...b,day:214,phase:'transit',ev:STORM,ch:STORM.choices[0],tp:.3,res:{...BASE},log:'ORDER SENT: SHIELD UP.'});
-    if(k==='result')this.setState({...b,day:214,phase:'result',ev:STORM,ch:STORM.choices[1],tp:1,typed:0,res:applyFx(BASE,STORM.choices[1].fx),flash:STORM.choices[1].fx,log:'SIGNAL RECEIVED.'});
+    const b={dragX:0,flash:{},jump:k,strip:false,ft:0,tp:0,tp2:0,ackT:0,fired:{storm:1},nextPing:244,res:{...BASE}};
+    if(k==='cruise'){const {f}=stormFeed(3);this.setState({...b,day:232,phase:'cruise',ev:null,ch:null,speed:1,res:applyFx(BASE,CH.fx),feed:f,ft:99,orderId:0,ackId:0});}
+    if(k==='card'){const {f}=stormFeed(0);this.setState({...b,day:214,phase:'card',ev:STORM,ch:null,speed:10,feed:f});}
+    if(k==='transit'){const {f,o}=stormFeed(1);this.setState({...b,day:214,phase:'transit',ev:STORM,ch:CH,tp:.3,feed:f,orderId:o.order.id,ft:99});}
+    if(k==='ack'){const {f,o}=stormFeed(2);this.setState({...b,day:214,phase:'ack',ev:STORM,ch:CH,tp:1,tp2:1,feed:f,orderId:o.order.id,ackId:o.ack.id});}
+    if(k==='result'){const {f,o}=stormFeed(2);this.setState({...b,day:214,phase:'result',ev:STORM,ch:CH,tp:1,tp2:1,typed:0,res:applyFx(BASE,CH.fx),flash:CH.fx,feed:f,orderId:o.order.id,ackId:o.ack.id,ft:99});}
   }
   chipsOf(c,eng){return c.costs.map(k=>({icon:ICON_OF[k.i],v:eng||!k.risk?k.v:k.v.replace('?','')+' RISK',col:k.risk?'#ffb547':(k.v[0]==='+'?'#8cff9e':'#ff8a6d'),bs:k.risk?'dashed':'solid'}));}
   renderVals(){
     const s=this.state,eng=s.mode==='eng',d=s.day;
+    const nameU=String(s.name||this.props.robotName||'VOYA').toUpperCase().slice(0,12);
     const e=earth(d),m=mars(d),c=craft(d);
-    const lt=Math.hypot(e[0]-c[0],e[1]-c[1])/150*499;
-    const px=e[0]+(c[0]-e[0])*s.tp,py=e[1]+(c[1]-e[1])*s.tp,ring=(performance.now()/700)%1;
+    const lt=Math.hypot(e[0]-c[0],e[1]-c[1])/150*499,ltMinN=Math.max(1,Math.round(lt/60));
+    const back=s.phase==='reply',isPulse=s.phase==='transit'||back,f=back?s.tp2:s.tp;
+    const px=back?c[0]+(e[0]-c[0])*f:e[0]+(c[0]-e[0])*f,py=back?c[1]+(e[1]-c[1])*f:e[1]+(c[1]-e[1])*f,ring=(performance.now()/700)%1;
     const res=RES.map(r=>{const v=s.res[r.k],low=v<=1&&r.k!=='data',col=low?'#ff5a3d':'#8cff9e',fl=s.flash[r.k];
       return {name:r.name,icon:ICON_OF[r.k],eng:r.u(v),col,hasDelta:!!fl,delta:fl?(fl>0?'+'+fl:'−'+Math.abs(fl)):'',deltaCol:fl>0?'#8cff9e':'#ffb547',
         segs:[0,1,2,3,4].map(i=>({bg:i<v?col:'#14281b',sh:i<v?'0 0 8px '+col:'none'}))};});
@@ -427,15 +506,23 @@ class Component extends DCLogic {
       col:ev.card?'#ffb547':'#8cff9e',when:eng?'DAY '+ev.day+' · T−'+Math.ceil(ev.day-d)+' d':'IN '+Math.ceil(ev.day-d)+' DAYS'}));
     const ticks=[30,60,90,120].map(n=>({left:n/WIN*100,txt:eng?'DAY '+Math.round(d+n):(n/30)+(n===30?' MONTH':' MONTHS'),short:(n/30)+'MO'}));
     const card=s.ev||STORM,cA=card.choices[0],cB=card.choices[1];
-    const ch=s.ch||STORM.choices[0];
+    const ch=s.ch||CH;
     const rt=('> '+ch.result.join('\n> '));
     const fxChips=Object.entries(ch.fx).map(([k,v])=>({icon:ICON_OF[k],v:(v>0?'+':'−')+Math.abs(v),col:v>0?'#8cff9e':'#ffb547'}));
     const sp=[[0,'II'],[1,'1×'],[10,'10×'],[100,'100×']];
-    const J=[['live','LIVE'],['cruise','CRUISE'],['card','DANGER CARD'],['transit','SIGNAL IN FLIGHT'],['result','RESULT ARRIVES']];
-    const ltMin=Math.round(lt/60);
+    const J=[['live','LIVE'],['cruise','CRUISE'],['card','DANGER CARD'],['transit','ORDER IN FLIGHT'],['ack','ROBOT REPLIES'],['result','RESULT']];
+    const n=s.feed.length,hot=s.phase==='ack'||s.phase==='result';
+    const feedV=s.feed.map((x,i)=>{const last=i===n-1,bot=x.w==='bot',isAck=x.id===s.ackId&&hot,inFl=x.id===s.orderId&&s.phase==='transit';
+      return {who:bot?nameU:'EARTH ▸ '+nameU,day:String(x.day).padStart(3,'0'),
+        stamp:bot?(x.kind==='ack'?'REPLY · ':'')+'SENT '+x.lt+' MIN AGO':(inFl?'IN FLIGHT · '+mmss(lt*(1-s.tp)):(x.id===s.orderId&&back?'DELIVERED · REPLY INBOUND':'DELIVERED')),
+        text:(bot?'':'▸ ')+(last?x.t.slice(0,Math.floor(s.ft)):x.t),curO:last&&s.blink?1:0,
+        col:bot?'#1b1a16':'#b23a22',meta:isAck?'#3a2a0a':(bot?'#7a715c':'#b23a22'),bg:isAck?'#ffb547':'transparent'};});
+    const ackM=s.feed.find(x=>x.id===s.ackId),ackLast=ackM&&s.feed[n-1]===ackM;
+    const ackShown=ackM?(ackLast?ackM.t.slice(0,Math.floor(s.ft)):ackM.t).replace('RECEIVED. ','RECEIVED.\n'):'';
+    const ltMinW=Math.round(lt/60);
     return {
-      eng,showGhost:this.props.showGhost??true,
-      jumps:J.map(([k,l])=>{const on=s.jump===k;return {label:l,go:()=>k==='live'?this.setState({jump:'live',day:200,speed:10,phase:'cruise',ev:null,ch:null,fired:{},res:{...BASE},flash:{},log:'CRUISING TO MARS. ALL QUIET.',logT:0}):this.jumpTo(k),bg:on?'#ffb547':'#1c1e18',fg:on?'#1b1a16':'#cbbf9f',bd:on?'#ffb547':'#3a3d33'};}),
+      eng,nameU,showGhost:this.props.showGhost??true,
+      jumps:J.map(([k,l])=>{const on=s.jump===k;return {label:l,go:()=>k==='live'?this.live():this.jumpTo(k),bg:on?'#ffb547':'#1c1e18',fg:on?'#1b1a16':'#cbbf9f',bd:on?'#ffb547':'#3a3d33'};}),
       res,ribbon,ticks,
       toggleMode:()=>this.setState({mode:eng?'cadet':'eng'}),leverLeft:eng?'32px':'3px',cadetLbl:eng?'#6f685a':'#ffb547',engLbl:eng?'#ffb547':'#6f685a',
       ghostD:GHOST_D,ghostLbl:{x:640,y:510},
@@ -443,20 +530,29 @@ class Component extends DCLogic {
       earthT:`translate(${e[0].toFixed(1)} ${e[1].toFixed(1)})`,marsT:`translate(${m[0].toFixed(1)} ${m[1].toFixed(1)})`,
       craftT:`translate(${c[0].toFixed(1)} ${c[1].toFixed(1)}) scale(1.3)`,craftTm:`translate(${c[0].toFixed(1)} ${c[1].toFixed(1)}) scale(1.5)`,
       e0x:e[0],e0y:e[1],c0x:c[0],c0y:c[1],px,py,ringR:8+ring*22,ringO:(1-ring)*.8,
+      pulseCol:back?'#8cff9e':'#ffb547',pulseGlow:back?'rgba(140,255,158,.6)':'rgba(255,181,71,.6)',
       rSun:(Math.hypot(c[0]-CX,c[1]-CY)/150).toFixed(2),dEarth:(lt/499).toFixed(2),ltFmt:mmss(lt),
-      ltWords:ltMin+' MINUTES',
-      countdown:mmss(lt*(1-s.tp)),chLabel:ch.label,
-      logText:s.log.slice(0,Math.floor(s.logT)),cursorO:s.blink?1:0,
+      ltWords:ltMinW+' MINUTES',ltMinN,
+      countdown:mmss(lt*(1-f)),
+      flTop:back?nameU+' HEARD YOU. REPLY ON ITS WAY':'ORDER “'+ch.label+'” IS ON ITS WAY',
+      flMid:back?'REPLY REACHES EARTH IN':'SIGNAL REACHES '+nameU+' IN',
+      flMidM:back?'REPLY REACHES EARTH IN':'ORDER REACHES '+nameU+' IN',
+      flBot:back?'IT HAS ALREADY ACTED. YOU JUST CAN’T SEE IT YET':'NOTHING YOU CAN DO NOW BUT WAIT',
+      isAck:s.phase==='ack',ackShown,rtLine:eng?'ROUND TRIP 2t = '+mmss(lt*2)+' · EARTH → '+nameU+' → EARTH':'YOUR ORDER WENT THERE AND BACK: '+(ltMinN*2)+' MINUTES',
+      feedRev:feedV.slice().reverse(),feedRevM:feedV.slice(-8).reverse(),latest:feedV[n-1]||{},
+      stripOpen:s.strip,toggleStrip:()=>this.setState({strip:!s.strip}),stripChev:s.strip?'▴ CLOSE':'▾ LOG',
+      stripBg:s.phase==='ack'?'#ffb547':'#efe6cf',
+      cursorO:s.blink?1:0,
       resultText:rt.slice(0,Math.floor(s.typed)),fxChips,cont:()=>this.cont(),
-      isCard:s.phase==='card',isTransit:s.phase==='transit',isResult:s.phase==='result',
+      isCard:s.phase==='card',isTransit:isPulse,isResult:s.phase==='result',
       card,cA:{...cA,chips:this.chipsOf(cA,eng)},cB:{...cB,chips:this.chipsOf(cB,eng)},
       pickL:()=>this.choose(0),pickR:()=>this.choose(1),
       dayInt:Math.floor(d),dayPad:String(Math.floor(d)).padStart(3,'0'),
       arrival:d<T?'MARS IN '+Math.ceil(T-d)+' DAYS':'IN ORBIT AT MARS',
       speeds:sp.map(([v,l])=>{const on=s.speed===v;return {label:l,go:()=>this.setState({speed:v}),bg:on?'#ffb547':'#3a3d33',fg:on?'#1b1a16':'#cbbf9f',edge:on?'#9a6514':'#1a1b16',glow:on?'0 0 14px rgba(255,181,71,.5)':'none'};}),
       dragX:s.dragX,dragRot:s.dragX/18,lHot:s.dragX<-40?'#ffb547':'#4a4d42',rHot:s.dragX>40?'#ffb547':'#4a4d42',
-      dragDown:e=>{this.dx0=e.clientX;this.drag=true;try{e.currentTarget.setPointerCapture(e.pointerId);}catch(_){}} ,
-      dragMove:e=>{if(this.drag)this.setState({dragX:e.clientX-this.dx0});},
+      dragDown:ev=>{this.dx0=ev.clientX;this.drag=true;try{ev.currentTarget.setPointerCapture(ev.pointerId);}catch(_){}} ,
+      dragMove:ev=>{if(this.drag)this.setState({dragX:ev.clientX-this.dx0});},
       dragUp:()=>{if(!this.drag)return;this.drag=false;const x=this.state.dragX;if(x<-90)this.choose(0);else if(x>90)this.choose(1);else this.setState({dragX:0});}
     };
   }

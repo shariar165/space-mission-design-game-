@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&amp;family=B612:wght@400;700&amp;family=B612+Mono:wght@400;700&amp;family=VT323&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#0b0c09;color:#cbbf9f}a{color:#ffb547;text-decoration:none}a:hover{color:#ffd28a}</style>
+</helmet>
+
+<section id="name" data-screen-label="00 Name Your Robot" style="padding:56px 64px 80px;display:flex;flex-direction:column;gap:28px">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap;max-width:1900px">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="font:400 14px/1 'B612 Mono',monospace;letter-spacing:.2em;color:#8a8270">SIGNAL DELAY · SCREEN 00 · BEFORE THE FIRST MISSION</div>
+      <h1 style="margin:0;font:800 56px/1 'Big Shoulders Display',sans-serif;color:#efe6cf;letter-spacing:.02em">NAME YOUR ROBOT</h1>
+      <p style="margin:0;max-width:640px;font:400 16px/1.5 'B612',sans-serif;color:#a49b84;text-wrap:pretty">The robot gets a name before it gets a mission. Its first words come back instantly. After launch, they never will again.</p>
+    </div>
+    <button onClick="{{ reset }}" style="cursor:pointer;padding:10px 16px;border-radius:4px;border:1px solid #3a3d33;background:#1c1e18;color:#cbbf9f;font:700 12px/1 'B612 Mono',monospace;letter-spacing:.1em;white-space:nowrap">↺ CLEAR NAME</button>
+  </div>
+
+  <div style="display:flex;gap:56px;align-items:flex-start;flex-wrap:wrap">
+    <div id="0a" style="display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;gap:10px;align-items:center"><span style="padding:4px 9px;border-radius:3px;background:#ffb547;color:#1b1a16;font:700 13px/1 'B612 Mono',monospace">0a</span><span style="font:400 13px/1 'B612 Mono',monospace;color:#8a8270;letter-spacing:.1em;white-space:nowrap">DESKTOP · 1440 × 900</span></div>
+      <div style="width:1440px;height:900px;box-sizing:border-box;padding:30px 56px 36px;background:#1c1e18;border-radius:10px;box-shadow:0 30px 80px rgba(0,0,0,.55),inset 0 1px 0 #34372e;display:grid;grid-template-rows:auto minmax(0,1fr) auto auto;gap:20px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:16px">
+          <div style="display:flex;align-items:baseline;gap:18px">
+            <span style="font:900 30px/1 'Big Shoulders Display',sans-serif;color:#efe6cf;letter-spacing:.06em">SIGNAL DELAY</span>
+            <span style="font:400 11px/1 'B612 Mono',monospace;color:#8a8270;letter-spacing:.18em">PAD 39A · PRE-LAUNCH</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font:700 11px/1 'B612 Mono',monospace;letter-spacing:.14em;color:{{ cadetLbl }}">CADET</span>
+            <button onClick="{{ toggleMode }}" title="Engineer mode shows numbers and sources" style="cursor:pointer;position:relative;width:62px;height:32px;border-radius:16px;border:1px solid #4a4d42;background:#0f100c;box-shadow:inset 0 2px 6px #000;padding:0"><span style="position:absolute;top:3px;left:{{ leverLeft }};width:26px;height:26px;border-radius:50%;background:linear-gradient(#d9d4c4,#8f8a7b);box-shadow:0 2px 3px #000"></span></button>
+            <span style="font:700 11px/1 'B612 Mono',monospace;letter-spacing:.14em;color:{{ engLbl }}">ENGINEER</span>
+          </div>
+        </div>
+
+        <div style="position:relative;border-radius:26px;border:14px solid #2c2f27;background:#050c07;box-shadow:inset 0 0 80px rgba(0,0,0,.9),0 0 0 1px #3a3d33;overflow:hidden;padding:48px 72px;display:flex;flex-direction:column">
+          <div style="min-height:55px;font:400 46px/1.2 'VT323',monospace;color:#8cff9e;text-shadow:0 0 8px rgba(140,255,158,.55)">{{ l1 }}<span style="opacity:{{ c1 }}">█</span></div>
+          <div style="min-height:55px;font:400 46px/1.2 'VT323',monospace;color:#8cff9e;text-shadow:0 0 8px rgba(140,255,158,.55)">{{ l2 }}<span style="opacity:{{ c2 }}">█</span></div>
+          <div style="margin-top:30px;display:flex;flex-direction:column;gap:12px;opacity:{{ cellsO }};transition:opacity .4s">
+            <span style="font:400 24px/1 'VT323',monospace;color:#47c96b;letter-spacing:.06em">NAME · {{ count }} / 12</span>
+            <div onClick="{{ focusD }}" style="position:relative;display:flex;gap:10px;cursor:text;width:max-content">
+              <sc-for list="{{ cells }}" as="c" hint-placeholder-count="12">
+                <span style="width:62px;height:88px;display:flex;align-items:flex-end;justify-content:center;border-bottom:4px solid {{ c.line }};font:400 100px/0.82 'VT323',monospace;color:{{ c.col }};text-shadow:0 0 16px rgba(255,181,71,.5)">{{ c.ch }}</span>
+              </sc-for>
+              <input ref="{{ inRef }}" value="{{ name }}" onChange="{{ onName }}" onKeyDown="{{ onKey }}" maxLength="12" autoComplete="off" spellCheck="false" aria-label="Robot name" style="position:absolute;inset:0;width:100%;opacity:0;font-size:16px;border:none;cursor:text">
+            </div>
+          </div>
+          <sc-if value="{{ launched }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top:28px;max-width:860px;padding:14px 20px;border:1px solid #ffb547;border-radius:4px;background:rgba(255,181,71,.06);display:flex;flex-direction:column;gap:8px">
+              <span style="font:400 20px/1 'VT323',monospace;color:#ffb547;letter-spacing:.06em">{{ nameU }} · DAY 000 · SENT JUST NOW · THE LAST TIME THERE IS NO DELAY</span>
+              <span style="min-height:44px;font:400 40px/1.1 'VT323',monospace;color:#ffd28a;text-shadow:0 0 10px rgba(255,181,71,.5)">{{ firstWords }}<span style="opacity:{{ c3 }}">█</span></span>
+            </div>
+          </sc-if>
+          <div style="position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.22) 0 1px,transparent 1px 3px)"></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(3,190px) minmax(0,1fr);gap:14px">
+          <sc-for list="{{ sugg }}" as="k" hint-placeholder-count="3">
+            <button onClick="{{ k.go }}" style="cursor:pointer;height:84px;border-radius:6px;border:1px solid #121410;border-bottom:5px solid {{ k.edge }};background:{{ k.bg }};color:{{ k.fg }};display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;padding:10px 14px;box-sizing:border-box">
+              <span style="font:700 10px/1 'B612 Mono',monospace;letter-spacing:.16em;opacity:.7">{{ k.tag }}</span>
+              <span style="font:800 32px/1 'Big Shoulders Display',sans-serif;letter-spacing:.06em">{{ k.label }}</span>
+            </button>
+          </sc-for>
+          <sc-if value="{{ notLaunched }}" hint-placeholder-val="{{ true }}">
+            <button onClick="{{ launch }}" style="cursor:{{ launchCursor }};height:84px;border-radius:8px;border:none;border-bottom:7px solid {{ launchEdge }};background:{{ launchBg }};color:{{ launchFg }};box-shadow:{{ launchGlow }};display:flex;align-items:center;justify-content:space-between;padding:0 28px;font:900 40px/1 'Big Shoulders Display',sans-serif;letter-spacing:.06em">LAUNCH INTO TODAY’S SKY<span style="font:400 30px/1 'VT323',monospace">▸</span></button>
+          </sc-if>
+          <sc-if value="{{ launched }}" hint-placeholder-val="{{ false }}">
+            <a href="Signal Delay - Pack.dc.html" style="height:84px;border-radius:8px;border-bottom:7px solid #9a6514;background:#ffb547;color:#1b1a16;box-shadow:0 0 30px rgba(255,181,71,.3);display:flex;align-items:center;justify-content:space-between;padding:0 28px;box-sizing:border-box">
+              <span style="display:flex;flex-direction:column;gap:4px"><span style="font:900 40px/1 'Big Shoulders Display',sans-serif;letter-spacing:.06em">LOAD {{ nameU }}</span><span style="font:400 14px/1 'B612',sans-serif;color:#3a2a0a">Next: the packing bay</span></span>
+              <span style="font:400 30px/1 'VT323',monospace">▸</span>
+            </a>
+          </sc-if>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:18px;padding:12px 18px;background:#050c07;border-radius:6px;box-shadow:inset 0 0 10px #000">
+          <span style="font:700 11px/1 'B612 Mono',monospace;letter-spacing:.18em;color:#8a8270;white-space:nowrap">TODAY’S SKY</span>
+          <span style="font:400 30px/1 'VT323',monospace;color:#8cff9e;text-shadow:0 0 8px rgba(140,255,158,.45)">{{ dateU }} · MARS IS {{ ltMin }} LIGHT-MINUTES AWAY</span>
+          <sc-if value="{{ eng }}" hint-placeholder-val="{{ false }}"><span style="margin-left:auto;font:400 20px/1 'VT323',monospace;color:#47c96b;white-space:nowrap">{{ skyEng }}</span></sc-if>
+        </div>
+      </div>
+    </div>
+
+    <div id="0b" style="display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;gap:10px;align-items:center"><span style="padding:4px 9px;border-radius:3px;background:#ffb547;color:#1b1a16;font:700 13px/1 'B612 Mono',monospace">0b</span><span style="font:400 13px/1 'B612 Mono',monospace;color:#8a8270;letter-spacing:.1em;white-space:nowrap">MOBILE · 390 × 844</span></div>
+      <div style="width:390px;height:844px;box-sizing:border-box;padding:14px 16px 22px;background:#1c1e18;border-radius:34px;box-shadow:0 30px 80px rgba(0,0,0,.55),0 0 0 8px #0f100c;display:flex;flex-direction:column;gap:12px;overflow:hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:0 8px;height:30px;font:700 12px/1 'B612 Mono',monospace;color:#8a8270"><span>9:41</span><span style="font:900 16px/1 'Big Shoulders Display',sans-serif;color:#efe6cf;letter-spacing:.08em">SIGNAL DELAY</span><button onClick="{{ toggleMode }}" style="cursor:pointer;padding:5px 8px;border-radius:4px;border:1px solid #4a4d42;background:#0f100c;color:{{ engLbl }};font:700 10px/1 'B612 Mono',monospace;letter-spacing:.1em">ENG</button></div>
+
+        <div style="flex:1;position:relative;border-radius:18px;border:8px solid #2c2f27;background:#050c07;box-shadow:inset 0 0 50px rgba(0,0,0,.9);overflow:hidden;padding:22px 16px;display:flex;flex-direction:column">
+          <div style="min-height:58px;font:400 27px/1.07 'VT323',monospace;color:#8cff9e;text-shadow:0 0 8px rgba(140,255,158,.55)">{{ l1 }}<span style="opacity:{{ c1 }}">█</span></div>
+          <div style="min-height:30px;margin-top:4px;font:400 27px/1.07 'VT323',monospace;color:#8cff9e;text-shadow:0 0 8px rgba(140,255,158,.55)">{{ l2 }}<span style="opacity:{{ c2 }}">█</span></div>
+          <div style="margin-top:26px;display:flex;flex-direction:column;gap:10px;opacity:{{ cellsO }};transition:opacity .4s">
+            <span style="font:400 18px/1 'VT323',monospace;color:#47c96b">NAME · {{ count }} / 12</span>
+            <div onClick="{{ focusM }}" style="position:relative;display:flex;gap:4px;cursor:text">
+              <sc-for list="{{ cells }}" as="c" hint-placeholder-count="12">
+                <span style="width:21px;height:40px;display:flex;align-items:flex-end;justify-content:center;border-bottom:3px solid {{ c.line }};font:400 44px/0.82 'VT323',monospace;color:{{ c.col }};text-shadow:0 0 10px rgba(255,181,71,.5)">{{ c.ch }}</span>
+              </sc-for>
+              <input ref="{{ inRefM }}" value="{{ name }}" onChange="{{ onName }}" onKeyDown="{{ onKey }}" maxLength="12" autoComplete="off" spellCheck="false" autoCapitalize="characters" aria-label="Robot name" style="position:absolute;inset:0;width:100%;opacity:0;font-size:16px;border:none">
+            </div>
+          </div>
+          <sc-if value="{{ launched }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top:22px;padding:10px 12px;border:1px solid #ffb547;border-radius:4px;background:rgba(255,181,71,.06);display:flex;flex-direction:column;gap:6px">
+              <span style="font:400 15px/1.1 'VT323',monospace;color:#ffb547">{{ nameU }} · DAY 000 · SENT JUST NOW</span>
+              <span style="min-height:52px;font:400 26px/1 'VT323',monospace;color:#ffd28a;text-shadow:0 0 8px rgba(255,181,71,.5)">{{ firstWords }}<span style="opacity:{{ c3 }}">█</span></span>
+              <span style="font:400 15px/1 'VT323',monospace;color:#1f9a4a">THE LAST TIME THERE IS NO DELAY</span>
+            </div>
+          </sc-if>
+          <div style="position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.22) 0 1px,transparent 1px 3px)"></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
+          <sc-for list="{{ sugg }}" as="k" hint-placeholder-count="3">
+            <button onClick="{{ k.go }}" style="cursor:pointer;height:54px;border-radius:6px;border:1px solid #121410;border-bottom:4px solid {{ k.edge }};background:{{ k.bg }};color:{{ k.fg }};font:800 22px/1 'Big Shoulders Display',sans-serif;letter-spacing:.05em">{{ k.label }}</button>
+          </sc-for>
+        </div>
+        <sc-if value="{{ notLaunched }}" hint-placeholder-val="{{ true }}">
+          <button onClick="{{ launch }}" style="cursor:{{ launchCursor }};height:76px;flex:none;border-radius:8px;border:none;border-bottom:6px solid {{ launchEdge }};background:{{ launchBg }};color:{{ launchFg }};box-shadow:{{ launchGlow }};font:900 27px/1 'Big Shoulders Display',sans-serif;letter-spacing:.05em">LAUNCH INTO TODAY’S SKY ▸</button>
+        </sc-if>
+        <sc-if value="{{ launched }}" hint-placeholder-val="{{ false }}">
+          <a href="Signal Delay - Pack.dc.html" style="height:76px;flex:none;border-radius:8px;border-bottom:6px solid #9a6514;background:#ffb547;color:#1b1a16;display:flex;align-items:center;justify-content:center;gap:10px;box-sizing:border-box;font:900 27px/1 'Big Shoulders Display',sans-serif;letter-spacing:.05em">LOAD {{ nameU }} ▸</a>
+        </sc-if>
+        <div style="display:flex;flex-direction:column;gap:5px;padding:10px 12px;background:#050c07;border-radius:6px;box-shadow:inset 0 0 8px #000">
+          <span style="font:700 9px/1 'B612 Mono',monospace;letter-spacing:.16em;color:#8a8270">TODAY’S SKY · {{ dateS }}</span>
+          <span style="font:400 22px/1 'VT323',monospace;color:#8cff9e">MARS IS {{ ltMin }} LIGHT-MINUTES AWAY</span>
+          <sc-if value="{{ eng }}" hint-placeholder-val="{{ false }}"><span style="font:400 16px/1 'VT323',monospace;color:#47c96b">{{ skyEngShort }}</span></sc-if>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const SUG=['VOYA','TALLY','KESTREL'];
+const L1='> A NEW ROBOT IS WAITING ON THE PAD.',L2='> GIVE IT A NAME.',FIRST='SYSTEMS ON. FUEL FULL. READY WHEN YOU ARE.',CPS=30;
+const MON=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+// JPL approximate Keplerian elements (Standish), valid 1800–2050
+function sky(date){
+  const r=Math.PI/180,T=(date.getTime()/86400000+2440587.5-2451545)/36525;
+  const pos=(a,e,I,L,w,O)=>{const M=(((L-w)%360)+540)%360-180,om=(w-O)*r;let E=M*r;for(let i=0;i<12;i++)E-=(E-e*Math.sin(E)-M*r)/(1-e*Math.cos(E));
+    const x=a*(Math.cos(E)-e),y=a*Math.sqrt(1-e*e)*Math.sin(E),co=Math.cos(om),so=Math.sin(om),cO=Math.cos(O*r),sO=Math.sin(O*r),cI=Math.cos(I*r),sI=Math.sin(I*r);
+    return [(co*cO-so*sO*cI)*x+(-so*cO-co*sO*cI)*y,(co*sO+so*cO*cI)*x+(-so*sO+co*cO*cI)*y,so*sI*x+co*sI*y];};
+  const E=pos(1.00000261+5.62e-6*T,0.01671123-4.392e-5*T,-1.531e-5-0.01294668*T,100.46457166+35999.37244981*T,102.93768193+0.32327364*T,0);
+  const M=pos(1.52371034+1.847e-5*T,0.0933941+7.882e-5*T,1.84969142-0.00813131*T,-4.55343205+19140.30268499*T,-23.94362959+0.44441088*T,49.55953891-0.29257343*T);
+  const au=Math.hypot(M[0]-E[0],M[1]-E[1],M[2]-E[2]);return {au,sec:au*499.004784};
+}
+class Component extends DCLogic {
+  state={name:'',t:0,lt:0,launched:false,mode:'cadet',blink:true};
+  inRef=React.createRef();inRefM=React.createRef();
+  componentDidMount(){
+    const d=new Date();this.sky=sky(d);this.date=d.getDate()+' '+MON[d.getMonth()]+' '+d.getFullYear();
+    this.last=performance.now();
+    this.iv=setInterval(()=>{const n=performance.now(),dt=(n-this.last)/1000;this.last=n;this.setState(s=>({t:s.t+dt,lt:s.launched?s.lt+dt:0,blink:Math.floor(n/450)%2===0}));},40);
+  }
+  componentWillUnmount(){clearInterval(this.iv);}
+  setName(v){this.setState({name:String(v).toUpperCase().replace(/[^A-Z0-9 \-]/g,'').replace(/^ +/,'').slice(0,12),launched:false,lt:0});}
+  launch(){const n=this.state.name.trim();if(!n)return;try{localStorage.setItem('sd.robotName',n);}catch(_){}this.setState({launched:true,lt:0});}
+  renderVals(){
+    const s=this.state,eng=s.mode==='eng',name=s.name,has=name.trim().length>0;
+    const t2=L1.length/CPS+.35,k1=Math.min(L1.length,Math.floor(s.t*CPS)),k2=Math.max(0,Math.min(L2.length,Math.floor((s.t-t2)*CPS)));
+    const introDone=s.t>t2+L2.length/CPS;
+    const cells=Array.from({length:12},(_,i)=>{const cur=i===name.length&&!s.launched&&introDone;
+      return {ch:cur?(s.blink?'█':''):(name[i]||''),col:cur?'#8cff9e':'#ffb547',line:name[i]?'#ffb547':(cur?'#8cff9e':'#1f5a32')};});
+    const sk=this.sky||{au:0,sec:0},ltMin=Math.round(sk.sec/60);
+    const focus=ref=>()=>{try{ref.current&&ref.current.focus({preventScroll:true});}catch(_){}};
+    return {
+      eng,name,nameU:name.trim(),count:name.length,cells,
+      l1:L1.slice(0,k1),l2:L2.slice(0,k2),c1:k1<L1.length&&s.blink?1:0,c2:k1>=L1.length&&!introDone&&s.blink?1:0,cellsO:introDone?1:0,
+      inRef:this.inRef,inRefM:this.inRefM,focusD:focus(this.inRef),focusM:focus(this.inRefM),
+      onName:e=>this.setName(e.target.value),onKey:e=>{if(e.key==='Enter')this.launch();},
+      sugg:SUG.map((n,i)=>{const on=name===n;return {label:n,tag:'SUGGESTION '+(i+1),go:()=>this.setName(n),bg:on?'#ffb547':'#3a3d33',fg:on?'#1b1a16':'#efe6cf',edge:on?'#9a6514':'#1a1b16'};}),
+      launch:()=>this.launch(),launched:s.launched,notLaunched:!s.launched,
+      launchBg:has?'#ffb547':'#2c2f27',launchFg:has?'#1b1a16':'#6f685a',launchEdge:has?'#9a6514':'#1a1b16',launchGlow:has?'0 0 30px rgba(255,181,71,.3)':'none',launchCursor:has?'pointer':'not-allowed',
+      firstWords:FIRST.slice(0,Math.floor(s.lt*CPS)),c3:s.blink?1:0,
+      dateU:'TODAY · '+(this.date||''),dateS:this.date||'',ltMin,
+      skyEng:sk.au.toFixed(2)+' AU · '+Math.round(sk.au*149.598)+' M KM · t = d / c = '+Math.floor(sk.sec/60)+' MIN '+Math.round(sk.sec%60)+' S',
+      skyEngShort:sk.au.toFixed(2)+' AU · t = d / c · JPL KEPLER ELEMENTS',
+      toggleMode:()=>this.setState({mode:eng?'cadet':'eng'}),leverLeft:eng?'32px':'3px',cadetLbl:eng?'#6f685a':'#ffb547',engLbl:eng?'#ffb547':'#6f685a',
+      reset:()=>{try{localStorage.removeItem('sd.robotName');}catch(_){}this.setState({name:'',launched:false,lt:0,t:0});}
+    };
+  }
+}
+</script>
+</body>
+</html>

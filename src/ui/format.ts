@@ -95,6 +95,10 @@ export function label(key: string): string {
 export const isoDate = (iso: string) =>
   new Date(`${iso.slice(0, 10)}T00:00:00Z`).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' });
 
+/** A date as the CRT prints it: "21 OCT 2026". */
+export const crtDate = (iso: string) =>
+  new Date(`${iso.slice(0, 10)}T00:00:00Z`).toLocaleDateString('en-GB', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' }).toUpperCase();
+
 /** Coins for a cost (Cadet): one 💰 per coin, ×n after a few. The coin count comes from the engine. */
 export const coins = (n: number) => (n <= 0 ? '—' : n <= 4 ? '💰'.repeat(n) : `💰×${num(n)}`);
 
@@ -138,6 +142,9 @@ export const deg = (x: number, digits = 1) => `${num(x, digits)}°`;
 
 /** Distance in AU (Engineer). */
 export const au = (m: number) => `${num(m / AU_M, 3)} AU`;
+
+/** A light time in whole minutes ("14"), for "… LIGHT-MINUTES AWAY". */
+export const wholeMinutes = (s: number) => num(Math.round(s / 60));
 
 /** A countdown as MM:SS, zero-padded (the CRT countdown), or H:MM:SS when an hour or longer. */
 export function mmss(s: number): string {
