@@ -8,8 +8,8 @@
 .hm-word { margin: 0; font: 900 90px/0.82 var(--sd-display); color: var(--sd-ink); letter-spacing: 0.01em; }
 .hm-pitch { min-height: 96px; font: 400 30px/1.1 var(--sd-crt-font); margin: 0; }
 
-.hm-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
-.hm-play { grid-column: 1 / span 4; cursor: pointer; display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; gap: 18px; align-items: center; padding: 18px 22px; border-radius: 8px; border: none; background: var(--sd-amber); border-bottom: 7px solid var(--sd-amber-edge); box-shadow: 0 0 30px rgba(255, 181, 71, 0.25); text-align: left; color: var(--sd-paper-ink); }
+.hm-grid { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 10px; }
+.hm-play { cursor: pointer; display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; gap: 18px; align-items: center; padding: 18px 22px; border-radius: 8px; border: none; background: var(--sd-amber); border-bottom: 7px solid var(--sd-amber-edge); box-shadow: 0 0 30px rgba(255, 181, 71, 0.25); text-align: left; color: var(--sd-paper-ink); }
 .hm-play-icon { width: 64px; height: 64px; border-radius: 6px; background: var(--sd-paper-ink); display: grid; place-items: center; }
 .hm-play-text { display: flex; flex-direction: column; gap: 4px; }
 .hm-play-word { font: 900 33px/0.9 var(--sd-display); letter-spacing: 0.06em; color: var(--sd-paper-ink); }
@@ -41,8 +41,6 @@
 /* ---- Phone (frame 4b) ---- */
 .hm.phone { padding: 46px 18px 22px; display: flex; flex-direction: column; gap: 16px; }
 .hm-phone-top { position: absolute; top: 12px; right: 14px; display: flex; align-items: center; gap: 8px; }
-.hm.phone .sd-lever-word, .hm.phone .sd-lever-switch { display: none; }
-.hm.phone .sd-lever-short { display: inline-block; }
 .hm.phone .hm-word { font-size: 54px; }
 .hm.phone .hm-pitch { min-height: 78px; font-size: 23px; }
 .hm.phone .hm-crt { position: relative; height: 170px; flex: none; border-radius: 16px; border-width: 6px; }
@@ -69,3 +67,24 @@
 .hm-now-k { font: 700 12px/1 var(--sd-mono); letter-spacing: 0.26em; color: var(--sd-amber); }
 .hm-now-alert b, .hm-now-alert { color: var(--sd-amber); }
 .hm-now.phone { position: static; padding: 12px 14px; border-radius: 6px; background: var(--sd-crt); border: 1px solid var(--sd-line); font-size: 19px; }
+
+/* ---- PLAY and the DAILY are the big keys; the rest is a smaller second row (spec UI rule 28) ---- */
+.hm-daily { border-color: var(--sd-amber-edge); border-bottom-color: var(--sd-amber-edge); justify-content: space-between; }
+.hm-daily .hm-key-label { font-size: 21px; letter-spacing: 0.04em; }
+.hm-daily .hm-key-icon { width: 48px; height: 48px; }
+.hm-second { display: flex; align-items: center; gap: 8px; }
+.hm-mini { cursor: pointer; display: grid; grid-template-columns: auto auto; grid-template-rows: auto auto; column-gap: 8px; row-gap: 4px; align-items: center; justify-items: start; padding: 7px 12px 6px 10px; border-radius: 6px; background: var(--sd-panel); border: 1px solid var(--sd-line); border-bottom: 3px solid var(--sd-deep); color: var(--sd-ink-2); }
+.hm-mini:hover { border-color: var(--sd-amber); }
+.hm-mini-label { font: 700 11px/1 var(--sd-mono); letter-spacing: 0.12em; white-space: nowrap; }
+.hm-mini > svg { grid-row: 1 / span 2; }
+.hm-mini-tag { font: 400 17px/1 var(--sd-crt-font); color: var(--sd-crt-mid); white-space: nowrap; }
+.hm-second-mode { margin-left: auto; }
+.hm.phone .hm-daily { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 10px 14px; border-bottom-width: 4px; }
+.hm.phone .hm-daily .hm-key-top { display: contents; }
+.hm.phone .hm-daily .hm-key-icon { width: 40px; height: 40px; grid-column: 1; grid-row: 1; }
+.hm.phone .hm-daily .hm-key-label { grid-column: 2; grid-row: 1; font-size: 17px; }
+.hm.phone .hm-daily .hm-key-tag { grid-column: 3; grid-row: 1; }
+.hm.phone .hm-second { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.hm.phone .hm-mini { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 5px; padding: 8px 4px; min-width: 0; }
+.hm.phone .hm-mini-label { font-size: 9px; letter-spacing: 0.06em; white-space: normal; text-align: center; }
+.hm.phone .hm-second-mode { grid-column: 1 / -1; margin-left: 0; display: flex; justify-content: center; padding-top: 4px; }

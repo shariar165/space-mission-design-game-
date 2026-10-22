@@ -1,5 +1,6 @@
-// HOME (Signal Delay design, screen 04). Four switches and the whole idea in one picture: an order leaves Earth
-// and you watch it crawl to the robot, with MAVEN's real one-way light time at Mars arrival (engine).
+// HOME (Signal Delay design, screen 04). The whole idea in one picture: an order leaves Earth and you watch it crawl
+// to the robot, with MAVEN's real one-way light time at Mars arrival (engine). PLAY and the DAILY are the two big
+// keys; Rescue History, the Notebook, Postcards and Engineer mode sit on a smaller second row (spec UI rule 28).
 import { useMemo, useState } from 'react';
 import { countdown, signalDelay } from '../../engine/flightMap';
 import { evaluateDesign } from '../../engine/index';
@@ -16,7 +17,7 @@ import { useReducedMotion } from '../opsGeometry';
 import { along, ring, useCycle, useIsPhone } from '../sdGeometry';
 import { isUnlocked, LEVELS, type Level, type Progress } from '../levels';
 import * as f from '../format';
-import { HOW_TO_PLAY, LIVE_WEATHER, POSTCARD_WORDS } from '../sdWords';
+import { HOME_WORDS, HOW_TO_PLAY, LIVE_WEATHER, POSTCARD_WORDS } from '../sdWords';
 
 /** The demo order loops every 6 s: 5 s of flight, then a second of RECEIVED (design). */
 export const HOME_LOOP_MS = 6000;
@@ -76,7 +77,7 @@ export function Home({ progress, mode, onMode, daily, rescue, notebook, postcard
   const r = ring(ringPhase);
   const [howTo, setHowTo] = useState(false);
 
-  const menu: MenuItem[] = [
+  const [dailyItem, ...more]: MenuItem[] = [
     { label: 'DAILY MISSION', sub: `Daily #${f.num(daily.number)}. ${daily.weather === 'live' ? LIVE_WEATHER.homeLive : daily.weather === 'offline' ? LIVE_WEATHER.homeOffline : 'Same mission for everyone today.'}`, icon: 'calendar', tag: daily.played ? 'DONE ✓' : 'NEW TODAY', hot: !daily.played, onClick: onDaily },
     { label: 'RESCUE HISTORY', sub: 'Real robots that nearly died. Try to save them.', icon: 'rescue', tag: `${f.num(rescue.solved)} OF ${f.num(rescue.total)}`, hot: false, onClick: onRescue },
     { label: 'NOTEBOOK', sub: 'Real lessons you have earned.', icon: 'book', tag: `${f.num(notebook.got)} OF ${f.num(notebook.total)}`, hot: false, onClick: onNotebook },
@@ -111,19 +112,36 @@ export function Home({ progress, mode, onMode, daily, rescue, notebook, postcard
     </button>
   );
 
-  const menuEls = menu.map((m) => (
-    <button key={m.label} type="button" className="hm-key" aria-label={`${m.label}: ${m.sub} (${m.tag})`} onClick={m.onClick}>
+  const daily1 = dailyItem!;
+  const dailyEl = (
+    <button type="button" className="hm-key hm-daily" aria-label={`${daily1.label}: ${daily1.sub} (${daily1.tag})`} onClick={daily1.onClick}>
       <span className="hm-key-top">
         <span className="hm-key-icon">
-          <SDIcon icon={m.icon} size={phone ? 21 : 24} color="var(--sd-crt-hi)" />
+          <SDIcon icon={daily1.icon} size={phone ? 21 : 26} color="var(--sd-amber)" />
         </span>
-        {!phone && <span className={`hm-key-tag${m.hot ? ' hot' : ''}`}>{m.tag}</span>}
+        <span className={`hm-key-tag${daily1.hot ? ' hot' : ''}`}>{daily1.tag}</span>
       </span>
-      <span className="hm-key-label">{m.label}</span>
-      {!phone && <span className="hm-key-sub">{m.sub}</span>}
-      {phone && <span className={`hm-key-tag${m.hot ? ' hot' : ''}`}>{m.tag}</span>}
+      <span className="hm-key-label">{daily1.label}</span>
+      {!phone && <span className="hm-key-sub">{daily1.sub}</span>}
     </button>
-  ));
+  );
+
+  /** The second row: smaller keys, then Engineer mode. */
+  const secondary = (
+    <div className="hm-second" role="group" aria-label={HOME_WORDS.more}>
+      {more.map((m) => (
+        <button key={m.label} type="button" className="hm-mini" aria-label={`${m.label}: ${m.sub} (${m.tag})`} title={m.sub} onClick={m.onClick}>
+          <SDIcon icon={m.icon} size={phone ? 18 : 20} color="var(--sd-crt-hi)" />
+          <span className="hm-mini-label">{m.label}</span>
+          <span className="hm-mini-tag">{m.tag}</span>
+        </button>
+      ))}
+      <span className="hm-second-mode">
+        <ModeLever mode={mode} onMode={onMode} />
+      </span>
+    </div>
+  );
+
 
   const crt = phone ? (
     <div className="hm-crt sd-crt" aria-hidden="true">
@@ -192,7 +210,6 @@ export function Home({ progress, mode, onMode, daily, rescue, notebook, postcard
       <div className={`sd hm phone${mode === 'engineer' ? ' eng' : ''}`}>
         <div className="hm-phone-top">
           <SoundToggle />
-          <ModeLever mode={mode} onMode={onMode} />
         </div>
         {crew && <CrewPlate crew={crew} className="phone" />}
         <h1 className="hm-word">
@@ -203,7 +220,8 @@ export function Home({ progress, mode, onMode, daily, rescue, notebook, postcard
         <Teletype className="hm-pitch sd-crt-text" text={PITCH} />
         {crt}
         {play}
-        {menuEls}
+        {dailyEl}
+        {secondary}
         <MarsNowPlate mars={mars} className="phone" />
         <button type="button" className="hm-missions" onClick={onMissions}>
           CHOOSE A MISSION ▸
@@ -231,8 +249,9 @@ export function Home({ progress, mode, onMode, daily, rescue, notebook, postcard
           </div>
           <div className="hm-grid">
             {play}
-            {menuEls}
+            {dailyEl}
           </div>
+          {secondary}
           <div className="hm-foot">
             <span className="hm-foot-keys">
               <button type="button" className="hm-missions" onClick={onMissions}>
@@ -241,7 +260,6 @@ export function Home({ progress, mode, onMode, daily, rescue, notebook, postcard
               {howToKey}
               <SoundToggle className="hm-sound" />
             </span>
-            <ModeLever mode={mode} onMode={onMode} />
           </div>
         </div>
         {crt}
