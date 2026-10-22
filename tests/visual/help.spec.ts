@@ -35,7 +35,6 @@ test('briefing, coach and back', async ({ page }, info) => {
   await page.screenshot({ path: `${OUT}help-pack-checklist-${p}.png` });
   await page.getByRole('switch', { name: 'Arm' }).click();
   const go = page.getByRole('button', { name: 'LAUNCH' });
-  if (await go.isDisabled()) await page.locator('.pk-day.good, .pk-day.soso').first().click();
   await go.click();
   // The first flight of a level opens with the launch countdown, then the coach.
   await expect(page.getByRole('dialog', { name: 'LAUNCH IN' })).toBeVisible({ timeout: 60_000 });

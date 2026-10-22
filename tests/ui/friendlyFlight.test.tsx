@@ -183,13 +183,8 @@ describe('◂ BACK on every step', () => {
     fireEvent.click(screen.getByRole('button', { name: 'CHOOSE A MISSION ▸' }));
     fireEvent.click(screen.getByRole('button', { name: /^Red Planet/ }));
     pass(100);
-    // arm and launch on the first good day
+    // arm and launch on the best day (picked for the Cadet)
     fireEvent.click(screen.getByRole('switch', { name: 'Arm' }));
-    const go = screen.getByRole('button', { name: 'LAUNCH' });
-    if ((go as HTMLButtonElement).disabled) {
-      const good = [...document.querySelectorAll<HTMLButtonElement>('.pk-day.good, .pk-day.soso')][0]!;
-      fireEvent.click(good);
-    }
     fireEvent.click(screen.getByRole('button', { name: 'LAUNCH' }));
     pass(100);
     fireEvent.click(screen.getByRole('button', { name: 'Back' }));
@@ -198,9 +193,6 @@ describe('◂ BACK on every step', () => {
     expect(screen.getByRole('group', { name: /Nose:/ })).toBeTruthy();
     // fly again, finish, report, then Back: Pack, not the finished flight
     fireEvent.click(screen.getByRole('switch', { name: 'Arm' }));
-    if ((screen.getByRole('button', { name: 'LAUNCH' }) as HTMLButtonElement).disabled) {
-      fireEvent.click([...document.querySelectorAll<HTMLButtonElement>('.pk-day.good, .pk-day.soso')][0]!);
-    }
     fireEvent.click(screen.getByRole('button', { name: 'LAUNCH' }));
     pass(100);
     fireEvent.click(screen.getByRole('button', { name: NAV.finish }));

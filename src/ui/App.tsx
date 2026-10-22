@@ -11,7 +11,7 @@ import { badges, newBadges, rankFor, starTotals, type RankDef } from '../engine/
 import { evaluateDesign } from '../engine/index';
 import { flightFacts, mergeFacts, newLessons, NOTEBOOK, notebook, notebookProgress, rescueProgress, type NotebookFacts } from '../engine/notebook';
 import { operationsDebrief, type OpsState } from '../engine/ops/index';
-import { shelfFor } from '../engine/pack';
+import { initialPack, shelfFor, type Packed } from '../engine/pack';
 import type { RescueCaseId } from '../engine/rescue';
 import type { Design, DestinationId } from '../engine/types';
 import { TopBar, type Mode, type Step } from './components/TopBar';
@@ -26,6 +26,7 @@ import { FlyAndSurvive } from './screens/FlyAndSurvive';
 import { Home } from './screens/Home';
 import { LevelMap } from './screens/LevelMap';
 import { MissionReport } from './screens/MissionReport';
+import { LaunchDay } from './screens/LaunchDay';
 import { NameRobot } from './screens/NameRobot';
 import { Notebook } from './screens/Notebook';
 import { Pack } from './screens/Pack';
@@ -110,6 +111,8 @@ export function App() {
   };
 
   const cadetMode = mode === 'cadet';
+  /** The packing and the picked launch day, kept while the player goes between Pack and the Launch Day step. */
+  const [packSave, setPackSave] = useState<{ key: string; packed?: Packed; pick?: number }>();
   /** Name Your Robot comes first: a Cadet who has never named the robot (nor skipped the screen). */
   const needsName = cadetMode && !robotName && !seen.includes('name');
   /** Where the name screen goes on to. */
@@ -256,6 +259,7 @@ export function App() {
     setMissionName(defaultMissionName(l.destination));
     setFlown(undefined);
     setDailyRun(false);
+    setPackSave(undefined);
     if (needsName) {
       afterName.current = 'build';
       go('name');
@@ -329,7 +333,7 @@ export function App() {
   const next = level && cadetMode && (progress[level.id] ?? 0) >= 1 ? nextLevel(level.id) : undefined;
   const home = () => go('home');
   const firstNew = fresh.length ? notebook(facts).find((c) => c.id === fresh[0]) : undefined;
-  const fullScreen = step === 'name' || step === 'fly' || step === 'report' || step === 'home' || step === 'daily' || step === 'notebook' || step === 'postcards' || (step === 'build' && cadetMode);
+  const fullScreen = step === 'name' || step === 'launch' || step === 'fly' || step === 'report' || step === 'home' || step === 'daily' || step === 'notebook' || step === 'postcards' || (step === 'build' && cadetMode);
 
   /** The mission briefing: what to do on this level (or a free build, or today's Daily). */
   const briefFor = (forDaily: boolean) =>
@@ -341,6 +345,11 @@ export function App() {
   const packBrief = { ...briefFor(false), open: level !== undefined && !seen.includes(`brief:${level.id}`) };
   /** The launch countdown plays on the first flight of each level (and of the Daily, and of a free build). */
   const launchKey = `launch:${dailyRun ? 'daily' : (level?.id ?? 'free')}`;
+  /** One packing per level: a new level (or destination) starts from its own starter. */
+  const packKey = `${cadet.levelId ?? 'free'}-${cadet.base.destination}`;
+  const keptPack = packSave?.key === packKey ? packSave : undefined;
+  const starterPack = useMemo(() => initialPack(cadet.base, level ? shelfOf(level) : shelfFor(cadet.base.destination)), [cadet.base, level]);
+  const packedNow = keptPack?.packed ?? starterPack;
 
   return (
     <div className={`app${step === 'build' && !cadetMode ? ' fixed' : ''}${cadetMode ? ' is-cadet' : ''}${step === 'fly' ? ' is-fly' : ''}`}>
@@ -431,9 +440,23 @@ export function App() {
           {...(flown && dailyRun ? { onReport: () => go('report') } : {})}
         />
       )}
+      {step === 'launch' && (
+        <LaunchDay
+          base={cadet.base}
+          packed={packedNow}
+          {...(keptPack?.pick !== undefined ? { pick: keptPack.pick } : {})}
+          onPick={(i) => setPackSave({ key: packKey, packed: packedNow, ...(i !== undefined ? { pick: i } : {}) })}
+          mode={mode}
+          onMode={changeMode}
+          missionName={missionName}
+          onHome={home}
+          onBack={back}
+          onLaunch={launchDesign}
+        />
+      )}
       {step === 'build' && cadetMode && (
         <Pack
-          key={`${cadet.levelId ?? 'free'}-${cadet.base.destination}`}
+          key={packKey}
           base={cadet.base}
           shelf={level ? shelfOf(level) : shelfFor(cadet.base.destination)}
           mode={mode}
@@ -447,6 +470,10 @@ export function App() {
           onBriefSeen={() => level && markSeen(`brief:${level.id}`)}
           robotName={robotName}
           onRobotName={nameRobot}
+          {...(keptPack?.packed ? { packed: keptPack.packed } : {})}
+          onPacked={(p) => setPackSave({ key: packKey, packed: p, ...(keptPack?.pick !== undefined ? { pick: keptPack.pick } : {}) })}
+          {...(keptPack?.pick !== undefined ? { pick: keptPack.pick } : {})}
+          onDays={() => go('launch')}
         />
       )}
       {step === 'build' && !cadetMode && <BuildBay design={design} ev={ev} engineer onChange={setDesign} onLaunch={launch} />}

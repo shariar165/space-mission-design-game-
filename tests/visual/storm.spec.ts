@@ -19,7 +19,7 @@ async function launchMoon(page: Page) {
   await page.goto('/?seed=4');
   await page.getByRole('button', { name: 'CHOOSE A MISSION ▸' }).click();
   await page.getByRole('button', { name: /^First Light/ }).click();
-  await expect(page.getByRole('radiogroup', { name: 'Launch day' }).getByRole('radio').first()).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByRole('button', { name: 'CHANGE ▸' })).toBeEnabled({ timeout: 60_000 }); // the launch days are worked out
   for (const name of ['Pack Extra solar panel', 'Pack Big battery']) {
     const b = page.getByRole('button', { name, exact: true });
     if (await b.isVisible()) await b.click();

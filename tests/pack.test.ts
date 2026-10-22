@@ -18,8 +18,7 @@ import {
   packBlockers,
   packPart,
   shelfFor,
-  type Packed,
-} from '../src/engine/pack';
+  type Packed, bestLaunchDay } from '../src/engine/pack';
 import { starterDesign } from '../src/ui/starters';
 
 const FROM = '2026-10-05';
@@ -192,6 +191,27 @@ describe('the launch calendar', () => {
     const ev = evaluateDesign(d);
     const far = calendarTransfers('mars', '2027-06-01');
     expect(far.some((t) => dayQuality(d, ev, t).quality === 'bad')).toBe(true);
+  });
+
+  it('the best day: the best quality, then the widest of its two margins, then the closest to the starter day', () => {
+    const q = (quality: 'good' | 'soso' | 'bad', m?: number) => ({ quality, ...(m !== undefined ? { massMargin: m, deltaVMargin: m + 0.5 } : {}) });
+    // good beats so-so whatever the margins; among good days the widest worse-margin wins (0.4 > 0.2)
+    expect(bestLaunchDay([q('soso', 0.05), q('good', 0.2), q('good', 0.4), q('bad')], 0)).toBe(2);
+    // a tie goes to the day nearest the preferred one (index 3 is 1 away, index 0 is 2 away)
+    expect(bestLaunchDay([q('good', 0.3), q('soso', 0.05), q('bad'), q('good', 0.3)], 2)).toBe(3);
+    // every day bad: still a day (the preferred one), so the screen can say why
+    expect(bestLaunchDay([q('bad'), q('bad'), q('bad')], 1)).toBe(1);
+  });
+
+  it('the best day of the real Mars calendar is a good day with the widest margin', () => {
+    const days = calendarTransfers('mars', mars.launchDate);
+    const d = buildPackDesign(mars, initialPack(mars, shelfFor('mars')));
+    const ev = evaluateDesign(d);
+    const q = days.map((t) => dayQuality(d, ev, t));
+    const best = bestLaunchDay(q, PACK.calendar.before.value);
+    expect(q[best]!.quality).toBe('good');
+    const worse = (x: (typeof q)[number]) => Math.min(x.massMargin ?? -Infinity, x.deltaVMargin ?? -Infinity);
+    for (const x of q.filter((y) => y.quality === 'good')) expect(worse(q[best]!)).toBeGreaterThanOrEqual(worse(x));
   });
 
   it('the Moon: every day is the same transfer', () => {
