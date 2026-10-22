@@ -52,6 +52,10 @@ test('fly states', async ({ page }, info) => {
   }
   await page.waitForTimeout(2600);
   await page.screenshot({ path: `${OUT}fly-signal-in-flight-${p}.png` });
+  // The order lands; the robot's reply crosses back, then shows (design: ROBOT REPLIES).
+  await expect(page.locator('.fly-reply')).toBeVisible({ timeout: 30_000 });
+  await page.waitForTimeout(2200);
+  await page.screenshot({ path: `${OUT}fly-robot-replies-${p}.png` });
   await expect(page.getByRole('dialog', { name: 'Incoming message' })).toBeVisible({ timeout: 30_000 });
   await page.waitForTimeout(4000);
   await page.screenshot({ path: `${OUT}fly-result-arrives-${p}.png` });

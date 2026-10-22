@@ -536,6 +536,7 @@ export const MAP_WORDS = {
   sun: 'SUN',
   storm: 'SOLAR STORM',
   order: 'YOUR ORDER',
+  reply: 'ITS REPLY',
   you: 'YOU',
 };
 
@@ -572,7 +573,6 @@ export const nextRobotName = (name: string) => ROBOT_NAMES[(ROBOT_NAMES.indexOf(
 export const ROBOT_WORDS = {
   nameLabel: 'YOUR ROBOT’S NAME',
   suggest: 'Suggest a name',
-  radio: (name: string) => `${name} SAYS`,
   took: (dest: string, delay: string) => `FROM ${dest} · TOOK ${delay} TO REACH YOU`,
   lastMessage: (name: string) => `LAST MESSAGE FROM ${name}`,
 };
@@ -600,48 +600,152 @@ export const NAME_WORDS = {
   skyEng: (au: string, mkm: string, t: string) => `${au} · ${mkm} · t = d / c = ${t}`,
 };
 
-type Line = (dest: string) => string;
-const HIT_LINES: Record<string, Line[]> = {
-  'solar-storm': [() => 'Storm’s here! Particles are pinging off my panels!', () => 'Another solar storm. I can feel it in my circuits.'],
-  'cme-shock': [() => 'The CME just hit! Mars is glowing with aurora under me.', () => 'Shock wave from the Sun. Everything is rattling.'],
-  'mars-dust-storm': [() => 'Dust storm below! The air is puffing up toward my orbit.'],
-  debris: [() => 'Whoa! Something tiny just went whizzing past me!'],
-  'reaction-wheel': [() => 'One of my spinning wheels is grinding. Ouch.'],
-  'memory-corruption': [() => 'My memory feels… scrambled. Running checks.'],
-  'radiation-damage': [(d) => `So much radiation around ${d}. My circuits are tingling.`],
+/**
+ * Fill a word template: each {slot} becomes its value. The robot's lines are templates, not sentences glued from
+ * pieces, so a translation (Bangla next) can move the slots wherever its grammar puts them.
+ */
+export const fill = (template: string, slots: Record<string, string>) => template.replace(/\{(\w+)\}/g, (all, k: string) => slots[k] ?? all);
+
+/**
+ * The robot's voice: terse uppercase telemetry, in the first person. Slots: {dest} {name} {option} {hazard}
+ * {days} {dist} {fuel} {data} {dv} {burned} {dark} {pct} {years}. Each kind has one or more variants; the
+ * message's seq picks one, so a repeated kind does not repeat itself word for word.
+ */
+export const VOICE: Record<Exclude<VoiceKind, 'hit' | 'status'>, string[]> = {
+  launch: ['LIFTOFF. SYSTEMS ON. NEXT STOP: {dest}.'],
+  'launch-failed': ['THE ROCKET FAILED. I NEVER LEFT THE PAD.'],
+  halfway: ['HALFWAY TO {dest}. EARTH IS A BLUE DOT BEHIND ME.'],
+  arrived: ['ARRIVED AT {dest}. ENGINE FIRED. IT CAUGHT ME.'],
+  science: ['INSTRUMENTS ON. {dest} BELOW. MAPPING.'],
+  'heading-home': ['SAMPLE STOWED. TURNING FOR HOME.'],
+  'bonus-time': ['EXTENSION BEGINS. STILL HERE. STILL WORKING.'],
+  dark: ['ECLIPSE SEASON. UP TO {dark} DARK EACH ORBIT. RUNNING ON BATTERY.', 'SHADOW SEASON AGAIN. {dark} DARK EACH ORBIT. HEATERS DOWN A LITTLE.', 'DARK AGAIN. I KNOW THE DRILL.'],
+  conjunction: ['THE SUN IS BETWEEN US. NO ORDERS FOR A WHILE. FLYING MYSELF.'],
+  'conjunction-end': ['THE SUN HAS MOVED ASIDE. I CAN HEAR YOU AGAIN.'],
+  saved: ['{hazard} PASSED. ALL SYSTEMS SAFE.', 'THAT WORKED. NO DAMAGE.', 'ALL GOOD UP HERE.'],
+  hurt: ['{hazard}: SOMETHING BROKE. STILL FLYING.', 'DAMAGE TAKEN. CARRYING ON AS BEST I CAN.'],
+  'instrument-lost': ['LOST AN INSTRUMENT. WORKING WITH THE REST.'],
+  'safe-mode': ['SAFE MODE. EVERYTHING NON-ESSENTIAL OFF. WAITING FOR ORDERS.'],
+  brownout: ['BATTERY LOW. SWITCHING THINGS OFF TO STAY ALIVE.'],
+  'wheel-spare': ['A WHEEL FAILED. THE SPARE TOOK OVER. STILL POINTING TRUE.'],
+  'out-of-fuel': ['TANK EMPTY. I CAN NO LONGER STEER.'],
+  'prime-complete': ['PRIMARY MISSION COMPLETE. ALL MY SCIENCE IS ON ITS WAY.'],
+  'last-words': ['MY BATTERY IS LOW AND IT’S GETTING DARK.'],
+  'order-received': ['ORDER RECEIVED. {option}. DONE.'],
+  'acted-alone': ['NO ORDER CAME IN TIME. I CHOSE {option}.'],
+  'order-too-late': ['YOUR ORDER CAME TOO LATE. I HAD ALREADY ACTED.'],
+  'science-milestone': ['{pct} OF THE SCIENCE GOAL SENT HOME.'],
+  extension: ['EXTENSION ORDER RECEIVED. {years} MORE. STILL HERE.'],
+  'signing-off': ['{name} SIGNING OFF. THANK YOU, EARTH.'],
 };
 
-const VOICE: Record<Exclude<VoiceKind, 'hit'>, Line[]> = {
-  launch: [(d) => `Liftoff! I can feel the rocket shaking. Next stop: ${d}!`],
-  'launch-failed': [() => 'The rocket… didn’t make it. I never left the ground.'],
-  halfway: [(d) => `Halfway to ${d}! Earth looks like a tiny blue dot from here.`],
-  arrived: [(d) => `I made it to ${d}! Firing my engine to slow down…`],
-  science: [(d) => `Instruments on. ${d} looks amazing from up here!`],
-  'heading-home': [() => 'Sample on board. Turning around… I’m coming home!'],
-  'bonus-time': [() => 'Bonus time! Thanks for keeping me flying.'],
-  dark: [
-    (d) => `It’s getting dark. ${d} is blocking the Sun, so I’m running on battery.`,
-    () => 'Shadow season again. Battery on, heaters down a bit.',
-    () => 'Dark again. I know the drill by now.',
-  ],
-  conjunction: [() => 'The Sun is right between us. I can’t hear you for a while. See you on the other side!'],
-  'conjunction-end': [() => 'I can hear you again! Did you miss me?'],
-  saved: [() => 'That worked! Thanks for the quick thinking.', () => 'Phew. Your order got here just in time.', () => 'All good up here. Nice call, Mission Control!'],
-  hurt: [() => 'That didn’t go well. I’m hurt, but I’m still flying.', () => 'Ow. Something broke. I’ll keep going as best I can.'],
-  'instrument-lost': [() => 'I lost one of my instruments. I’ll do what I can with the rest.'],
-  'safe-mode': [() => 'I switched to safe mode to protect myself. Waiting for your orders…'],
-  brownout: [() => 'Not enough power! I’m switching things off to stay alive.'],
-  'wheel-spare': [() => 'A wheel gave up, but my spare took over. Still pointing straight!'],
-  'out-of-fuel': [() => 'My tank is empty. I can’t steer any more.'],
-  'prime-complete': [() => 'Mission done! All my science is on its way to you.'],
-  'last-words': [() => 'My battery is low… and it’s getting dark. Goodbye, Mission Control.'],
+/** Lines with a different shape for some values: a burn on arrival, plans and standing orders, a full goal. */
+export const VOICE_ALT = {
+  arrivedBurn: 'ENGINE FIRED: {dv} OFF MY SPEED, {burned} OF FUEL. {dest} CAUGHT ME.',
+  plan: 'ORDER RECEIVED. NEW POWER PLAN LOADED.',
+  standing: 'ORDER RECEIVED. NEW STANDING ORDERS STORED.',
+  standingChoice: 'NO NEW ORDER. FOLLOWING YOUR STANDING ORDER: {option}.',
+  goalMet: 'SCIENCE GOAL MET. EVERYTHING I CAME FOR IS SENT HOME.',
+  hitUnknown: 'TROUBLE UP HERE. SOMETHING JUST WENT WRONG.',
 };
 
-/** What the robot says, in its own words. */
-export function robotSays(m: RobotMessage, destName: string): string {
-  const lines = m.kind === 'hit' ? (HIT_LINES[m.values.hazardType ?? ''] ?? [() => 'Trouble up here! Something just went wrong.']) : VOICE[m.kind];
-  return lines[m.seq % lines.length]!(destName);
+/** Routine status (VOICE_RULES.statusEvery_days): on the way, at the destination, and on the way home. */
+export const STATUS_VOICE: Record<'cruise' | 'orbit' | 'home', string[]> = {
+  cruise: ['CRUISE NOMINAL. {days} DAYS TO {dest}. {fuel} OF FUEL LEFT.', 'ALL QUIET. {dist} FROM EARTH. HOLDING COURSE.', 'STAR TRACKER LOCKED. {days} DAYS TO {dest}.'],
+  orbit: ['ORBIT NOMINAL. {data} SENT HOME SO FAR.', 'ALL QUIET. MAPPING. {fuel} OF FUEL LEFT.', 'HEATERS CYCLING. {dist} FROM EARTH. HOLDING.'],
+  home: ['HEADING HOME. ALL QUIET. {dist} FROM EARTH.'],
+};
+
+const HIT_VOICE: Record<string, string[]> = {
+  'solar-storm': ['STORM HERE. PARTICLES HITTING MY PANELS.', 'ANOTHER SOLAR STORM. I CAN FEEL IT IN MY CIRCUITS.'],
+  'cme-shock': ['THE CME HIT. AURORA BELOW ME.', 'SHOCK WAVE FROM THE SUN. EVERYTHING IS RATTLING.'],
+  'mars-dust-storm': ['DUST STORM BELOW. THE AIR IS PUFFING UP TOWARD MY ORBIT.'],
+  debris: ['SOMETHING TINY JUST WENT PAST ME. FAST.'],
+  'reaction-wheel': ['ONE OF MY WHEELS IS GRINDING.'],
+  'memory-corruption': ['MEMORY ERRORS. RUNNING CHECKS.'],
+  'radiation-damage': ['HEAVY RADIATION AROUND {dest}. CIRCUITS TINGLING.'],
+};
+
+/** What a line needs besides the message: names, and how to say an option and a hazard. */
+export interface VoiceContext {
+  dest: string;
+  name: string;
+  option?: (hazardType: string, optionId: string) => string;
+  hazard?: (hazardType: string) => string;
 }
+
+const years = (n: number) => `${f.num(n)} ${n === 1 ? 'YEAR' : 'YEARS'}`;
+
+/** What the robot says, in its own words (uppercase telemetry). Every number is the message's, only formatted. */
+export function robotSays(m: RobotMessage, ctx: VoiceContext): string {
+  const v = m.values;
+  const pick = (lines: string[]) => lines[m.seq % lines.length]!;
+  const type = v.hazardType ?? '';
+  const slots: Record<string, string> = {
+    dest: ctx.dest.toUpperCase(),
+    name: ctx.name.toUpperCase(),
+    option: v.optionId ? (ctx.option ? ctx.option(type, v.optionId) : v.optionId.toUpperCase()) : '',
+    hazard: type ? (ctx.hazard ? ctx.hazard(type) : type).toUpperCase() : '',
+    ...(v.daysToArrival !== undefined ? { days: f.num(v.daysToArrival) } : {}),
+    ...(v.earthDistance_m !== undefined ? { dist: f.millionKm(v.earthDistance_m).toUpperCase() } : {}),
+    ...(v.propellantLeft_kg !== undefined ? { fuel: f.kg(v.propellantLeft_kg).toUpperCase() } : {}),
+    ...(v.downlinked_bits !== undefined ? { data: f.bits(v.downlinked_bits).toUpperCase() } : {}),
+    ...(v.dv_ms !== undefined ? { dv: f.speed(v.dv_ms).toUpperCase() } : {}),
+    ...(v.propellant_kg !== undefined ? { burned: f.kg(v.propellant_kg).toUpperCase() } : {}),
+    ...(v.longestEclipse_s !== undefined ? { dark: f.minutes(v.longestEclipse_s).toUpperCase() } : {}),
+    ...(v.fraction !== undefined ? { pct: f.pct(v.fraction, 0) } : {}),
+    ...(v.years !== undefined ? { years: years(v.years) } : {}),
+  };
+  let t: string;
+  if (m.kind === 'hit') t = pick(HIT_VOICE[type] ?? [VOICE_ALT.hitUnknown]);
+  else if (m.kind === 'status') {
+    const where = v.phase === 'cruise' || v.phase === 'launch' ? 'cruise' : v.phase === 'return' ? 'home' : 'orbit';
+    t = pick(STATUS_VOICE[where]);
+  } else if (m.kind === 'arrived' && v.dv_ms !== undefined) t = VOICE_ALT.arrivedBurn;
+  else if (m.kind === 'order-received' && v.commandKind === 'power-plan') t = VOICE_ALT.plan;
+  else if (m.kind === 'order-received' && v.commandKind === 'standing-orders') t = VOICE_ALT.standing;
+  else if (m.kind === 'acted-alone' && v.by === 'standing-order') t = VOICE_ALT.standingChoice;
+  else if (m.kind === 'science-milestone' && (v.fraction ?? 0) >= 1) t = VOICE_ALT.goalMet;
+  else t = pick(VOICE[m.kind]);
+  return fill(t, slots);
+}
+
+/** The TRANSMISSIONS teletype (Fly & Survive), the robot's reply to an order, and the reply's trip home. */
+export const TX_WORDS = {
+  kicker: (name: string) => `TELETYPE 02 · ${name} ⇄ EARTH`,
+  title: 'TRANSMISSIONS',
+  keyRobot: (name: string) => `BLACK · ${name}`,
+  keyYou: 'RED · YOU',
+  fromEarth: (name: string) => `EARTH ▸ ${name}`,
+  day: (day: string) => `DAY ${day}`,
+  took: (delay: string) => `TOOK ${delay}`,
+  /** On the pad there is no light time yet. */
+  noDelay: 'NO DELAY · ON THE PAD',
+  reply: 'REPLY',
+  queued: (t: string) => `TEAM WRITING · LEAVES IN ${t}`,
+  inFlight: (t: string) => `IN FLIGHT · ${t}`,
+  replyInbound: 'DELIVERED · REPLY INBOUND',
+  delivered: 'DELIVERED',
+  tooLate: 'TOO LATE',
+  order: (what: string) => `ORDER: ${what}.`,
+  plan: 'NEW POWER PLAN',
+  standing: 'NEW STANDING ORDERS',
+  extend: (years: string) => `KEEP FLYING ${years}`,
+  /** Footer: "Everything PIP says is 12 MINUTES old by the time it prints here." */
+  footBefore: (name: string) => `Everything ${name} says is `,
+  footAge: (age: string) => `${age} old`,
+  footAfter: ' by the time it prints here.',
+  empty: 'NOTHING YET. THE ROBOT IS STILL ON THE PAD.',
+  log: '▾ LOG',
+  close: '▴ CLOSE',
+  logLabel: 'Transmissions log',
+  replyFrom: (name: string, delay: string) => `REPLY FROM ${name} · TOOK ${delay}`,
+  roundTrip: (t: string) => `YOUR ORDER WENT THERE AND BACK: ${t}`,
+  roundTripEng: (t: string, name: string) => `ROUND TRIP 2t = ${t} · EARTH → ${name} → EARTH`,
+  heard: (name: string) => `${name} HEARD YOU. REPLY ON ITS WAY`,
+  replyReaches: 'REPLY REACHES EARTH IN',
+  alreadyActed: 'IT HAS ALREADY ACTED. YOU JUST CAN’T SEE IT YET',
+};
 
 // ---------------------------------------------------------------------------
 // Big moments and sound

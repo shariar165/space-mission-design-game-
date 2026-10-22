@@ -19,6 +19,8 @@ interface Props {
   ghost?: { path: XY[]; label: string };
   /** 0–1 along the Earth → robot line while an order travels; undefined when none. */
   pulse?: number;
+  /** The pulse is the robot's reply, going back from the robot to Earth. */
+  pulseBack?: boolean;
   /** 0–1 ring phase (the expanding circle around the pulse). */
   ringPhase: number;
   /** A solar storm crossing space from the Sun, or on the robot (engine: stormFront). */
@@ -111,7 +113,7 @@ export function Robot({ x, y, scale, lost, storm, label = MAP_WORDS.you }: { x: 
   );
 }
 
-export function CrtMap({ map, frame, trail, ahead, destination, destName, ghost, pulse, ringPhase, storm, robotName, phone, lost }: Props) {
+export function CrtMap({ map, frame, trail, ahead, destination, destName, ghost, pulse, pulseBack, ringPhase, storm, robotName, phone, lost }: Props) {
   const p = projector(map.extent_m);
   const e = p.at(frame.earth);
   const m = p.at(frame.dest);
@@ -119,7 +121,7 @@ export function CrtMap({ map, frame, trail, ahead, destination, destName, ghost,
   const sunFrame = map.frame === 'sun';
   const sun = sunOnMap(p.at(frame.sun), phone);
   const r = ring(ringPhase);
-  const pt = pulse !== undefined ? along(e, c, pulse) : undefined;
+  const pt = pulse !== undefined ? (pulseBack ? along(c, e, pulse) : along(e, c, pulse)) : undefined;
   const g = ghost && ghost.path.length > 1 ? p.at(ghost.path[Math.floor(ghost.path.length * 0.7)]!) : undefined;
   const wave = storm ? stormWave(sun.at, c, storm.progress, FLY_RULES.cmeWidth_deg.value, sun.offMap) : undefined;
   const waveLabel = wave && storm?.phase === 'coming' ? toward(wave.tip, [MAP_CX, MAP_CY], 18) : undefined;
@@ -169,13 +171,13 @@ export function CrtMap({ map, frame, trail, ahead, destination, destName, ghost,
         </g>
       )}
       {pt && (
-        <g className="crt-pulse">
+        <g className={`crt-pulse${pulseBack ? ' back' : ''}`}>
           <line x1={e[0]} y1={e[1]} x2={c[0]} y2={c[1]} className="crt-pulse-line" />
           <circle cx={pt[0]} cy={pt[1]} r={r.r} className="crt-pulse-ring" style={{ strokeOpacity: r.opacity }} />
           <circle cx={pt[0]} cy={pt[1]} r={phone ? 9 : 7} className="crt-pulse-dot" />
           {!phone && (
             <text x={pt[0] + 16} y={pt[1] - 14} className="crt-order-label">
-              {MAP_WORDS.order}
+              {pulseBack ? MAP_WORDS.reply : MAP_WORDS.order}
             </text>
           )}
         </g>

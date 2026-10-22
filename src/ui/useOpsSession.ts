@@ -20,6 +20,7 @@ import {
   type OpsState,
   type PowerPlan,
 } from '../engine/ops/index';
+import { newsArrival } from '../engine/ops/commands';
 import type { Design } from '../engine/types';
 import type { RealStorm } from '../engine/spaceWeather';
 
@@ -32,6 +33,8 @@ export type OpsSpeed = (typeof OPS_SPEEDS)[number];
 export const TRANSIT_STEPS = 24;
 /** The team's reaction time before the order leaves Earth plays in this many steps (one and a half seconds). */
 export const TEAM_STEPS = 6;
+/** The robot's reply crossing back to Earth plays in this many steps (about four seconds). */
+export const REPLY_STEPS = 16;
 
 const STORE = 'mdt.ops';
 
@@ -71,6 +74,8 @@ export interface Transit {
   chosenAt: number;
   departsAt: number;
   arrivesAt: number;
+  /** When the robot's reply (what it did) reaches Earth: one more light time after the order lands. */
+  replyAt: number;
   /** After the order lands: when its outcome is known (the danger strikes), if that is later. */
   resolveAt?: number;
 }
@@ -78,11 +83,16 @@ export interface Transit {
 /** The outcome after an order lands plays in this many steps. */
 export const OUTCOME_STEPS = 8;
 
-/** The next stop of a transit: the team's reaction in TEAM_STEPS steps, then the light-time trip in TRANSIT_STEPS. */
+/**
+ * The next stop of a transit: the team's reaction in TEAM_STEPS steps, the light-time trip out in TRANSIT_STEPS, the
+ * reply's trip back in REPLY_STEPS, then (if the danger has not struck yet) the wait for the outcome.
+ */
 function transitStop(tr: Transit, t: number): number {
   if (t < tr.departsAt - 1e-12) return Math.min(tr.departsAt, t + Math.max(1e-6, (tr.departsAt - tr.chosenAt) / TEAM_STEPS));
-  if (t < tr.arrivesAt - 1e-12 || tr.resolveAt === undefined) return Math.min(tr.arrivesAt, t + Math.max(1e-6, (tr.arrivesAt - tr.departsAt) / TRANSIT_STEPS));
-  return Math.min(tr.resolveAt, t + Math.max(1e-6, (tr.resolveAt - tr.arrivesAt) / OUTCOME_STEPS));
+  if (t < tr.arrivesAt - 1e-12) return Math.min(tr.arrivesAt, t + Math.max(1e-6, (tr.arrivesAt - tr.departsAt) / TRANSIT_STEPS));
+  if (t < tr.replyAt - 1e-12) return Math.min(tr.replyAt, t + Math.max(1e-6, (tr.replyAt - tr.arrivesAt) / REPLY_STEPS));
+  const end = tr.resolveAt ?? tr.replyAt;
+  return Math.min(end, t + Math.max(1e-6, (end - tr.replyAt) / OUTCOME_STEPS));
 }
 
 export type Notice = { kind: 'refused'; reason: NonNullable<CommandReceipt['reason']>; retryAfterDay?: number } | { kind: 'booked'; day: number; dish: 34 | 70 } | { kind: 'sent' };
@@ -131,6 +141,8 @@ export function useOpsSession(design: Design, seed: number, storms?: RealStorm[]
   const [hold, setHold] = useState(false);
   const stateRef = useRef<OpsState>(undefined);
   stateRef.current = state;
+  const transitRef = useRef<Transit>(undefined);
+  transitRef.current = transit;
   /** Real time of the last clock step, so mission time follows the wall clock even if the browser slows timers. */
   const lastTick = useRef(0);
 
@@ -160,7 +172,8 @@ export function useOpsSession(design: Design, seed: number, storms?: RealStorm[]
   const apply = useCallback((next: OpsState, prev: OpsState) => {
     const fresh = next.events.slice(prev.events.length);
     const out = [...fresh].reverse().find((e) => e.code === 'response-outcome');
-    if (out) setResult({ hazardId: String(out.values.hazardId), optionId: String(out.values.optionId) });
+    // An order on its way shows its own outcome once the robot's reply has reached Earth (the clock below).
+    if (out && out.values.hazardId !== transitRef.current?.hazardId) setResult({ hazardId: String(out.values.hazardId), optionId: String(out.values.optionId) });
     setState(next);
   }, []);
 
@@ -196,13 +209,14 @@ export function useOpsSession(design: Design, seed: number, storms?: RealStorm[]
           return;
         }
         const rec = next.hazards.find((h) => h.id === transit.hazardId);
-        const outcomeLanded = next.events.slice(s.events.length).some((e) => e.code === 'response-outcome' && e.values.hazardId === transit.hazardId);
         const arrived = next.t >= transit.arrivesAt - 1e-12;
-        if (next.status !== 'flying' || next.newDecisions.length || outcomeLanded || (arrived && (!rec || rec.outcomeDone || rec.resolveAt === undefined))) {
+        // Nothing is known on Earth until the robot's reply has crossed back.
+        const replied = next.t >= transit.replyAt - 1e-12;
+        if (next.status !== 'flying' || next.newDecisions.length || (replied && (!rec || rec.outcomeDone || rec.resolveAt === undefined || rec.resolveAt <= next.t + 1e-12))) {
           setTransit(undefined);
           setResult((r) => r ?? { hazardId: transit.hazardId, optionId: transit.optionId });
-        } else if (arrived && transit.resolveAt === undefined && rec?.resolveAt !== undefined) {
-          // The order landed before the danger struck: keep time running until the outcome is known.
+        } else if (arrived && transit.resolveAt === undefined && rec?.resolveAt !== undefined && rec.resolveAt > transit.replyAt) {
+          // The danger strikes after the reply is home: keep time running until the outcome is known.
           setTransit({ ...transit, resolveAt: rec.resolveAt });
         }
         return;
@@ -231,7 +245,7 @@ export function useOpsSession(design: Design, seed: number, storms?: RealStorm[]
     setState(r.state);
     if (!r.receipt.accepted) return refuse(r.receipt);
     setNotice(undefined);
-    setTransit({ hazardId: a.hazardId, optionId, chosenAt: s.t, departsAt: r.receipt.sentAt, arrivesAt: r.receipt.arrivesAt! });
+    setTransit({ hazardId: a.hazardId, optionId, chosenAt: s.t, departsAt: r.receipt.sentAt, arrivesAt: r.receipt.arrivesAt!, replyAt: newsArrival(s.env, r.receipt.arrivesAt!) });
   };
 
   const sendPlan = (plan: PowerPlan) => {

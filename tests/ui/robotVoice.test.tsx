@@ -9,7 +9,8 @@ import { App } from '../../src/ui/App';
 import * as f from '../../src/ui/format';
 import { FlyAndSurvive } from '../../src/ui/screens/FlyAndSurvive';
 import { MissionReport } from '../../src/ui/screens/MissionReport';
-import { ROBOT_NAMES, ROBOT_WORDS, robotSays } from '../../src/ui/sdWords';
+import { ROBOT_NAMES, ROBOT_WORDS, robotSays, TX_WORDS } from '../../src/ui/sdWords';
+import { voiceContext } from '../../src/ui/voiceContext';
 import './setup';
 
 const maven = presetDesign('maven');
@@ -45,16 +46,19 @@ describe('Pack: name your robot', () => {
 });
 
 describe('Fly & Survive: the robot talks', () => {
-  it('its name is over it on the map, and its first message arrives with how long it took', () => {
+  it('its name is over it on the map, and its first message prints on the teletype with how long it took', () => {
     vi.useFakeTimers();
     render(<FlyAndSurvive design={maven} seed={2013} mode="cadet" onMode={vi.fn()} missionName="Orbiter-1" onHome={vi.fn()} onDone={vi.fn()} robotName="ZED" />);
     pass(100);
     expect(document.querySelector('.crt-you')!.textContent).toBe('ZED');
     fireEvent.click(screen.getByRole('button', { name: '10× speed' }));
     pass(1500, 100);
-    const radio = screen.getByRole('log', { name: ROBOT_WORDS.radio('ZED') });
-    expect(radio.textContent).toContain('Liftoff!');
-    expect(radio.textContent).toContain('FROM MARS · TOOK');
+    // The transmissions teletype: the launch line, printed once it reached Earth, with how long it took.
+    const log = screen.getByRole('log', { name: TX_WORDS.logLabel });
+    expect(log.textContent).toContain('LIFTOFF. SYSTEMS ON. NEXT STOP: MARS.');
+    expect(log.textContent).toContain('ZED · DAY');
+    // Launched from Earth: the first words still cross no distance at all.
+    expect(log.textContent).toContain(TX_WORDS.noDelay);
   });
 });
 
@@ -64,7 +68,7 @@ describe('Mission Report: the last message', () => {
     const last = heardMessages(s).latest!;
     render(<MissionReport state={s} design={maven} mode="cadet" onMode={vi.fn()} missionName="Orbiter-1" onFlyAgain={vi.fn()} onHome={vi.fn()} homeLabel="HOME" robotName="ZED" />);
     const note = screen.getByRole('note', { name: ROBOT_WORDS.lastMessage('ZED') });
-    expect(note.textContent).toContain(robotSays(last, 'Mars'));
+    expect(note.textContent).toContain(robotSays(last, voiceContext('Mars', 'ZED')));
     expect(note.textContent).toContain(ROBOT_WORDS.took('MARS', f.durationWords(last.delay_s)));
   });
 
@@ -72,7 +76,7 @@ describe('Mission Report: the last message', () => {
     const s = runOperations(maven, { seed: 6, policy: 'default' }).state;
     render(<MissionReport state={s} design={maven} mode="cadet" onMode={vi.fn()} missionName="Orbiter-1" onFlyAgain={vi.fn()} onHome={vi.fn()} homeLabel="HOME" />);
     const note = screen.getByRole('note', { name: ROBOT_WORDS.lastMessage(ROBOT_NAMES[0]!) });
-    expect(note.textContent).toContain('battery is low');
+    expect(note.textContent).toContain('BATTERY IS LOW');
     expect(note.querySelector('button')).not.toBeNull();
   });
 });

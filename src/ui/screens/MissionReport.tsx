@@ -42,6 +42,7 @@ import {
   STAR_WORDS,
 } from '../sdWords';
 import * as f from '../format';
+import { voiceContext } from '../voiceContext';
 
 /** The comic prints one panel every 2.4 s, its caption at 38 characters a second (as the design). */
 export const PANEL_STEP_MS = 2400;
@@ -300,7 +301,7 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
         📡 {ROBOT_WORDS.lastMessage(name)}
         {last.kind === 'last-words' && <SourceInfo s={VOICE_RULES.lastWordsHistory} title="Opportunity’s last message" />}
       </span>
-      <span className="rp-radio-v">“{robotSays(last, dest.name)}”</span>
+      <span className="rp-radio-v">“{robotSays(last, voiceContext(dest.name, robotName))}”</span>
       <span className="rp-radio-t">{ROBOT_WORDS.took(dest.name.toUpperCase(), f.durationWords(last.delay_s))}</span>
     </div>
   );
