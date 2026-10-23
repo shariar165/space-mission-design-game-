@@ -72,12 +72,13 @@ test('design report', async ({ page }, info) => {
     frame(page, id)
       .locator(':scope > div')
       .evaluate((el, k) => {
-        const kids = Array.from(el.children) as HTMLElement[];
-        el.scrollTop = kids[k]?.offsetTop ?? 0;
+        const kid = el.children[k];
+        el.scrollTop = kid ? kid.getBoundingClientRect().top - el.getBoundingClientRect().top + el.scrollTop : 0;
       }, n);
   for (const ending of ['LOST', 'EXTENDED', 'COMPLETE']) {
     const suffix = ending === 'COMPLETE' ? '' : `-${ending.toLowerCase()}`;
     await page.getByRole('button', { name: ending, exact: true }).click();
+    if (mobile) await scrollPhone(0);
     await page.waitForTimeout(2000);
     await shoot(page, id, `report-album${suffix}`, info.project.name);
     if (mobile) await scrollPhone(1);

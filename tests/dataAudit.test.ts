@@ -13,6 +13,7 @@ import operations from '../src/data/operations.json';
 import pack from '../src/data/pack.json';
 import notebookData from '../src/data/notebook.json';
 import postcards from '../src/data/postcards.json';
+import targets from '../src/data/targets.json';
 import ranks from '../src/data/ranks.json';
 import orbitalElements from '../src/data/orbitalElements.json';
 import parts from '../src/data/parts.json';
@@ -85,6 +86,7 @@ const DATA_FILES: Record<string, unknown> = {
   'rescueCases.json': rescueCases,
   'rideshares.json': rideshares,
   'spaceWeather.json': spaceWeather,
+  'targets.json': targets,
 };
 
 const ENGINE_VALUES: Record<string, Record<string, Sourced<unknown>>> = {
