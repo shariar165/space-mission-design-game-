@@ -161,3 +161,61 @@ export function useCycle(ms: number, on: boolean): number {
   }, [ms, on]);
   return on ? p : 0;
 }
+
+// ---------------------------------------------------------------------------
+// The Mars globe in the CRT (Science Targets): an orthographic view of the NASA surface map.
+
+/** Where the globe looks from: centred over Tharsis, tilted north so the polar cap shows (layout choice). */
+export const GLOBE_VIEW = { lat_deg: 22, lon_deg: -100 };
+/** Moon rings drawn around the globe, in globe radii (a picture, not to scale: Phobos is 2.8 and Deimos 6.9). */
+export const GLOBE_MOON_RING = { phobos: 1.32, deimos: 1.62 } as const;
+/** Where each moon sits on its ring (angle round the ring, radians) and the ring's tilt and squash. */
+export const GLOBE_MOON_AT = { phobos: 2.55, deimos: 0.25 } as const;
+export const GLOBE_RING_TILT_DEG = -14;
+export const GLOBE_RING_SQUASH = 0.31;
+/** The limb target: a point on the lit edge of the disc (angle from +x, radians). */
+export const GLOBE_LIMB_AT = 0.42;
+/** Disc size in CSS px (desktop, phone). */
+export const GLOBE_PX = { desktop: 220, phone: 120 } as const;
+
+const R = Math.PI / 180;
+
+/** Orthographic projection of (lat, lon) onto the unit disc seen from the view centre: x right, y down; front = visible. */
+export function globePoint(lat_deg: number, lon_deg: number, view = GLOBE_VIEW): { x: number; y: number; front: boolean } {
+  const p = lat_deg * R;
+  const l = (lon_deg - view.lon_deg) * R;
+  const p0 = view.lat_deg * R;
+  const x = Math.cos(p) * Math.sin(l);
+  const y = Math.cos(p0) * Math.sin(p) - Math.sin(p0) * Math.cos(p) * Math.cos(l);
+  const c = Math.sin(p0) * Math.sin(p) + Math.cos(p0) * Math.cos(p) * Math.cos(l);
+  return { x, y: -y, front: c > 0 };
+}
+
+/** Inverse orthographic: the (lat, lon) under a disc point, or undefined off the disc. */
+export function globeLatLon(x: number, y: number, view = GLOBE_VIEW): { lat_deg: number; lon_deg: number; z: number } | undefined {
+  const yy = -y;
+  const rho = Math.hypot(x, yy);
+  if (rho > 1) return undefined;
+  const p0 = view.lat_deg * R;
+  if (rho === 0) return { lat_deg: view.lat_deg, lon_deg: view.lon_deg, z: 1 };
+  const c = Math.asin(rho);
+  const lat = Math.asin(Math.cos(c) * Math.sin(p0) + (yy * Math.sin(c) * Math.cos(p0)) / rho);
+  const lon = view.lon_deg * R + Math.atan2(x * Math.sin(c), rho * Math.cos(c) * Math.cos(p0) - yy * Math.sin(c) * Math.sin(p0));
+  let lon_deg = lon / R;
+  lon_deg = ((((lon_deg + 180) % 360) + 360) % 360) - 180;
+  return { lat_deg: lat / R, lon_deg, z: Math.cos(c) };
+}
+
+/** A point on a tilted moon ring around the globe (unit = globe radius), x right, y down. */
+export function ringPoint(radius: number, angle: number): { x: number; y: number } {
+  const t = GLOBE_RING_TILT_DEG * R;
+  const ex = radius * Math.cos(angle);
+  const ey = radius * GLOBE_RING_SQUASH * Math.sin(angle);
+  return { x: ex * Math.cos(t) - ey * Math.sin(t), y: ex * Math.sin(t) + ey * Math.cos(t) };
+}
+
+/** The print of a downlinked picture: its width in teletype dots, and how long the print takes. */
+export const PRINT_DOTS = 180;
+export const PRINT_MS = 4600;
+/** The full-colour reveal after the print. */
+export const REVEAL_MS = 1100;

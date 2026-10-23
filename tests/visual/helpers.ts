@@ -19,6 +19,12 @@ export async function flyToEnd(page: Page, mobile: boolean) {
       await cont.click();
       continue;
     }
+    // Science Targets in Mars orbit (no pictures here): skip it and fly on.
+    const sci = page.locator('.sci-done');
+    if (await sci.isVisible()) {
+      await sci.click();
+      continue;
+    }
     if (await page.getByRole('dialog', { name: /DANGER CARD|PLAN AHEAD/ }).isVisible()) {
       // In a solar conjunction no order can be sent: every choice is disabled, so the robot decides.
       const decide = page.getByRole('button', { name: /^LET THE ROBOT DECIDE/ });
@@ -56,4 +62,52 @@ export async function routeDonki(page: Page) {
   const shift = today - Date.parse('2030-01-08T00:00:00Z');
   const moved = text.replace(/2030-01-(\d\d)/g, (d) => new Date(Date.parse(`${d}T00:00:00Z`) + shift).toISOString().slice(0, 10));
   await page.route('**/data/donki-latest.json', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: moved }));
+}
+
+/** Engineer Build Bay → Launch, then flip to Cadet inside the flight (the designs show Cadet). Seed 2013. */
+export async function launchFlight(page: Page, mobile: boolean, engineer = false) {
+  await page.addInitScript(() => {
+    try {
+      localStorage.setItem('mdt.mode', 'engineer');
+      localStorage.setItem('sd.seen', JSON.stringify(['coach', 'name', 'brief:moon-1', 'brief:moon-2', 'brief:moon-3', 'brief:mars', 'brief:venus', 'brief:bennu', 'brief:jupiter', 'launch:moon-1', 'launch:moon-2', 'launch:moon-3', 'launch:mars', 'launch:venus', 'launch:bennu', 'launch:jupiter', 'launch:free', 'launch:daily']));
+      localStorage.setItem('sd.robot', JSON.stringify({ name: 'VOYA' }));
+      localStorage.removeItem('mdt.ops');
+    } catch {
+      /* ignore */
+    }
+  });
+  await page.goto('/?seed=2013');
+  await page.getByRole('button', { name: 'Launch', exact: true }).click();
+  await page.getByRole('img', { name: /Map: your robot/ }).waitFor({ timeout: 60_000 });
+  if (!engineer) await page.getByRole(mobile ? 'button' : 'switch', { name: mobile ? 'Engineer mode (short)' : 'Engineer mode' }).click();
+  await page.evaluate(() => document.fonts.ready);
+}
+
+/** Next event (leaving dangers to the robot) until the Science Targets panel is up in Mars orbit. */
+export async function toMarsOrbit(page: Page) {
+  for (let i = 0; i < 300; i++) {
+    if (await page.locator('.sci').isVisible()) return;
+    const cont = page.getByRole('button', { name: 'CONTINUE ▸' });
+    if (await cont.isVisible()) {
+      await cont.click();
+      continue;
+    }
+    const decide = page.getByRole('button', { name: /^LET THE ROBOT DECIDE/ });
+    if (await decide.isVisible()) {
+      await decide.click();
+      await page.waitForTimeout(200);
+      continue;
+    }
+    // A planning card (the eclipse season) has no "robot decides": take its first open choice.
+    const choice = page.locator('.dc-choice:not([disabled])').first();
+    if (await choice.isVisible()) {
+      await choice.click();
+      await page.waitForTimeout(200);
+      continue;
+    }
+    const next = page.getByRole('button', { name: 'Next event' });
+    if ((await next.isVisible()) && (await next.isEnabled())) await next.click();
+    else await page.waitForTimeout(250);
+  }
+  throw new Error('never reached Mars orbit');
 }

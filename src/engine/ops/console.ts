@@ -8,7 +8,8 @@ import { evaluateDesign, type FullEvaluation } from '../index';
 import { marginStatus } from '../meter';
 import { propellantBurned } from '../propulsion';
 import { gameEstimate, sourced, type Design, type MeterStatus, type Sourced } from '../types';
-import { commandArrival, inMoratorium, moratoriumEndDay, oneWayAt } from './commands';
+import { commandArrival, inMoratorium, moratoriumEndDay, newsArrival, oneWayAt } from './commands';
+import { hasTargets } from './observe';
 import { defaultBooking, demand, downlinkCapacity_bitsPerDay, dsnExtraCost_M, type Loads } from './resources';
 import { defaultResponse, effectiveFailureChance, isFree, optionBlockers, type ResponseBlocker } from './responses';
 import { bookingFor, deltaVLeft_ms, deltaVStillNeeded_ms, powerMarginNow, spareNow } from './timeline';
@@ -797,6 +798,9 @@ export function nextEventT(s: OpsState): number {
   for (const c of s.commands) if (c.status === 'in-flight') after(c.arrivesAt);
   for (const b of env.burns.slice(s.burnsDone)) if (b.kind !== 'maintenance') after(b.day);
   for (const w of env.timeline) after(w.startDay);
+  // At Mars: the robot's question ("what should it look at?") reaching Earth, so Science Targets opens on time.
+  const sci = env.timeline.find((w) => w.phase === 'science');
+  if (sci && hasTargets(env)) after(newsArrival(env, sci.startDay));
   for (const w of env.conjunctions) {
     // The warning comes first, so commands can still be queued before the Sun blocks the radio.
     after(w.startDay - CONSOLE_RULES.conjunctionWarning_days.value);
@@ -805,6 +809,11 @@ export function nextEventT(s: OpsState): number {
   }
   for (const e of env.eclipseSeasons) after(e.startDay);
   after(s.pausedUntil);
+  // Science pictures: taken, a pass opening while one waits, or one reaching Earth.
+  for (const im of s.images) {
+    if (im.status === 'observing') after(im.takenAt);
+    if (im.status === 'sent') after(im.homeAt);
+  }
   after(env.primeEndDay + 1);
   if (s.extension) after(s.extension.endDay + 1);
   return Math.min(next, env.horizonDay + 1);

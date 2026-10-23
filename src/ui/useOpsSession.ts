@@ -119,6 +119,8 @@ export interface OpsSession {
   /** Leave the open hazard to the craft (standing order or fault protection at the deadline). */
   deferAlert: () => void;
   sendPlan: (plan: PowerPlan) => void;
+  /** Order a picture of a science target (Mars): a light-delayed command; the clock keeps its speed. */
+  observe: (targetId: string) => boolean;
   book: (day: number, dish: 34 | 70, hours: number) => void;
   extend: (optionId: string) => void;
   nextEvent: () => void;
@@ -257,6 +259,15 @@ export function useOpsSession(design: Design, seed: number, storms?: RealStorm[]
     else refuse(r.receipt);
   };
 
+  const observe = (targetId: string): boolean => {
+    const s = stateRef.current;
+    if (!s) return false;
+    const r = sendCommand(s, { kind: 'observe', targetId });
+    setState(r.state);
+    if (!r.receipt.accepted) refuse(r.receipt);
+    return r.receipt.accepted;
+  };
+
   const book = (day: number, dish: 34 | 70, hours: number) => {
     const s = stateRef.current;
     if (!s) return;
@@ -303,6 +314,7 @@ export function useOpsSession(design: Design, seed: number, storms?: RealStorm[]
     respond,
     deferAlert: () => view?.alert && setDeferred((d) => [...d, view.alert!.decisionId]),
     sendPlan,
+    observe,
     book,
     extend,
     nextEvent: () => state && jump(nextEventT(state)),

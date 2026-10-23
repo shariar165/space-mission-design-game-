@@ -5,7 +5,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { DESTINATIONS, HAZARDS, PARTS } from '../../engine/data';
 import { flightMap, ghostFor, pathAhead } from '../../engine/flightMap';
-import { comingUp, eclipseCard, flyCard, flyTiles, FLY_RULES, missionProgress, momentsSince, outcomeIn_s, stormFront, transmissionFeed, type FeedEntry, type FlyChip, type MomentKind, type OpsState } from '../../engine/ops/index';
+import { comingUp, downlinkView, eclipseCard, flyCard, flyTiles, FLY_RULES, missionProgress, momentsSince, nextImageT, outcomeIn_s, scienceTargetsView, stormFront, transmissionFeed, type FeedEntry, type FlyChip, type MomentKind, type OpsState } from '../../engine/ops/index';
 import type { Design, Sourced } from '../../engine/types';
 import { SPEED_OF_LIGHT } from '../../engine/constants';
 import { BookCall } from '../components/ops/BookCall';
@@ -20,6 +20,9 @@ import { newPostcards, POSTCARDS, postcardsEarned } from '../../engine/postcards
 import { play } from '../sound';
 import { DangerCard, type CardView, type ChipView, type ChoiceView } from '../components/fly/DangerCard';
 import { EquationsPanel } from '../components/fly/EquationsPanel';
+import { Downlink } from '../components/fly/Downlink';
+import { MarsGlobe2D } from '../components/fly/MarsGlobe2D';
+import { ScienceTargets } from '../components/fly/ScienceTargets';
 import { BackButton } from '../components/sd/BackButton';
 import { CoachCard } from '../components/sd/CoachCard';
 import { MissionBriefing } from '../components/sd/MissionBriefing';
@@ -29,11 +32,12 @@ import { Segments } from '../components/sd/Segments';
 import { Teletype } from '../components/sd/Teletype';
 import { useReducedMotion } from '../opsGeometry';
 import { BLOCKER, COMMAND_KIND, eventLine, FAILURE_EFFECT, OPTION_BLURB } from '../opsWords';
-import { RIBBON_FLIP, RIBBON_PHONE_MAX, RING_MS, useCycle, useIsPhone } from '../sdGeometry';
+import { GLOBE_PX, RIBBON_FLIP, RIBBON_PHONE_MAX, RING_MS, useCycle, useIsPhone } from '../sdGeometry';
 import {
   arrivesWords,
   CHIP_ICON,
   COMING,
+  DOWNLINK,
   EFFECT_ICON,
   endsInWords,
   FINISH_CONFIRM,
@@ -54,6 +58,7 @@ import {
   stormLine,
   TX_WORDS,
   RESULT_EFFECT_CHIP,
+  SCIENCE,
   resultLines,
   TILE,
   type Briefing,
@@ -92,7 +97,7 @@ interface Props {
   robotName?: string;
 }
 
-type Panel = 'power' | 'call' | 'queue' | 'eqs';
+type Panel = 'power' | 'call' | 'queue' | 'eqs' | 'downlink';
 /** The robot's reply to an order stays on screen this long (and holds the clock), then the outcome shows. */
 export const REPLY_SHOW_MS = 4000;
 /** Overlays that hold the clock while they are open. */
@@ -135,6 +140,21 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
   const ahead = useMemo(() => (ev && view ? pathAhead(design, view.map.frame.day, ev) : []), [design, ev, view?.map.frame.day]); // eslint-disable-line react-hooks/exhaustive-deps
   const eclipse = state && !ops.showAlert && !ops.transit && !ops.result ? eclipseCard(state) : undefined;
   const eclipseOpen = eclipse !== undefined && !eclipseDone.includes(eclipse.season.startDay);
+
+  // ---- Science targets (Mars orbit): the panel opens when the robot's question reaches Earth, and holds the clock ----
+  const sci = useMemo(() => (state ? scienceTargetsView(state) : undefined), [state]);
+  const dl = useMemo(() => (state ? downlinkView(state) : undefined), [state]);
+  const [sciOpen, setSciOpen] = useState(false);
+  const [sciPick, setSciPick] = useState<string>();
+  const asked = feed?.entries.some((e) => e.from === 'robot' && e.message?.kind === 'targets') ?? false;
+  const askedSeen = useRef(false);
+  useEffect(() => {
+    if (!asked || askedSeen.current) return;
+    askedSeen.current = true;
+    if ((state?.t ?? 0) > 0 && sci?.available) setSciOpen(true);
+  }, [asked]); // eslint-disable-line react-hooks/exhaustive-deps
+  const sciShown = sciOpen && sci?.available === true;
+  const sciSelected = sciPick ?? sci?.cards.find((c) => c.blocker === undefined)?.id ?? sci?.cards[0]?.id ?? '';
 
   // ---- Big moments: the launch countdown, banners for the arrival burn and a storm hit, and their sounds ----
   const [launching, setLaunching] = useState(!!launchMoment);
@@ -223,7 +243,7 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
   const openPostcard = POSTCARDS.find((c) => c.id === cardOpen);
 
   // An eclipse planning card, an overlay, an open postcard or the launch countdown holds the clock like a danger card does.
-  const held = eclipseOpen || overlay !== undefined || launching || openPostcard !== undefined || reply !== undefined;
+  const held = eclipseOpen || overlay !== undefined || launching || openPostcard !== undefined || reply !== undefined || sciShown;
   useEffect(() => {
     ops.setHold(held);
   }, [held]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -343,6 +363,17 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
   const openCard = hazardCard ?? eclipseView;
   const pickCard = (id: string) => (hazardCard ? respond(id) : chooseEclipse(id));
 
+  // OBSERVE: the order leaves now and lands one light time later; the next target still free is picked.
+  const observe = () => {
+    const c = sci?.cards.find((x) => x.id === sciSelected);
+    if (!c || c.blocker !== undefined) return;
+    if (ops.observe(c.id)) {
+      play('shutter');
+      const next = sci!.cards.find((x) => x.id !== c.id && x.blocker === undefined);
+      setSciPick(next?.id);
+    }
+  };
+
   // Keyboard: ← → ↓ choose on a card; Space pause/resume, 1/2/3 speed, N next event, Esc closes a drawer.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -358,7 +389,10 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
         }
         return;
       }
-      if (e.key === 'Escape') setPanel(undefined);
+      if (e.key === 'Escape') {
+        setPanel(undefined);
+        setSciOpen(false);
+      }
       else if (e.key === ' ' && !(t instanceof HTMLButtonElement)) {
         e.preventDefault();
         setSpeed(ops.speed === 0 ? lastSpeed : 0);
@@ -552,7 +586,7 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
     </div>
   );
 
-  const actions = !openCard && !flying && !returning && !reply && !ops.result && !awaitingExt && !debrief && (
+  const actions = !openCard && !flying && !returning && !reply && !ops.result && !awaitingExt && !debrief && !sciShown && (
     <div className="fly-actions">
       <button type="button" className="fly-action" aria-pressed={panel === 'power'} onClick={() => setPanel((p) => (p === 'power' ? undefined : 'power'))}>
         <SDIcon icon="power" size={16} />
@@ -569,6 +603,18 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
       {engineer && (
         <button type="button" className="fly-action" aria-pressed={panel === 'eqs'} onClick={() => setPanel((p) => (p === 'eqs' ? undefined : 'eqs'))}>
           EQUATIONS
+        </button>
+      )}
+      {sci?.available && (
+        <button type="button" className="fly-action sci-key" onClick={() => setSciOpen(true)}>
+          <SDIcon icon="camera" size={16} />
+          {SCIENCE.reopen}
+        </button>
+      )}
+      {phone && dl && dl.rows.length > 0 && (
+        <button type="button" className="fly-action" aria-pressed={panel === 'downlink'} onClick={() => setPanel((p) => (p === 'downlink' ? undefined : 'downlink'))}>
+          <SDIcon icon="dish" size={16} />
+          {DOWNLINK.button}
         </button>
       )}
       <button type="button" className="fly-action" onClick={ops.nextEvent} disabled={lockedUi} aria-label="Next event">
@@ -648,6 +694,37 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
     </>
   );
 
+  const skipT = nextImageT(state);
+  const sciPanel = sciShown && sci && !openCard && (
+    <ScienceTargets
+      view={sci}
+      selected={sciSelected}
+      onSelect={setSciPick}
+      onObserve={observe}
+      onDone={() => setSciOpen(false)}
+      robotName={name}
+      destName={dest.name}
+      engineer={engineer}
+      phone={phone}
+      globe={<MarsGlobe2D cards={sci.cards} selected={sciSelected} onPick={setSciPick} size={phone ? GLOBE_PX.phone : GLOBE_PX.desktop} />}
+    />
+  );
+  const downlink = panel === 'downlink' && dl && (
+    <div className={`dn-wrap${phone ? ' phone' : ''}`}>
+      <Downlink view={dl} robotName={name} phone={phone} still={still} onClose={() => setPanel(undefined)} {...(skipT !== undefined && !lockedUi ? { onSkip: () => ops.skipTo(skipT) } : {})} />
+    </div>
+  );
+  const downlinkFoot = dl && dl.rows.length > 0 && (
+    <button type="button" className={`tx-downlink${dl.waiting === 0 ? ' all' : ''}`} aria-pressed={panel === 'downlink'} onClick={() => setPanel((p) => (p === 'downlink' ? undefined : 'downlink'))}>
+      <SDIcon icon="dish" size={24} />
+      <span className="tx-downlink-t">
+        <span className="tx-downlink-k">{DOWNLINK.button}</span>
+        <span className="tx-downlink-s">{dl.waiting === 0 ? DOWNLINK.allHome(f.num(dl.rows.length)) : DOWNLINK.waitingOn(f.num(dl.waiting), dl.waiting === 1, name.toUpperCase())}</span>
+      </span>
+      <span className="tx-downlink-chev">{panel === 'downlink' ? DOWNLINK.close : DOWNLINK.open}</span>
+    </button>
+  );
+
   const crt = (
     <main className={`sd-crt fly-crt${view.blackout.active ? ' blackout' : ''}${shake && !still ? ' shake' : ''}`} aria-label="Mission map">
       <CrtMap
@@ -711,6 +788,7 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
       {!phone && openCard && <DangerCard card={openCard} engineer={engineer} phone={false} onPick={pickCard} />}
       {actions}
       {drawers}
+      {!phone && sciPanel}
     </main>
   );
 
@@ -837,6 +915,8 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
         </div>
         {openCard && <DangerCard card={openCard} engineer={engineer} phone onPick={pickCard} />}
         {resultBox}
+        {sciPanel}
+        {downlink}
         {overlays}
       </div>
     );
@@ -856,7 +936,7 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
       </header>
       <div className="fly-mid">
         {crt}
-        <Transmissions feed={feed!} voice={voice} oneWay_s={view.clock.oneWay_s} phone={false} {...(reply ? { hot: reply } : {})} />
+        <Transmissions feed={feed!} voice={voice} oneWay_s={view.clock.oneWay_s} phone={false} {...(reply ? { hot: reply } : {})} {...(downlinkFoot ? { footer: downlinkFoot } : {})} />
       </div>
       <footer className="fly-bottom">
         <div className="fly-clock">
@@ -876,6 +956,7 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
           {ribbon}
         </div>
       </footer>
+      {downlink}
       {overlays}
     </div>
   );
