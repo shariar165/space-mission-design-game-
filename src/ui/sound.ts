@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import { loadSoundOn, saveSoundOn } from './saves';
 
-export type Cue = 'alarm' | 'chirp' | 'radio' | 'tick' | 'launch' | 'fanfare' | 'zap' | 'sad' | 'ding' | 'jingle';
+export type Cue = 'alarm' | 'chirp' | 'radio' | 'tick' | 'launch' | 'fanfare' | 'zap' | 'sad' | 'ding' | 'jingle' | 'shutter' | 'print';
 
 type Wave = 'square' | 'triangle' | 'sawtooth' | 'sine';
 /** One note: start time, length, pitch (gliding to `to`), wave and loudness. */
@@ -67,6 +67,10 @@ const CUES: Record<Cue, { notes: Note[]; noise?: Noise[] }> = {
       { at: 0.42, len: 0.5, hz: 1319, wave: 'triangle' },
     ],
   },
+  /** OBSERVE sent: a camera shutter. */
+  shutter: { notes: [{ at: 0, len: 0.05, hz: 2400, wave: 'square', gain: 0.3 }], noise: [{ at: 0, len: 0.05, filterHz: 5000, gain: 0.5 }, { at: 0.09, len: 0.04, filterHz: 4000, gain: 0.35 }] },
+  /** A picture prints on the downlink teletype: a short chatter. */
+  print: { notes: [0, 0.07, 0.14, 0.21, 0.28].map((at) => ({ at, len: 0.04, hz: 220, wave: 'square' as const, gain: 0.25 })), noise: [{ at: 0, len: 0.34, filterHz: 1800, gain: 0.3 }] },
 };
 
 /** Overall loudness: quiet by default, so the game never startles. */

@@ -201,3 +201,86 @@ describe('a Cadet Mars run lasts about five minutes at the default speed (100×)
     expect(maven.scienceDays).toBe(365);
   });
 });
+
+describe('Science Targets panel (view model)', () => {
+  it('opens only in Mars orbit; six cards in the design’s order with costs from the observation plan', () => {
+    expect(ops.scienceTargetsView(ops.startOperations(maven, calm)).available).toBe(false);
+    const s = inOrbit();
+    const v = ops.scienceTargetsView(s);
+    expect(v.available).toBe(true);
+    expect(v.cards.map((c) => c.ordinal)).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(v.orderTakes_s).toBeCloseTo((commandArrival(s.env, s.t) - s.t) * DAY_S, 6);
+    for (const c of v.cards) {
+      const plan = observationFor(s, targetById(c.id)!);
+      expect(c.dv_ms).toBeCloseTo(plan.dv_ms, 9);
+      expect(c.energy_Wh).toBeCloseTo(plan.energy_Wh, 9);
+    }
+    const card = (id: string) => v.cards.find((c) => c.id === id)!;
+    // Deimos needs 750 m/s: more than the craft can spare.
+    expect(card('deimos').blocker).toBe('fuel');
+    expect(card('valles-marineris').blocker).toBeUndefined();
+    // Quality: 6 m → SHARP, 50 m → GOOD, 300 m → FAIR (game rules).
+    expect([card('olympus-mons').quality, card('north-polar-cap').quality, card('limb').quality]).toEqual([3, 2, 1]);
+    // Risk: none at the usual periapsis, highest for the deep dip.
+    expect(card('valles-marineris').riskLevel).toBe('none');
+    expect(card('limb').risk).toBeGreaterThan(card('olympus-mons').risk);
+    // A cost always shows at least one segment; no burn shows none.
+    expect(card('valles-marineris').fuelSegments).toBe(0);
+    expect(card('olympus-mons').fuelSegments).toBeGreaterThanOrEqual(1);
+    expect(card('valles-marineris').powerSegments).toBeGreaterThanOrEqual(1);
+  });
+
+  it('follows each target from the order to home', () => {
+    let s = observe(inOrbit(), 'valles-marineris').state;
+    const st = () => ops.scienceTargetsView(s).cards.find((c) => c.id === 'valles-marineris')!;
+    expect(st().state).toBe('ordered');
+    expect(st().blocker).toBe('ordered');
+    s = fly(s, 0.2);
+    expect(st().state).toBe('observing');
+    s = fly(s, 4);
+    expect(st().state).toBe('home');
+    expect(ops.scienceTargetsView(s).science).toBeCloseTo(0.16, 12);
+  });
+});
+
+describe('Downlink drawer (view model)', () => {
+  it('shows the queue, the next pass and the last picture home', () => {
+    let s = observe(inOrbit(), 'valles-marineris').state;
+    s = observe(s, 'phobos').state;
+    s = fly(s, 1.05);
+    const v = ops.downlinkView(s);
+    expect(v.rows.map((r) => r.targetId)).toEqual(['valles-marineris', 'phobos']);
+    expect(v.pass).toBeDefined();
+    expect(v.pass!.dish).toBe(34);
+    const p = ops.nextPass(s)!;
+    expect(p.close - p.open).toBeCloseTo(8 / 24, 12); // the default pass: 8 h
+    s = fly(s, 4);
+    const w = ops.downlinkView(s);
+    expect(w.home).toBe(2);
+    expect(w.waiting).toBe(0);
+    expect(w.latestHome!.targetId).toBe('phobos');
+  });
+
+  it('the next-event button stops when a picture is taken and when it reaches Earth', () => {
+    const s = fly(observe(inOrbit(), 'valles-marineris').state, 0.2);
+    const im = s.images[0]!;
+    expect(ops.nextEventT(s)).toBeCloseTo(Math.min(im.takenAt, ops.nextEventT({ ...s, images: [] })), 12);
+  });
+});
+
+describe('Downlink queue: orders in flight', () => {
+  it('an OBSERVE order still crossing space is in the queue as ordered', () => {
+    const s = observe(inOrbit(), 'phobos').state;
+    expect(ops.downlinkView(s).rows).toEqual([{ targetId: 'phobos', state: 'ordered', sent: 0, bits: 0 }]);
+    expect(ops.downlinkView(s).waiting).toBe(1);
+  });
+});
+
+describe('the question reaches Earth', () => {
+  it('Next event stops when the robot’s question arrives, so Science Targets opens on time', () => {
+    let s = ops.startOperations(maven, calm);
+    const sci = s.env.timeline.find((w) => w.phase === 'science')!;
+    s = ops.advanceOperations(s, { until: sci.startDay });
+    expect(ops.nextEventT(s)).toBeCloseTo(newsArrival(s.env, sci.startDay), 12);
+  });
+});

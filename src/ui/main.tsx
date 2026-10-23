@@ -14,6 +14,7 @@ import './styles/sd-name.css';
 import './styles/sd-daily.css';
 import './styles/sd-notebook.css';
 import './styles/sd-moments.css';
+import './styles/sd-science.css';
 import './styles/sd-postcards.css';
 
 createRoot(document.getElementById('root')!).render(

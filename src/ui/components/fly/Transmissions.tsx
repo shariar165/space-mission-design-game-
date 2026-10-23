@@ -2,7 +2,7 @@
 // red, each printed only once it has reached Earth (engine transmissionFeed): a robot line says how long it took,
 // an order says where it is on its trip. Desktop: a paper column beside the CRT, newest at the bottom. Phone: the
 // latest line on a strip; tap it for the log. Words in sdWords (TX_WORDS, robotSays).
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import type { FeedEntry, OrderLine, TransmissionFeed } from '../../../engine/ops/index';
 import * as f from '../../format';
 import { robotSays, targetName, TX_WORDS, type VoiceContext } from '../../sdWords';
@@ -19,6 +19,8 @@ interface Props {
   phone: boolean;
   /** Highlight this robot line (the reply on screen). */
   hot?: FeedEntry;
+  /** Replaces the paper's footer (desktop): the DOWNLINK key once pictures are ordered. */
+  footer?: ReactNode;
 }
 
 function orderWhat(o: OrderLine, voice: VoiceContext): string {
@@ -58,7 +60,7 @@ export function txLine(e: FeedEntry, voice: VoiceContext) {
   return { who: TX_WORDS.fromEarth(voice.name.toUpperCase()), stamp: orderStamp(o), text: `▸ ${TX_WORDS.order(orderWhat(o, voice))}` };
 }
 
-const keyOf = (e: FeedEntry) => `${e.from}:${e.at}:${e.message?.kind ?? e.order?.kind}`;
+const keyOf = (e: FeedEntry) => `${e.from}:${e.at}:${e.message?.kind ?? e.order?.kind}:${e.message?.seq ?? e.order?.targetId ?? e.order?.hazardId ?? ''}`;
 
 function Line({ e, voice, typing, hot }: { e: FeedEntry; voice: VoiceContext; typing: boolean; hot: boolean }) {
   const l = txLine(e, voice);
@@ -88,7 +90,7 @@ function Line({ e, voice, typing, hot }: { e: FeedEntry; voice: VoiceContext; ty
   );
 }
 
-export function Transmissions({ feed, voice, oneWay_s, phone, hot }: Props) {
+export function Transmissions({ feed, voice, oneWay_s, phone, hot, footer }: Props) {
   const [open, setOpen] = useState(false);
   const entries = feed.entries;
   const latest = entries[entries.length - 1];
@@ -140,11 +142,13 @@ export function Transmissions({ feed, voice, oneWay_s, phone, hot }: Props) {
         </span>
       </header>
       {list(entries)}
-      <footer className="tx-foot">
-        {TX_WORDS.footBefore(name)}
-        <b>{TX_WORDS.footAge(f.durationWords(oneWay_s))}</b>
-        {TX_WORDS.footAfter}
-      </footer>
+      {footer ?? (
+        <footer className="tx-foot">
+          {TX_WORDS.footBefore(name)}
+          <b>{TX_WORDS.footAge(f.durationWords(oneWay_s))}</b>
+          {TX_WORDS.footAfter}
+        </footer>
+      )}
     </section>
   );
 }

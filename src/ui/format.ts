@@ -23,6 +23,9 @@ export function speed(ms: number): string {
 /** Distances in million km. */
 export const millionKm = (m: number) => `${num(m / 1e9, 1)} million km`;
 
+/** A short length in metres (ground resolution). */
+export const meters = (m: number) => `${num(m, m < 10 ? 1 : 0)} m`;
+
 /** A distance for Cadet screens: km below a million km (the Moon), million km beyond. */
 export const distance = (m: number) => (Math.abs(m) < 1e9 ? `${num(m / 1000)} km` : millionKm(m));
 
@@ -114,7 +117,8 @@ export function clock(s: number): string {
 /** Photos per day, rounded down to whole photos. */
 export const photos = (n: number) => num(Math.floor(n));
 
-const pad2 = (n: number) => String(n).padStart(2, '0');
+/** Two digits: 1 → 01 (clock fields, card numbers). */
+export const pad2 = (n: number) => String(n).padStart(2, '0');
 
 /** A light time as minutes and seconds ("11 m 54 s"), or hours and minutes when long. */
 export function lightTime(s: number): string {
