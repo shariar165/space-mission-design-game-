@@ -50,7 +50,8 @@ describe('Fly & Survive always reaches the report', () => {
       const decide = danger && within(danger).queryByRole('button', { name: /LET THE ROBOT DECIDE/ });
       const pick = danger && [...danger.querySelectorAll<HTMLButtonElement>('.dc-choice')].find((b) => !b.disabled);
       // Science Targets in Mars orbit holds the clock like a card: skip it (no pictures) and fly on.
-      const sci = screen.queryByRole('button', { name: /SKIP SCIENCE|DONE · KEEP FLYING/ });
+      const sciKey = screen.queryByRole('button', { name: /SKIP SCIENCE|DONE · KEEP FLYING/ }) as HTMLButtonElement | null;
+      const sci = sciKey && !sciKey.disabled ? sciKey : null; // disabled while the globe zooms
       const go = screen.queryByRole('button', { name: 'CONTINUE ▸' }) ?? screen.queryByRole('button', { name: 'Retire the craft' }) ?? decide ?? pick ?? sci;
       if (go) act(() => fireEvent.click(go));
       else pass(250, 250);

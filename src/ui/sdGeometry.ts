@@ -170,7 +170,7 @@ export const GLOBE_VIEW = { lat_deg: 22, lon_deg: -100 };
 /** Moon rings drawn around the globe, in globe radii (a picture, not to scale: Phobos is 2.8 and Deimos 6.9). */
 export const GLOBE_MOON_RING = { phobos: 1.32, deimos: 1.62 } as const;
 /** Where each moon sits on its ring (angle round the ring, radians) and the ring's tilt and squash. */
-export const GLOBE_MOON_AT = { phobos: 2.55, deimos: 0.25 } as const;
+export const GLOBE_MOON_AT = { phobos: 2.7, deimos: 0.9 } as const;
 export const GLOBE_RING_TILT_DEG = -14;
 export const GLOBE_RING_SQUASH = 0.31;
 /** The limb target: a point on the lit edge of the disc (angle from +x, radians). */

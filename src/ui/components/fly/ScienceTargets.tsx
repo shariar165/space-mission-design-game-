@@ -20,6 +20,8 @@ interface Props {
   phone: boolean;
   /** The globe (3D or 2D), sized by the screen. */
   globe: ReactNode;
+  /** The arrival transition is running: the keys wait for it. */
+  busy?: boolean;
 }
 
 const bars = (q: 1 | 2 | 3) => '▮'.repeat(q) + '▯'.repeat(3 - q);
@@ -67,7 +69,7 @@ function Card({ c, on, onSelect, engineer, phone }: { c: TargetCard; on: boolean
   );
 }
 
-export function ScienceTargets({ view, selected, onSelect, onObserve, onDone, robotName, destName, engineer, phone, globe }: Props) {
+export function ScienceTargets({ view, selected, onSelect, onObserve, onDone, robotName, destName, engineer, phone, globe, busy = false }: Props) {
   const sel = view.cards.find((c) => c.id === selected) ?? view.cards[0]!;
   const ok = sel.blocker === undefined;
   const takes = f.durationWords(view.orderTakes_s);
@@ -78,12 +80,12 @@ export function ScienceTargets({ view, selected, onSelect, onObserve, onDone, ro
   const hint = view.ordered ? SCIENCE.hintSome(f.num(view.ordered)) : SCIENCE.hint;
   const keys = (
     <div className="sci-keys">
-      <button type="button" className={`sci-observe${ok ? '' : ' off'}`} disabled={!ok} onClick={onObserve} aria-label={`${SCIENCE.observe}: ${targetName(sel.id)}`}>
+      <button type="button" className={`sci-observe${ok ? '' : ' off'}`} disabled={!ok || busy} onClick={onObserve} aria-label={`${SCIENCE.observe}: ${targetName(sel.id)}`}>
         <span className="sci-observe-k">{SCIENCE.observe}{phone ? ' ▸' : ''}</span>
         <span className="sci-observe-sub">{phone ? subShort : sub}</span>
         {!phone && <span className="sci-observe-arrow">▸</span>}
       </button>
-      <button type="button" className="sci-done" onClick={onDone}>
+      <button type="button" className="sci-done" disabled={busy} onClick={onDone}>
         {finish} ▸
       </button>
     </div>

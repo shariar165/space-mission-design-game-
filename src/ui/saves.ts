@@ -80,3 +80,11 @@ export const loadDonkiCache = (todayIso: string): string | undefined => {
   return v.date === todayIso && typeof v.text === 'string' ? v.text : undefined;
 };
 export const saveDonkiCache = (date: string, text: string) => write(DONKI_KEY, { date, text });
+
+/** The Mars globe: '3d' or '2d' when the player flipped the toggle (absent: the device decides). */
+const GLOBE_KEY = 'sd.globe';
+export const loadGlobeMode = (): '2d' | '3d' | undefined => {
+  const v = read<{ mode?: unknown }>(GLOBE_KEY, {});
+  return v.mode === '2d' || v.mode === '3d' ? v.mode : undefined;
+};
+export const saveGlobeMode = (mode: '2d' | '3d') => write(GLOBE_KEY, { mode });

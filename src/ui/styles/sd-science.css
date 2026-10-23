@@ -156,3 +156,30 @@
 @media (prefers-reduced-motion: reduce) {
   .dn-print-color, .dn-voice { transition: none; }
 }
+
+/* ---- The Mars globe host: 3D canvas, the toggle, the selected target's tag ---- */
+.sci-globe-host { position: relative; display: flex; align-items: center; justify-content: center; }
+.sci-globe.gl { position: relative; }
+.sci-globe-gl { position: absolute; inset: 0; width: 100% !important; height: 100% !important; }
+.sci-globe-toggle { position: absolute; right: -6px; bottom: -6px; cursor: pointer; padding: 4px 8px; border-radius: 3px; border: 1px solid var(--sd-crt-line); background: rgba(5, 12, 7, 0.85); color: var(--sd-crt-mid); font: 400 16px/1 var(--sd-crt-font); z-index: 2; }
+.sci-globe-toggle:hover { border-color: var(--sd-amber); color: var(--sd-amber); }
+.sci-sel-tag { position: absolute; left: 50%; bottom: 2%; transform: translateX(-50%); padding: 4px 8px; background: var(--sd-crt); border: 1px solid var(--sd-amber); font: 400 20px/1 var(--sd-crt-font); color: var(--sd-amber); white-space: nowrap; pointer-events: none; }
+/* The phosphor glow: a ring behind the sphere (cheap), instead of a filter on the WebGL canvas. */
+.sci-globe.gl::before { content: ''; position: absolute; left: 19%; top: 19%; width: 62%; height: 62%; border-radius: 50%; box-shadow: 0 0 0 1px rgba(140, 255, 160, 0.35), 0 0 22px rgba(57, 255, 106, 0.22); pointer-events: none; }
+
+/* ---- The arrival transition (spec: UI rule 42): the hook sets the variables; nothing moves without .zooming ---- */
+.fly.zooming .crt-map { transform-origin: var(--zo-x) var(--zo-y); transform: translate(var(--zt-x), var(--zt-y)) scale(var(--zs)); opacity: var(--map-out); }
+.fly.zooming .crt-map > :not(.crt-dest) { opacity: var(--map-rest); }
+.fly.zooming .crt-dest text { opacity: var(--map-rest); }
+.fly.zooming .fly-log, .fly.zooming .fly-legend, .fly.zooming .fly-goal, .fly.zooming .fly-eng-readout { opacity: var(--map-rest); }
+.fly.zooming .sci { background: rgba(5, 12, 7, var(--sci-chrome)); }
+.fly.zooming .sci.phone { background: rgba(3, 6, 4, calc(0.96 * var(--sci-chrome))); }
+.fly.zooming .sci::after { opacity: var(--sci-chrome); }
+.fly.zooming .sci-title, .fly.zooming .sci-hint, .fly.zooming .sci-credit, .fly.zooming .sci-right, .fly.zooming .sci-globe-toggle, .fly.zooming .sci-globe-rings,
+.fly.zooming .sci-list, .fly.zooming .sci-keys, .fly.zooming .sci-globe-k, .fly.zooming .sci-globe-sel, .fly.zooming .sci-globe-box::after { opacity: var(--sci-chrome); }
+.fly.zooming .sci-globe-box { border-color: rgba(44, 47, 39, var(--sci-chrome)); background: transparent; }
+.fly.zooming .sci-globe-host { opacity: var(--globe-in); transform: scale(var(--globe-scale)); }
+.fly.zooming .sci-mark-label, .fly.zooming .sci-sel-tag { opacity: var(--sci-chrome); }
+/* Phone: the toggle sits in the globe box's corner. */
+.sci.phone .sci-globe-host { position: static; }
+.sci.phone .sci-globe-toggle { right: 8px; bottom: 8px; }

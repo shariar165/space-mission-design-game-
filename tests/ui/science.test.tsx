@@ -7,6 +7,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { presetDesign } from '../../src/engine/missions';
 import { targetById } from '../../src/engine/targets';
 import { FlyAndSurvive } from '../../src/ui/screens/FlyAndSurvive';
+import { ZOOM_MS } from '../../src/ui/components/fly/arrivalZoom';
 import { DOWNLINK, SCIENCE, TARGET_WORDS } from '../../src/ui/sdWords';
 import './setup';
 
@@ -26,6 +27,11 @@ const panel = () => screen.queryByRole('region', { name: SCIENCE.title('MARS') }
 
 /** Next event until the robot's question arrives and the targets open; danger cards are left to the robot. */
 function toMarsOrbit() {
+  toMarsOrbitNoWait();
+  pass(ZOOM_MS + 200); // the map zooms into the globe (spec: UI rule 42); the keys wait for it
+}
+
+function toMarsOrbitNoWait() {
   for (let i = 0; i < 300 && !panel(); i++) {
     const danger = screen.queryByRole('dialog', { name: /DANGER CARD|PLAN AHEAD/ });
     const go =
@@ -63,6 +69,7 @@ describe('Science Targets in Mars orbit', () => {
     // The order is on the teletype, in flight.
     expect(screen.getAllByText(/OBSERVE VALLES MARINERIS/).length).toBeGreaterThan(0);
     fireEvent.click(within(p).getByRole('button', { name: `${SCIENCE.done} ▸` }));
+    pass(ZOOM_MS + 200); // the globe zooms back out to the map (spec: UI rule 42)
     expect(panel()).toBeNull();
     // The DOWNLINK key on the paper counts the picture still on the robot.
     expect(screen.getByRole('button', { name: /DOWNLINK/ })).toBeTruthy();
@@ -83,5 +90,35 @@ describe('Science Targets in Mars orbit', () => {
     expect(within(drawer).getByText(DOWNLINK.credit(img.credit, img.mission, img.nasaId))).toBeTruthy();
     fireEvent.click(within(drawer).getByRole('button', { name: DOWNLINK.closeKey }));
     expect(screen.queryByRole('region', { name: DOWNLINK.title })).toBeNull();
+  }, 120_000);
+});
+
+describe('the arrival transition (spec: UI rule 42)', () => {
+  it('zooms from the map into the globe in about two seconds, then the keys wake up; going back zooms out', () => {
+    fly();
+    toMarsOrbitNoWait();
+    const root = document.querySelector('.fly')!;
+    expect(root.classList.contains('zooming')).toBe(true);
+    // The keys wait for the transition; the markers come one by one.
+    expect((panel()!.querySelector('.sci-done') as HTMLButtonElement).disabled).toBe(true);
+    pass(ZOOM_MS + 200);
+    expect(root.classList.contains('zooming')).toBe(false);
+    expect(panel()!.querySelectorAll('.sci-mark').length).toBe(6);
+    fireEvent.click(panel()!.querySelector('.sci-done')!);
+    expect(root.classList.contains('zooming')).toBe(true);
+    expect(panel()).toBeTruthy();
+    pass(ZOOM_MS + 200);
+    expect(panel()).toBeNull();
+    expect(root.classList.contains('zooming')).toBe(false);
+  }, 120_000);
+});
+
+describe('reduced motion', () => {
+  it('the arrival is an instant cut: no zoom, the keys work at once', () => {
+    vi.stubGlobal('matchMedia', (q: string) => ({ matches: q.includes('reduce'), media: q, addEventListener: () => {}, removeEventListener: () => {}, addListener: () => {}, removeListener: () => {} }));
+    fly();
+    toMarsOrbitNoWait();
+    expect(document.querySelector('.fly')!.classList.contains('zooming')).toBe(false);
+    expect((panel()!.querySelector('.sci-done') as HTMLButtonElement).disabled).toBe(false);
   }, 120_000);
 });

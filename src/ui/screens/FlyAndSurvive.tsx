@@ -21,7 +21,8 @@ import { play } from '../sound';
 import { DangerCard, type CardView, type ChipView, type ChoiceView } from '../components/fly/DangerCard';
 import { EquationsPanel } from '../components/fly/EquationsPanel';
 import { Downlink } from '../components/fly/Downlink';
-import { MarsGlobe2D } from '../components/fly/MarsGlobe2D';
+import { MarsGlobe } from '../components/fly/MarsGlobe';
+import { useArrivalZoom, type ZoomDirection } from '../components/fly/arrivalZoom';
 import { ScienceTargets } from '../components/fly/ScienceTargets';
 import { BackButton } from '../components/sd/BackButton';
 import { CoachCard } from '../components/sd/CoachCard';
@@ -145,13 +146,25 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
   const sci = useMemo(() => (state ? scienceTargetsView(state) : undefined), [state]);
   const dl = useMemo(() => (state ? downlinkView(state) : undefined), [state]);
   const [sciOpen, setSciOpen] = useState(false);
+  // The arrival transition (spec: UI rule 42): in when the panel opens, out when the player goes back to the map.
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [zoomDir, setZoomDir] = useState<ZoomDirection>();
+  const openScience = () => {
+    setSciOpen(true);
+    setZoomDir('in');
+  };
+  const closeScience = () => setZoomDir('out');
+  const zoom = useArrivalZoom(rootRef, zoomDir, 6, still, () => {
+    if (zoomDir === 'out') setSciOpen(false);
+    setZoomDir(undefined);
+  });
   const [sciPick, setSciPick] = useState<string>();
   const asked = feed?.entries.some((e) => e.from === 'robot' && e.message?.kind === 'targets') ?? false;
   const askedSeen = useRef(false);
   useEffect(() => {
     if (!asked || askedSeen.current) return;
     askedSeen.current = true;
-    if ((state?.t ?? 0) > 0 && sci?.available) setSciOpen(true);
+    if ((state?.t ?? 0) > 0 && sci?.available) openScience();
   }, [asked]); // eslint-disable-line react-hooks/exhaustive-deps
   const sciShown = sciOpen && sci?.available === true;
   const sciSelected = sciPick ?? sci?.cards.find((c) => c.blocker === undefined)?.id ?? sci?.cards[0]?.id ?? '';
@@ -391,7 +404,7 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
       }
       if (e.key === 'Escape') {
         setPanel(undefined);
-        setSciOpen(false);
+        if (sciOpen) closeScience();
       }
       else if (e.key === ' ' && !(t instanceof HTMLButtonElement)) {
         e.preventDefault();
@@ -606,7 +619,7 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
         </button>
       )}
       {sci?.available && (
-        <button type="button" className="fly-action sci-key" onClick={() => setSciOpen(true)}>
+        <button type="button" className="fly-action sci-key" onClick={openScience}>
           <SDIcon icon="camera" size={16} />
           {SCIENCE.reopen}
         </button>
@@ -701,12 +714,13 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
       selected={sciSelected}
       onSelect={setSciPick}
       onObserve={observe}
-      onDone={() => setSciOpen(false)}
+      onDone={closeScience}
+      busy={zoom.running}
       robotName={name}
       destName={dest.name}
       engineer={engineer}
       phone={phone}
-      globe={<MarsGlobe2D cards={sci.cards} selected={sciSelected} onPick={setSciPick} size={phone ? GLOBE_PX.phone : GLOBE_PX.desktop} />}
+      globe={<MarsGlobe cards={sci.cards} selected={sciSelected} onPick={setSciPick} size={phone ? GLOBE_PX.phone : GLOBE_PX.desktop} phone={phone} shown={zoom.running ? zoom.shown : sci.cards.length} />}
     />
   );
   const downlink = panel === 'downlink' && dl && (
@@ -772,7 +786,7 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
           t = d / c = {f.au(view.clock.earthDistance_m)} / c = {f.mmss(view.clock.oneWay_s)}
         </div>
       )}
-      {banner && !openCard && !debrief && (
+      {banner && !openCard && !debrief && !sciShown && (
         <MomentBanner
           key={banner.n}
           kind={banner.kind}
@@ -884,7 +898,7 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
 
   if (phone)
     return (
-      <div className={`sd fly phone${engineer ? ' eng' : ''}`}>
+      <div ref={rootRef} className={`sd fly phone${engineer ? ' eng' : ''}${zoom.running ? ' zooming' : ''}`}>
         <div className="fly-status">
           {onBack ? (
             <BackButton onBack={back} />
@@ -922,7 +936,7 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
     );
 
   return (
-    <div className={`sd fly${engineer ? ' eng' : ''}`}>
+    <div ref={rootRef} className={`sd fly${engineer ? ' eng' : ''}${zoom.running ? ' zooming' : ''}`}>
       <header className="fly-top">
         <div className="fly-top-left">
           {onBack && <BackButton onBack={back} />}

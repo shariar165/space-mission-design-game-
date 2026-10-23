@@ -49,8 +49,8 @@ function Planet({ x, y, name, destination, big }: { x: number; y: number; name: 
   const mars = destination === 'mars';
   const fill = mars ? 'var(--sd-mars)' : destination === 'venus' ? '#e8c27a' : destination === 'jupiter' ? '#d9a066' : destination === 'moon' ? '#cfcabb' : '#8f8676';
   return (
-    <g transform={`translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${k})`}>
-      <circle r={destination === 'jupiter' ? 16 : destination === 'bennu' ? 7 : 12} fill={fill} />
+    <g className="crt-dest" transform={`translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${k})`}>
+      <circle className="crt-dest-disc" r={destination === 'jupiter' ? 16 : destination === 'bennu' ? 7 : 12} fill={fill} />
       {mars && (
         <>
           <circle cx="-4" cy="-2" r="3.5" fill="var(--sd-mars-dark)" />

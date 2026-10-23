@@ -1068,3 +1068,10 @@ export const DOWNLINK = {
   voice: (name: string, line: string) => `${name}: “${line}”`,
   credit: (credit: string, mission: string, id: string) => `IMAGE CREDIT: ${credit} · ${mission} · ${id}`,
 };
+
+/** The Mars globe's 2D/3D toggle (spec: UI rule 41). */
+export const GLOBE_WORDS = {
+  toggleLabel: 'Switch the Mars globe between 3D and flat',
+  to2d: '2D',
+  to3d: '3D',
+};
