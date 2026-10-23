@@ -1,0 +1,28 @@
+html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+body { font-family: "IBM Plex Mono", ui-monospace, monospace; color: #5dff8a; }
+a { color: #5dff8a; text-decoration: none; }
+a:hover { color: #c8ffd2; }
+three-d-stage { width: 100vw; height: 100vh; animation: flicker 6s infinite steps(1); }
+three-d-stage:not(:defined) { visibility: hidden; }
+@keyframes flicker { 0%,100% { opacity: 1; } 41% { opacity: .96; } 42% { opacity: 1; } 77% { opacity: .98; } }
+@keyframes roll { from { transform: translateY(-30vh); } to { transform: translateY(130vh); } }
+.crt-scan { position: fixed; inset: 0; pointer-events: none; z-index: 5;
+  background: repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0, rgba(0,0,0,0) 2px, rgba(0,0,0,.32) 2px, rgba(0,0,0,.32) 3px); }
+.crt-vignette { position: fixed; inset: 0; pointer-events: none; z-index: 6;
+  background: radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(0,0,0,.55) 88%, rgba(0,0,0,.85) 100%); }
+.crt-roll { position: fixed; left: 0; right: 0; top: 0; height: 22vh; pointer-events: none; z-index: 5;
+  background: linear-gradient(to bottom, rgba(93,255,138,0), rgba(93,255,138,.035), rgba(93,255,138,0)); animation: roll 7s linear infinite; }
+.glow { text-shadow: 0 0 4px rgba(93,255,138,.8), 0 0 12px rgba(57,255,106,.35); }
+.hud { white-space: nowrap; position: fixed; z-index: 4; pointer-events: none; text-transform: uppercase; letter-spacing: .14em; font-size: 11px; line-height: 1.7; }
+.hud a { pointer-events: auto; }
+.hud.tl { top: 22px; left: 24px; }
+.hud.tr { top: 22px; right: 24px; text-align: right; }
+.hud .title { font-size: 15px; letter-spacing: .22em; color: #b6ffc4; }
+.hud .dim { color: rgba(93,255,138,.55); }
+.hud .nav { display: flex; gap: 14px; justify-content: flex-end; }
+.hud .nav a { border: 1px solid rgba(93,255,138,.35); padding: 6px 10px; }
+.hud .nav a.on { background: rgba(93,255,138,.14); color: #c8ffd2; border-color: rgba(93,255,138,.7); }
+.labels { position: fixed; inset: 0; pointer-events: none; z-index: 3; overflow: hidden; }
+.lbl { position: absolute; left: 0; top: 0; white-space: nowrap; font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: #8dffa8; transition: opacity .25s; }
+.lbl .k { color: #d6ffdc; }
+.lbl .s { display: block; color: rgba(93,255,138,.6); font-size: 9.5px; }

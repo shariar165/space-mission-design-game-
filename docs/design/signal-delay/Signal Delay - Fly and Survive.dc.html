@@ -19,7 +19,7 @@
     <div style="display:flex;flex-direction:column;gap:8px">
       <div style="font:400 14px/1 'B612 Mono',monospace;letter-spacing:.2em;color:#8a8270">SIGNAL DELAY · SCREEN 01 OF 06</div>
       <h1 style="margin:0;font:800 56px/1 'Big Shoulders Display',sans-serif;color:#efe6cf;letter-spacing:.02em">FLY &amp; SURVIVE</h1>
-      <p style="margin:0;max-width:640px;font:400 16px/1.5 'B612',sans-serif;color:#a49b84;text-wrap:pretty">The robot cruises on its own and talks to you on the teletype, always minutes late. Danger cards pause time. You pick, the order crawls out at light speed, and the robot’s reply crawls back.</p>
+      <p style="margin:0;max-width:640px;font:400 16px/1.5 'B612',sans-serif;color:#a49b84;text-wrap:pretty">The robot cruises on its own and talks to you on the teletype, always minutes late. Danger cards pause time. You pick, the order crawls out at light speed, and the robot’s reply crawls back. After arrival, the CRT turns to Mars: pick science targets, then pull the pictures home through the DOWNLINK drawer.</p>
     </div>
     <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-end">
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -42,7 +42,7 @@
         <div style="display:grid;grid-template-columns:240px minmax(0,1fr) 240px;align-items:center;gap:16px">
           <div style="display:flex;flex-direction:column;gap:4px">
             <div style="font:900 30px/1 'Big Shoulders Display',sans-serif;color:#efe6cf;letter-spacing:.06em">SIGNAL DELAY</div>
-            <div style="font:400 11px/1 'B612 Mono',monospace;color:#8a8270;letter-spacing:.18em">{{ nameU }} · TO MARS</div>
+            <div style="display:flex;align-items:center;gap:7px;font:700 11px/1 'B612 Mono',monospace;letter-spacing:.14em"><span style="color:#6f685a">PACK ✓</span><span style="color:#4a4d42">›</span><span style="color:#ffb547;padding-bottom:3px;border-bottom:2px solid #ffb547">FLY</span><span style="color:#4a4d42">›</span><a href="Signal Delay - Mission Report.dc.html" style="color:#6f685a;text-decoration:none">REPORT</a></div>
           </div>
           <div style="display:flex;justify-content:center;gap:14px">
             <sc-for list="{{ res }}" as="r" hint-placeholder-count="4">
@@ -199,6 +199,53 @@
               </button>
             </div>
           </sc-if>
+          <sc-if value="{{ isSci }}" hint-placeholder-val="{{ false }}">
+            <div style="position:absolute;inset:0;background:#050c07;display:grid;grid-template-columns:360px minmax(0,1fr);gap:18px;padding:16px 18px;box-sizing:border-box">
+              <div style="display:flex;flex-direction:column;gap:4px;min-height:0">
+                <span style="font:400 24px/1 'VT323',monospace;color:#8cff9e;text-shadow:0 0 8px rgba(140,255,158,.5)">MARS ORBIT · SCIENCE TARGETS</span>
+                <span style="font:400 18px/1.1 'VT323',monospace;color:#1f9a4a">{{ sciHint }}</span>
+                <div style="flex:1;display:flex;align-items:center;justify-content:center;min-height:0">
+              <div style="position:relative;width:350px;height:350px;flex:none">
+                <svg viewBox="0 0 100 100" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible"><g transform="rotate(-14 50 50)" fill="none" stroke="#1f9a4a" stroke-width=".5" stroke-dasharray="1 1.2"><ellipse cx="50" cy="50" rx="36" ry="11"></ellipse><ellipse cx="50" cy="50" rx="47" ry="15"></ellipse></g></svg>
+                <img src="assets/mars/globe.jpg" alt="Mars" style="position:absolute;left:19%;top:19%;width:62%;height:62%;border-radius:50%">
+                <div style="position:absolute;left:22%;top:22%;width:56%;height:56%;border-radius:50%;box-shadow:0 0 0 1px #1f5a32,0 0 26px rgba(140,255,158,.14)"></div>
+                <svg viewBox="0 0 100 100" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none"><g transform="rotate(-14 50 50)" fill="none" stroke="#47c96b" stroke-width=".6" stroke-dasharray="1 1.2"><path d="M14 50 A36 11 0 0 0 86 50"></path><path d="M3 50 A47 15 0 0 0 97 50"></path></g></svg>
+                <sc-for list="{{ sciMarks }}" as="m" hint-placeholder-count="6">
+                  <button onClick="{{ m.pick }}" aria-label="{{ m.n }}" style="position:absolute;left:{{ m.x }};top:{{ m.y }};transform:translate(-50%,-50%);width:30px;height:30px;border-radius:50%;border:2px solid {{ m.bd }};background:{{ m.bg }};color:{{ m.fg }};box-shadow:{{ m.glow }};font:400 22px/1 'VT323',monospace;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center">{{ m.num }}</button>
+                </sc-for>
+                <span style="position:absolute;left:{{ selX }};top:{{ selY }};transform:{{ selTf }};padding:4px 8px;background:#050c07;border:1px solid #ffb547;font:400 20px/1 'VT323',monospace;color:#ffb547;white-space:nowrap;pointer-events:none">{{ selName }}</span>
+              </div>
+                </div>
+                <span style="font:400 15px/1 'VT323',monospace;color:#1f5a32">MARS · NASA/ESA HUBBLE, 2003</span>
+              </div>
+              <div style="display:grid;grid-template-rows:minmax(0,1fr) 58px;gap:12px;min-height:0">
+                <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr));gap:10px;min-height:0">
+                  <sc-for list="{{ sciCards }}" as="c" hint-placeholder-count="6">
+                    <button onClick="{{ c.pick }}" style="cursor:pointer;text-align:left;border-radius:5px;border:1.5px solid {{ c.bd }};background:{{ c.bg }};box-shadow:{{ c.glow }};padding:9px 11px;display:flex;flex-direction:column;gap:5px;min-height:0;overflow:hidden;box-sizing:border-box">
+                      <div style="display:flex;align-items:baseline;gap:8px;width:100%"><span style="font:400 18px/1 'VT323',monospace;color:{{ c.numCol }}">{{ c.num }}</span><span style="flex:1;font:400 25px/0.95 'VT323',monospace;color:{{ c.nameCol }}">{{ c.n }}</span><sc-if value="{{ c.queued }}" hint-placeholder-val="{{ false }}"><span style="padding:3px 6px;border-radius:2px;background:#1f9a4a;color:#050c07;font:400 16px/1 'VT323',monospace;white-space:nowrap">✓ QUEUED</span></sc-if></div>
+                      <span style="font:400 17px/1 'VT323',monospace;color:#ffb547">IMAGE {{ c.qBars }} <span style="color:#47c96b">{{ c.ql }}</span></span>
+                      <span style="font:400 12.5px/1.3 'B612',sans-serif;color:#9fc7a6;text-wrap:pretty">{{ c.learn }}</span>
+                      <sc-if value="{{ eng }}" hint-placeholder-val="{{ false }}"><span style="font:400 15px/1 'VT323',monospace;color:#47c96b">{{ c.engLine }}</span></sc-if>
+                      <div style="margin-top:auto;display:flex;gap:6px;flex-wrap:wrap;width:100%">
+                    <span style="display:flex;align-items:center;gap:4px;padding:3px 6px;border-radius:3px;border:1.5px solid {{ c.fuelCol }};font:400 18px/1 'VT323',monospace;color:{{ c.fuelCol }}"><dc-import name="SDIcon" icon="fuel" size="14" color="{{ c.fuelCol }}" hint-size="14px,14px"></dc-import>{{ c.fuelV }}</span>
+                    <span style="display:flex;align-items:center;gap:4px;padding:3px 6px;border-radius:3px;border:1.5px solid {{ c.powCol }};font:400 18px/1 'VT323',monospace;color:{{ c.powCol }}"><dc-import name="SDIcon" icon="power" size="14" color="{{ c.powCol }}" hint-size="14px,14px"></dc-import>{{ c.powV }}</span>
+                    <span style="display:flex;align-items:center;gap:4px;padding:3px 6px;border-radius:3px;border:1.5px dashed {{ c.riskCol }};font:400 18px/1 'VT323',monospace;color:{{ c.riskCol }}">⚠ {{ c.risk }}</span>
+                      </div>
+                    </button>
+                  </sc-for>
+                </div>
+                <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px">
+                  <button onClick="{{ observe }}" style="cursor:{{ obsCursor }};border-radius:6px;border:none;border-bottom:5px solid {{ obsEdge }};background:{{ obsBg }};color:{{ obsFg }};box-shadow:{{ obsGlow }};display:flex;align-items:center;gap:16px;padding:0 18px;text-align:left">
+                    <span style="font:900 32px/1 'Big Shoulders Display',sans-serif;letter-spacing:.08em">OBSERVE</span>
+                    <span style="flex:1;font:400 13px/1.25 'B612',sans-serif;color:{{ obsSubCol }}">{{ obsSub }}</span>
+                    <span style="font:400 26px/1 'VT323',monospace">▸</span>
+                  </button>
+                  <button onClick="{{ finishSci }}" style="cursor:pointer;padding:0 16px;border-radius:6px;border:1.5px solid #47c96b;background:transparent;color:#8cff9e;font:400 22px/1 'VT323',monospace;white-space:nowrap">{{ finishLbl }} ▸</button>
+                </div>
+              </div>
+              <div style="position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.22) 0 1px,transparent 1px 3px)"></div>
+            </div>
+          </sc-if>
         </div>
 
         <div style="position:relative;background:#efe6cf;border-radius:4px;overflow:hidden;display:grid;grid-template-rows:auto minmax(0,1fr) auto">
@@ -215,7 +262,10 @@
               </div>
             </sc-for>
           </div>
-          <div style="padding:10px 38px 12px;border-top:2px dashed #c4b897;font:400 13px/1.35 'B612',sans-serif;color:#3a372e;text-wrap:pretty">Everything {{ nameU }} says is <b>{{ ltWords }} old</b> by the time it prints here.</div>
+          <sc-if value="{{ hasDl }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ toggleDl }}" style="cursor:pointer;border:none;border-top:2px dashed #c4b897;padding:10px 38px 12px;background:{{ dlFootBg }};display:flex;align-items:center;gap:12px;text-align:left;width:100%"><dc-import name="SDIcon" icon="dish" size="24" color="#1b1a16" hint-size="24px,24px"></dc-import><span style="flex:1;display:flex;flex-direction:column;gap:4px"><span style="font:800 20px/1 'Big Shoulders Display',sans-serif;letter-spacing:.08em;color:#1b1a16">DOWNLINK</span><span style="font:700 11px/1 'B612 Mono',monospace;letter-spacing:.06em;color:#3a2a0a">{{ dlBtn }}</span></span><span style="font:700 12px/1 'B612 Mono',monospace;letter-spacing:.08em;color:#1b1a16;white-space:nowrap">{{ dlChev }}</span></button>
+          </sc-if>
+          <sc-if value="{{ noDl }}" hint-placeholder-val="{{ true }}"><div style="padding:10px 38px 12px;border-top:2px dashed #c4b897;font:400 13px/1.35 'B612',sans-serif;color:#3a372e;text-wrap:pretty">Everything {{ nameU }} says is <b>{{ ltWords }} old</b> by the time it prints here.</div></sc-if>
         </div>
         </div>
 
@@ -251,6 +301,42 @@
             </div>
           </div>
         </div>
+        <sc-if value="{{ dlOpen }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;top:108px;right:18px;bottom:18px;width:660px;z-index:5;background:#efe6cf;border-radius:4px;box-shadow:-24px 0 60px rgba(0,0,0,.65);overflow:hidden">
+            <div style="position:absolute;left:0;top:0;bottom:0;width:24px;border-right:1px dashed #c4b897;background-image:radial-gradient(circle,#1c1e18 4px,transparent 5px);background-size:24px 26px;background-position:center 8px"></div><div style="position:absolute;right:0;top:0;bottom:0;width:24px;border-left:1px dashed #c4b897;background-image:radial-gradient(circle,#1c1e18 4px,transparent 5px);background-size:24px 26px;background-position:center 8px"></div>
+            <div style="position:absolute;top:0;bottom:0;left:24px;right:24px;box-sizing:border-box;padding:14px 22px 16px;display:flex;flex-direction:column;gap:12px">
+              <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;padding-bottom:10px;border-bottom:3px solid #1b1a16">
+                <div style="display:flex;flex-direction:column;gap:6px"><span style="font:700 10px/1 'B612 Mono',monospace;letter-spacing:.18em;color:#7a715c">TELETYPE 04 · DSN CANBERRA 70 M · {{ dlSent }}</span><span style="font:900 34px/0.9 'Big Shoulders Display',sans-serif;color:#1b1a16;letter-spacing:.03em">DOWNLINK</span></div>
+                <button onClick="{{ toggleDl }}" style="cursor:pointer;padding:9px 14px;border-radius:4px;border:2px solid #1b1a16;border-bottom-width:4px;background:#efe6cf;font:700 12px/1 'B612 Mono',monospace;letter-spacing:.1em;color:#1b1a16">✕ CLOSE</button>
+              </div>
+              <div style="position:relative;display:grid;grid-template-columns:minmax(0,1fr) 190px;gap:14px;padding:12px 14px;background:#050c07;border-radius:6px;box-shadow:inset 0 0 12px #000;overflow:hidden">
+                <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
+                  <span style="font:400 32px/1 'VT323',monospace;color:#8cff9e;text-shadow:0 0 8px rgba(140,255,158,.5)">{{ dlBig }}</span>
+                  <span style="font:400 22px/1 'VT323',monospace;color:{{ dlPassCol }}">{{ dlPass }}</span>
+                  <div style="margin-top:6px;display:flex;flex-direction:column;gap:5px">
+                    <sc-for list="{{ dlQueue }}" as="q" hint-placeholder-count="3">
+                      <div style="display:grid;grid-template-columns:minmax(0,1fr) 90px 104px;align-items:center;gap:10px"><span style="font:400 20px/1 'VT323',monospace;color:{{ q.nameCol }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ q.n }}</span><div style="height:5px;background:#0f2416;overflow:hidden"><div style="height:100%;width:{{ q.pct }};background:{{ q.barCol }}"></div></div><span style="font:400 18px/1 'VT323',monospace;color:{{ q.stCol }};text-align:right;white-space:nowrap">{{ q.st }}</span></div>
+                    </sc-for>
+                  </div>
+                </div>
+                <button onClick="{{ dlKeyGo }}" style="cursor:{{ dlKeyCursor }};border-radius:6px;border:none;border-bottom:5px solid {{ dlKeyEdge }};background:{{ dlKeyBg }};color:{{ dlKeyFg }};box-shadow:{{ dlKeyGlow }};display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:6px;padding:0 14px;text-align:left"><span style="font:900 24px/0.95 'Big Shoulders Display',sans-serif;letter-spacing:.05em">{{ dlKeyLbl }} ▸</span><span style="font:400 12px/1.25 'B612',sans-serif;color:{{ dlKeySubCol }}">{{ dlKeySub }}</span></button>
+                <div style="position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.22) 0 1px,transparent 1px 3px)"></div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px"><span style="font:900 36px/0.92 'Big Shoulders Display',sans-serif;color:#1b1a16">{{ dlTitle }}</span><span style="font:700 14px/1 'B612 Mono',monospace;color:#1d6b34;letter-spacing:.03em">{{ dlStatus }}</span></div>
+              <div style="flex:1;min-height:0;display:flex;justify-content:center">
+                <div style="position:relative;height:100%;max-width:100%;display:grid;box-shadow:0 0 0 1px #d3c8a8">
+                  <canvas ref="{{ cRefD }}" width="180" height="170" style="grid-area:1/1;height:100%;width:auto;max-width:100%;display:block;image-rendering:pixelated"></canvas>
+                  <div role="img" aria-label="{{ dlName }}" style="grid-area:1/1;width:100%;height:100%;background:{{ dlImgBg }};clip-path:{{ dlClip }};transition:{{ dlClipTr }}"></div>
+                  <div style="position:absolute;left:-14px;right:-14px;top:{{ dlHeadY }};height:4px;margin-top:-2px;background:#1b1a16;opacity:{{ dlHeadO }}"></div>
+                </div>
+              </div>
+              <div style="min-height:58px;display:flex;flex-direction:column;gap:7px;opacity:{{ dlCapO }};transition:opacity .6s .5s">
+                <span style="font:700 16px/1.35 'B612 Mono',monospace;color:#1b1a16;text-wrap:pretty">{{ dlVoice }}</span>
+                <span style="font:400 11px/1.3 'B612 Mono',monospace;letter-spacing:.06em;color:#7a715c">{{ dlCredit }}</span>
+              </div>
+            </div>
+          </div>
+        </sc-if>
       </div>
     </div>
 
@@ -258,7 +344,7 @@
     <div id="1b" style="display:flex;flex-direction:column;gap:12px">
       <div style="display:flex;gap:10px;align-items:center"><span style="padding:4px 9px;border-radius:3px;background:#ffb547;color:#1b1a16;font:700 13px/1 'B612 Mono',monospace">1b</span><span style="font:400 13px/1 'B612 Mono',monospace;color:#8a8270;letter-spacing:.1em;white-space:nowrap">MOBILE · 390 × 844</span></div>
       <div style="width:390px;height:844px;box-sizing:border-box;padding:12px 10px 14px;background:#1c1e18;border-radius:34px;box-shadow:0 30px 80px rgba(0,0,0,.55),0 0 0 8px #0f100c;display:grid;grid-template-rows:30px 70px 46px minmax(0,1fr) 168px;gap:10px;position:relative;overflow:hidden">
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:0 14px;font:700 12px/1 'B612 Mono',monospace;color:#8a8270"><span>9:41</span><span style="font:900 16px/1 'Big Shoulders Display',sans-serif;color:#efe6cf;letter-spacing:.08em">SIGNAL DELAY</span><button onClick="{{ toggleMode }}" style="cursor:pointer;padding:5px 8px;border-radius:4px;border:1px solid #4a4d42;background:#0f100c;color:{{ engLbl }};font:700 10px/1 'B612 Mono',monospace;letter-spacing:.1em">ENG</button></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:0 12px;font:700 12px/1 'B612 Mono',monospace;color:#8a8270"><span style="font:900 16px/1 'Big Shoulders Display',sans-serif;color:#efe6cf;letter-spacing:.08em">SIGNAL DELAY</span><span style="display:flex;align-items:center;gap:5px;font:700 9px/1 'B612 Mono',monospace;letter-spacing:.1em"><span style="color:#6f685a">PACK ✓</span><span style="color:#4a4d42">›</span><span style="color:#ffb547;padding-bottom:2px;border-bottom:2px solid #ffb547">FLY</span><span style="color:#4a4d42">›</span><span style="color:#6f685a">REPORT</span></span><button onClick="{{ toggleMode }}" style="cursor:pointer;padding:5px 8px;border-radius:4px;border:1px solid #4a4d42;background:#0f100c;color:{{ engLbl }};font:700 10px/1 'B612 Mono',monospace;letter-spacing:.1em">ENG</button></div>
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
           <sc-for list="{{ res }}" as="r" hint-placeholder-count="4">
             <div style="position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:#23251f;border:1px solid #3a3d33;border-radius:6px">
@@ -300,6 +386,7 @@
             </g>
           </svg>
           <div style="position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.22) 0 1px,transparent 1px 3px)"></div>
+          <sc-if value="{{ hasDl }}" hint-placeholder-val="{{ false }}"><button onClick="{{ toggleDl }}" style="position:absolute;right:10px;top:10px;cursor:pointer;display:flex;align-items:center;gap:6px;padding:6px 9px;border-radius:4px;border:1.5px solid {{ dlBtnCol }};background:rgba(5,12,7,.9);color:{{ dlBtnCol }};font:400 18px/1 'VT323',monospace"><dc-import name="SDIcon" icon="dish" size="15" color="{{ dlBtnCol }}" hint-size="15px,15px"></dc-import>DOWNLINK · {{ dlBtnShort }}</button></sc-if>
           <sc-if value="{{ eng }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;left:14px;bottom:10px;font:400 17px/1.1 'VT323',monospace;color:#ffb547">t = d / c = {{ dEarth }} AU / c = {{ ltFmt }}</div></sc-if>
           <sc-if value="{{ isTransit }}" hint-placeholder-val="{{ false }}">
             <div style="position:absolute;left:50%;bottom:16px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 22px;background:rgba(5,12,7,.85);border:1px solid #1f5a32;border-radius:6px;white-space:nowrap">
@@ -364,6 +451,78 @@
           </div>
         </sc-if>
 
+        <sc-if value="{{ isSci }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;left:0;right:0;top:184px;bottom:0;background:rgba(3,6,4,.96);display:flex;flex-direction:column;gap:8px;padding:2px 10px 14px;box-sizing:border-box">
+            <div style="flex:none;position:relative;height:196px;border-radius:14px;border:6px solid #2c2f27;background:#050c07;overflow:hidden;display:flex;align-items:center;justify-content:center">
+              <span style="position:absolute;left:10px;top:8px;font:400 17px/1 'VT323',monospace;color:#8cff9e">MARS ORBIT · PICK TARGETS</span>
+              <div style="position:relative;width:172px;height:172px;flex:none">
+                <svg viewBox="0 0 100 100" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible"><g transform="rotate(-14 50 50)" fill="none" stroke="#1f9a4a" stroke-width=".5" stroke-dasharray="1 1.2"><ellipse cx="50" cy="50" rx="36" ry="11"></ellipse><ellipse cx="50" cy="50" rx="47" ry="15"></ellipse></g></svg>
+                <img src="assets/mars/globe.jpg" alt="Mars" style="position:absolute;left:19%;top:19%;width:62%;height:62%;border-radius:50%">
+                <div style="position:absolute;left:22%;top:22%;width:56%;height:56%;border-radius:50%;box-shadow:0 0 0 1px #1f5a32,0 0 26px rgba(140,255,158,.14)"></div>
+                <svg viewBox="0 0 100 100" style="position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none"><g transform="rotate(-14 50 50)" fill="none" stroke="#47c96b" stroke-width=".6" stroke-dasharray="1 1.2"><path d="M14 50 A36 11 0 0 0 86 50"></path><path d="M3 50 A47 15 0 0 0 97 50"></path></g></svg>
+                <sc-for list="{{ sciMarks }}" as="m" hint-placeholder-count="6">
+                  <button onClick="{{ m.pick }}" aria-label="{{ m.n }}" style="position:absolute;left:{{ m.x }};top:{{ m.y }};transform:translate(-50%,-50%);width:22px;height:22px;border-radius:50%;border:2px solid {{ m.bd }};background:{{ m.bg }};color:{{ m.fg }};box-shadow:{{ m.glow }};font:400 16px/1 'VT323',monospace;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center">{{ m.num }}</button>
+                </sc-for>
+              </div>
+              <span style="position:absolute;left:10px;bottom:7px;font:400 17px/1 'VT323',monospace;color:#ffb547">{{ selNameShort }}</span>
+              <div style="position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.22) 0 1px,transparent 1px 3px)"></div>
+            </div>
+            <div style="flex:1;min-height:0;overflow-y:auto;scrollbar-width:none;display:flex;flex-direction:column;gap:7px">
+              <sc-for list="{{ sciCards }}" as="c" hint-placeholder-count="6">
+                <button onClick="{{ c.pick }}" style="flex:none;cursor:pointer;text-align:left;border-radius:5px;border:1.5px solid {{ c.bd }};background:{{ c.bg }};padding:8px 10px;display:flex;flex-direction:column;gap:5px;box-sizing:border-box">
+                  <div style="display:flex;align-items:baseline;gap:7px;width:100%"><span style="font:400 16px/1 'VT323',monospace;color:{{ c.numCol }}">{{ c.num }}</span><span style="flex:1;font:400 22px/0.95 'VT323',monospace;color:{{ c.nameCol }}">{{ c.n }}</span><span style="font:400 16px/1 'VT323',monospace;color:#ffb547;white-space:nowrap">{{ c.qBars }} <span style="color:#47c96b">{{ c.ql }}</span></span></div>
+                  <span style="font:400 12px/1.3 'B612',sans-serif;color:#9fc7a6;text-wrap:pretty">{{ c.learn }}</span>
+                  <div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;width:100%">
+                    <span style="display:flex;align-items:center;gap:4px;padding:2px 5px;border-radius:3px;border:1.5px solid {{ c.fuelCol }};font:400 16px/1 'VT323',monospace;color:{{ c.fuelCol }}"><dc-import name="SDIcon" icon="fuel" size="12" color="{{ c.fuelCol }}" hint-size="12px,12px"></dc-import>{{ c.fuelV }}</span>
+                    <span style="display:flex;align-items:center;gap:4px;padding:2px 5px;border-radius:3px;border:1.5px solid {{ c.powCol }};font:400 16px/1 'VT323',monospace;color:{{ c.powCol }}"><dc-import name="SDIcon" icon="power" size="12" color="{{ c.powCol }}" hint-size="12px,12px"></dc-import>{{ c.powV }}</span>
+                    <span style="display:flex;align-items:center;gap:4px;padding:2px 5px;border-radius:3px;border:1.5px dashed {{ c.riskCol }};font:400 16px/1 'VT323',monospace;color:{{ c.riskCol }}">⚠ {{ c.risk }}</span>
+                    <sc-if value="{{ c.queued }}" hint-placeholder-val="{{ false }}"><span style="margin-left:auto;padding:3px 6px;border-radius:2px;background:#1f9a4a;color:#050c07;font:400 15px/1 'VT323',monospace">✓ QUEUED</span></sc-if>
+                  </div>
+                </button>
+              </sc-for>
+            </div>
+            <div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px">
+              <button onClick="{{ observe }}" style="cursor:{{ obsCursor }};height:62px;border-radius:7px;border:none;border-bottom:5px solid {{ obsEdge }};background:{{ obsBg }};color:{{ obsFg }};box-shadow:{{ obsGlow }};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px"><span style="font:900 26px/1 'Big Shoulders Display',sans-serif;letter-spacing:.08em">OBSERVE ▸</span><span style="font:400 10px/1.2 'B612',sans-serif;color:{{ obsSubCol }}">{{ obsSubShort }}</span></button>
+              <button onClick="{{ finishSci }}" style="cursor:pointer;padding:0 14px;border-radius:7px;border:1.5px solid #47c96b;background:transparent;color:#8cff9e;font:400 20px/1 'VT323',monospace">{{ finishLblShort }} ▸</button>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ dlOpen }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;left:8px;right:8px;top:118px;bottom:0;z-index:6;background:#efe6cf;border-radius:14px 14px 0 0;box-shadow:0 -20px 50px rgba(0,0,0,.7);overflow:hidden">
+            <div style="position:absolute;left:0;top:0;bottom:0;width:16px;border-right:1px dashed #c4b897;background-image:radial-gradient(circle,#1c1e18 2.6666666666666665px,transparent 3.6666666666666665px);background-size:16px 18px;background-position:center 8px"></div><div style="position:absolute;right:0;top:0;bottom:0;width:16px;border-left:1px dashed #c4b897;background-image:radial-gradient(circle,#1c1e18 2.6666666666666665px,transparent 3.6666666666666665px);background-size:16px 18px;background-position:center 8px"></div>
+            <div style="position:absolute;top:0;bottom:0;left:16px;right:16px;box-sizing:border-box;padding:12px 10px 14px;display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:8px;padding-bottom:7px;border-bottom:2px solid #1b1a16">
+                <div style="display:flex;flex-direction:column;gap:5px"><span style="font:700 8px/1.2 'B612 Mono',monospace;letter-spacing:.12em;color:#7a715c">TELETYPE 04 · DSN CANBERRA</span><span style="font:900 24px/0.9 'Big Shoulders Display',sans-serif;color:#1b1a16">DOWNLINK</span></div>
+                <button onClick="{{ toggleDl }}" style="cursor:pointer;padding:7px 10px;border-radius:4px;border:2px solid #1b1a16;border-bottom-width:3px;background:#efe6cf;font:700 10px/1 'B612 Mono',monospace;color:#1b1a16">✕ CLOSE</button>
+              </div>
+              <div style="position:relative;display:flex;flex-direction:column;gap:3px;padding:8px 10px;background:#050c07;border-radius:5px;overflow:hidden">
+                <span style="font:400 22px/1 'VT323',monospace;color:#8cff9e">{{ dlBig }}</span>
+                <span style="font:400 16px/1 'VT323',monospace;color:{{ dlPassCol }}">{{ dlPassShort }}</span>
+                <div style="margin-top:4px;display:flex;flex-direction:column;gap:4px">
+                  <sc-for list="{{ dlQueue }}" as="q" hint-placeholder-count="3">
+                    <div style="display:grid;grid-template-columns:minmax(0,1fr) 56px 58px;align-items:center;gap:7px"><span style="font:400 16px/1 'VT323',monospace;color:{{ q.nameCol }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ q.n }}</span><div style="height:4px;background:#0f2416;overflow:hidden"><div style="height:100%;width:{{ q.pct }};background:{{ q.barCol }}"></div></div><span style="font:400 15px/1 'VT323',monospace;color:{{ q.stCol }};text-align:right;white-space:nowrap">{{ q.stS }}</span></div>
+                  </sc-for>
+                </div>
+                <div style="position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.22) 0 1px,transparent 1px 3px)"></div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:4px"><span style="font:900 21px/0.95 'Big Shoulders Display',sans-serif;color:#1b1a16">{{ dlTitle }}</span><span style="font:700 9.5px/1.2 'B612 Mono',monospace;color:#1d6b34">{{ dlStatus }}</span></div>
+              <div style="flex:1;min-height:0;display:flex;justify-content:center">
+                <div style="position:relative;height:100%;max-width:100%;display:grid;box-shadow:0 0 0 1px #d3c8a8">
+                  <canvas ref="{{ cRefM }}" width="180" height="170" style="grid-area:1/1;height:100%;width:auto;max-width:100%;display:block;image-rendering:pixelated"></canvas>
+                  <div role="img" aria-label="{{ dlName }}" style="grid-area:1/1;width:100%;height:100%;background:{{ dlImgBg }};clip-path:{{ dlClip }};transition:{{ dlClipTr }}"></div>
+                  <div style="position:absolute;left:-8px;right:-8px;top:{{ dlHeadY }};height:4px;margin-top:-2px;background:#1b1a16;opacity:{{ dlHeadO }}"></div>
+                </div>
+              </div>
+              <div style="min-height:50px;display:flex;flex-direction:column;gap:4px;opacity:{{ dlCapO }};transition:opacity .6s .5s">
+                <span style="font:700 11px/1.35 'B612 Mono',monospace;color:#1b1a16;text-wrap:pretty">{{ dlVoice }}</span>
+                <span style="font:400 8px/1.3 'B612 Mono',monospace;color:#7a715c">{{ dlCredit }}</span>
+              </div>
+              <button onClick="{{ dlKeyGo }}" style="flex:none;cursor:{{ dlKeyCursor }};height:56px;border-radius:7px;border:none;border-bottom:5px solid {{ dlKeyEdge }};background:{{ dlKeyBg }};color:{{ dlKeyFg }};box-shadow:{{ dlKeyGlow }};font:900 22px/1 'Big Shoulders Display',sans-serif;letter-spacing:.06em">{{ dlKeyLbl }} ▸</button>
+            </div>
+          </div>
+        </sc-if>
+
         <sc-if value="{{ stripOpen }}" hint-placeholder-val="{{ false }}">
           <div style="position:absolute;left:10px;right:10px;top:180px;height:340px;box-sizing:border-box;background:#efe6cf;border-radius:0 0 8px 8px;box-shadow:0 24px 40px rgba(0,0,0,.65);display:flex;flex-direction:column-reverse;gap:2px;padding:6px 12px 12px;overflow-y:auto;scrollbar-width:none">
             <sc-for list="{{ feedRevM }}" as="f" hint-placeholder-count="5">
@@ -409,6 +568,7 @@ const EVENTS=[
   history:'Sep 2014: NASA’s MAVEN fired its engines for 33 minutes. Earth heard it worked 12 minutes later.',source:'NASA · MAVEN orbit insertion, 21 Sep 2014 (to verify)',
   choices:[{label:'SAFE ORBIT',sub:'Long burn. Wide, easy orbit.',costs:[{i:'fuel',v:'−2'}],eng:'Δv ≈ 1.2 km/s · capture margin high',fx:{fuel:-2},ack:'ORDER RECEIVED. LONG BURN ARMED. 34 MIN.',result:['ENGINE FIRED 34 MIN.','CAUGHT BY MARS.','WIDE ORBIT. ALL SAFE.']},
            {label:'TIGHT ORBIT',sub:'Short burn. Skim the air to slow down.',costs:[{i:'fuel',v:'−1'},{i:'sys',v:'−1?',risk:true}],eng:'Δv ≈ 0.8 km/s + aerobraking passes',fx:{fuel:-1,sys:-1},ack:'ORDER RECEIVED. SHORT BURN. AIR DOES THE REST.',result:['ENGINE FIRED 22 MIN.','AIR DRAG DID THE REST.','HEAT PANELS SCORCHED.','CLOSE ORBIT. MORE SCIENCE.']}]},
+ {id:'sci',day:312,science:true,icon:'camera',label:'Science targets',short:'SCI'},
  {id:'ecl',day:352,card:true,icon:'eclipse',label:'Eclipse season',short:'DARK',title:'ECLIPSE SEASON',line:'Mars will block the Sun for 40 minutes every orbit. No sun, no power.',hits:'IN 2 DAYS',
   history:'Every Mars orbiter plans for this. The batteries must last through the dark.',source:'NASA · MAVEN eclipse seasons (to verify)',
   choices:[{label:'SAVE POWER',sub:'Turn the heaters down. Shiver.',costs:[{i:'sys',v:'−1?',risk:true}],eng:'Heater duty 40% · battery DoD 22%',fx:{sys:-1},ack:'ORDER RECEIVED. HEATERS DOWN. IT WILL BE COLD.',result:['ECLIPSES DONE.','IT GOT COLD. ONE PART CRACKED.','POWER STILL HEALTHY.']},
@@ -420,6 +580,24 @@ const EVENTS=[
            {label:'BIG PLAN',sub:'Upload a busy 2-week plan.',costs:[{i:'data',v:'+2'},{i:'sys',v:'−2?',risk:true}],eng:'Corrupt-uplink risk at SEP < 2°',fx:{data:2,sys:-1},ack:'ORDER RECEIVED. 14-DAY PLAN LOADED.',result:['SUN MOVED ASIDE.','ONE ORDER ARRIVED GARBLED.','HID IN SAFE MODE.','STILL GOT GOOD DATA.']}]}
 ];
 const STORM=EVENTS[0];
+const SCI=312,W=180,WAIT=3.4,PD=4.6,HOLD=.7,INK=[29,107,52];
+const TG=[
+ {n:'OLYMPUS MONS',learn:'How a volcano grows two and a half times taller than Everest.',q:3,ql:'SHARP',res:'40 M/PX',mb:'1.8 MB',fuel:1,pow:1,risk:'LOW',x:34,y:40,img:'assets/mars/olympus.jpg',credit:'IMAGE CREDIT: NASA/JPL · VIKING 1 ORBITER',voice:'IT WAS WIDER THAN MY WHOLE VIEW. I BACKED UP TO FIT IT IN.'},
+ {n:'VALLES MARINERIS',learn:'A canyon as long as the USA — and what tore it open.',q:3,ql:'SHARP',res:'60 M/PX',mb:'2.1 MB',fuel:0,pow:1,risk:'DUST MED',x:50,y:53,img:'assets/mars/valles.jpg',credit:'IMAGE CREDIT: NASA/JPL-CALTECH/USGS · VIKING ORBITER MOSAIC',voice:'A CRACK ACROSS THE WHOLE PLANET. I FOLLOWED IT FOR 40 MINUTES.'},
+ {n:'NORTH POLAR CAP',learn:'Ice layers that record a million years of Mars weather.',q:2,ql:'GOOD',res:'120 M/PX',mb:'1.4 MB',fuel:1,pow:1,risk:'LOW',x:50,y:23,img:'assets/mars/northcap.jpg',credit:'IMAGE CREDIT: NASA/JPL/USGS · VIKING ORBITER · PIA00161',voice:'WHITE SPIRALS. THE ICE IS WRITING SOMETHING DOWN.'},
+ {n:'PHOBOS',learn:'A captured asteroid — or a chunk blasted off Mars?',q:3,ql:'SHARP',res:'7 M/PX',mb:'2.6 MB',fuel:1,pow:1,risk:'DUST MED',x:21,y:63,img:'assets/mars/phobos.jpg',credit:'IMAGE CREDIT: NASA/JPL-CALTECH/UNIVERSITY OF ARIZONA · MRO HiRISE, 2008',voice:'CLOSE ENOUGH TO SEE THE GROOVES. IT IS FALLING TOWARD MARS. SLOWLY.'},
+ {n:'DEIMOS',learn:'Why the smaller moon looks smoothed over with sand.',q:2,ql:'GOOD',res:'20 M/PX',mb:'0.9 MB',fuel:2,pow:1,risk:'LOW',x:91,y:47,img:'assets/mars/deimos.jpg',credit:'IMAGE CREDIT: NASA/JPL-CALTECH/UNIVERSITY OF ARIZONA · MRO HiRISE',voice:'SMALL. QUIET. SMOOTH, LIKE SAND POURED OVER IT.'},
+ {n:'THIN AIR AT THE LIMB',learn:'How much air Mars has left — and where the rest went.',q:1,ql:'FAIR',res:'300 M/PX',mb:'1.2 MB',fuel:0,pow:2,risk:'DRAG HIGH',x:77,y:38,img:'assets/mars/limb.jpg',credit:'IMAGE CREDIT: NASA/JPL · VIKING 1 ORBITER',voice:'THE SKY HERE IS ONE THIN LINE. I FLEW LOW TO SEE IT.'}
+];
+function dither(img){
+  const hh=Math.round(W*img.naturalHeight/img.naturalWidth),c=document.createElement('canvas');c.width=W;c.height=hh;
+  const x=c.getContext('2d');x.drawImage(img,0,0,W,hh);const d=x.getImageData(0,0,W,hh).data,g=new Float32Array(W*hh);
+  for(let i=0;i<W*hh;i++){const l=(d[i*4]*.3+d[i*4+1]*.59+d[i*4+2]*.11)/255;g[i]=Math.min(1,Math.max(0,(l-.5)*1.5+.55))*255;}
+  const bits=new Uint8Array(W*hh);
+  for(let y=0;y<hh;y++)for(let xx=0;xx<W;xx++){const i=y*W+xx,o=g[i],n=o<128?0:255,e=o-n;bits[i]=n?0:1;
+    if(xx+1<W)g[i+1]+=e*7/16;if(y+1<hh){if(xx>0)g[i+W-1]+=e*3/16;g[i+W]+=e*5/16;if(xx+1<W)g[i+W+1]+=e/16;}}
+  return {h:hh,bits};
+}
 const ICON_OF={power:'power',fuel:'fuel',data:'data',sys:'sys'};
 const RES=[{k:'power',name:'POWER',u:v=>v*290+' Wh'},{k:'fuel',name:'FUEL',u:v=>v*328+' kg'},{k:'data',name:'DATA',u:v=>(v*0.8).toFixed(1)+' Gb'},{k:'sys',name:'SYSTEMS',u:v=>v+'/5'}];
 const clamp=v=>Math.max(0,Math.min(5,v));
@@ -447,23 +625,28 @@ function stormFeed(n){const f=seed(214),o={};f.push(msg('bot',214,ALERT.storm(BA
   if(n>2)f.push(msg('bot',214,CH.result.join(' ')));return {f,o};}
 
 class Component extends DCLogic {
-  state={day:200,speed:10,phase:'cruise',mode:'cadet',ev:null,ch:null,tp:0,tp2:0,ackT:0,typed:0,ft:99,res:{...BASE},fired:{},nextPing:212,feed:seed(200),orderId:0,ackId:0,strip:false,name:'',dragX:0,flash:{},blink:true,jump:'live'};
+  state={day:200,speed:10,phase:'cruise',mode:'cadet',ev:null,ch:null,tp:0,tp2:0,ackT:0,typed:0,ft:99,res:{...BASE},fired:{},nextPing:212,feed:seed(200),orderId:0,ackId:0,strip:false,name:'',dragX:0,flash:{},blink:true,jump:'live',sci:{sel:0,queued:[]},dl:{open:false,phase:'wait',cur:-1,wt:0,pt:0},clk:0};
+  bits=[];cvs={d:null,m:null};drawn=0;
+  cRefD=el=>{this.cvs.d=el;if(el)this.prepAll();};
+  cRefM=el=>{this.cvs.m=el;if(el)this.prepAll();};
   componentDidMount(){
     let nm='';try{nm=localStorage.getItem('sd.robotName')||'';}catch(_){}
     this.setState({name:nm,mode:this.props.startMode==='engineer'?'eng':'cadet'});
     this.last=performance.now();
     this.iv=setInterval(()=>this.tick(),33);
+    TG.forEach((t,i)=>{const im=new Image();im.onload=()=>{try{this.bits[i]=dither(im);if(this.dlCur()===i)this.prepAll();}catch(_){}};im.src=t.img;});
     this.kd=e=>{if(this.state.phase!=='card')return;if(e.key==='ArrowLeft')this.choose(0);if(e.key==='ArrowRight')this.choose(1);};
     window.addEventListener('keydown',this.kd);
   }
   componentWillUnmount(){clearInterval(this.iv);window.removeEventListener('keydown',this.kd);}
   tick(){
     const now=performance.now(),dt=Math.min(.1,(now-this.last)/1000);this.last=now;
-    const s=this.state,cps=TYPE[this.props.typeSpeed]||34,u={ft:s.ft+dt*cps*1.4,blink:Math.floor(now/450)%2===0};
+    const s=this.state,cps=TYPE[this.props.typeSpeed]||34,u={ft:s.ft+dt*cps*1.4,blink:Math.floor(now/450)%2===0,clk:s.clk+dt};
     let feed=null;const add=m=>{feed=(feed||s.feed).concat([m]);u.ft=0;return m;};
     if(s.phase==='cruise'&&s.speed>0){
       let nd=s.day+s.speed*dt;const fired={...s.fired};
       for(const ev of EVENTS){if(fired[ev.id]||ev.day<=s.day||ev.day>nd)continue;fired[ev.id]=1;
+        if(ev.science){nd=ev.day;u.phase='science';u.strip=false;add(msg('bot',ev.day,this.nm()+' IS IN MARS ORBIT. WHAT SHOULD IT LOOK AT?'));break;}
         if(ev.card){nd=ev.day;u.phase='card';u.ev=ev;u.strip=false;add(msg('bot',ev.day,ALERT[ev.id](s.res)));break;}
         add(msg('bot',ev.day,ev.log));}
       if(!u.phase&&nd>=s.nextPing&&s.nextPing<470){add(msg('bot',s.nextPing,PINGS[Math.floor(s.nextPing/18)%3](s.nextPing,s.res)));u.nextPing=s.nextPing+18;}
@@ -474,22 +657,90 @@ class Component extends DCLogic {
     if(s.phase==='reply'){u.tp2=s.tp2+dt/4.2;if(u.tp2>=1){u.tp2=1;u.phase='ack';u.ackT=0;u.ackId=add(msg('bot',s.day,s.ch.ack,'ack')).id;}}
     if(s.phase==='ack'){u.ackT=s.ackT+dt;if(u.ackT>3.6&&s.jump!=='ack'){u.phase='result';u.typed=0;u.res=applyFx(s.res,s.ch.fx);u.flash=s.ch.fx;}}
     if(s.phase==='result')u.typed=s.typed+dt*cps;
+    const dl=s.dl;
+    if(dl.open&&dl.phase==='wait'&&s.sci.queued.length){const wt=dl.wt+dt;if(wt>=WAIT){u.dl={...dl,phase:'print',cur:0,pt:u.clk,wt};this._prep=true;}else u.dl={...dl,wt};}
+    if(dl.phase==='print'){this.drawTo(this.dlRows(u.clk));if(u.clk-dl.pt>=PD+HOLD){u.dl={...dl,phase:'open'};const t=TG[s.sci.queued[dl.cur]];add(msg('bot',s.day,'IMAGE HOME · '+t.n+'. '+t.voice));u.res=applyFx(u.res||s.res,{data:-1});u.flash={data:-1};}}
     if(feed)u.feed=feed.slice(-30);
-    this.setState(u);
+    this.setState(u,this._prep?()=>{this._prep=false;this.prepAll();}:undefined);
   }
   choose(i){const s=this.state,ev=s.ev;if(!ev||s.phase!=='card')return;const ch=ev.choices[i],m=msg('earth',s.day,'ORDER: '+ch.label+'.','order');
     this.setState({phase:'transit',ch,tp:0,tp2:0,dragX:0,orderId:m.id,feed:s.feed.concat([m]).slice(-30),ft:0});}
   cont(){const s=this.state,m=s.ch?msg('bot',s.day,s.ch.result.join(' ')):null;
     this.setState({phase:'cruise',ev:null,ch:null,flash:{},jump:'live',ackId:0,feed:m?s.feed.concat([m]).slice(-30):s.feed,ft:0});}
-  live(){this.setState({jump:'live',day:200,speed:10,phase:'cruise',ev:null,ch:null,fired:{},res:{...BASE},flash:{},feed:seed(200),nextPing:212,ft:99,orderId:0,ackId:0,strip:false});}
+  live(){this.setState({jump:'live',day:200,speed:10,phase:'cruise',ev:null,ch:null,fired:{},res:{...BASE},flash:{},feed:seed(200),nextPing:212,ft:99,orderId:0,ackId:0,strip:false,sci:{sel:0,queued:[]},dl:{open:false,phase:'wait',cur:-1,wt:0,pt:0}});}
   jumpTo(k){
-    const b={dragX:0,flash:{},jump:k,strip:false,ft:0,tp:0,tp2:0,ackT:0,fired:{storm:1},nextPing:244,res:{...BASE}};
+    if(k==='science'||k==='downlink')return this.jumpSci(k);
+    const b={dragX:0,flash:{},jump:k,strip:false,ft:0,tp:0,tp2:0,ackT:0,fired:{storm:1},nextPing:244,res:{...BASE},sci:{sel:0,queued:[]},dl:{open:false,phase:'wait',cur:-1,wt:0,pt:0}};
     if(k==='cruise'){const {f}=stormFeed(3);this.setState({...b,day:232,phase:'cruise',ev:null,ch:null,speed:1,res:applyFx(BASE,CH.fx),feed:f,ft:99,orderId:0,ackId:0});}
     if(k==='card'){const {f}=stormFeed(0);this.setState({...b,day:214,phase:'card',ev:STORM,ch:null,speed:10,feed:f});}
     if(k==='transit'){const {f,o}=stormFeed(1);this.setState({...b,day:214,phase:'transit',ev:STORM,ch:CH,tp:.3,feed:f,orderId:o.order.id,ft:99});}
     if(k==='ack'){const {f,o}=stormFeed(2);this.setState({...b,day:214,phase:'ack',ev:STORM,ch:CH,tp:1,tp2:1,feed:f,orderId:o.order.id,ackId:o.ack.id});}
     if(k==='result'){const {f,o}=stormFeed(2);this.setState({...b,day:214,phase:'result',ev:STORM,ch:CH,tp:1,tp2:1,typed:0,res:applyFx(BASE,CH.fx),flash:CH.fx,feed:f,orderId:o.order.id,ackId:o.ack.id,ft:99});}
   }
+  nm(){return String(this.state.name||this.props.robotName||'VOYA').toUpperCase().slice(0,12);}
+  jumpSci(k){const nm=this.nm(),{f}=stormFeed(3);
+    f.push(msg('bot',248,'COURSE FIX BURN DONE. 9 SECONDS. ON TARGET FOR MARS.'));
+    f.push(msg('earth',307,'ORDER: TIGHT ORBIT.','order'));
+    f.push(msg('bot',307,'ENGINE FIRED 22 MIN. AIR DRAG DID THE REST. CLOSE ORBIT.'));
+    f.push(msg('bot',SCI,nm+' IS IN MARS ORBIT. WHAT SHOULD IT LOOK AT?'));
+    const base={jump:k,day:SCI,ev:null,ch:null,dragX:0,flash:{},strip:false,fired:{storm:1,tcm:1,moi:1,sci:1},nextPing:324,orderId:0,ackId:0,tp:0,tp2:0,ackT:0};
+    if(k==='science')return this.setState({...base,phase:'science',speed:10,res:{power:4,fuel:3,data:2,sys:3},sci:{sel:0,queued:[]},dl:{open:false,phase:'wait',cur:-1,wt:0,pt:0},feed:f.slice(-30),ft:0});
+    const q=[0,3,1];q.forEach(i=>f.push(msg('earth',SCI,'ORDER: OBSERVE '+TG[i].n+'.','sci')));
+    f.push(msg('bot',SCI+1,'3 TARGETS SHOT. PICTURES WAIT IN MY MEMORY FOR A DISH ON EARTH.'));
+    this.setState({...base,day:SCI+1,phase:'cruise',speed:0,res:{power:1,fuel:1,data:5,sys:3},sci:{sel:0,queued:q},dl:{open:true,phase:'wait',cur:-1,wt:0,pt:0},feed:f.slice(-30),ft:0},()=>this.prepAll());}
+  sciCheck(i){const s=this.state,x=TG[i];if(s.sci.queued.includes(i))return 'queued';if(s.res.data>=5)return 'full';if(x.fuel&&s.res.fuel-x.fuel<1)return 'fuel';if(s.res.power<x.pow)return 'pow';return 'ok';}
+  observe(){const s=this.state,i=s.sci.sel,x=TG[i];if(s.phase!=='science'||this.sciCheck(i)!=='ok')return;
+    const fx={fuel:-x.fuel,power:-x.pow,data:1};if(/HIGH/.test(x.risk))fx.sys=-1;
+    const m=msg('earth',s.day,'ORDER: OBSERVE '+x.n+'.','sci');
+    this.setState({sci:{...s.sci,queued:[...s.sci.queued,i]},res:applyFx(s.res,fx),flash:fx,feed:s.feed.concat([m]).slice(-30),ft:0});}
+  finishSci(){const s=this.state,n=s.sci.queued.length,m=msg('bot',s.day,n?n+(n===1?' TARGET':' TARGETS')+' SHOT. PICTURES WAIT IN MY MEMORY FOR A DISH ON EARTH.':'NO PICTURES THIS TIME. SAVING FUEL.');
+    this.setState({phase:'cruise',flash:{},feed:s.feed.concat([m]).slice(-30),ft:0});}
+  dlCur(){const s=this.state;return s.dl.cur>=0?s.sci.queued[s.dl.cur]:-1;}
+  dlRows(clk){const s=this.state,b=this.bits[this.dlCur()];if(!b)return 0;if(s.dl.phase==='print')return Math.floor(Math.min(1,(clk-s.dl.pt)/PD)*b.h);return s.dl.phase==='open'?b.h:0;}
+  prepAll(){this.drawn=0;const b=this.bits[this.dlCur()];['d','m'].forEach(k=>{const el=this.cvs[k];if(!el)return;el.width=W;el.height=b?b.h:170;el.getContext('2d').clearRect(0,0,el.width,el.height);});this.drawTo(this.dlRows(this.state.clk));}
+  drawTo(rows){const b=this.bits[this.dlCur()];if(!b||rows<=this.drawn)return;const from=this.drawn,n=rows-from;
+    ['d','m'].forEach(k=>{const el=this.cvs[k];if(!el||el.height!==b.h)return;const x=el.getContext('2d'),img=x.createImageData(W,n);
+      for(let y=0;y<n;y++)for(let xx=0;xx<W;xx++){if(b.bits[(from+y)*W+xx]){const p=(y*W+xx)*4;img.data[p]=INK[0];img.data[p+1]=INK[1];img.data[p+2]=INK[2];img.data[p+3]=255;}}
+      x.putImageData(img,0,from);});
+    this.drawn=rows;}
+  dlStart(i){this.setState(s=>({dl:{...s.dl,phase:'print',cur:i,pt:s.clk}}),()=>this.prepAll());}
+  sciVals(eng,nameU){const s=this.state,sel=s.sci.sel,x=TG[sel],st=this.sciCheck(sel),lt=ltMin(s.day);
+    const pick=i=>()=>this.setState({sci:{...this.state.sci,sel:i}});
+    const cards=TG.map((t,i)=>{const on=i===sel,q=s.sci.queued.includes(i),dead=!q&&this.sciCheck(i)!=='ok';
+      return {n:t.n,learn:t.learn,num:String(i+1).padStart(2,'0'),qBars:'▮'.repeat(t.q)+'▯'.repeat(3-t.q),ql:t.ql,queued:q,
+        fuelV:t.fuel?'−'+t.fuel:'0',powV:'−'+t.pow,risk:t.risk,engLine:'RES '+t.res+' · '+t.mb+(/HIGH/.test(t.risk)?' · SYS −1':''),
+        fuelCol:!q&&t.fuel&&s.res.fuel-t.fuel<1?'#ff5a3d':(t.fuel?'#ffb547':'#1f9a4a'),powCol:!q&&s.res.power<t.pow?'#ff5a3d':'#ffb547',riskCol:/HIGH/.test(t.risk)?'#ff5a3d':/MED/.test(t.risk)?'#ffb547':'#47c96b',
+        bg:on?'#1c1a0c':(q?'#0c2414':'#0a1a0f'),bd:on?'#ffb547':(q?'#47c96b':'#1f5a32'),glow:on?'0 0 16px rgba(255,181,71,.25)':'none',numCol:on?'#ffb547':'#1f9a4a',nameCol:dead?'#3f7a50':(on?'#ffd28a':'#8cff9e'),pick:pick(i)};});
+    const marks=TG.map((t,i)=>{const on=i===sel,q=s.sci.queued.includes(i);return {n:t.n,num:i+1,x:t.x+'%',y:t.y+'%',bd:on?'#ffb547':(q?'#8cff9e':'#47c96b'),bg:on?'#ffb547':(q?'#1f9a4a':'rgba(5,12,7,.75)'),fg:on||q?'#050c07':'#8cff9e',glow:on?'0 0 14px rgba(255,181,71,.8)':'none',pick:pick(i)};});
+    const sub={ok:[x.n+' · the order takes '+lt+' min to reach '+nameU,x.n+' · ARRIVES IN '+lt+' MIN'],queued:['Already queued. Pick another target.','ALREADY QUEUED'],full:['Camera memory full. Downlink some pictures first.','MEMORY FULL · DOWNLINK FIRST'],fuel:['Not enough fuel. '+nameU+' keeps its last unit to stay in orbit.','KEEP 1 FUEL TO STAY IN ORBIT'],pow:['Battery too low for this one.','BATTERY TOO LOW']}[st];
+    const ok=st==='ok',n=s.sci.queued.length;
+    return {isSci:s.phase==='science',sciCards:cards,sciMarks:marks,selX:x.x+'%',selY:x.y+'%',selTf:x.x>60?'translate(calc(-100% - 22px),-50%)':'translate(22px,-50%)',selName:x.n,selNameShort:(sel+1)+' · '+x.n,
+      sciHint:n?n+' QUEUED · EVERY PICTURE COSTS FUEL OR BATTERY':'EVERY PICTURE COSTS FUEL OR BATTERY. YOU CAN’T SEE IT ALL.',
+      observe:()=>this.observe(),obsSub:sub[0],obsSubShort:sub[1],obsBg:ok?'#ffb547':'#2c2f27',obsFg:ok?'#1b1a16':'#6f685a',obsEdge:ok?'#9a6514':'#1a1b16',obsGlow:ok?'0 0 24px rgba(255,181,71,.3)':'none',obsCursor:ok?'pointer':'not-allowed',obsSubCol:ok?'#3a2a0a':'#8a8270',
+      finishSci:()=>this.finishSci(),finishLbl:n?'DONE · KEEP FLYING':'SKIP SCIENCE',finishLblShort:n?'DONE':'SKIP'};}
+  dlVals(nameU){const s=this.state,dl=s.dl,Q=s.sci.queued.map(i=>TG[i]),cur=dl.cur,q=Q[Math.max(0,cur)]||TG[0],lt=ltMin(s.day);
+    const p=dl.phase==='print'?Math.min(1,(s.clk-dl.pt)/PD):(dl.phase==='open'?1:0);
+    const done=i=>i<cur||(i===cur&&dl.phase==='open'),waiting=Q.filter((_,i)=>!done(i)).length;
+    const hrs=Math.max(0,Math.ceil(6*(1-dl.wt/WAIT))),all=Q.length>0&&waiting===0,b=this.bits[this.dlCur()],lines=b?b.h:240;
+    const rows=Q.map((t,i)=>{const d=done(i),now=i===cur&&!d,pct=d?100:(now?Math.round(p*100):0);return {n:t.n,st:d?'HOME ✓':(now?'↓ '+pct+'%':'WAITING'),stS:d?'HOME ✓':(now?pct+'%':'WAITING'),pct:pct+'%',nameCol:d?'#8cff9e':(now?'#ffb547':'#47c96b'),stCol:d?'#8cff9e':(now?'#ffb547':'#1f9a4a'),barCol:d?'#47c96b':'#ffb547'};});
+    let kl,ks,ok=true,go=null;
+    if(!Q.length){kl='NOTHING QUEUED';ks='Pick targets first';ok=false;}
+    else if(all){kl='ALL HOME';ks='Close the drawer';go=()=>this.setState({dl:{...this.state.dl,open:false}});}
+    else if(dl.phase==='wait'){kl='SKIP TO PASS';ks='Fast-forward '+hrs+' h';go=()=>this.dlStart(0);}
+    else if(dl.phase==='print'){kl='RECEIVING…';ks='Line by line, 500 kbit/s';ok=false;}
+    else{kl='NEXT IMAGE';ks=waiting+' still on '+nameU;go=()=>this.dlStart(cur+1);}
+    const printing=cur>=0,opened=printing&&dl.phase==='open';
+    return {dlOpen:dl.open,hasDl:Q.length>0,noDl:!Q.length,toggleDl:()=>{const d=this.state.dl;this.setState({dl:{...d,open:!d.open,wt:d.phase==='wait'?0:d.wt}});},
+      dlBtn:all?'ALL '+Q.length+' IMAGES HOME':waiting+(waiting===1?' IMAGE':' IMAGES')+' WAITING ON '+nameU,dlBtnShort:all?'ALL HOME':waiting+' WAITING',dlChev:dl.open?'CLOSE ▸':'OPEN ◂',dlFootBg:all?'#e4d9bb':'#ffb547',dlBtnCol:all?'#47c96b':'#ffb547',
+      dlBig:all?'ALL IMAGES HOME':waiting+(waiting===1?' IMAGE WAITING':' IMAGES WAITING'),
+      dlPass:dl.phase==='wait'?'NEXT DSN PASS IN '+hrs+' H':(all?'PASS CLOSES IN 2 H 10 M':'DSN CANBERRA · PASS OPEN · 3 H LEFT'),
+      dlPassShort:dl.phase==='wait'?'NEXT DSN PASS IN '+hrs+' H':(all?'PASS CLOSES IN 2 H':'CANBERRA PASS OPEN · 3 H LEFT'),dlPassCol:dl.phase==='wait'?'#ffb547':'#8cff9e',
+      dlQueue:rows,dlSent:printing?'SENT '+lt+' MIN BEFORE IT PRINTED':'NO SIGNAL YET',
+      dlTitle:printing?'IMAGE '+(cur+1)+' OF '+Q.length+' — '+q.n:'WAITING FOR THE DISH',
+      dlStatus:!printing?'PAPER LOADED · NOTHING TO PRINT YET':(opened?lines+' OF '+lines+' LINES · OPENED IN FULL COLOUR':'RECEIVING · LINE '+Math.floor(p*lines)+' OF '+lines+' · '+q.mb),
+      cRefD:this.cRefD,cRefM:this.cRefM,dlImg:q.img,dlImgBg:'#1b1a16 url("'+q.img+'") center/cover no-repeat',dlName:q.n,dlClip:opened?'inset(0 0 0 0)':'inset(50% 0 50% 0)',dlClipTr:opened?'clip-path 1.1s cubic-bezier(.6,0,.2,1)':'none',
+      dlHeadY:(p*100)+'%',dlHeadO:dl.phase==='print'?1:0,dlCapO:opened?1:0,dlVoice:nameU+': “'+q.voice+'”',dlCredit:q.credit,
+      dlKeyLbl:kl,dlKeySub:ks,dlKeyGo:()=>{if(go)go();},dlKeyBg:ok?'#ffb547':'#2c2f27',dlKeyFg:ok?'#1b1a16':'#6f685a',dlKeyEdge:ok?'#9a6514':'#1a1b16',dlKeyGlow:ok?'0 0 20px rgba(255,181,71,.3)':'none',dlKeyCursor:ok?'pointer':'default',dlKeySubCol:ok?'#3a2a0a':'#8a8270'};}
   chipsOf(c,eng){return c.costs.map(k=>({icon:ICON_OF[k.i],v:eng||!k.risk?k.v:k.v.replace('?','')+' RISK',col:k.risk?'#ffb547':(k.v[0]==='+'?'#8cff9e':'#ff8a6d'),bs:k.risk?'dashed':'solid'}));}
   renderVals(){
     const s=this.state,eng=s.mode==='eng',d=s.day;
@@ -503,18 +754,18 @@ class Component extends DCLogic {
         segs:[0,1,2,3,4].map(i=>({bg:i<v?col:'#14281b',sh:i<v?'0 0 8px '+col:'none'}))};});
     const vis=EVENTS.filter(ev=>!ev.surprise&&ev.day>d&&ev.day<=d+WIN);
     const ribbon=vis.map((ev,i)=>({icon:ev.icon,label:ev.label.toUpperCase(),short:ev.short,left:(ev.day-d)/WIN*100,top:i%2?44:10,topM:i%2?44:20,showLbl:true,leftM:Math.min((ev.day-d)/WIN*100,92),dir:(ev.day-d)/WIN>.72?'row-reverse':'row',ta:(ev.day-d)/WIN>.72?'right':'left',tx:(ev.day-d)/WIN>.72?'translateX(calc(-100% + 14px))':'translateX(-14px)',txm:(ev.day-d)/WIN>.72?'translateX(calc(-100% + 12px))':'translateX(-12px)',
-      col:ev.card?'#ffb547':'#8cff9e',when:eng?'DAY '+ev.day+' · T−'+Math.ceil(ev.day-d)+' d':'IN '+Math.ceil(ev.day-d)+' DAYS'}));
+      col:ev.card||ev.science?'#ffb547':'#8cff9e',when:eng?'DAY '+ev.day+' · T−'+Math.ceil(ev.day-d)+' d':'IN '+Math.ceil(ev.day-d)+' DAYS'}));
     const ticks=[30,60,90,120].map(n=>({left:n/WIN*100,txt:eng?'DAY '+Math.round(d+n):(n/30)+(n===30?' MONTH':' MONTHS'),short:(n/30)+'MO'}));
     const card=s.ev||STORM,cA=card.choices[0],cB=card.choices[1];
     const ch=s.ch||CH;
     const rt=('> '+ch.result.join('\n> '));
     const fxChips=Object.entries(ch.fx).map(([k,v])=>({icon:ICON_OF[k],v:(v>0?'+':'−')+Math.abs(v),col:v>0?'#8cff9e':'#ffb547'}));
     const sp=[[0,'II'],[1,'1×'],[10,'10×'],[100,'100×']];
-    const J=[['live','LIVE'],['cruise','CRUISE'],['card','DANGER CARD'],['transit','ORDER IN FLIGHT'],['ack','ROBOT REPLIES'],['result','RESULT']];
+    const J=[['live','LIVE'],['cruise','CRUISE'],['card','DANGER CARD'],['transit','ORDER IN FLIGHT'],['ack','ROBOT REPLIES'],['result','RESULT'],['science','SCIENCE TARGETS'],['downlink','DOWNLINK']];
     const n=s.feed.length,hot=s.phase==='ack'||s.phase==='result';
     const feedV=s.feed.map((x,i)=>{const last=i===n-1,bot=x.w==='bot',isAck=x.id===s.ackId&&hot,inFl=x.id===s.orderId&&s.phase==='transit';
       return {who:bot?nameU:'EARTH ▸ '+nameU,day:String(x.day).padStart(3,'0'),
-        stamp:bot?(x.kind==='ack'?'REPLY · ':'')+'SENT '+x.lt+' MIN AGO':(inFl?'IN FLIGHT · '+mmss(lt*(1-s.tp)):(x.id===s.orderId&&back?'DELIVERED · REPLY INBOUND':'DELIVERED')),
+        stamp:bot?(x.kind==='ack'?'REPLY · ':'')+'SENT '+x.lt+' MIN AGO':(inFl?'IN FLIGHT · '+mmss(lt*(1-s.tp)):(x.id===s.orderId&&back?'DELIVERED · REPLY INBOUND':(x.kind==='sci'?'CAMERA ORDER · '+x.lt+' MIN TO ARRIVE':'DELIVERED'))),
         text:(bot?'':'▸ ')+(last?x.t.slice(0,Math.floor(s.ft)):x.t),curO:last&&s.blink?1:0,
         col:bot?'#1b1a16':'#b23a22',meta:isAck?'#3a2a0a':(bot?'#7a715c':'#b23a22'),bg:isAck?'#ffb547':'transparent'};});
     const ackM=s.feed.find(x=>x.id===s.ackId),ackLast=ackM&&s.feed[n-1]===ackM;
@@ -550,6 +801,7 @@ class Component extends DCLogic {
       dayInt:Math.floor(d),dayPad:String(Math.floor(d)).padStart(3,'0'),
       arrival:d<T?'MARS IN '+Math.ceil(T-d)+' DAYS':'IN ORBIT AT MARS',
       speeds:sp.map(([v,l])=>{const on=s.speed===v;return {label:l,go:()=>this.setState({speed:v}),bg:on?'#ffb547':'#3a3d33',fg:on?'#1b1a16':'#cbbf9f',edge:on?'#9a6514':'#1a1b16',glow:on?'0 0 14px rgba(255,181,71,.5)':'none'};}),
+      ...this.sciVals(eng,nameU),...this.dlVals(nameU),
       dragX:s.dragX,dragRot:s.dragX/18,lHot:s.dragX<-40?'#ffb547':'#4a4d42',rHot:s.dragX>40?'#ffb547':'#4a4d42',
       dragDown:ev=>{this.dx0=ev.clientX;this.drag=true;try{ev.currentTarget.setPointerCapture(ev.pointerId);}catch(_){}} ,
       dragMove:ev=>{if(this.drag)this.setState({dragX:ev.clientX-this.dx0});},

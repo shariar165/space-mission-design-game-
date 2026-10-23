@@ -22,7 +22,7 @@ async function shoot(page: Page, id: string, name: string, project: string) {
 }
 
 const SCREENS: { file: string; name: string; desk: string; phone: string; jumps?: string[] }[] = [
-  { file: 'Signal Delay - Fly and Survive.dc.html', name: 'fly', desk: '1a', phone: '1b', jumps: ['CRUISE', 'DANGER CARD', 'ORDER IN FLIGHT', 'ROBOT REPLIES', 'RESULT'] },
+  { file: 'Signal Delay - Fly and Survive.dc.html', name: 'fly', desk: '1a', phone: '1b', jumps: ['CRUISE', 'DANGER CARD', 'ORDER IN FLIGHT', 'ROBOT REPLIES', 'RESULT', 'SCIENCE TARGETS', 'DOWNLINK'] },
   { file: 'Signal Delay - Pack.dc.html', name: 'pack', desk: '2a', phone: '2b' },
   { file: 'Signal Delay - Home.dc.html', name: 'home', desk: '4a', phone: '4b' },
   { file: 'Signal Delay - Home.dc.html', name: 'daily', desk: '5a', phone: '5b' },
@@ -42,7 +42,7 @@ for (const s of SCREENS) {
     }
     for (const j of s.jumps) {
       await page.getByRole('button', { name: j, exact: true }).click();
-      await page.waitForTimeout(j === 'RESULT' ? 4000 : 1200);
+      await page.waitForTimeout(j === 'RESULT' ? 4000 : j === 'DOWNLINK' ? 9000 : 1200); // the downlink waits for the pass, then prints
       await shoot(page, id, `${s.name}-${JUMP_SHOT[j] ?? j.toLowerCase().replace(/\s+/g, '-')}`, info.project.name);
     }
   });
@@ -61,20 +61,32 @@ test('design name', async ({ page }, info) => {
   await shoot(page, id, 'name-launched', info.project.name);
 });
 
-// Mission Report (screen 03): the FINAL TRANSMISSION teletype for each ending, then the report under it.
+// Mission Report (screen 03): the MISSION ALBUM for each ending, then the FINAL TRANSMISSION teletype under it,
+// then the report.
 test('design report', async ({ page }, info) => {
   await open(page, 'Signal Delay - Mission Report.dc.html');
   const mobile = info.project.name === 'mobile';
   const id = mobile ? '3b' : '3a';
+  /** The phone frame scrolls: put its nth section (0 album, 1 transmission, 2 report) at the top. */
+  const scrollPhone = (n: number) =>
+    frame(page, id)
+      .locator(':scope > div')
+      .evaluate((el, k) => {
+        const kids = Array.from(el.children) as HTMLElement[];
+        el.scrollTop = kids[k]?.offsetTop ?? 0;
+      }, n);
   for (const ending of ['LOST', 'EXTENDED', 'COMPLETE']) {
+    const suffix = ending === 'COMPLETE' ? '' : `-${ending.toLowerCase()}`;
     await page.getByRole('button', { name: ending, exact: true }).click();
+    await page.waitForTimeout(2000);
+    await shoot(page, id, `report-album${suffix}`, info.project.name);
+    if (mobile) await scrollPhone(1);
+    else await page.getByRole('button', { name: /FEED THE PAPER · FINAL TRANSMISSION/ }).click();
     await page.waitForTimeout(11_000); // the lines type one after another
-    await shoot(page, id, `report-final${ending === 'COMPLETE' ? '' : `-${ending.toLowerCase()}`}`, info.project.name);
+    await shoot(page, id, `report-final${suffix}`, info.project.name);
   }
-  if (mobile) {
-    // The phone frame scrolls: bring the report under the transmission into view.
-    await frame(page, id).locator(':scope > div').evaluate((el) => (el.scrollTop = (el.firstElementChild as HTMLElement).offsetHeight + 16));
-  } else await page.getByRole('button', { name: /FEED THE PAPER/ }).click();
+  if (mobile) await scrollPhone(2);
+  else await page.getByRole('button', { name: /FEED THE PAPER · MISSION REPORT/ }).click();
   await page.waitForTimeout(12_000); // the comic prints panel by panel
   await shoot(page, id, 'report', info.project.name);
 });
