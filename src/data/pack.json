@@ -264,7 +264,8 @@
         "mars-dust-storm",
         "debris",
         "reaction-wheel",
-        "insertion-anomaly"
+        "insertion-anomaly",
+        "drag-heating"
       ]
     },
     "heater": {

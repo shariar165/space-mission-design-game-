@@ -190,7 +190,7 @@ Still to collect: launch price per vehicle, from NASA Announcement of Opportunit
 - **Mass limit:** m_max = min(secondary slot, m_LV(C3) − m_primary). The mass margin is measured against the slot.
 - **Price (game rule, labelled):** the secondary pays a mass-proportional share of the rocket, price × m_wet / (m_wet + m_primary). Launch is paid outside the cost cap, as before, so a shared ride lowers the total mission cost, not the development cost.
 - The ride only goes where its primary went. On any other destination it is a blocker.
-- **Why it matters:** a small Moon craft on a whole Atlas V uses under 20% of its lift, so its mass margin (82–87%) can never be in the 10–30% band, and the Moon's third star was out of reach. In the 1000 kg slot the Cadet crafts sit at 16–41%, and four of the nine science × fuel cards are in the band (validation info row).
+- **Why it matters:** a small Moon craft on a whole Atlas V uses under 20% of its lift, so its mass margin (82–87%) can never be in the 10–30% band, and the Moon's third star was out of reach (before v0.8, when the third star still needed every margin in band; it now shows in the mass score). In the 1000 kg slot the Cadet crafts sit at 16–41%, and four of the nine science × fuel cards are in the band (validation info row).
 
 ## Power
 
@@ -523,7 +523,9 @@ At Mars the science phase is a choice of targets (`targets.json`): **Olympus Mon
 
 **Science returned.** At Mars, science returned = Σ wᵢ over the targets whose picture came home by the end of the prime mission. It is the main score (see Scoring).
 
-**Run length.** The Cadet Mars level flies a prime science campaign of `SCIENCE_RULES.cadetCampaign_days` (game rule) so a run at 100× lasts about five minutes; Engineer mode and the real MAVEN preset keep their planned science days.
+**Run length.** The Cadet Mars level (and the Daily, which flies to Mars) packs a prime science campaign of `SCIENCE_RULES.cadetCampaign_days` = 100 days (game rule). With a 285–311 day cruise the clock runs about four minutes at 100× (`flightClock_s`), and the decisions bring a run to about five. Engineer mode and the real MAVEN preset keep their planned science days.
+
+**The extension review stays on data.** The Senior Review stand-in (Mission extension) still judges the prime data sent home against the data goal at every destination, not the target weights, so a Mars flight that mapped all year can still be extended.
 
 ## Validation set
 
@@ -863,3 +865,4 @@ The UI (`src/ui/`, React + Vite) follows the Claude Design mockups for Build Bay
 | 65 | Oct 23, 2026 | **Mars globe in three.js** (user request; Claude Design 3D project): the only 3D element, with a real NASA texture instead of the mockup's procedural map, a 2D fallback and a 2D/3D toggle, loaded as a separate chunk. Its frame rate is checked on a throttled phone profile. |
 | 66 | Oct 23, 2026 | **Arrival transition and Mission Album** (user request; Claude Design screens 01 and 03): a 2 s map-to-globe zoom (instant under reduced motion), and the report opens with the album before the final transmission and the comic. |
 | 67 | Oct 23, 2026 | **Copy fix:** Olympus Mons is about 2.5 times taller than Everest (21.9 km vs 8.85 km, both Sourced), not "two and a half times" from the mockup without a source. |
+| 68 | Oct 23, 2026 | **Science targets in Ops** (spec section Science targets and downlink): OBSERVE is a command kind; refused orders cost nothing; the drag-heating hazard (`science: true`, not in Pack's deck) is its own stream, so observing never reshuffles other draws. Pictures take the head of each day's pass; routine data gets what is left. At Mars the robot's science-phase line becomes the targets question and data milestones give way to a line per picture sent. The extension review stays on data (decision above). |

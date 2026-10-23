@@ -6,6 +6,7 @@
 import { gameEstimate, type Sourced } from '../types';
 import { END_MISSION } from './extension';
 import { newsArrival, oneWayAt } from './commands';
+import { hasTargets } from './observe';
 import type { OpsEvent, OpsPhase, OpsState } from './types';
 
 export const VOICE_RULES = {
@@ -55,7 +56,11 @@ export type VoiceKind =
   | 'science-milestone'
   | 'extension'
   | 'signing-off'
-  | 'status';
+  | 'status'
+  | 'targets'
+  | 'observing'
+  | 'observe-refused'
+  | 'image-sent';
 
 export interface RobotMessage {
   kind: VoiceKind;
@@ -78,7 +83,11 @@ export interface MessageValues {
   streak?: number;
   /** An order the robot carried out (or chose itself), and who chose it. */
   optionId?: string;
-  commandKind?: 'respond' | 'power-plan' | 'standing-orders';
+  commandKind?: 'respond' | 'power-plan' | 'standing-orders' | 'observe';
+  /** Science targets: the target, how long the observation lasts (days), why an order was refused. */
+  targetId?: string;
+  days?: number;
+  reason?: string;
   commandId?: number;
   by?: string;
   /** Science milestone: the share of the prime science goal now sent home. */
@@ -118,6 +127,8 @@ function voiceOf(e: OpsEvent, s: OpsState): { kind: VoiceKind; values: MessageVa
       return { kind: 'launch-failed', values: {} };
     case 'phase-start': {
       const kind = PHASE_KIND[String(v.phase)];
+      // At Mars the science phase opens with the robot asking what to look at (spec: UI rule 39).
+      if (kind === 'science' && hasTargets(s.env)) return { kind: 'targets', values: {} };
       if (kind !== 'arrived') return kind ? { kind, values: {} } : undefined;
       // The arrival message carries the arrival burn made that day (if any).
       const b = s.events.find((x) => x.code === 'burn' && x.values.kind === 'arrival' && Math.floor(x.t) === Math.floor(e.t));
@@ -160,6 +171,12 @@ function voiceOf(e: OpsEvent, s: OpsState): { kind: VoiceKind; values: MessageVa
       return { kind: 'out-of-fuel', values: {} };
     case 'prime-complete':
       return { kind: 'prime-complete', values: {} };
+    case 'observe-start':
+      return { kind: 'observing', values: { commandId: Number(v.commandId), commandKind: 'observe', targetId: String(v.targetId), days: Number(v.days) } };
+    case 'observe-refused':
+      return { kind: 'observe-refused', values: { commandId: Number(v.commandId), commandKind: 'observe', targetId: String(v.targetId), reason: String(v.reason) } };
+    case 'image-sent':
+      return { kind: 'image-sent', values: { targetId: String(v.targetId) } };
     default:
       return undefined;
   }
@@ -188,7 +205,8 @@ function scienceGoal_bits(s: OpsState): number {
 /** Science milestones from the daily ledger: sent at the end of the day the downlinked total crosses each share. */
 function milestones(s: OpsState): Raw[] {
   const goal = scienceGoal_bits(s);
-  if (goal <= 0) return [];
+  // At Mars the pictures are the science: each one says so when it is sent (image-sent).
+  if (goal <= 0 || hasTargets(s.env)) return [];
   const out: Raw[] = [];
   const marks = VOICE_RULES.scienceMilestones.value;
   let sum = 0;
@@ -291,7 +309,7 @@ export function heardMessages(s: OpsState, all = robotMessages(s)): HeardMessage
 // The transmissions teletype: the robot's heard messages and the player's orders, as Earth sees them.
 
 export interface OrderLine {
-  kind: 'respond' | 'power-plan' | 'standing-orders' | 'extension';
+  kind: 'respond' | 'power-plan' | 'standing-orders' | 'extension' | 'observe';
   sentAt: number;
   /** When it reaches the robot (days). */
   arrivesAt: number;
@@ -299,6 +317,8 @@ export interface OrderLine {
   hazardType?: string;
   optionId?: string;
   years?: number;
+  /** OBSERVE orders: the target. */
+  targetId?: string;
   /**
    * queued (the team is still writing it) → in-flight → reply-inbound (the robot acted; its reply is on the way) →
    * replied; or too-late (it landed after the robot had already acted).
@@ -342,7 +362,9 @@ export function transmissionFeed(s: OpsState): TransmissionFeed {
         ? m.kind === 'extension'
         : o.kind === 'respond'
           ? (m.kind === 'order-received' || m.kind === 'order-too-late') && m.values.hazardId === o.hazardId
-          : m.kind === 'order-received' && m.values.commandId === o.commandId,
+          : o.kind === 'observe'
+            ? (m.kind === 'observing' || m.kind === 'observe-refused') && m.values.commandId === o.commandId
+            : m.kind === 'order-received' && m.values.commandId === o.commandId,
     );
   const entries: FeedEntry[] = [];
   const orders: { line: Omit<OrderLine, 'status' | 'replyAt' | 'progress'>; commandId?: number; tooLate?: boolean }[] = [];
@@ -355,6 +377,7 @@ export function transmissionFeed(s: OpsState): TransmissionFeed {
         sentAt: c.sentAt,
         arrivesAt: c.arrivesAt,
         ...(cmd.kind === 'respond' ? { hazardId: cmd.hazardId, optionId: cmd.optionId, ...(type ? { hazardType: type } : {}) } : {}),
+        ...(cmd.kind === 'observe' ? { targetId: cmd.targetId } : {}),
       },
       commandId: c.id,
       tooLate: c.status === 'too-late',

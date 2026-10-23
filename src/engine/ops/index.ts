@@ -2,12 +2,13 @@
 // the input is never changed. A mission is a function of (design, seed, actions): replayOperations rebuilds it.
 // Every player action is logged, refused ones too, because a refusal is itself an event.
 import type { Phase } from '../risk';
-import { budgetScore, marginBandScore, missionSuccessScore, nextStar, scienceGoal_Gbit, scienceScore, STAR_RULES, stars, totalScore, type Category } from '../scoring';
+import { budgetScore, marginBandScore, missionSuccessScore, nextStar, scienceGoal_Gbit, stars, totalScore, type Category } from '../scoring';
 import { crisisScore } from '../crisis';
 import { DESTINATIONS, HAZARDS, OPERATIONS } from '../data';
 import type { Design } from '../types';
 import type { RealStorm } from '../spaceWeather';
 import { END_MISSION } from './extension';
+import { firstScienceHome, hasTargets, scienceReturned } from './observe';
 import { defaultBooking, defaultPowerPlan, demand } from './resources';
 import {
   cloneState,
@@ -296,7 +297,7 @@ export function operationsDebrief(s: OpsState): OpsDebrief {
 
   // End-of-prime margins: Δv after response burns; power on the worst day of the prime mission, eclipses included
   // (the Power meter, which reads these same days); mass at launch.
-  const dvMargin = (d.deltaVCapability_ms - s.dvResponses_ms - d.deltaVRequired_ms) / d.deltaVRequired_ms;
+  const dvMargin = (d.deltaVCapability_ms - s.dvResponses_ms - s.dvScience_ms - d.deltaVRequired_ms) / d.deltaVRequired_ms;
   const endMargins = { deltaV: dvMargin, power: ev.meters.power.margin, mass: ev.meters.mass.margin };
 
   // Prime mission only: hazards that struck after the prime mission belong to the extension's report.
@@ -304,7 +305,8 @@ export function operationsDebrief(s: OpsState): OpsDebrief {
   const crisis = answered.length
     ? answered.reduce((a, h) => a + crisisScore(h.choice!.choseSafest, h.choice!.badOutcome ?? false), 0) / answered.length
     : 100;
-  const sciScore = scienceScore(downlinked_Gbit, goal_Gbit);
+  // Science returned (spec: Scoring, v0.8): target pictures home at Mars, data downlinked ÷ goal elsewhere.
+  const sciScore = 100 * scienceReturned(s);
   const scores: Record<Category, number> = {
     science: sciScore,
     success: missionSuccessScore(phasesCompleted, tl.length),
@@ -316,11 +318,11 @@ export function operationsDebrief(s: OpsState): OpsDebrief {
   };
   const t = totalScore(scores);
   const launched = s.status !== 'not-launched' && !(s.status === 'lost' && s.failureT === 0);
-  const reachedScience = launched && phasesCompleted >= STAR_RULES.phasesToReachScience.value;
-  const st = stars({ reachedScience, scienceScore: sciScore, margins: endMargins });
+  const st = stars({ firstScienceHome: launched && firstScienceHome(s), scienceScore: sciScore });
   const failedPrime: Phase | undefined = lostInPrime && s.failedPhase !== 'extended' ? (s.failedPhase as Phase) : undefined;
   const next = nextStar({
     stars: st,
+    targets: hasTargets(env),
     failedPhase: failedPrime,
     blockers: ev.blockers,
     radioLimited: s.radioLimited,
@@ -379,7 +381,7 @@ export function operationsDebrief(s: OpsState): OpsDebrief {
 export { defaultBooking, defaultPowerPlan, prepareOps, primeScienceFraction };
 export { consoleView, dsnOptions, nextEventT, opsAvailable, powerPlanPreview, CONSOLE_RULES } from './console';
 export type * from './console';
-export { comingUp, eclipseCard, flyCard, flyTiles, FLY_RULES, missionProgress, outcomeIn_s, segmentsFromFraction, segmentsFromMargin, stormFront, systemsHealth, countdownAt, momentsSince } from './fly';
+export { comingUp, eclipseCard, flightClock_s, flyCard, flyTiles, FLY_RULES, missionProgress, outcomeIn_s, segmentsFromFraction, segmentsFromMargin, stormFront, systemsHealth, countdownAt, momentsSince } from './fly';
 export type * from './fly';
 export { heardMessages, robotMessages, transmissionFeed, VOICE_RULES } from './voice';
 export type * from './voice';

@@ -19,13 +19,12 @@ const fly = (opts: { seed?: number; rng?: () => number }, policy: 'safe' | 'risk
   runOperations(maven, { ...opts, policy, extension: 'end' }).state;
 
 describe('star rules are Sourced', () => {
-  it('one star for reaching science (3 phases), two at a science score of 70', () => {
-    expect(STAR_RULES.phasesToReachScience.value).toBe(3);
-    expect(STAR_RULES.scienceForSecondStar.value).toBe(70);
+  it('one star for the first science home, two at 50% of the science, three at 80%', () => {
+    expect(STAR_RULES.scienceForSecondStar.value).toBe(50);
+    expect(STAR_RULES.scienceForThirdStar.value).toBe(80);
     expect(STAR_RULES.scienceForSecondStar.isGameEstimate).toBe(true);
-    const margins = { deltaV: 0.2, power: 0.2, mass: 0.2 };
-    expect(stars({ reachedScience: true, scienceScore: 69.9, margins })).toBe(1);
-    expect(stars({ reachedScience: true, scienceScore: 70, margins })).toBe(3);
+    expect(stars({ firstScienceHome: true, scienceScore: 49.9 })).toBe(1);
+    expect(stars({ firstScienceHome: true, scienceScore: 80 })).toBe(3);
   });
 });
 

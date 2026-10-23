@@ -575,9 +575,9 @@ export const MISSION_STEPS_WORDS: { word: string; line: string }[] = [
 
 /** How the three stars are earned, in plain words (the rules are the engine's STAR_RULES). */
 export const STAR_GOALS = (dest: string): string[] => [
-  `Reach ${dest} and start the science.`,
-  'Send lots of science home.',
-  'Finish with spare power, fuel and weight (not too little, not too much).',
+  `Reach ${dest} and send the first science home.`,
+  'Bring half of the mission science home.',
+  'Bring most of the mission science home.',
 ];
 
 /** A real mission that flew there, for the briefing. */
@@ -765,7 +765,23 @@ export const VOICE: Record<Exclude<VoiceKind, 'hit' | 'status'>, string[]> = {
   'science-milestone': ['{pct} OF THE SCIENCE GOAL SENT HOME.'],
   extension: ['EXTENSION ORDER RECEIVED. {years} MORE. STILL HERE.'],
   'signing-off': ['{name} SIGNING OFF. THANK YOU, EARTH.'],
+  targets: ['{name} IS IN {dest} ORBIT. WHAT SHOULD IT LOOK AT?'],
+  observing: ['ORDER RECEIVED. CAMERA ON {target}.', 'ORDER RECEIVED. LINING UP ON {target}.'],
+  'observe-refused': ['I CANNOT TAKE {target} NOW.'],
+  'image-sent': ['PICTURE OF {target} SENT HOME. {comment}'],
 };
+
+/** The science targets in the robot's words (spec: UI rule 39): the name it uses and what it says when the picture goes home. */
+export const TARGET_WORDS: Record<string, { name: string; comment: string }> = {
+  'olympus-mons': { name: 'OLYMPUS MONS', comment: 'IT WAS WIDER THAN MY WHOLE VIEW.' },
+  'valles-marineris': { name: 'VALLES MARINERIS', comment: 'A CRACK ACROSS THE WHOLE PLANET. I FOLLOWED IT ALL PASS.' },
+  'north-polar-cap': { name: 'NORTH POLAR CAP', comment: 'WHITE SPIRALS. THE ICE IS WRITING SOMETHING DOWN.' },
+  phobos: { name: 'PHOBOS', comment: 'CLOSE ENOUGH TO SEE THE GROOVES. IT IS FALLING TOWARD MARS. SLOWLY.' },
+  deimos: { name: 'DEIMOS', comment: 'SMALL. QUIET. SMOOTH, LIKE SAND POURED OVER IT.' },
+  limb: { name: 'THIN AIR AT THE LIMB', comment: 'THE SKY HERE IS ONE THIN LINE. I FLEW LOW TO SEE IT.' },
+};
+
+export const targetName = (id: string) => TARGET_WORDS[id]?.name ?? id.toUpperCase();
 
 /** Lines with a different shape for some values: a burn on arrival, plans and standing orders, a full goal. */
 export const VOICE_ALT = {
@@ -775,6 +791,11 @@ export const VOICE_ALT = {
   standingChoice: 'NO NEW ORDER. FOLLOWING YOUR STANDING ORDER: {option}.',
   goalMet: 'SCIENCE GOAL MET. EVERYTHING I CAME FOR IS SENT HOME.',
   hitUnknown: 'TROUBLE UP HERE. SOMETHING JUST WENT WRONG.',
+  observeDip: 'ORDER RECEIVED. DIPPING LOW FOR {target}. BACK UP IN {days}.',
+  refusedFuel: 'NOT ENOUGH FUEL FOR {target}. I KEEP WHAT I NEED TO STAY UP.',
+  refusedUnreachable: 'I CANNOT SEE {target} CLEARLY FROM THIS ORBIT.',
+  refusedAlready: '{target} IS ALREADY ON MY LIST.',
+  refusedNotInOrbit: 'NOT IN ORBIT YET. ASK ME AGAIN AT {dest}.',
 };
 
 /** Routine status (VOICE_RULES.statusEvery_days): on the way, at the destination, and on the way home. */
@@ -823,6 +844,8 @@ export function robotSays(m: RobotMessage, ctx: VoiceContext): string {
     ...(v.longestEclipse_s !== undefined ? { dark: f.minutes(v.longestEclipse_s).toUpperCase() } : {}),
     ...(v.fraction !== undefined ? { pct: f.pct(v.fraction, 0) } : {}),
     ...(v.years !== undefined ? { years: years(v.years) } : {}),
+    ...(v.targetId !== undefined ? { target: targetName(v.targetId), comment: TARGET_WORDS[v.targetId]?.comment ?? '' } : {}),
+    ...(v.days !== undefined ? { days: `${f.num(v.days)} ${v.days === 1 ? 'DAY' : 'DAYS'}` } : {}),
   };
   let t: string;
   if (m.kind === 'hit') t = pick(HIT_VOICE[type] ?? [VOICE_ALT.hitUnknown]);
@@ -834,6 +857,11 @@ export function robotSays(m: RobotMessage, ctx: VoiceContext): string {
   else if (m.kind === 'order-received' && v.commandKind === 'standing-orders') t = VOICE_ALT.standing;
   else if (m.kind === 'acted-alone' && v.by === 'standing-order') t = VOICE_ALT.standingChoice;
   else if (m.kind === 'science-milestone' && (v.fraction ?? 0) >= 1) t = VOICE_ALT.goalMet;
+  else if (m.kind === 'observing' && (v.days ?? 1) > 1) t = VOICE_ALT.observeDip;
+  else if (m.kind === 'observe-refused' && v.reason === 'fuel') t = VOICE_ALT.refusedFuel;
+  else if (m.kind === 'observe-refused' && v.reason === 'unreachable') t = VOICE_ALT.refusedUnreachable;
+  else if (m.kind === 'observe-refused' && v.reason === 'already-ordered') t = VOICE_ALT.refusedAlready;
+  else if (m.kind === 'observe-refused' && v.reason === 'not-in-orbit') t = VOICE_ALT.refusedNotInOrbit;
   else t = pick(VOICE[m.kind]);
   return fill(t, slots);
 }
@@ -858,6 +886,7 @@ export const TX_WORDS = {
   order: (what: string) => `ORDER: ${what}.`,
   plan: 'NEW POWER PLAN',
   standing: 'NEW STANDING ORDERS',
+  observe: (target: string) => `OBSERVE ${target}`,
   extend: (years: string) => `KEEP FLYING ${years}`,
   /** Footer: "Everything PIP says is 12 MINUTES old by the time it prints here." */
   footBefore: (name: string) => `Everything ${name} says is `,

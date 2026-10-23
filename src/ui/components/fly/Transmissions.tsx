@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import type { FeedEntry, OrderLine, TransmissionFeed } from '../../../engine/ops/index';
 import * as f from '../../format';
-import { robotSays, TX_WORDS, type VoiceContext } from '../../sdWords';
+import { robotSays, targetName, TX_WORDS, type VoiceContext } from '../../sdWords';
 import { useTeletype } from '../sd/Teletype';
 
 /** The phone log shows this many of the newest lines. */
@@ -24,6 +24,7 @@ interface Props {
 function orderWhat(o: OrderLine, voice: VoiceContext): string {
   if (o.kind === 'power-plan') return TX_WORDS.plan;
   if (o.kind === 'standing-orders') return TX_WORDS.standing;
+  if (o.kind === 'observe') return TX_WORDS.observe(targetName(o.targetId ?? ''));
   if (o.kind === 'extension') return TX_WORDS.extend(`${f.num(o.years ?? 0)} ${o.years === 1 ? 'YEAR' : 'YEARS'}`);
   return o.hazardType && o.optionId && voice.option ? voice.option(o.hazardType, o.optionId) : (o.optionId ?? '').toUpperCase();
 }

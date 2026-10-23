@@ -125,7 +125,8 @@ export const EXTENSION_BLOCKER: Record<ExtensionOption['blockedBy'][number], str
   'science-review': 'NASA review: not enough science sent home yet',
 };
 
-export const COMMAND_KIND: Record<'power-plan' | 'respond' | 'standing-orders', string> = {
+export const COMMAND_KIND: Record<'power-plan' | 'respond' | 'standing-orders' | 'observe', string> = {
+  observe: 'Take a picture',
   'power-plan': 'New power plan',
   respond: 'Hazard response',
   'standing-orders': 'New standing orders',

@@ -17,7 +17,9 @@ describe('robot messages', () => {
     const s = calm();
     const kinds = robotMessages(s).map((m) => m.kind);
     expect(kinds[0]).toBe('launch');
-    for (const k of ['halfway', 'arrived', 'science', 'dark', 'conjunction', 'conjunction-end', 'prime-complete'] as const) expect(kinds).toContain(k);
+    // At Mars the science phase opens with the robot asking what to look at (spec: UI rule 39).
+    for (const k of ['halfway', 'arrived', 'targets', 'dark', 'conjunction', 'conjunction-end', 'prime-complete'] as const) expect(kinds).toContain(k);
+    expect(kinds).not.toContain('science');
     // halfway is the middle of the cruise: arrivalDay / 2 (MAVEN arrives on day 307 → 153.5)
     expect(robotMessages(s).find((m) => m.kind === 'halfway')!.sentAt).toBeCloseTo(s.env.arrivalDay / 2, 9);
     // in time order
@@ -33,7 +35,7 @@ describe('robot messages', () => {
       expect(m.receivedAt).toBeCloseTo(m.sentAt + oneWay / DAY_S, 12);
     }
     // At Mars the light time is minutes: between about 3 and 22 minutes
-    const at = robotMessages(s).find((m) => m.kind === 'science')!;
+    const at = robotMessages(s).find((m) => m.kind === 'targets')!;
     expect(at.delay_s / 60).toBeGreaterThan(3);
     expect(at.delay_s / 60).toBeLessThan(23);
   });
@@ -94,19 +96,19 @@ describe('robot messages', () => {
 describe('heard messages (what Earth has received by now)', () => {
   it('a message is heard only once it has arrived; until then it is incoming', () => {
     const full = calm();
-    const m = robotMessages(full).find((x) => x.kind === 'science')!;
+    const m = robotMessages(full).find((x) => x.kind === 'targets')!;
     // Fly to just after the craft sent it, before it reaches Earth.
     const mid = m.sentAt + (m.receivedAt - m.sentAt) / 2;
     let s = ops.startOperations(maven, { rng: () => 0.999999 });
     for (let i = 0; i < 1000 && s.t < mid - 1e-12 && s.status === 'flying'; i++) s = ops.advanceOperations(s, { until: mid });
     let h = heardMessages(s);
-    expect(h.heard.some((x) => x.kind === 'science' && x.sentAt === m.sentAt)).toBe(false);
+    expect(h.heard.some((x) => x.kind === 'targets' && x.sentAt === m.sentAt)).toBe(false);
     expect(h.incoming).toBeDefined();
     expect(h.incoming!.inFlight_s).toBeCloseTo((m.receivedAt - s.t) * DAY_S, 3);
     s = ops.advanceOperations(s, { until: m.receivedAt + 1e-6 });
     h = heardMessages(s);
-    expect(h.heard[h.heard.length - 1]!.kind).toBe('science');
-    expect(h.latest!.kind).toBe('science');
+    expect(h.heard[h.heard.length - 1]!.kind).toBe('targets');
+    expect(h.latest!.kind).toBe('targets');
   });
 
   it('a finished flight has heard everything', () => {
@@ -244,7 +246,9 @@ describe('the robot reports in', () => {
   });
 
   it('science milestones: a quarter, half, three quarters, all of the goal, each once, on the day it is crossed', () => {
-    const s = calm();
+    // At Mars the pictures are the science (image-sent lines), so milestones are for data destinations: Bennu here.
+    expect(robotMessages(calm()).some((m) => m.kind === 'science-milestone')).toBe(false);
+    const s = ops.runOperations(presetDesign('osiris-rex'), { rng: () => 0.999999 }).state;
     const sci = s.env.timeline.find((w) => w.phase === 'science')!;
     const goal = s.env.loads.instruments.reduce((a, i) => a + i.data_bitsPerDay, 0) * (sci.endDay - sci.startDay + 1);
     const ms = robotMessages(s).filter((m) => m.kind === 'science-milestone');

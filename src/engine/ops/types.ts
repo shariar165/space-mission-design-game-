@@ -45,7 +45,11 @@ export type OpsEventCode =
   | 'craft-lost'
   | 'prime-complete'
   | 'extension-decided'
-  | 'mission-complete';
+  | 'mission-complete'
+  | 'observe-start'
+  | 'observe-refused'
+  | 'image-taken'
+  | 'image-sent';
 
 export interface OpsEvent {
   /** Mission time, days from launch (fractional). */
@@ -155,7 +159,9 @@ export interface DsnBooking {
 export type Command =
   | { kind: 'power-plan'; plan: PowerPlan }
   | { kind: 'respond'; hazardId: string; optionId: string }
-  | { kind: 'standing-orders'; orders: Record<string, string> };
+  | { kind: 'standing-orders'; orders: Record<string, string> }
+  /** Take a picture of a science target (Mars; spec: Science targets and downlink). */
+  | { kind: 'observe'; targetId: string };
 
 export interface CommandRecord {
   id: number;
@@ -300,6 +306,8 @@ export interface OpsState {
   dvPlannedSpent_ms: number;
   /** Δv spent on hazard responses in the prime mission, and in the extension (m/s). */
   dvResponses_ms: number;
+  /** Δv spent observing science targets (orbit changes there and back, extra drag), m/s. */
+  dvScience_ms: number;
   dvExtensionResponses_ms: number;
   /** Operations cost of the prime science days, DSN extras and response costs ($M). */
   opsCost_M: number;
@@ -336,4 +344,33 @@ export interface OpsState {
   extensionDecided: boolean;
   /** Ids of decisions opened in the last advance (the UI's "new" list; advance stops when non-empty). */
   newDecisions: string[];
+  /** Science-target pictures ordered (Mars), in order of the orders' arrival. */
+  images: ImageRecord[];
+}
+
+export type ImageStatus = 'observing' | 'on-board' | 'sent' | 'refused';
+export type ObserveRefusal = 'not-in-orbit' | 'already-ordered' | 'unreachable' | 'fuel' | 'unknown-target';
+
+/** One ordered picture, from the order's arrival to its last bit leaving the craft. */
+export interface ImageRecord {
+  targetId: string;
+  commandId: number;
+  /** When the order reached the craft and the observation began (days). */
+  startedAt: number;
+  /** When the picture is taken, at the end of the observation (days). */
+  takenAt: number;
+  bits: number;
+  /** Bits already sent down. */
+  sentBits: number;
+  /** When the last bit left the craft, and when it reaches Earth one light time later (days). */
+  sentAt?: number;
+  homeAt?: number;
+  /** Extra camera load while observing (W), and the drag-heating factor of the pass (0: no low pass). */
+  load_W: number;
+  dragFactor: number;
+  /** The observation's Δv (orbit changes and drag), m/s. */
+  dv_ms: number;
+  status: ImageStatus;
+  /** Why the robot could not take it (refused orders only). */
+  reason?: ObserveRefusal;
 }

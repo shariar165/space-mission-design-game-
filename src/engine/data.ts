@@ -203,6 +203,8 @@ export interface Hazard {
   title: string;
   /** Only real data creates it (a live Daily's CME shock): no seeded rate, and not in Pack's danger deck. */
   liveOnly?: boolean;
+  /** Only a science-target observation raises it (rate 0 otherwise), so it is not in Pack's danger deck either. */
+  science?: boolean;
   destinations: DestinationId[];
   phases: OpsPhase[];
   /** 'earth': seen from Earth before it reaches the craft; 'craft': Earth learns one light time after onset. */

@@ -458,8 +458,7 @@ function run(p: Prepared, rng: () => number, policy: CrisisPolicy): SimulationRe
       crisis: r.crisisScoreValue,
     };
     const t = totalScore(scores);
-    const reachedScience = r.launched && r.phasesCompleted >= 3;
-    const s = stars({ reachedScience, scienceScore: sci, margins: endMargins });
+    const s = stars({ firstScienceHome: r.launched && r.downlinked_Gbit > 0, scienceScore: sci });
     const { dvMargin: _dv, crisisScoreValue: _cs, ...rest } = r;
     const next = nextStar({
       stars: s,

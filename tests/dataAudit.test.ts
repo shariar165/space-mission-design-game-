@@ -14,6 +14,7 @@ import pack from '../src/data/pack.json';
 import notebookData from '../src/data/notebook.json';
 import postcards from '../src/data/postcards.json';
 import { SCIENCE_RULES } from '../src/engine/science';
+import { OBSERVE_RULES } from '../src/engine/ops/observe';
 import targets from '../src/data/targets.json';
 import ranks from '../src/data/ranks.json';
 import orbitalElements from '../src/data/orbitalElements.json';
@@ -110,6 +111,7 @@ const ENGINE_VALUES: Record<string, Record<string, Sourced<unknown>>> = {
   'daily.ts DAILY_RULES': DAILY_RULES,
   'ops/voice.ts VOICE_RULES': VOICE_RULES,
   'science.ts SCIENCE_RULES': SCIENCE_RULES,
+  'ops/observe.ts OBSERVE_RULES': OBSERVE_RULES,
 };
 
 const all: Entry[] = [];

@@ -29,8 +29,8 @@ export const MARGIN_BAND = {
 
 /** Star rules (spec: Scoring, Stars), as Sourced game rules (the Mission Report shows them in Engineer mode). */
 export const STAR_RULES = {
-  phasesToReachScience: gameEstimate(3, 'phases', 'Game rule (spec: Stars): one star for reaching science, i.e. launch, cruise and arrival completed'),
-  scienceForSecondStar: gameEstimate(70, 'score (0–100)', 'Game rule (spec: Stars): a second star at a science score of 70'),
+  scienceForSecondStar: gameEstimate(50, 'science returned (0–100)', 'Game rule (spec: Stars, v0.8): a second star once half the mission science is home'),
+  scienceForThirdStar: gameEstimate(80, 'science returned (0–100)', 'Game rule (spec: Stars, v0.8): a third star once 80% of the mission science is home'),
 };
 
 export const BUDGET_ZERO_AT_OVERRUN = gameEstimate(0.2, 'fraction over cap', 'Game rule: budget score falls linearly from 100 at the cap to 0 at 20% over');
@@ -101,11 +101,14 @@ export interface EndMargins {
   mass: number;
 }
 
-/** Stars, in order: 1 reached the destination and started science; 2 science ≥ 70%; 3 every margin in band. */
-export function stars(p: { reachedScience: boolean; scienceScore: number; margins: EndMargins }): number {
-  if (!p.reachedScience) return 0;
-  if (p.scienceScore < STAR_RULES.scienceForSecondStar.value) return 1;
-  if (!(inBand(p.margins.deltaV) && inBand(p.margins.power) && inBand(p.margins.mass))) return 2;
+/**
+ * Stars follow the science returned (spec: Stars, v0.8): 1 the first science came home (Mars: the first picture;
+ * elsewhere: the first data); 2 science ≥ 50%; 3 science ≥ 80%. Margins still score, but no longer give stars.
+ */
+export function stars(p: { firstScienceHome: boolean; scienceScore: number }): number {
+  if (!p.firstScienceHome) return 0;
+  if (p.scienceScore < STAR_RULES.scienceForSecondStar.value - 1e-9) return 1;
+  if (p.scienceScore < STAR_RULES.scienceForThirdStar.value - 1e-9) return 2;
   return 3;
 }
 
@@ -134,6 +137,8 @@ const kg = (x: number) => `${Math.round(x)} kg`;
 
 export interface NextStarInput {
   stars: number;
+  /** Science comes as target pictures (Mars): the hint asks for more targets rather than more data. */
+  targets?: boolean;
   failedPhase?: string;
   blockers?: string[];
   radioLimited: boolean;
@@ -155,44 +160,14 @@ export function nextStar(c: NextStarInput): { hint: string; category?: Category 
   if (c.stars >= 3) return r(undefined, 'All three stars earned.');
   if (c.stars === 0) {
     if (c.blockers?.length) return r('success', `Fix this first: ${c.blockers[0]}`);
-    return r('success', `Reach the destination: the mission was lost in the ${c.failedPhase ?? 'unknown'} phase. Bigger margins lower that phase's risk.`);
+    if (c.failedPhase) return r('success', `Reach the destination: the mission was lost in the ${c.failedPhase} phase. Bigger margins lower that phase's risk.`);
+    return r('science', c.targets
+      ? 'Send a picture home: order a science target and wait for a DSN pass to bring it down.'
+      : 'Send science home: turn the instruments on and keep the radio on a DSN pass.');
   }
-  if (c.stars === 1) {
-    if (c.radioLimited) return r('science', `Science return is ${Math.round(c.scienceScore)}% and the radio is the limit: a 70 m DSN dish gives about 4.2× the data rate, or use a bigger antenna.`);
-    return r('science', `Science return is ${Math.round(c.scienceScore)}%: add science days or instruments to reach 70%.`);
-  }
-  // Star 3: first margin outside its band.
-  const m = c.margins;
-  const lo = MARGIN_BAND.low.value;
-  const hi = MARGIN_BAND.high.value;
-  if (m.deltaV < lo || m.deltaV > hi) {
-    const target = m.deltaV < lo ? lo : hi;
-    const newProp = propellantForMargin({ targetMargin: target, ...c.deltaV });
-    const change = newProp - c.deltaV.propellant_kg;
-    if (change > 0) {
-      const k = c.deltaV.asFlown ? 0 : (1 + GAME_RULES.massGrowthMargin.value) * GAME_RULES.tankFraction.value;
-      const addedWet = change * (1 + k);
-      const unused = c.launch.capacity_kg - c.launch.wet_kg;
-      return r('deltaV', addedWet <= unused
-        ? `Carry ${kg(change)} more propellant for a ${target * 100}% Δv margin — it fits: ${kg(unused)} of launch capacity unused.`
-        : `Carry ${kg(change)} more propellant for a ${target * 100}% Δv margin — it does not fit (${kg(unused)} unused launch capacity): choose a bigger rocket or a cheaper capture orbit.`);
-    }
-    return r('deltaV', `Carry ${kg(-change)} less propellant: a ${hi * 100}% Δv margin is enough.`);
-  }
-  if (m.power < lo || m.power > hi) {
-    const target = m.power < lo ? lo : hi;
-    const neededW = c.power.required_W * (1 + target);
-    if (c.power.type === 'solar' && c.power.arrayArea_m2) {
-      const area = (c.power.arrayArea_m2 * neededW) / c.power.available_W;
-      const d = area - c.power.arrayArea_m2;
-      return r('power', d > 0
-        ? `Add ${d.toFixed(1)} m² of solar array for a ${target * 100}% power margin.`
-        : `Remove ${(-d).toFixed(1)} m² of solar array: a ${hi * 100}% power margin is enough.`);
-    }
-    return r('power', m.power < lo ? 'Add power: another RTG, or lower the power the craft needs.' : 'You carry more power than you need: remove an RTG.');
-  }
-  if (m.mass < lo) {
-    return r('mass', `Cut ${kg(c.launch.wet_kg - (1 - lo) * c.launch.capacity_kg)} of launch mass or choose a bigger rocket for a ${lo * 100}% mass margin.`);
-  }
-  return r('mass', `${kg(c.launch.capacity_kg - c.launch.wet_kg)} of launch capacity is unused: a smaller rocket, or more payload, puts the mass margin in band.`);
+  const want = c.stars <= 1 ? STAR_RULES.scienceForSecondStar.value : STAR_RULES.scienceForThirdStar.value;
+  const now = Math.round(c.scienceScore);
+  if (c.targets) return r('science', `Science returned is ${now}%: bring home more targets to reach ${want}%. Pictures home before anything goes wrong still count.`);
+  if (c.radioLimited) return r('science', `Science return is ${now}% and the radio is the limit: a 70 m DSN dish gives about 4.2× the data rate, or use a bigger antenna.`);
+  return r('science', `Science return is ${now}%: add science days or instruments to reach ${want}%.`);
 }
