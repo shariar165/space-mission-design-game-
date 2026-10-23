@@ -5,12 +5,21 @@ import { launchFlight, toMarsOrbit } from './helpers';
 
 const OUT = 'test-results/shots/';
 
+// Let the browser draw with the GPU (headless Chromium otherwise renders WebGL in software, too slowly for the 3D
+// globe at 1440 × 900, and the globe rightly falls back to the flat one).
+test.use({ launchOptions: { args: ['--enable-gpu', '--use-angle=d3d11', '--ignore-gpu-blocklist'] } });
+
 test('science targets and downlink', async ({ page }, info) => {
   const mobile = info.project.name === 'mobile';
   const p = info.project.name;
   await launchFlight(page, mobile);
   await toMarsOrbit(page);
-  await page.waitForTimeout(1500);
+  // The arrival transition (about 2 s): the map has zoomed into Mars and the globe is fading in.
+  await page.waitForTimeout(950);
+  await page.screenshot({ path: `${OUT}fly-arrival-transition-${p}.png` });
+  await page.waitForTimeout(2500);
+  const fps = await page.evaluate(() => (document.querySelector('[data-globe="3d"]') as HTMLElement | null)?.dataset.fps ?? null);
+  console.log(`globe ${p}: ${fps === null ? '2D' : `3D at ${fps} fps`}`);
   await page.screenshot({ path: `${OUT}fly-science-targets-${p}.png` });
   // Order three pictures, as the design's DOWNLINK state has.
   for (const name of ['VALLES MARINERIS', 'PHOBOS', 'OLYMPUS MONS']) {
