@@ -1,0 +1,162 @@
+{
+  "_comment": "Mars science targets (spec: Science targets and downlink; UI rules 39-43). Each target has a location, a one-line lesson, a science weight (game estimate; the six sum to 1), what its picture needs, and one real NASA image checked against its catalogue page on Oct 23, 2026. Image copies are made by scripts/fetch-targets.py into public/targets/ and public/mars/. JPL Image Use Policy: images on JPL public sites may be used for any purpose without prior permission, except third-party images (credits naming a university), whose owners allow journalistic, educational and personal use only.",
+  "targets": [
+    {
+      "id": "olympus-mons",
+      "name": "Olympus Mons",
+      "kind": "surface",
+      "lat_deg": { "value": 18.4, "unit": "deg (planetocentric)", "source": "USGS Gazetteer of Planetary Nomenclature: Olympus Mons (centre)", "url": "https://planetarynames.wr.usgs.gov/Feature/4453", "isGameEstimate": false },
+      "lon_deg": { "value": -134, "unit": "deg east (226.0° E)", "source": "USGS Gazetteer of Planetary Nomenclature: Olympus Mons (centre 226.00° E)", "url": "https://planetarynames.wr.usgs.gov/Feature/4453", "isGameEstimate": false },
+      "learn": { "value": "How a volcano grows about 2.5 times taller than Everest.", "unit": "", "source": "NASA PIA26055 caption: Olympus Mons is 21.9 km (72,000 ft) tall; Mt Everest is 29,032 ft (ratio from the engine, targetFacts)", "url": "https://science.nasa.gov/photojournal/pj-olympus-mons-26/", "isGameEstimate": false },
+      "weight": { "value": 0.18, "unit": "share of mission science", "source": "Game estimate (Science targets): what the picture teaches", "isGameEstimate": true },
+      "resolution_m": { "value": 6, "unit": "m per pixel", "source": "Game estimate (Science targets): sharp enough to see the summit calderas' terraces", "isGameEstimate": true },
+      "image_Mbit": { "value": 24, "unit": "Mbit", "source": "Game estimate (Science targets): one compressed frame", "isGameEstimate": true },
+      "dust": false,
+      "image": {
+        "nasaId": "PIA02982",
+        "title": "Color Mosaic of Olympus Mons",
+        "file": "targets/olympus-mons.jpg",
+        "credit": "NASA/JPL",
+        "mission": "Viking 1 Orbiter, 22 June 1978",
+        "usage": { "value": "Courtesy NASA/JPL. May be used for any purpose without prior permission (JPL Image Use Policy).", "unit": "", "source": "NASA Photojournal PIA02982 (credit NASA/JPL); JPL Image Use Policy", "url": "https://science.nasa.gov/photojournal/color-mosaic-of-olympus-mons/", "isGameEstimate": false }
+      }
+    },
+    {
+      "id": "valles-marineris",
+      "name": "Valles Marineris",
+      "kind": "surface",
+      "lat_deg": { "value": -10, "unit": "deg (planetocentric)", "source": "NASA Photojournal PIA00422 caption: the mosaic covers 0° to 20° S (centre of that frame)", "url": "https://pds-rings.seti.org/press_releases/pages/PIA00xxx/PIA00422.html", "isGameEstimate": false },
+      "lon_deg": { "value": -73.75, "unit": "deg east", "source": "NASA Photojournal PIA00422 caption: the mosaic covers longitude 45° to 102.5° (west; centre of that frame)", "url": "https://pds-rings.seti.org/press_releases/pages/PIA00xxx/PIA00422.html", "isGameEstimate": false },
+      "learn": { "value": "A canyon over 3,000 km long and 8 km deep, and what tore it open.", "unit": "", "source": "NASA Photojournal PIA00422 caption: the canyon system is over 3000 km long and averages 8 km deep", "url": "https://pds-rings.seti.org/press_releases/pages/PIA00xxx/PIA00422.html", "isGameEstimate": false },
+      "weight": { "value": 0.16, "unit": "share of mission science", "source": "Game estimate (Science targets): what the picture teaches", "isGameEstimate": true },
+      "resolution_m": { "value": 10, "unit": "m per pixel", "source": "Game estimate (Science targets): enough to see layers in the canyon walls", "isGameEstimate": true },
+      "image_Mbit": { "value": 28, "unit": "Mbit", "source": "Game estimate (Science targets): one compressed frame", "isGameEstimate": true },
+      "dust": true,
+      "image": {
+        "nasaId": "PIA00422",
+        "title": "Valles Marineris",
+        "file": "targets/valles-marineris.jpg",
+        "credit": "NASA/JPL/USGS",
+        "mission": "Viking Orbiter mosaic",
+        "usage": { "value": "Courtesy NASA/JPL/USGS. May be used for any purpose without prior permission (JPL Image Use Policy).", "unit": "", "source": "NASA Photojournal PIA00422 (credit NASA/JPL/USGS); JPL Image Use Policy", "url": "https://pds-rings.seti.org/press_releases/pages/PIA00xxx/PIA00422.html", "isGameEstimate": false }
+      }
+    },
+    {
+      "id": "north-polar-cap",
+      "name": "North Polar Cap",
+      "kind": "surface",
+      "lat_deg": { "value": 90, "unit": "deg (planetocentric)", "source": "NASA Photojournal PIA00161 (MC-1 Mare Boreum, latitudes 65° to 90°): the residual cap sits at the pole", "url": "https://science.nasa.gov/photojournal/mc-1-mare-boreum-region", "isGameEstimate": false },
+      "lon_deg": { "value": 0, "unit": "deg east", "source": "At the pole every longitude meets (game convention: 0)", "isGameEstimate": true },
+      "learn": { "value": "Ice cut by spiral troughs that show its layers, a record of Mars weather.", "unit": "", "source": "NASA Photojournal PIA00161 caption: a residual ice cap cut by spiral-patterned troughs exposing layered terrain (the weather record is general knowledge, to verify)", "url": "https://science.nasa.gov/photojournal/mc-1-mare-boreum-region", "isGameEstimate": true },
+      "weight": { "value": 0.14, "unit": "share of mission science", "source": "Game estimate (Science targets): what the picture teaches", "isGameEstimate": true },
+      "resolution_m": { "value": 50, "unit": "m per pixel", "source": "Game estimate (Science targets): enough to count the troughs", "isGameEstimate": true },
+      "image_Mbit": { "value": 20, "unit": "Mbit", "source": "Game estimate (Science targets): one compressed frame", "isGameEstimate": true },
+      "dust": false,
+      "image": {
+        "nasaId": "PIA00161",
+        "title": "MC-1 Mare Boreum Region",
+        "file": "targets/north-polar-cap.jpg",
+        "credit": "NASA/JPL/USGS",
+        "mission": "Viking Orbiter 1",
+        "usage": { "value": "Courtesy NASA/JPL/USGS. May be used for any purpose without prior permission (JPL Image Use Policy).", "unit": "", "source": "NASA Photojournal PIA00161 (credit NASA/JPL/USGS); JPL Image Use Policy", "url": "https://science.nasa.gov/photojournal/mc-1-mare-boreum-region", "isGameEstimate": false }
+      }
+    },
+    {
+      "id": "phobos",
+      "name": "Phobos",
+      "kind": "moon",
+      "moon": "phobos",
+      "learn": { "value": "Grooves and landslides on a moon slowly falling toward Mars.", "unit": "", "source": "NASA Photojournal PIA10368 caption (troughs, crater chains, landslides into Stickney); NASA Mars moons: Phobos is spiralling inward", "url": "https://science.nasa.gov/photojournal/phobos-from-6800-kilometers-color/", "isGameEstimate": false },
+      "weight": { "value": 0.2, "unit": "share of mission science", "source": "Game estimate (Science targets): what the picture teaches", "isGameEstimate": true },
+      "resolution_m": { "value": 7, "unit": "m per pixel", "source": "NASA Photojournal PIA10368: each pixel covers 6.8 m in the full-resolution image", "url": "https://science.nasa.gov/photojournal/phobos-from-6800-kilometers-color/", "isGameEstimate": false },
+      "image_Mbit": { "value": 32, "unit": "Mbit", "source": "Game estimate (Science targets): one compressed frame", "isGameEstimate": true },
+      "dust": false,
+      "image": {
+        "nasaId": "PIA10368",
+        "title": "Phobos from 6,800 Kilometers (Color)",
+        "file": "targets/phobos.jpg",
+        "credit": "NASA/JPL-Caltech/University of Arizona",
+        "mission": "MRO HiRISE, 23 March 2008",
+        "usage": { "value": "Credit NASA/JPL-Caltech/University of Arizona. A third-party image: free for educational and personal use; commercial use needs the University of Arizona's permission (JPL Image Use Policy).", "unit": "", "source": "NASA Photojournal PIA10368; JPL Image Use Policy (third-party images)", "url": "https://www.jpl.nasa.gov/jpl-image-use-policy", "isGameEstimate": false }
+      }
+    },
+    {
+      "id": "deimos",
+      "name": "Deimos",
+      "kind": "moon",
+      "moon": "deimos",
+      "learn": { "value": "Why the smaller moon looks smoothed over, as if with sand.", "unit": "", "source": "NASA Photojournal PIA11826 caption: smooth surface covered by loose rock and dust, except near fresh craters", "url": "https://science.nasa.gov/resource/martian-moon-deimos-in-high-resolution/", "isGameEstimate": false },
+      "weight": { "value": 0.12, "unit": "share of mission science", "source": "Game estimate (Science targets): what the picture teaches", "isGameEstimate": true },
+      "resolution_m": { "value": 20, "unit": "m per pixel", "source": "NASA/JPL PIA11826 release: HiRISE scale about 20 m per pixel", "url": "https://pds-rings.seti.org/press_releases/pages/PIA11xxx/PIA11826.html", "isGameEstimate": false },
+      "image_Mbit": { "value": 12, "unit": "Mbit", "source": "Game estimate (Science targets): one compressed frame", "isGameEstimate": true },
+      "dust": false,
+      "image": {
+        "nasaId": "PIA11826",
+        "title": "Martian Moon Deimos in High Resolution",
+        "file": "targets/deimos.jpg",
+        "credit": "NASA/JPL/University of Arizona",
+        "mission": "MRO HiRISE, 21 February 2009",
+        "usage": { "value": "Credit NASA/JPL/University of Arizona. A third-party image: free for educational and personal use; commercial use needs the University of Arizona's permission (JPL Image Use Policy).", "unit": "", "source": "NASA Photojournal PIA11826; JPL Image Use Policy (third-party images)", "url": "https://www.jpl.nasa.gov/jpl-image-use-policy", "isGameEstimate": false }
+      }
+    },
+    {
+      "id": "limb",
+      "name": "Thin Air at the Limb",
+      "kind": "limb",
+      "learn": { "value": "How the thin air is stacked in layers of ice cloud and dust.", "unit": "", "source": "NASA Photojournal PIA26203 caption: scientists wanted to see how layers of ice clouds and dust are stacked, to refine models of the atmosphere", "url": "https://science.nasa.gov/photojournal/odysseys-themis-views-the-horizon-of-mars", "isGameEstimate": false },
+      "weight": { "value": 0.2, "unit": "share of mission science", "source": "Game estimate (Science targets): what the picture teaches", "isGameEstimate": true },
+      "resolution_m": { "value": 300, "unit": "m per pixel", "source": "Game estimate (Science targets): a sideways look along the horizon", "isGameEstimate": true },
+      "image_Mbit": { "value": 16, "unit": "Mbit", "source": "Game estimate (Science targets): one compressed frame", "isGameEstimate": true },
+      "dust": true,
+      "image": {
+        "nasaId": "PIA26203",
+        "title": "Odyssey's THEMIS Views the Horizon of Mars",
+        "file": "targets/limb.jpg",
+        "credit": "NASA/JPL-Caltech/ASU",
+        "mission": "Mars Odyssey THEMIS, 9 May 2023 (false colour, infrared)",
+        "usage": { "value": "Credit NASA/JPL-Caltech/ASU. A third-party image: free for educational and personal use; commercial use needs Arizona State University's permission (JPL Image Use Policy).", "unit": "", "source": "NASA Photojournal PIA26203; JPL Image Use Policy (third-party images)", "url": "https://www.jpl.nasa.gov/jpl-image-use-policy", "isGameEstimate": false }
+      }
+    }
+  ],
+  "heights": {
+    "olympusMons_km": { "value": 21.9, "unit": "km", "source": "NASA Photojournal PIA26055 caption: Olympus Mons is 21.9 km (72,000 feet) tall", "url": "https://science.nasa.gov/photojournal/pj-olympus-mons-26/", "isGameEstimate": false },
+    "everest_km": { "value": 8.849, "unit": "km", "source": "NASA Photojournal PIA26055 caption: Mt Everest is 29,032 feet tall (= 8.849 km)", "url": "https://science.nasa.gov/photojournal/pj-olympus-mons-26/", "isGameEstimate": false }
+  },
+  "moons": {
+    "phobos": {
+      "name": "Phobos",
+      "a_km": { "value": 9375, "unit": "km", "source": "JPL Solar System Dynamics: planetary satellite mean elements (Phobos)", "url": "https://ssd.jpl.nasa.gov/sats/elem/sep.html", "isGameEstimate": false },
+      "period_days": { "value": 0.3187, "unit": "days", "source": "JPL Solar System Dynamics: planetary satellite mean elements (Phobos)", "url": "https://ssd.jpl.nasa.gov/sats/elem/sep.html", "isGameEstimate": false }
+    },
+    "deimos": {
+      "name": "Deimos",
+      "a_km": { "value": 23457, "unit": "km", "source": "JPL Solar System Dynamics: planetary satellite mean elements (Deimos)", "url": "https://ssd.jpl.nasa.gov/sats/elem/sep.html", "isGameEstimate": false },
+      "period_days": { "value": 1.2625, "unit": "days", "source": "JPL Solar System Dynamics: planetary satellite mean elements (Deimos)", "url": "https://ssd.jpl.nasa.gov/sats/elem/sep.html", "isGameEstimate": false }
+    }
+  },
+  "atmosphere": {
+    "nominalAlt_km": { "value": 158.5, "unit": "km", "source": "MAVEN mission update (2018): mean periapsis altitude 158.5 km in the nominal science corridor (to verify against a NASA publication)", "url": "http://redplanet.asu.edu/index.php/2018/05/maven-deep-dip-campaign-9-completed/", "isGameEstimate": true },
+    "nominalDensity_kgkm3": { "value": 0.1, "unit": "kg/km³", "source": "MAVEN mission update (2018): mean periapsis density 0.10 kg/km³ (corridor 0.05–0.15; to verify)", "url": "http://redplanet.asu.edu/index.php/2018/05/maven-deep-dip-campaign-9-completed/", "isGameEstimate": true },
+    "deepAlt_km": { "value": 121.2, "unit": "km", "source": "MAVEN fourth deep-dip campaign: periapsis 121.2 km (to verify)", "url": "https://www.ssl.berkeley.edu/maven-successfully-enters-fourth-deep-dip-campaign/", "isGameEstimate": true },
+    "deepDensity_kgkm3": { "value": 2.2, "unit": "kg/km³", "source": "MAVEN fourth deep-dip campaign: density 2.2 kg/km³ at periapsis (to verify)", "url": "https://www.ssl.berkeley.edu/maven-successfully-enters-fourth-deep-dip-campaign/", "isGameEstimate": true },
+    "dragCoefficient": { "value": 2.2, "unit": "", "source": "Game estimate: the usual free-molecular drag coefficient for a spacecraft", "isGameEstimate": true }
+  },
+  "deepDip": {
+    "alt_km": { "value": 125, "unit": "km", "source": "NASA/MAVEN team (2015): during deep dips periapsis is lowered to about 125 km (to verify)", "url": "https://phys.org/news/2015-02-maven-spacecraft-deep-dip-campaign.html", "isGameEstimate": true },
+    "days": { "value": 7, "unit": "days", "source": "Zurek et al. 2017 (JGR Space Physics): each deep-dip campaign lasted a week or more", "url": "https://agupubs.onlinelibrary.wiley.com/doi/full/10.1002/2016JA023641", "isGameEstimate": true }
+  },
+  "camera": {
+    "ifov_urad": { "value": 45, "unit": "µrad", "source": "Game estimate after Mars Odyssey THEMIS VIS: about 18 m per pixel from about 400 km (to verify)", "isGameEstimate": true },
+    "power_W": { "value": 20, "unit": "W", "source": "Game estimate (same as the Camera part)", "isGameEstimate": true },
+    "imaging_h": { "value": 1, "unit": "h per pass", "source": "Game estimate (Science targets): warm-up, slew, pointing and readout around one pass", "isGameEstimate": true },
+    "dustRepeats": { "value": 3, "unit": "passes", "source": "Game estimate (Science targets): a hazy target is shot again until one frame is clear", "isGameEstimate": true },
+    "dustSeasonRepeats": { "value": 6, "unit": "passes", "source": "Game estimate (Science targets): more repeats inside the dust season", "isGameEstimate": true }
+  },
+  "globe": {
+    "file": "mars/globe-2k.jpg",
+    "title": "Mars Viking Colorized Global Mosaic 232m",
+    "credit": "NASA/USGS Astrogeology (Viking Orbiter; colour by NASA Ames)",
+    "lon0_deg": { "value": -180, "unit": "deg east at the map's left edge", "source": "USGS Astrogeology product page: simple cylindrical, positive-east longitude, centred on 0°", "url": "https://astrogeology.usgs.gov/search/map/mars_viking_colorized_global_mosaic_232m", "isGameEstimate": false },
+    "usage": { "value": "Public domain (USGS Astrogeology: access constraint public domain, no use constraints).", "unit": "", "source": "USGS Astrogeology Science Center: Mars Viking Colorized Global Mosaic 232m", "url": "https://astrogeology.usgs.gov/search/map/mars_viking_colorized_global_mosaic_232m", "isGameEstimate": false }
+  }
+}
