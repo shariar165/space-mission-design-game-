@@ -120,9 +120,9 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
   const hurt = hurtWords(verdict.hurt, { label, title: type });
   const starWords = STAR_WORDS(dest.name);
   const starRule = [
-    `${f.num(STAR_RULES.phasesToReachScience.value)} phases done`,
+    'first science home',
     `science ≥ ${f.num(STAR_RULES.scienceForSecondStar.value)}`,
-    `margins ${f.pct(MARGIN_BAND.low.value, 0)}–${f.pct(MARGIN_BAND.high.value, 0)}`,
+    `science ≥ ${f.num(STAR_RULES.scienceForThirdStar.value)}`,
   ];
   const lessonHazard = verdict.hurt.code === 'bad-outcome' ? verdict.hurt.hazardType : 'hazardType' in verdict.saved ? verdict.saved.hazardType : panels.find((p) => p.hazardType)?.hazardType;
   const lesson = lessonHazard ? HAZARDS[lessonHazard]?.realHistory : undefined;

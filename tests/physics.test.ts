@@ -948,12 +948,12 @@ describe('scoring', () => {
     expect(t.breakdown.reduce((a, b) => a + b.contribution, 0)).toBeCloseTo(77.5, 9);
   });
 
-  it('stars are earned in order: reach science, ≥ 70% science, all margins in band', () => {
-    const band = { deltaV: 0.2, power: 0.15, mass: 0.25 };
-    expect(SC.stars({ reachedScience: false, scienceScore: 100, margins: band })).toBe(0);
-    expect(SC.stars({ reachedScience: true, scienceScore: 60, margins: band })).toBe(1);
-    expect(SC.stars({ reachedScience: true, scienceScore: 70, margins: { ...band, power: 0.5 } })).toBe(2);
-    expect(SC.stars({ reachedScience: true, scienceScore: 70, margins: band })).toBe(3);
+  it('stars follow the science returned: first science home, ≥ 50%, ≥ 80% (v0.8)', () => {
+    expect(SC.stars({ firstScienceHome: false, scienceScore: 100 })).toBe(0);
+    expect(SC.stars({ firstScienceHome: true, scienceScore: 49.9 })).toBe(1);
+    expect(SC.stars({ firstScienceHome: true, scienceScore: 50 })).toBe(2);
+    expect(SC.stars({ firstScienceHome: true, scienceScore: 79.9 })).toBe(2);
+    expect(SC.stars({ firstScienceHome: true, scienceScore: 80 })).toBe(3);
   });
 
   it('next-star hint: extra propellant from the rocket equation (as-flown dry mass)', () => {
@@ -970,18 +970,17 @@ describe('scoring', () => {
     expect(p).toBeCloseTo(1345.87, 0);
   });
 
-  it('next-star hint text checks the extra propellant against unused launch capacity', () => {
-    const hint = SC.nextStarHint({
-      stars: 2,
+  it('next-star hint names the science threshold of the next star (v0.8)', () => {
+    const base = {
       radioLimited: false,
-      scienceScore: 100,
       margins: { deltaV: 0.05, power: 0.2, mass: 0.2 },
       deltaV: { required_ms: 2000, capability_ms: 2100, isp_s: 300, dry_kg: 1000, propellant_kg: 1041.74, asFlown: true },
       launch: { capacity_kg: 2600, wet_kg: 2041.74 },
-      power: { available_W: 1200, required_W: 1000, type: 'solar', arrayArea_m2: 10 },
-    });
-    expect(hint).toMatch(/Carry 71 kg more propellant/);
-    expect(hint).toMatch(/fits/);
+      power: { available_W: 1200, required_W: 1000, type: 'solar' as const, arrayArea_m2: 10 },
+    };
+    expect(SC.nextStarHint({ ...base, stars: 1, scienceScore: 32, targets: true })).toMatch(/Science returned is 32%: bring home more targets to reach 50%/);
+    expect(SC.nextStarHint({ ...base, stars: 2, scienceScore: 68, targets: true })).toMatch(/reach 80%/);
+    expect(SC.nextStarHint({ ...base, stars: 2, scienceScore: 60 })).toMatch(/add science days or instruments to reach 80%/);
   });
 });
 

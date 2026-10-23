@@ -118,6 +118,11 @@ export function flyTiles(s: OpsState, v: OpsConsoleView = consoleView(s)): FlyTi
   };
 }
 
+/** Real seconds the mission clock takes to run a flight's prime mission at a speed (mission days a minute). */
+export function flightClock_s(s: OpsState, daysPerMinute: number): number {
+  return ((s.env.primeEndDay + 1) / daysPerMinute) * 60;
+}
+
 // ---------------------------------------------------------------------------
 // Danger card
 

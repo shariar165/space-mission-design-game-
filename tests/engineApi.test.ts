@@ -234,11 +234,14 @@ describe('score grades and the next-star category', () => {
       launch: { capacity_kg: 3163, wet_kg: 2454 },
       power: { available_W: 1590, required_W: 1300, type: 'solar' as const, arrayArea_m2: 12 },
     };
-    expect(nextStar(c).category).toBe('deltaV');
+    // v0.8: the stars follow the science returned, so every hint below three stars is about science.
+    expect(nextStar(c).category).toBe('science');
     expect(nextStar(c).hint).toBe(nextStarHint(c));
     expect(nextStar({ ...c, stars: 3 }).category).toBeUndefined();
     expect(nextStar({ ...c, stars: 1 }).category).toBe('science');
-    expect(nextStar({ ...c, margins: { deltaV: 0.2, power: 0.05, mass: 0.2 } }).category).toBe('power');
+    expect(nextStar({ ...c, stars: 0, blockers: ['Too heavy for this rocket'] }).category).toBe('success');
+    expect(nextStar({ ...c, stars: 0, failedPhase: 'cruise' }).category).toBe('success');
+    expect(nextStar({ ...c, stars: 0, targets: true }).hint).toMatch(/order a science target/);
   });
 });
 
@@ -1364,15 +1367,17 @@ describe('Rideshare (Moon: LRO 2009, the LCROSS secondary slot)', () => {
     expect(withLauncher(d, 'atlas-v-411').rideshareId).toBeUndefined();
   });
 
-  it('the Moon’s third star: reachable on the shared ride (radar kit, safe fuel), not on a whole Atlas V', () => {
+  it('the Moon’s mass margin: in band on the shared ride (radar kit, safe fuel), not on a whole Atlas V', () => {
     const choices = { ...cadet.defaultChoices(moon), science: 'radar', fuel: 'balanced', rocket: 'lro-lcross-2009' };
     const shared = cadet.buildCadetDesign(moon, choices);
     const whole = cadet.buildCadetDesign(moon, { ...choices, rocket: 'atlas-v-401' });
     const noLuck = { seed: 1, rng: () => 0.999999 };
-    expect(simulateMission(shared, noLuck).stars).toBe(3);
-    // on its own rocket the same craft uses a small share of the lift: the mass margin is far above the 30% band
+    expect(simulateMission(shared, noLuck).scores.mass).toBe(100);
+    // on its own rocket the same craft uses a small share of the lift: the mass margin is far above the 30% band.
+    // Since v0.8 the stars follow the science, so both flights earn three; only the mass score tells them apart.
     expect(evaluateDesign(whole).meters.mass.margin).toBeGreaterThan(0.3);
-    expect(simulateMission(whole, noLuck).stars).toBe(2);
+    expect(simulateMission(whole, noLuck).scores.mass).toBeLessThan(100);
+    expect(simulateMission(shared, noLuck).stars).toBe(simulateMission(whole, noLuck).stars);
   });
 
   it('the ride goes to the Moon only: on a Mars design it is a blocker', () => {

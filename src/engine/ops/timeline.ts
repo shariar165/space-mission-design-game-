@@ -39,6 +39,7 @@ import type {
   EnvDay,
   EventValues,
   HazardRecord,
+  ObserveRefusal,
   OpsDay,
   OpsEnvironment,
   OpsEventCode,
@@ -48,9 +49,13 @@ import type {
   ResponseSource,
 } from './types';
 import { stormCandidates, type RealStorm } from '../spaceWeather';
+import { density_kgm3, SCIENCE_RULES } from '../science';
+import { MARS_ATMOSPHERE, TARGETS, targetById } from '../targets';
+import { dragFactorAt, hasTargets, imageOf, OBSERVE_RULES, observationFor, observeLoadAt } from './observe';
 
 const EPS = 1e-9;
 const YEAR = 365.25;
+const DAY_S = 86_400;
 
 // ---------------------------------------------------------------------------
 // The fixed environment
@@ -237,6 +242,9 @@ function boundRate(env: OpsEnvironment, type: string): number {
     }
     case 'radiation-damage':
       return DESTINATIONS[env.design.destination].radiation?.lossRateAfterTolerance_perDay.value ?? 0;
+    case 'drag-heating':
+      // Every target observed at once, each at the lowest pass the craft may fly (thinning needs a bound ≥ the rate).
+      return OBSERVE_RULES.dragHeatingRate_perDay.value * (density_kgm3(SCIENCE_RULES.lowestAlt_km.value * 1000) / density_kgm3(MARS_ATMOSPHERE.nominalAlt_km.value * 1000)) * TARGETS.length;
     default:
       return 0;
   }
@@ -339,6 +347,8 @@ export function newState(
     events: [],
     extensionDecided: false,
     newDecisions: [],
+    images: [],
+    dvScience_ms: 0,
   };
 }
 
@@ -361,6 +371,7 @@ export function cloneState(s: OpsState): OpsState {
     events: [...s.events],
     ...(s.extension ? { extension: { ...s.extension } } : {}),
     newDecisions: [...s.newDecisions],
+    images: s.images.map((im) => ({ ...im })),
   };
 }
 
@@ -469,6 +480,8 @@ function hazardRate(s: OpsState, type: string, t: number): number {
       const tol = DESTINATIONS[env.design.destination].radiation?.tolerance_rad.value ?? Infinity;
       return s.dose_rad >= tol ? boundRate(env, type) : 0;
     }
+    case 'drag-heating':
+      return OBSERVE_RULES.dragHeatingRate_perDay.value * dragFactorAt(s, onset);
     default:
       return 0;
   }
@@ -628,6 +641,11 @@ function applyDeadline(s: OpsState, rec: HazardRecord, t: number) {
 
 function executeCommand(s: OpsState, cmd: Command, t: number, id: number) {
   const rec = s.commands.find((c) => c.id === id)!;
+  if (cmd.kind === 'observe') {
+    rec.status = 'executed';
+    observe(s, cmd.targetId, t, id);
+    return;
+  }
   if (cmd.kind === 'power-plan' || cmd.kind === 'standing-orders') {
     if (cmd.kind === 'power-plan') s.plan = { ...cmd.plan, instruments: { ...cmd.plan.instruments } };
     else s.standingOrders = { ...cmd.orders };
@@ -660,6 +678,72 @@ export function queueCommand(s: OpsState, command: Command, sentAt: number): Com
   return { accepted: true, sentAt, arrivesAt };
 }
 
+/** An OBSERVE order arrives: price the picture from the orbit and mass now, then fly it or refuse it. */
+function observe(s: OpsState, targetId: string, t: number, commandId: number) {
+  const target = targetById(targetId);
+  const phase = s.env.days[Math.floor(t)]?.phase;
+  const base = { targetId, commandId, startedAt: t, takenAt: t, bits: 0, sentBits: 0, load_W: 0, dragFactor: 0, dv_ms: 0 };
+  const refuse = (reason: ObserveRefusal) => {
+    s.images.push({ ...base, status: 'refused', reason });
+    emit(s, t, 'observe-refused', { commandId, targetId, reason });
+  };
+  if (!target || !hasTargets(s.env)) return refuse('unknown-target');
+  if (phase !== 'science' && phase !== 'extended') return refuse('not-in-orbit');
+  if (imageOf(s, targetId)) return refuse('already-ordered');
+  const plan = observationFor(s, target, t);
+  if (!plan.reachable) return refuse('unreachable');
+  if (plan.dv_ms > spareNow(s).deltaV_ms) return refuse('fuel');
+  if (!burn(s, plan.dv_ms, 'observe')) return;
+  s.dvScience_ms += plan.dv_ms;
+  s.images.push({
+    ...base,
+    takenAt: t + plan.days,
+    bits: plan.image_bits,
+    load_W: plan.energy_Wh / (plan.days * 24),
+    dragFactor: plan.dragFactor,
+    dv_ms: plan.dv_ms,
+    status: 'observing',
+  });
+  emit(s, t, 'observe-start', { commandId, targetId, dv_ms: plan.dv_ms, days: plan.days, takenAt: t + plan.days });
+}
+
+/**
+ * Pictures go down first on the day's DSN pass (it opens SCIENCE_RULES.passStart_h after the day starts and lasts
+ * the booked hours), in the order they were taken, at that day's link rate. Returns the bits they used in [t0, t1).
+ */
+function downlinkImages(s: OpsState, t0: number, t1: number, day: number, radioFrac: number): number {
+  const waiting = s.images.filter((im) => im.status === 'on-board');
+  if (!waiting.length) return 0;
+  const e = s.env.days[day]!;
+  const b = bookingFor(s, day);
+  const rate = b.hours > 0 ? (downlinkCapacity_bitsPerDay(e, b) / (b.hours * 3600)) * radioFrac : 0;
+  if (!(rate > 0)) return 0;
+  const open = day + SCIENCE_RULES.passStart_h.value / 24;
+  let cursor = Math.max(t0, open);
+  const close = Math.min(t1, open + b.hours / 24);
+  let used = 0;
+  for (const im of waiting) {
+    if (cursor >= close - EPS) break;
+    const need = im.bits - im.sentBits;
+    const can = rate * (close - cursor) * DAY_S;
+    if (can + 1e-6 >= need) {
+      const done = cursor + need / rate / DAY_S;
+      im.sentBits = im.bits;
+      im.sentAt = done;
+      im.homeAt = newsArrival(s.env, done);
+      im.status = 'sent';
+      used += need;
+      cursor = done;
+      emit(s, done, 'image-sent', { targetId: im.targetId, homeAt: im.homeAt });
+    } else {
+      im.sentBits += can;
+      used += can;
+      cursor = close;
+    }
+  }
+  return used;
+}
+
 // ---------------------------------------------------------------------------
 // Extension
 
@@ -677,6 +761,7 @@ function openExtensionDecision(s: OpsState, t: number) {
   emit(s, t, 'decision-open', { decisionId: 'extension' });
 }
 
+/** Prime data sent home ÷ the data goal: what the extension's science review judges (data, at every destination). */
 export function primeScienceFraction(s: OpsState): number {
   const sci = s.env.timeline.find((w) => w.phase === 'science')!;
   const goal = s.env.loads.instruments.reduce((a, i) => a + i.data_bitsPerDay, 0) * (sci.endDay - sci.startDay + 1);
@@ -767,6 +852,8 @@ function integrate(s: OpsState, t0: number, t1: number) {
   const e = env.days[day]!;
   const sci = scienceOn(s, day) && t0 + EPS >= s.pausedUntil;
   const want = demand(env, e, s.plan, { scienceOn: sci, lost: s.instrumentsLost });
+  // A science-target observation runs the camera on top of the plan (Science targets: dust costs power).
+  want.instruments += observeLoadAt(s, t0 + EPS);
   const got = shedLoads(e.available_W, want);
   const T = s.today;
   for (const k of ['bus', 'heaters', 'instruments', 'radio'] as const) {
@@ -782,7 +869,8 @@ function integrate(s: OpsState, t0: number, t1: number) {
     ? env.loads.instruments.reduce((a, i) => a + (lost.has(i.id) ? 0 : Math.max(0, Math.min(1, s.plan.instruments[i.id] ?? 0)) * i.data_bitsPerDay), 0) * instrFrac * dt
     : 0;
   const radioFrac = want.radio > 0 ? got.radio / want.radio : 0;
-  const capacity = downlinkCapacity_bitsPerDay(e, bookingFor(s, day)) * dt * radioFrac;
+  const images = downlinkImages(s, t0, t1, day, radioFrac);
+  const capacity = Math.max(0, downlinkCapacity_bitsPerDay(e, bookingFor(s, day)) * dt * radioFrac - images);
   const total = s.recorder_bits + produced;
   const down = Math.min(total, capacity);
   let recorder = total - down;
@@ -870,6 +958,7 @@ function nextEventTime(s: OpsState): number {
     if (!h.endDone) after(h.endsAt);
   }
   after(s.pausedUntil);
+  for (const im of s.images) if (im.status === 'observing') after(im.takenAt);
   return next;
 }
 
@@ -883,6 +972,12 @@ function processAt(s: OpsState, t: number) {
       // A real storm happened, so it is not thinned.
       if (s.status === 'flying' && (c.real || c.uAccept < hazardRate(s, type, c.t) / stream.bound_perDay)) createHazard(s, type, c.t, c.uOutcome, c.real);
       c = stream.list[s.cursors[type]!];
+    }
+  }
+  for (const im of s.images) {
+    if (im.status === 'observing' && im.takenAt <= t + EPS && s.status === 'flying') {
+      im.status = 'on-board';
+      emit(s, im.takenAt, 'image-taken', { targetId: im.targetId });
     }
   }
   const due = s.commands.filter((c) => c.status === 'in-flight' && c.arrivesAt <= t + EPS).sort((a, b) => a.arrivesAt - b.arrivesAt || a.id - b.id);

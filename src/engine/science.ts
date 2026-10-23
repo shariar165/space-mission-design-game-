@@ -13,7 +13,7 @@ export const SCIENCE_RULES = {
   observeDays: gameEstimate(1, 'days', 'Game estimate (Science targets): a surface or moon target is shot within a day of the order'),
   lowestAlt_km: gameEstimate(115, 'km', 'Game estimate after MAVEN: its deep dips went no lower than about 115 km (Zurek et al. 2017)'),
   passStart_h: gameEstimate(6, 'h after midnight (spacecraft day)', 'Game estimate (Science targets): when each day\'s DSN pass opens'),
-  cadetCampaign_days: gameEstimate(120, 'days', 'Game rule (Science targets): the Cadet Mars prime science campaign, so a run at 100× lasts about five minutes'),
+  cadetCampaign_days: gameEstimate(100, 'days', 'Game rule (Science targets): the Cadet Mars prime science campaign; with a 285–311 day cruise the clock runs about four minutes at 100×, and the decisions bring a run to about five'),
 } satisfies Record<string, Sourced<number>>;
 
 const R_MARS = DESTINATIONS.mars.radius_km.value * 1000;

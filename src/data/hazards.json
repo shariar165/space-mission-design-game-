@@ -671,5 +671,76 @@
     },
     "prompt": "The electronics have taken more radiation than they were built for.",
     "options": []
+  },
+  "drag-heating": {
+    "title": "Hot low pass",
+    "science": true,
+    "destinations": [
+      "mars"
+    ],
+    "phases": [
+      "science",
+      "extended"
+    ],
+    "detectedBy": "craft",
+    "warningLead_days": {
+      "value": 0,
+      "unit": "days",
+      "source": "Game rule: the craft feels the heating on the pass itself",
+      "isGameEstimate": true
+    },
+    "deadline_days": {
+      "value": 1,
+      "unit": "days after onset",
+      "source": "Game estimate (Science targets): the next passes go just as deep unless the orbit is raised",
+      "isGameEstimate": true
+    },
+    "duration_days": {
+      "value": 1,
+      "unit": "days",
+      "source": "Game estimate",
+      "isGameEstimate": true
+    },
+    "realHistory": {
+      "value": "Mars Global Surveyor began aerobraking in 1997 with a solar panel damaged at launch. When the panel bent on a low pass through the air, the team raised the periapsis, paused for a month and then dipped more gently, finishing in 1999.",
+      "unit": "",
+      "source": "Summary from general knowledge; to verify against NASA source",
+      "isGameEstimate": true,
+      "url": "https://science.nasa.gov/mission/mars-global-surveyor/"
+    },
+    "prompt": "A low pass through the air is heating the craft. Climb out, or stay low and finish the picture?",
+    "options": [
+      {
+        "id": "pop-up",
+        "label": "Raise the periapsis now",
+        "cost": {
+          "deltaV_ms": {
+            "value": 3,
+            "unit": "m/s",
+            "source": "Game estimate (Science targets): a quick burn at apoapsis",
+            "isGameEstimate": true
+          }
+        },
+        "failureChance": {
+          "value": 0.01,
+          "unit": "probability",
+          "source": "Game estimate",
+          "isGameEstimate": true
+        },
+        "failureEffect": "safe-mode"
+      },
+      {
+        "id": "stay-low",
+        "label": "Stay low and finish the picture",
+        "cost": {},
+        "failureChance": {
+          "value": 0.05,
+          "unit": "probability",
+          "source": "Game estimate",
+          "isGameEstimate": true
+        },
+        "failureEffect": "craft"
+      }
+    ]
   }
 }

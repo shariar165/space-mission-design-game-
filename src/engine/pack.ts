@@ -9,6 +9,7 @@ import { DESTINATIONS, HAZARDS, LAUNCH_VEHICLES, lookup, RIDESHARES } from './da
 import type { FullEvaluation } from './index';
 import { launchMassCheck, rideshareMassCheck } from './launch';
 import { marginStatus } from './meter';
+import { SCIENCE_RULES } from './science';
 import { arrivalDeltaV, bestArrival, maxFlightDays, transferForDesign } from './trajectory';
 import type { Design, DesignKit, DestinationId, MeterStatus, Sourced } from './types';
 
@@ -140,6 +141,8 @@ export function buildPackDesign(base: Design, packed: Packed): Design {
   const ids = packed.map((q) => q.id);
   const instrumentIds = ids.map((id) => part(id).instrumentId).filter((x): x is string => !!x);
   let d: Design = { ...base, instrumentIds, power: { ...base.power }, comms: { ...base.comms } };
+  // Cadet Mars flies a short prime campaign of science targets, so a run lasts about five minutes (spec: Science targets).
+  if (base.destination === 'mars') d.scienceDays = SCIENCE_RULES.cadetCampaign_days.value;
   if (has('dish')) d.comms.dishDiameter_m = DISH_SIZES.large.value;
   if (has('solar')) {
     const s = part('solar');
@@ -211,7 +214,7 @@ export function dangerDeck(destination: DestinationId, packed: Packed): DeckCard
   if (dest.missionType === 'orbiter') cards.push({ id: 'eclipse', kind: 'eclipse' });
   if (destination !== 'moon') cards.push({ id: 'conjunction', kind: 'conjunction' });
   for (const [id, h] of Object.entries(HAZARDS)) {
-    if (h.options.length && !h.liveOnly && h.destinations.includes(destination)) cards.push({ id, kind: 'hazard', detectedBy: h.detectedBy });
+    if (h.options.length && !h.liveOnly && !h.science && h.destinations.includes(destination)) cards.push({ id, kind: 'hazard', detectedBy: h.detectedBy });
   }
   return cards.map((c) => {
     const parts = packed.map((q) => q.id).filter((id) => part(id).covers.includes(c.id));
