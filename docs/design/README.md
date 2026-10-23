@@ -45,3 +45,26 @@ Differences from the mockups, on purpose:
 - Home's kicker reads "MISSION CONTROL · DEEP SPACE" (no year), and Home adds "Choose a mission" and the mode lever.
 - The Daily share card has one square per danger answered (held / cost you / hurt) rather than four placeholder squares. Its title comes from the first danger faced.
 - The Notebook holds the lessons the data can source (15), not 24.
+
+## Name Your Robot, transmissions and final transmission (Oct 21, 2026)
+
+`Signal Delay - Name Your Robot.dc.html` (19,069 bytes; frames 0a, 0b) is implemented in `src/ui/screens/NameRobot.tsx` and `styles/sd-name.css`. The same import updated Fly and Survive (the TRANSMISSIONS teletype) and Mission Report (FINAL TRANSMISSION).
+
+## Science targets, downlink, mission album and the Mars globe (Oct 23, 2026)
+
+Imported through the claude_design MCP, and the same check applies: each copy matches the project file byte for byte. `read_file` returns HTML-entity-escaped text, so every copy was decoded and its size compared with the project listing.
+
+**Signal Delay copies in `signal-delay/`.**
+- Current sizes: Fly and Survive 100,354; Mission Report 48,945; Name Your Robot 19,069; Home 24,737; Notebook 18,488; Pack 30,521; SDIcon 4,456; support.js 69,150.
+- **Fly and Survive** adds the Mars-orbit phase. The CRT turns to a Mars globe with six SCIENCE TARGETS cards, an OBSERVE key and DONE · KEEP FLYING. It also adds the DOWNLINK drawer on the TRANSMISSIONS paper: a queue, the next DSN pass, a dithered print line by line, then the image in full colour with its credit and the robot's comment. New JUMP TO states: SCIENCE TARGETS and DOWNLINK.
+- **Mission Report** opens with the MISSION ALBUM, which comes before FINAL TRANSMISSION and the comic. It shows one frame per target: in colour if the picture came home, SIGNAL LOST if it was cut off, NOT RETURNED if it never left. Above the frames is a science bar with one block per target, sized by what that target teaches.
+- The project also keeps `… (before science)` and `… (before album)` versions of these two files. They are the copies imported on Oct 21 and are not copied again.
+
+**Mars globe in `3d/`.** From the project https://claude.ai/design/p/b3c517da-8be3-4c68-b563-65378ba39d71.
+- Files: `Mars Globe.html` 11,402; `three-d-stage.js` 18,742; `crt.css` 2,323; `mars-map.js` 11,588.
+- It is the only 3D element in the game: the globe in the Fly & Survive CRT after arrival. Fly & Survive keeps its 2D map, so the project's `Orbit View.html` is not used.
+
+**Differences from the mockups, on purpose.**
+- The globe uses a real NASA surface map, the USGS Viking colorized global mosaic, not `mars-map.js`'s procedural map. The mockup's Jezero marker is replaced by the game's six targets.
+- The design's pictures (`signal-delay/assets/mars/*.jpg`) are binary, and the MCP returns text only, so they could not be copied. The game ships its own copies of the NASA images, each one checked against its Photojournal page (`src/data/targets.json`). The same files are placed under `signal-delay/assets/mars/` with the design's names, so the mockups render.
+- Every cost, risk, size and time on a target card or in the drawer is engine output.

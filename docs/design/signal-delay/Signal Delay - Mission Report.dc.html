@@ -19,7 +19,7 @@
     <div style="display:flex;flex-direction:column;gap:8px">
       <div style="font:400 14px/1 'B612 Mono',monospace;letter-spacing:.2em;color:#8a8270">SIGNAL DELAY · SCREEN 03 OF 06</div>
       <h1 style="margin:0;font:800 56px/1 'Big Shoulders Display',sans-serif;color:#efe6cf;letter-spacing:.02em">MISSION REPORT</h1>
-      <p style="margin:0;max-width:640px;font:400 16px/1.5 'B612',sans-serif;color:#a49b84;text-wrap:pretty">First the robot’s last words come off the teletype. Then the paper feeds up and prints your mission as a 4-panel comic. Then: stars, what saved you, what hurt you, how the real NASA mission did, and one new card for your Notebook.</p>
+      <p style="margin:0;max-width:640px;font:400 16px/1.5 'B612',sans-serif;color:#a49b84;text-wrap:pretty">First the mission album: every science target, in colour if it made it home, an empty frame if it didn’t. Then the robot’s last words come off the teletype. Then the paper feeds up and prints your mission as a 4-panel comic. Then: stars, what saved you, what hurt you, how the real NASA mission did, and one new card for your Notebook.</p>
     </div>
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
       <span style="font:400 12px/1 'B612 Mono',monospace;letter-spacing:.16em;color:#8a8270">ENDING</span>
@@ -37,9 +37,37 @@
       <div style="display:flex;gap:10px;align-items:center"><span style="padding:4px 9px;border-radius:3px;background:#ffb547;color:#1b1a16;font:700 13px/1 'B612 Mono',monospace">3a</span><span style="font:400 13px/1 'B612 Mono',monospace;color:#8a8270;letter-spacing:.1em;white-space:nowrap">DESKTOP · 1440 × 900</span></div>
       <div style="width:1440px;height:900px;box-sizing:border-box;padding:18px;background:#1c1e18;border-radius:10px;box-shadow:0 30px 80px rgba(0,0,0,.55),inset 0 1px 0 #34372e;display:flex">
         <div style="flex:1;position:relative;background:#efe6cf;border-radius:4px;overflow:hidden">
-          <div style="position:absolute;left:0;right:0;top:0;height:1728px;transform:translateY({{ rollY }}px);transition:transform 1.6s cubic-bezier(.6,0,.2,1)">
+          <div style="position:absolute;left:0;right:0;top:0;height:2592px;transform:translateY({{ rollY }}px);transition:transform 1.6s cubic-bezier(.6,0,.2,1)">
           <div style="position:absolute;left:0;top:0;bottom:0;width:40px;border-right:1px dashed #c4b897;background-image:radial-gradient(circle,#1c1e18 6px,transparent 7px);background-size:40px 36px;background-position:center 10px"></div>
           <div style="position:absolute;right:0;top:0;bottom:0;width:40px;border-left:1px dashed #c4b897;background-image:radial-gradient(circle,#1c1e18 6px,transparent 7px);background-size:40px 36px;background-position:center 10px"></div>
+          <div style="position:relative;height:864px;box-sizing:border-box;padding:34px 100px 30px;display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;gap:18px;border-bottom:2px dashed #b9ad8c">
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div style="display:flex;justify-content:space-between;gap:20px;font:700 12px/1 'B612 Mono',monospace;letter-spacing:.2em;color:#7a715c"><span>TELETYPE 03 · MISSION ALBUM — {{ nameU }}</span><span>{{ albMeta }}</span></div>
+              <div style="display:flex;flex-direction:column;font:900 60px/0.95 'Big Shoulders Display',sans-serif;letter-spacing:.01em"><span style="color:{{ albBigCol }}">{{ albBig }}</span><span style="color:{{ albBig2Col }}">{{ albBig2 }}</span></div>
+              <span style="font:700 18px/1.2 'B612 Mono',monospace;color:#1b1a16;letter-spacing:.04em">{{ albSub }}</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="display:flex;gap:4px;height:22px"><sc-for list="{{ albFrames }}" as="f" hint-placeholder-count="6"><div title="{{ f.n }}" style="flex:{{ f.sci }} 1 0;box-sizing:border-box;border:2px {{ f.barStyle }} {{ f.barBd }};background:{{ f.barBg }}"></div></sc-for></div>
+              <div style="display:flex;justify-content:space-between;font:400 12px/1 'B612 Mono',monospace;letter-spacing:.1em;color:#7a715c"><span>MISSION SCIENCE · ONE BLOCK PER TARGET, SIZED BY WHAT IT TEACHES</span><span>{{ albPct }}</span></div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:16px 26px;min-height:0">
+              <sc-for list="{{ albFrames }}" as="f" hint-placeholder-count="6">
+                <div style="display:flex;flex-direction:column;gap:7px;min-height:0">
+                  <div style="flex:1;min-height:0;position:relative;box-sizing:border-box;padding:{{ f.pad }};background:{{ f.mountBg }};border:2px {{ f.frameStyle }} {{ f.frameBd }};box-shadow:{{ f.shadow }}">
+                    <sc-if value="{{ f.isImg }}" hint-placeholder-val="{{ false }}"><div role="img" aria-label="{{ f.n }}" style="width:100%;height:100%;background:{{ f.imgBg }}"></div></sc-if>
+                    <sc-if value="{{ f.isPartial }}" hint-placeholder-val="{{ false }}"><div style="width:100%;height:100%;display:flex;flex-direction:column;overflow:hidden"><canvas ref="{{ f.crefD }}" width="160" height="60" style="width:100%;height:auto;display:block;image-rendering:pixelated"></canvas><div style="flex:1;border-top:3px solid #b23a22;display:flex;align-items:center;justify-content:center;font:900 22px/1 'Big Shoulders Display',sans-serif;letter-spacing:.14em;color:#b23a22">— SIGNAL LOST —</div></div></sc-if>
+                    <sc-if value="{{ f.isMiss }}" hint-placeholder-val="{{ false }}"><div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center"><span style="font:700 12px/1 'B612 Mono',monospace;letter-spacing:.18em;color:#9a8f72">NOT RETURNED</span><span style="font:700 15px/1.3 'B612 Mono',monospace;color:#7a715c;max-width:260px">{{ f.why }}</span></div></sc-if>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><span style="font:800 21px/1.1 'Big Shoulders Display',sans-serif;letter-spacing:.03em;color:{{ f.nameCol }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0">{{ f.n }}</span><span style="font:700 12px/1 'B612 Mono',monospace;letter-spacing:.06em;color:{{ f.sciCol }};white-space:nowrap">{{ f.sciTxt }}</span></div>
+                  <span style="font:400 10px/1.25 'B612 Mono',monospace;letter-spacing:.06em;color:#7a715c;min-height:13px">{{ f.cap }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:20px">
+              <span style="font:400 14px/1.4 'B612',sans-serif;color:#7a715c;max-width:640px;text-wrap:pretty">{{ albFoot }}</span>
+              <button onClick="{{ toTrans }}" style="cursor:pointer;height:54px;padding:0 24px;border-radius:5px;border:2px solid #1b1a16;border-bottom-width:5px;background:#efe6cf;font:800 18px/1 'Big Shoulders Display',sans-serif;letter-spacing:.1em;color:#1b1a16;white-space:nowrap">FEED THE PAPER · FINAL TRANSMISSION ▾</button>
+            </div>
+          </div>
           <div style="position:relative;height:864px;box-sizing:border-box;padding:46px 150px 40px;display:flex;flex-direction:column;gap:30px;border-bottom:2px dashed #b9ad8c">
             <div style="display:flex;flex-direction:column;gap:12px;padding-bottom:18px;border-bottom:3px solid #1b1a16">
               <div style="display:flex;justify-content:space-between;gap:20px;font:700 12px/1 'B612 Mono',monospace;letter-spacing:.2em;color:#7a715c"><span>TELETYPE 03 · {{ recv }}</span><span>{{ sent }}</span></div>
@@ -185,6 +213,26 @@
       <div style="width:390px;height:844px;box-sizing:border-box;padding:10px;background:#1c1e18;border-radius:34px;box-shadow:0 30px 80px rgba(0,0,0,.55),0 0 0 8px #0f100c;display:flex;overflow:hidden">
         <div style="flex:1;background:#efe6cf;border-radius:24px;overflow-y:auto;scrollbar-width:none;padding:18px 16px 24px;display:grid;grid-template-columns:minmax(0,1fr);align-content:start;gap:16px">
           <div style="display:flex;flex-direction:column;gap:12px;padding-bottom:20px;border-bottom:2px dashed #b9ad8c">
+            <span style="font:700 9px/1.3 'B612 Mono',monospace;letter-spacing:.14em;color:#7a715c">TELETYPE 03 · MISSION ALBUM — {{ nameU }}</span>
+            <div style="display:flex;flex-direction:column;gap:2px;font:900 30px/0.98 'Big Shoulders Display',sans-serif"><span style="color:{{ albBigCol }};text-wrap:balance">{{ albBig }}</span><span style="color:{{ albBig2Col }};text-wrap:balance">{{ albBig2 }}</span></div>
+            <span style="font:700 11px/1.3 'B612 Mono',monospace;color:#1b1a16">{{ albSub }}</span>
+            <div style="display:flex;gap:3px;height:14px"><sc-for list="{{ albFrames }}" as="f" hint-placeholder-count="6"><div style="flex:{{ f.sci }} 1 0;box-sizing:border-box;border:2px {{ f.barStyle }} {{ f.barBd }};background:{{ f.barBg }}"></div></sc-for></div>
+            <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 12px">
+              <sc-for list="{{ albFrames }}" as="f" hint-placeholder-count="6">
+                <div style="display:flex;flex-direction:column;gap:5px">
+                  <div style="height:120px;position:relative;box-sizing:border-box;padding:{{ f.padM }};background:{{ f.mountBg }};border:2px {{ f.frameStyle }} {{ f.frameBd }};box-shadow:{{ f.shadow }}">
+                    <sc-if value="{{ f.isImg }}" hint-placeholder-val="{{ false }}"><div role="img" aria-label="{{ f.n }}" style="width:100%;height:100%;background:{{ f.imgBg }}"></div></sc-if>
+                    <sc-if value="{{ f.isPartial }}" hint-placeholder-val="{{ false }}"><div style="width:100%;height:100%;display:flex;flex-direction:column;overflow:hidden"><canvas ref="{{ f.crefM }}" width="160" height="60" style="width:100%;height:auto;display:block;image-rendering:pixelated"></canvas><div style="flex:1;border-top:2px solid #b23a22;display:flex;align-items:center;justify-content:center;font:900 13px/1 'Big Shoulders Display',sans-serif;letter-spacing:.12em;color:#b23a22">— SIGNAL LOST —</div></div></sc-if>
+                    <sc-if value="{{ f.isMiss }}" hint-placeholder-val="{{ false }}"><div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;text-align:center;padding:0 6px;box-sizing:border-box"><span style="font:700 8px/1 'B612 Mono',monospace;letter-spacing:.14em;color:#9a8f72">NOT RETURNED</span><span style="font:700 10px/1.3 'B612 Mono',monospace;color:#7a715c">{{ f.why }}</span></div></sc-if>
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:3px"><span style="font:800 15px/1.1 'Big Shoulders Display',sans-serif;letter-spacing:.03em;color:{{ f.nameCol }}">{{ f.n }}</span><span style="font:700 9px/1 'B612 Mono',monospace;color:{{ f.sciCol }}">{{ f.sciTxt }}</span></div>
+                  <span style="font:400 7.5px/1.25 'B612 Mono',monospace;color:#7a715c">{{ f.capShort }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <span style="font:400 12px/1.4 'B612',sans-serif;color:#7a715c;text-wrap:pretty">{{ albFoot }}</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px;padding-bottom:20px;border-bottom:2px dashed #b9ad8c">
             <div style="display:flex;flex-direction:column;gap:8px;padding-bottom:12px;border-bottom:2px solid #1b1a16">
               <span style="font:700 9px/1.3 'B612 Mono',monospace;letter-spacing:.14em;color:#7a715c">TELETYPE 03 · {{ recv }}</span>
               <span style="font:900 36px/0.9 'Big Shoulders Display',sans-serif;color:#1b1a16">FINAL TRANSMISSION — {{ nameU }}</span>
@@ -252,6 +300,29 @@ const PANELS=[
  {day:'DAY 307 · ARRIVE AT MARS',text:'A 34-minute burn. Mars caught you.',eng:'Δv 1.2 km/s · FUEL 4 → 2'},
  {day:'DAY 424 · SUN IN THE WAY',text:'No radio for two weeks. The autopilot flew alone.',eng:'SEP < 2° · 14 d autonomous'}
 ];
+const F=[
+ {n:'OLYMPUS MONS',img:'assets/mars/olympus.jpg',sci:18,credit:'NASA/JPL · VIKING 1 ORBITER',short:'NASA/JPL · VIKING 1'},
+ {n:'VALLES MARINERIS',img:'assets/mars/valles.jpg',sci:16,credit:'NASA/JPL-CALTECH/USGS · VIKING MOSAIC',short:'NASA/JPL-CALTECH/USGS'},
+ {n:'NORTH POLAR CAP',img:'assets/mars/northcap.jpg',sci:14,credit:'NASA/JPL/USGS · VIKING ORBITER · PIA00161',short:'NASA/JPL/USGS · VIKING'},
+ {n:'PHOBOS',img:'assets/mars/phobos.jpg',sci:20,credit:'NASA/JPL-CALTECH/UNIV. OF ARIZONA · MRO HiRISE',short:'NASA/JPL-CALTECH/UA · HiRISE'},
+ {n:'DEIMOS',img:'assets/mars/deimos.jpg',sci:12,credit:'NASA/JPL-CALTECH/UNIV. OF ARIZONA · MRO HiRISE',short:'NASA/JPL-CALTECH/UA · HiRISE'},
+ {n:'THIN AIR AT THE LIMB',img:'assets/mars/limb.jpg',sci:20,credit:'NASA/JPL · VIKING 1 ORBITER',short:'NASA/JPL · VIKING 1'}
+];
+const ALB={
+ complete:{st:['img','img','img','img','miss','miss'],why:{4:'SKIPPED · NOT ENOUGH FUEL',5:'SKIPPED · DRAG RISK TOO HIGH'},big:()=>'4 OF 6 TARGETS RETURNED',big2:'68% OF MISSION SCIENCE',bigCol:'#1b1a16',big2Col:'#1d6b34',sub:n=>n+' · PRIMARY MISSION COMPLETE · DAY 672',meta:'DAY 001–672',foot:'Deimos and the limb are still up there. Not this mission.'},
+ lost:{st:['img','img','partial','img','miss','miss'],why:{4:'NEVER OBSERVED',5:'TAKEN ON DAY 436 · NEVER SENT'},big:n=>n+' WAS LOST ON DAY 438 —',big2:'3 IMAGES MADE IT HOME.',bigCol:'#b23a22',big2Col:'#1b1a16',sub:()=>'3 OF 6 TARGETS RETURNED · 54% OF MISSION SCIENCE',meta:'LAST CONTACT · DAY 438',foot:'The limb picture is still in its memory, somewhere over Mars. The polar cap got halfway down the wire.'},
+ extended:{st:['img','img','img','img','miss','miss'],why:{4:'STILL POSSIBLE · EXTENDED MISSION',5:'STILL POSSIBLE · EXTENDED MISSION'},big:()=>'4 OF 6 TARGETS RETURNED',big2:'68% SO FAR · STILL FLYING',bigCol:'#1b1a16',big2Col:'#a8620a',sub:n=>n+' · MISSION EXTENDED · DAY 672',meta:'DAY 001–672 · AND COUNTING',foot:'Two empty frames, and a robot with fuel left to fill them.'}
+};
+const AW=160,CUT=.46,INK=[29,107,52],ALBT=10;
+function dither(img){
+  const hh=Math.round(AW*img.naturalHeight/img.naturalWidth),c=document.createElement('canvas');c.width=AW;c.height=hh;
+  const x=c.getContext('2d');x.drawImage(img,0,0,AW,hh);const d=x.getImageData(0,0,AW,hh).data,g=new Float32Array(AW*hh);
+  for(let i=0;i<AW*hh;i++){const l=(d[i*4]*.3+d[i*4+1]*.59+d[i*4+2]*.11)/255;g[i]=Math.min(1,Math.max(0,(l-.5)*1.5+.55))*255;}
+  const bits=new Uint8Array(AW*hh);
+  for(let y=0;y<hh;y++)for(let xx=0;xx<AW;xx++){const i=y*AW+xx,o=g[i],n=o<128?0:255,e=o-n;bits[i]=n?0:1;
+    if(xx+1<AW)g[i+1]+=e*7/16;if(y+1<hh){if(xx>0)g[i+AW-1]+=e*3/16;g[i+AW]+=e*5/16;if(xx+1<AW)g[i+AW+1]+=e/16;}}
+  return {h:hh,bits};
+}
 const STEP=2.4,CPS=38,LCPS=30,STILL='STILL HERE.';
 const OUT={
  complete:{label:'COMPLETE',recvDay:672,recv:'RECEIVED DAY 672 · DSN CANBERRA',sent:'SENT 20 MIN BEFORE IT PRINTED',
@@ -265,29 +336,46 @@ const OUT={
   foot:'Not a final transmission after all. The next one is up to you.',stamp:['MISSION','EXTENDED'],col:'#a8620a',stars:[1,1,0],lasted:'STILL FLYING',ended:'—'}
 };
 class Component extends DCLogic {
-  state={t:0,mode:'cadet',outcome:null,sheet:null,name:'',blink:true};
+  state={t:0,mode:'cadet',outcome:null,stage:0,ts:0,t2:0,name:'',blink:true};
+  cv={d:null,m:null};
+  crefD=el=>{this.cv.d=el;this.paint(el);};
+  crefM=el=>{this.cv.m=el;this.paint(el);};
+  paint(el){const b=this.bits;if(!el||!b)return;const rows=Math.round(b.h*CUT);el.width=AW;el.height=rows;
+    const x=el.getContext('2d'),img=x.createImageData(AW,rows);
+    for(let i=0;i<AW*rows;i++)if(b.bits[i]){img.data[i*4]=INK[0];img.data[i*4+1]=INK[1];img.data[i*4+2]=INK[2];img.data[i*4+3]=255;}
+    x.putImageData(img,0,0);}
+  albVals(key,nameU){const e=ALB[key]||ALB.complete;let got=0;
+    const frames=F.map((f,i)=>{const st=e.st[i],img=st==='img',part=st==='partial',miss=st==='miss';if(img)got+=f.sci;
+      return {n:f.n,img:f.img,imgBg:'#1b1a16 url("'+f.img+'") center/cover no-repeat',sci:f.sci,isImg:img,isPartial:part,isMiss:miss,why:e.why[i]||'',crefD:this.crefD,crefM:this.crefM,
+        pad:img||part?'10px':'0',padM:img||part?'5px':'0',mountBg:img||part?'#fbf7ec':'transparent',frameStyle:miss?'dashed':'solid',frameBd:miss?'#b9ad8c':'transparent',shadow:img||part?'0 2px 0 #c4b897,0 8px 18px rgba(27,26,22,.14)':'none',
+        nameCol:miss?'#9a8f72':'#1b1a16',sciCol:img?'#1d6b34':(part?'#b23a22':'#9a8f72'),sciTxt:img?'+'+f.sci+'% SCIENCE':(part?'HALF AN IMAGE · 0%':f.sci+'% MISSED'),
+        cap:img?'IMAGE CREDIT: '+f.credit:(part?'SIGNAL LOST AT LINE 112 OF 240':''),capShort:img?f.short:(part?'LOST AT LINE 112':''),
+        barStyle:miss||part?'dashed':'solid',barBd:img?'#1d6b34':(part?'#b23a22':'#b9ad8c'),barBg:img?'#1d6b34':'transparent'};});
+    return {albFrames:frames,albBig:e.big(nameU),albBig2:e.big2,albBigCol:e.bigCol,albBig2Col:e.big2Col,albSub:e.sub(nameU),albMeta:e.meta,albFoot:e.foot,albPct:got+'% RETURNED'};}
   componentDidMount(){let nm='';try{nm=localStorage.getItem('sd.robotName')||'';}catch(_){}this.setState({name:nm});
-    this.last=performance.now();this.iv=setInterval(()=>{const n=performance.now();const dt=(n-this.last)/1000;this.last=n;this.setState(s=>({t:s.t+dt,blink:Math.floor(n/450)%2===0}));},40);}
+    const im=new Image();im.onload=()=>{try{this.bits=dither(im);this.paint(this.cv.d);this.paint(this.cv.m);}catch(_){}};im.src=F[2].img;
+    this.last=performance.now();this.iv=setInterval(()=>{const n=performance.now();const dt=(n-this.last)/1000;this.last=n;this.setState(s=>{const t=s.t+dt,u={t,blink:Math.floor(n/450)%2===0};
+      if(s.stage===0&&t>=ALBT){u.stage=1;u.ts=t;}else if(s.stage===1&&this._feedAt&&t-s.ts>=this._feedAt){u.stage=2;u.t2=t;}return u;});},40);}
   componentWillUnmount(){clearInterval(this.iv);}
   renderVals(){
     const s=this.state,eng=s.mode==='eng',key=s.outcome||this.props.outcome||'complete',o=OUT[key]||OUT.complete;
     const nameU=String(s.name||this.props.robotName||'VOYA').toUpperCase().slice(0,12);
-    const lines=o.lines(nameU);let acc=.9;
-    const logLines=lines.map((tx,i)=>{const st=acc,dur=tx.length/LCPS;acc+=dur+.5;const k=Math.max(0,Math.min(tx.length,Math.floor((s.t-st)*LCPS)));
-      const on=s.t>=st,typing=on&&k<tx.length,tail=i===lines.length-1&&!o.lost&&!o.still&&on;
+    const lines=o.lines(nameU);let acc=.9;const tt=s.stage>=1?s.t-s.ts:-1;
+    const logLines=lines.map((tx,i)=>{const st=acc,dur=tx.length/LCPS;acc+=dur+.5;const k=Math.max(0,Math.min(tx.length,Math.floor((tt-st)*LCPS)));
+      const on=tt>=st,typing=on&&k<tx.length,tail=i===lines.length-1&&!o.lost&&!o.still&&on;
       return {text:tx.slice(0,k),curO:(typing||tail)&&s.blink?1:0};});
-    const lostAt=acc+.7,stillAt=acc+.4,stillK=Math.max(0,Math.min(STILL.length,Math.floor((s.t-stillAt)*LCPS*.5)));
+    const lostAt=acc+.7,stillAt=acc+.4,stillK=Math.max(0,Math.min(STILL.length,Math.floor((tt-stillAt)*LCPS*.5)));
     const end=o.lost?lostAt:o.still?stillAt+STILL.length/(LCPS*.5):acc;
     const feedAt=end+2.8;this._feedAt=feedAt;
-    const stage=s.sheet!=null?s.sheet:(s.t>=feedAt?1:0),tc=s.t-(feedAt+1.4);
+    const tc=s.stage===2?s.t-s.t2-1.4:-1;
     const panels=PANELS.map((p,i)=>{const lt=tc-i*STEP;const on=lt>0;
       return {...p,is1:i===0,is2:i===1,is3:i===2,is4:i===3,op:on?1:.12,text:on?p.text.slice(0,Math.floor(lt*CPS)):''};});
     const labs=[['ROBOT SURVIVED','SYS > 0 at end'],['SCIENCE GOAL','DATA ≥ 4'],['NO DAMAGE','SYS = 5 at end']];
     return {eng,panels,nameU,recv:o.recv,recvDay:o.recvDay,sent:o.sent,foot:o.foot,logLines,
-      showLost:!!o.lost&&s.t>=lostAt,showStill:!!o.still&&s.t>=stillAt,stillText:STILL.slice(0,stillK),stillCur:s.blink?1:0,
-      rollY:stage?-864:0,toReport:()=>this.setState({sheet:1,t:Math.max(s.t,this._feedAt)}),
+      showLost:!!o.lost&&tt>=lostAt,showStill:!!o.still&&tt>=stillAt,stillText:STILL.slice(0,stillK),stillCur:s.blink?1:0,
+      rollY:-864*s.stage,toReport:()=>this.setState({stage:2,t2:s.t}),toTrans:()=>this.setState({stage:1,ts:s.t}),...this.albVals(key,nameU),
       stampCol:o.col,stampA:o.stamp[0],stampB:o.stamp[1],
-      outs:Object.entries(OUT).map(([k,v])=>{const on=k===key;return {label:v.label,go:()=>this.setState({outcome:k,t:0,sheet:null}),bg:on?'#ffb547':'#1c1e18',fg:on?'#1b1a16':'#cbbf9f',bd:on?'#ffb547':'#3a3d33'};}),
+      outs:Object.entries(OUT).map(([k,v])=>{const on=k===key;return {label:v.label,go:()=>this.setState({outcome:k,t:0,stage:0}),bg:on?'#ffb547':'#1c1e18',fg:on?'#1b1a16':'#cbbf9f',bd:on?'#ffb547':'#3a3d33'};}),
       stars:labs.map(([l,r],i)=>({label:l,rule:r,fill:!!o.stars[i],col:o.stars[i]?'#d8a21c':'#a49b84'})),
       compare:[
         {k:'LAUNCH',you:'NOV 18',nasa:'NOV 18, 2013',nasaShort:'MAVEN · NOV 18, 2013'},
@@ -296,7 +384,7 @@ class Component extends DCLogic {
         {k:'ACTUALLY LASTED',you:o.lasted,nasa:'11 YEARS',nasaShort:'MAVEN · 11 YEARS'},
         {k:'HOW IT ENDED',you:o.ended,nasa:'SPUN, BATTERY DIED · DEC 2025',nasaShort:'SPIN DRAINED BATTERY'}
       ],
-      replay:()=>this.setState({t:0,sheet:null}),
+      replay:()=>this.setState({t:0,stage:0}),
       toggleMode:()=>this.setState({mode:eng?'cadet':'eng'}),modeBtn:eng?'ENGINEER MODE ON':'CADET MODE · SWITCH',engLbl:eng?'#ffb547':'#cbbf9f'};
   }
 }

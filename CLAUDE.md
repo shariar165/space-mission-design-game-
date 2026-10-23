@@ -66,7 +66,7 @@ There is no lint step.
 - Engineer mode shows each equation and every input; ⓘ (`SourceInfo`) shows the `Sourced<T>` record, with a "game estimate" badge when `isGameEstimate`.
 - **Fly & Survive** (`screens/FlyAndSurvive.tsx`, `components/fly/*`):
   - Clock in `useOpsSession.ts` (`advanceOperations`, `decide`, `sendCommand`, `bookDsn`, `nextEventT`; a transit plays the team's reaction, the light-time trip, then the wait for the outcome).
-  - **The chosen speed stays set** (II / 10× / 100× / 1000× mission days a minute): a card, a result, the eclipse card or an overlay only *holds* the clock (`locked` / `setHold`), and time runs on by itself once it clears. A transit that cannot advance is cleared (stall guard).
+  - **The chosen speed stays set** (II / 10× / 100× / 1000× mission days a minute; `OPS_SPEEDS` in `useOpsSession.ts`, a flight opens paused and PLAY resumes at 100×, the "default speed"): a card, a result, the eclipse card or an overlay only *holds* the clock (`locked` / `setHold`), and time runs on by itself once it clears. A transit that cannot advance is cleared (stall guard).
   - **FINISH MISSION** (`finish()` → engine `finishOperations`): the robot flies the rest with its default responses and ends at the extension decision, so every flight reaches the report. The footer shows `missionProgress` (bar + "MISSION ENDS IN …").
   - Numbers come from `consoleView`, `powerPlanPreview`, `dsnOptions` (`ops/console.ts`) and `flyTiles`, `flyCard`, `comingUp`, `eclipseCard`, `outcomeIn_s` (`ops/fly.ts`).
   - **Risk chips read "⚠ +n risk" (`riskIncrease`), never a negative number.**
