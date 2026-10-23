@@ -384,7 +384,7 @@ export type * from './console';
 export { comingUp, eclipseCard, flightClock_s, flyCard, flyTiles, FLY_RULES, missionProgress, outcomeIn_s, segmentsFromFraction, segmentsFromMargin, stormFront, systemsHealth, countdownAt, momentsSince } from './fly';
 export type * from './fly';
 export { heardMessages, robotMessages, transmissionFeed, VOICE_RULES } from './voice';
-export { downlinkView, nextImageT, nextPass, scienceTargetsView, SCIENCE_VIEW_RULES } from './scienceView';
+export { downlinkView, missionAlbum, nextImageT, nextPass, scienceTargetsView, SCIENCE_VIEW_RULES } from './scienceView';
 export type * from './scienceView';
 export { scienceReturned, targetScience } from './observe';
 export type * from './voice';

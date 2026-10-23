@@ -7,7 +7,7 @@ import { BackButton } from '../components/sd/BackButton';
 import { ModeLever, type Mode } from '../components/sd/ModeLever';
 import { SDIcon } from '../components/sd/SDIcon';
 import { useIsPhone } from '../sdGeometry';
-import { DANGER_LOOK, dangerLook, GAME_NAME, LIVE_WEATHER } from '../sdWords';
+import { DAILY_SCIENCE, DANGER_LOOK, dangerLook, GAME_NAME, LIVE_WEATHER } from '../sdWords';
 import { HAZARDS } from '../../engine/data';
 import * as f from '../format';
 
@@ -35,7 +35,8 @@ export function shareText(n: number, g: DailyGrid): string {
   const rows = g.rows.map((r) => `${ICON_EMOJI[r.type] ?? '⚠️'} ${EMOJI[r.result]}${r.realDate ? ` · ${LIVE_WEATHER.realOn.toLowerCase()} ${f.isoDate(r.realDate)}` : ''}`);
   const end = g.alive ? `🤖 alive · day ${f.num(g.endDay)}` : `💥 lost · day ${f.num(g.endDay)}`;
   const weather = g.weather === 'live' ? [LIVE_WEATHER.shareLive] : g.weather === 'offline' ? [LIVE_WEATHER.shareOffline] : [];
-  return [`${GAME_NAME} · DAILY #${f.num(n)}  ${starLine(g.stars)}`, ...weather, ...(rows.length ? rows : ['🟦 a quiet flight']), end].join('\n');
+  const science = g.science !== undefined ? [DAILY_SCIENCE.share(f.pct(g.science, 0))] : [];
+  return [`${GAME_NAME} · DAILY #${f.num(n)}  ${starLine(g.stars)}`, ...science, ...weather, ...(rows.length ? rows : ['🟦 a quiet flight']), end].join('\n');
 }
 
 /** Draws the share card on a canvas (layout only) and returns a PNG data URL. */
@@ -68,6 +69,11 @@ function cardImage(n: number, date: string, title: string, g: DailyGrid, streak:
   x.font = '48px sans-serif';
   x.textAlign = 'right';
   x.fillText(starLine(g.stars), W - 36, 180);
+  if (g.science !== undefined) {
+    x.fillStyle = '#1d6b34';
+    x.font = '700 20px "Share Tech Mono", monospace';
+    x.fillText(DAILY_SCIENCE.card(f.pct(g.science, 0)), W - 36, 116);
+  }
   x.textAlign = 'left';
   x.fillStyle = '#1b1a16';
   const top = 210;
@@ -154,6 +160,7 @@ export function Daily({ number, date, grid, played, mode, onMode, onHome, onBack
             <span className="dl-date">{dateLabel} · MARS</span>
             {weatherWord(grid) && <span className={`dl-weather ${grid.weather}`}>{weatherWord(grid)}</span>}
             <span className="dl-title">{title}</span>
+            {grid.science !== undefined && <span className="dl-science">{DAILY_SCIENCE.card(f.pct(grid.science, 0))}</span>}
           </div>
           <div className="dl-stars" aria-label={`${f.num(grid.stars)} of 3 stars`}>
             {[0, 1, 2].map((i) => (

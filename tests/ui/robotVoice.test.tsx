@@ -10,7 +10,7 @@ import { App } from '../../src/ui/App';
 import * as f from '../../src/ui/format';
 import { FlyAndSurvive } from '../../src/ui/screens/FlyAndSurvive';
 import { MissionReport } from '../../src/ui/screens/MissionReport';
-import { FINAL_WORDS, finalLines, ROBOT_NAMES, ROBOT_WORDS, TX_WORDS } from '../../src/ui/sdWords';
+import { ALBUM, FINAL_WORDS, finalLines, ROBOT_NAMES, ROBOT_WORDS, TX_WORDS } from '../../src/ui/sdWords';
 import './setup';
 
 const maven = presetDesign('maven');
@@ -67,6 +67,7 @@ describe('Mission Report: the final transmission', () => {
     const s = runOperations(maven, { rng: () => 0.999999 }).state;
     const ft = finalTransmission(s)!;
     render(<MissionReport state={s} design={maven} mode="cadet" onMode={vi.fn()} missionName="Orbiter-1" onFlyAgain={vi.fn()} onHome={vi.fn()} homeLabel="HOME" robotName="ZED" />);
+    fireEvent.click(screen.getByRole('button', { name: ALBUM.feed })); // the album comes first at Mars
     const sheet = screen.getByRole('region', { name: FINAL_WORDS.label });
     expect(sheet.textContent).toContain(FINAL_WORDS.title('ZED'));
     expect(sheet.textContent).toContain(FINAL_WORDS.sent(f.durationWords(ft.delay_s)));
@@ -78,6 +79,7 @@ describe('Mission Report: the final transmission', () => {
     vi.useFakeTimers();
     const s = runOperations(maven, { seed: 6, policy: 'default' }).state;
     render(<MissionReport state={s} design={maven} mode="cadet" onMode={vi.fn()} missionName="Orbiter-1" onFlyAgain={vi.fn()} onHome={vi.fn()} homeLabel="HOME" />);
+    fireEvent.click(screen.getByRole('button', { name: ALBUM.feed })); // the album comes first at Mars
     const sheet = screen.getByRole('region', { name: FINAL_WORDS.label });
     expect(sheet.textContent).toContain(FINAL_WORDS.cutOff);
     expect(sheet.textContent).not.toContain(FINAL_WORDS.lost); // still printing

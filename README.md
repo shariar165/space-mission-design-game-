@@ -39,13 +39,16 @@
 
 ## About the game
 
+> **Keep a robot you'll never touch alive, under the real sky, with words that arrive too late.**
+> **Keep it alive long enough to bring the science home.**
+
 **Signal Delay** is a browser game about the hardest part of robotic space exploration: you are not there. A spacecraft at Mars is between 3 and 22 light-minutes from Earth. When a solar storm is coming, the team on the ground has to decide, send the order, and hope it crosses space before the danger arrives.
 
 The game turns the work of a NASA mission team into three steps:
 
 1. **Pack.** Choose which parts fit in the rocket's nose and which dangers to prepare for.
-2. **Fly & Survive.** The mission runs day by day. Danger cards stop the clock, you choose a response, and your order travels to the spacecraft at the speed of light.
-3. **Mission Report.** Your flight is printed as a comic strip, scored, compared with the real NASA mission to the same place, and turned into a real engineering lesson.
+2. **Fly & Survive.** The mission runs day by day. Danger cards stop the clock, you choose a response, and your order travels to the spacecraft at the speed of light. At Mars the robot asks **what it should look at**: six science targets, each picture costing fuel, battery or risk, each one coming home through a DSN pass and printing on the teletype.
+3. **Mission Report.** It opens with the **mission album** of the pictures that made it home, then the robot's final transmission; your flight is printed as a comic strip, scored, compared with the real NASA mission to the same place, and turned into a real engineering lesson.
 
 It is designed for students and curious players first (**Cadet mode**), and for anyone who wants to see the physics underneath (**Engineer mode**, where every number can be opened to show its equation, its inputs and its source).
 
@@ -85,7 +88,7 @@ It is designed for students and curious players first (**Cadet mode**), and for 
 | 6 | Pebble Catcher | Bennu (asteroid) | Rendezvous and sample return |
 | 7 | Giant Leap | Jupiter | Rocket limits: why real missions to Jupiter need gravity assists |
 
-Each mission earns up to three stars: **reach the destination**, **meet the science goal**, and **keep every margin in the healthy 10–30% band**. One star opens the next mission.
+Each mission earns up to three stars, all for the **science you bring home** (the main score): the **first science home**, **half of it**, and **80% of it**. At Mars that is the weight of the target pictures that came home (pictures already home count even if the robot is lost later); elsewhere it is the data sent home against the goal. One star opens the next mission. Margins in the healthy 10–30% band still score in Engineer mode.
 
 ### More ways to play
 
@@ -185,6 +188,22 @@ How the Daily's real Sun works:
 
 DONKI moved from `api.nasa.gov` to CCMC on Sept 30, 2026; the old URLs now redirect to CCMC's announcement.
 
+### Mars science targets and their pictures
+
+At Mars the science is six targets. What each picture costs comes from the same physics as the rest of the game: lowering the periapsis (vis-viva burns there and back) for a sharper view, drag on the low passes from an upper atmosphere fitted to MAVEN's published periapsis densities, a deep dip for the limb (MAVEN's campaigns), an orbit change to reach Phobos or Deimos, and camera power (repeat passes for dusty targets). Each picture comes down on a DSN pass at that day's link rate and is home one light time later. The pictures are real NASA images, checked against their catalogue pages; optimised copies ship in `public/targets/` (made by [`scripts/fetch-targets.py`](scripts/fetch-targets.py)).
+
+| Target | NASA picture | Credit | Use |
+| --- | --- | --- | --- |
+| Olympus Mons | [PIA02982 Color Mosaic of Olympus Mons](https://science.nasa.gov/photojournal/color-mosaic-of-olympus-mons/) (Viking 1 Orbiter, 1978) | NASA/JPL | JPL Image Use Policy: any purpose |
+| Valles Marineris | [PIA00422 Valles Marineris](https://pds-rings.seti.org/press_releases/pages/PIA00xxx/PIA00422.html) (Viking mosaic) | NASA/JPL/USGS | JPL Image Use Policy: any purpose |
+| North Polar Cap | [PIA00161 MC-1 Mare Boreum Region](https://science.nasa.gov/photojournal/mc-1-mare-boreum-region) (Viking Orbiter 1) | NASA/JPL/USGS | JPL Image Use Policy: any purpose |
+| Phobos | [PIA10368 Phobos from 6,800 Kilometers](https://science.nasa.gov/photojournal/phobos-from-6800-kilometers-color/) (MRO HiRISE, 2008) | NASA/JPL-Caltech/University of Arizona | Third-party: educational and personal use |
+| Deimos | [PIA11826 Martian Moon Deimos in High Resolution](https://science.nasa.gov/resource/martian-moon-deimos-in-high-resolution/) (MRO HiRISE, 2009) | NASA/JPL/University of Arizona | Third-party: educational and personal use |
+| Thin Air at the Limb | [PIA26203 Odyssey's THEMIS Views the Horizon of Mars](https://science.nasa.gov/photojournal/odysseys-themis-views-the-horizon-of-mars) (false colour, 2023) | NASA/JPL-Caltech/ASU | Third-party: educational and personal use |
+| The Mars globe | [Mars Viking Colorized Global Mosaic 232 m](https://astrogeology.usgs.gov/search/map/mars_viking_colorized_global_mosaic_232m) | NASA/USGS Astrogeology | Public domain |
+
+Usage terms follow the [JPL Image Use Policy](https://www.jpl.nasa.gov/jpl-image-use-policy). Olympus Mons is about 2.5 times taller than Everest (21.9 km against 29,032 ft, [PIA26055](https://science.nasa.gov/photojournal/pj-olympus-mons-26/)). The science weights, the camera and the atmosphere fit are labelled game estimates in [`TODO_DATA.md`](TODO_DATA.md). The globe is the game's only 3D element (three.js, loaded on demand; a flat globe takes over without WebGL or when the frame rate drops).
+
 ### Physical constants
 
 Standard gravity, speed of light (SI definitions), the astronomical unit (IAU 2012), and the unit conversion behind the Mars Climate Orbiter case ([NIST SP 811](https://www.nist.gov/pml/special-publication-811)).
@@ -268,7 +287,7 @@ Every push to `main` runs the tests, builds with the Pages base path and publish
 ```
 src/
   data/            Sourced catalogues: destinations, orbitalElements, launchVehicles, rideshares, parts,
-                   missions, hazards, operations, pack, crisisCards, lessons, rescueCases, notebook
+                   missions, hazards, operations, pack, crisisCards, lessons, rescueCases, notebook, targets
   engine/          Simulation engine (pure TypeScript, no UI)
     ephemeris.ts   JPL approximate planet positions; Bennu from the JPL SBDB
     trajectory.ts  Hohmann, Lambert, capture Δv, orbit changes, launch windows
@@ -280,7 +299,10 @@ src/
     risk.ts / scoring.ts   margins → risk → score and stars
     index.ts       evaluateDesign, simulateMission, monteCarloMission
     ops/           Mission Operations: day-by-day clock, hazards, commands, DSN, extension,
-                   Fly & Survive view (fly.ts) and Mission Report (report.ts)
+                   Fly & Survive view (fly.ts), Mission Report (report.ts), science targets
+                   (observe.ts: OBSERVE orders, pictures, science returned; scienceView.ts: panel,
+                   downlink, album)
+    science.ts / targets.ts   what a picture costs (vis-viva, MAVEN-fitted drag); the six Mars targets
     pack.ts / daily.ts / notebook.ts / rescue.ts   game modes
   ui/              React screens (Home, Pack, FlyAndSurvive, MissionReport, Daily, Notebook,
                    Rescue, BuildBay), components, words (sdWords.ts), styles
@@ -301,7 +323,8 @@ The models are simplified on purpose, using the standard first-order methods of 
 - **Operations.** Science orbits are fixed in inertial space (no J2 precession), shadows are cylindrical, hazards are independent Poisson processes, and the Moon has no conjunctions.
 - **Placeholder launch curves** for the Atlas V, as noted above.
 - **The live Daily** uses that day's DONKI snapshot. DONKI sometimes adds or revises records later, and a snapshot deployed mid-day can differ from the morning's. Each browser keeps the first snapshot it reads for the whole day. Players without the file fly the offline Daily, which has different storms. The storm cards are real events replayed on a game timeline; the model does not predict how a CME propagates.
-- **Scoring** uses `Σ wᵢsᵢ` on a 0–100 scale (the spec's `100 Σ wᵢsᵢ` was read this way).
+- **Science targets.** The camera's resolution, the science weights and the drag-heating rate are game estimates. Orbit changes are coplanar (no plane change to reach the moons), the upper atmosphere is a single exponential fitted to two MAVEN densities, and the Cadet Mars campaign is shortened to 100 days so a run lasts about five minutes.
+- **Scoring** uses `Σ wᵢsᵢ` on a 0–100 scale (the spec's `100 Σ wᵢsᵢ` was read this way); since v0.8 the headline and the stars use the science returned.
 
 The full list is in the *Assumptions* section of [`docs/SCIENCE_SPEC.md`](docs/SCIENCE_SPEC.md) and in [`game_engine.md`](game_engine.md).
 

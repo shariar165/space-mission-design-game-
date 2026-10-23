@@ -5,13 +5,14 @@
 // Every number comes from the engine (operationsDebrief, ops/report.ts, compare.ts); this screen lays them out.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { DESTINATIONS, HAZARDS, LAUNCH_VEHICLES, RIDESHARES } from '../../engine/data';
-import { heardMessages, operationsDebrief, VOICE_RULES, type OpsState } from '../../engine/ops/index';
+import { heardMessages, missionAlbum, operationsDebrief, VOICE_RULES, type OpsState } from '../../engine/ops/index';
 import { finalTransmission, reportCompare, reportPanels, reportVerdict } from '../../engine/ops/report';
 import { MAX_SCORE, MARGIN_BAND, scoreGrade, STAR_RULES } from '../../engine/scoring';
 import type { CompareMetric } from '../../engine/compare';
 import type { Design } from '../../engine/types';
 import { ComicArt } from '../components/report/ComicArt';
 import { FinalTransmission } from '../components/report/FinalTransmission';
+import { MissionAlbum } from '../components/report/MissionAlbum';
 import { PostcardView, postcardSrc } from '../components/sd/PostcardView';
 import { POSTCARDS, postcardsEarned } from '../../engine/postcards';
 import type { RankDef } from '../../engine/ranks';
@@ -95,6 +96,13 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
   const compare = useMemo(() => reportCompare(design, ev), [design, ev]);
   const risk = useOpsRisk(design);
   const ft = useMemo(() => finalTransmission(state), [state]);
+  // At Mars the album comes first (spec: UI rule 43); FEED THE PAPER brings the final transmission (desktop).
+  const album = useMemo(() => missionAlbum(state), [state]);
+  const [albumFed, setAlbumFed] = useState(!album || phone);
+  const finalTop = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (albumFed && album && !phone) finalTop.current?.scrollIntoView?.({ behavior: still ? 'auto' : 'smooth', block: 'start' });
+  }, [albumFed]); // eslint-disable-line react-hooks/exhaustive-deps
   const [t, setT] = useState(0);
   /** The comic prints once the final transmission has (or the paper is fed by hand). */
   const [printing, setPrinting] = useState(!ft);
@@ -307,13 +315,14 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
   const name = robotNameOr(robotName);
   // The final transmission holds the robot's last words; only a robot that never flew has just its pad message here.
   const last = ft ? undefined : heardMessages(state).latest;
-  const finalEl = ft && (
+  const albumEl = album && <MissionAlbum album={album} name={name.toUpperCase()} phone={phone} onFeed={() => setAlbumFed(true)} />;
+  const finalEl = ft && albumFed && (
     <FinalTransmission
       ft={ft}
       lines={finalLines(ft, { dest: dest.name, name, title: type, label })}
       name={name}
       phone={phone}
-      {...(onBack && !phone ? { back: <BackButton onBack={onBack} className="rp-back ft-back" /> } : {})}
+      {...(onBack && !phone && !album ? { back: <BackButton onBack={onBack} className="rp-back ft-back" /> } : {})}
       onPrinted={() => setPrinting(true)}
       onFeed={feed}
     />
@@ -422,6 +431,7 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
       <div className={`sd rp phone${engineer ? ' eng' : ''}`}>
         <div className="rp-sheet">
           {onBack && <BackButton onBack={onBack} className="rp-back" />}
+          {albumEl}
           {finalEl}
           <div className="rp-phone-head" ref={reportTop}>
             <div>
@@ -455,7 +465,9 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
       <div className="rp-sheet">
         <div className="rp-holes left" />
         <div className="rp-holes right" />
-        {finalEl}
+        {album && onBack && <BackButton onBack={onBack} className="rp-back ft-back" />}
+        {albumEl}
+        <div ref={finalTop}>{finalEl}</div>
         <header className="rp-head" ref={reportTop as React.RefObject<HTMLElement | null>}>
           <div className="rp-head-l">
             {onBack && !ft && <BackButton onBack={onBack} className="rp-back" />}

@@ -66,3 +66,4 @@
 .dl-real b { color: var(--sd-gold); }
 .dl-row:has(.dl-real) { grid-template-columns: 34px 40px auto minmax(0, 1fr); }
 .dl.phone .dl-row:has(.dl-real) { grid-template-columns: 30px 34px auto minmax(0, 1fr); }
+.dl-science { font: 700 13px/1 var(--sd-mono); letter-spacing: 0.08em; color: var(--sd-ok); }

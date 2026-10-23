@@ -2,7 +2,7 @@
 // seed, and the packed craft is fixed. The share card's grid shows how each danger went, never what was picked.
 import { HAZARDS } from './data';
 import { buildPackDesign, initialPack, packPart, shelfFor, type PartId } from './pack';
-import { operationsDebrief } from './ops/index';
+import { operationsDebrief, scienceReturned } from './ops/index';
 import { fnv1a } from './ops/random';
 import type { OpsState } from './ops/types';
 import type { RealStorm } from './spaceWeather';
@@ -69,6 +69,8 @@ export interface DailyGrid {
   /** Last mission day of the report (the loss, or the end of the prime mission). */
   endDay: number;
   stars: number;
+  /** Science returned, 0–1 (the main score; absent on results saved before v0.8). */
+  science?: number;
   /** The danger that set the day's theme (the first one faced), if any. */
   theme?: string;
   /** Absent on results saved before live weather. */
@@ -90,6 +92,7 @@ export function dailyGrid(s: OpsState, weather?: DailyWeather): DailyGrid {
     alive: s.status !== 'lost' && s.status !== 'not-launched',
     endDay,
     stars: operationsDebrief(s).stars,
+    science: scienceReturned(s),
     ...(rows[0] ? { theme: rows[0].type } : {}),
     ...(weather ? { weather } : {}),
   };

@@ -11,6 +11,8 @@ import { robotMessages } from '../src/engine/ops/voice';
 import { STAR_RULES, stars } from '../src/engine/scoring';
 import { buildPackDesign, initialPack, packPart, shelfFor } from '../src/engine/pack';
 import { starterDesign } from '../src/ui/starters';
+import { missionAlbum, sendCommand } from '../src/engine/ops/index';
+import { dailyGrid } from '../src/engine/daily';
 
 const maven = presetDesign('maven');
 
@@ -176,3 +178,63 @@ describe('final transmission', () => {
     expect(finalTransmission(runOperations(maven, { seed: 2013 }).state)).toEqual(finalTransmission(runOperations(maven, { seed: 2013 }).state));
   });
 });
+
+// ---------------------------------------------------------------------------
+// Mission Album (spec: UI rule 43): one frame per target, home, partial or missing with why.
+
+describe('the mission album', () => {
+  const orbit = () => {
+    const s = startOperations(maven, { rng: () => 0.999999 });
+    const sci = s.env.timeline.find((w) => w.phase === 'science')!;
+    return advanceOperations(s, { until: sci.startDay + 0.1 });
+  };
+  const order = (s: OpsState, id: string) => sendCommand(s, { kind: 'observe', targetId: id }).state;
+
+  it('only at Mars (the destination with targets)', () => {
+    expect(missionAlbum(runOperations(presetDesign('osiris-rex'), { rng: () => 0.999999 }).state)).toBeUndefined();
+  });
+
+  it('a complete flight: the targets home, and why the others are empty', () => {
+    let s = orbit();
+    for (const id of ['valles-marineris', 'phobos', 'deimos']) s = order(s, id);
+    s = runOperationsFrom(s);
+    const a = missionAlbum(s)!;
+    expect(a.ending).toBe('complete');
+    expect(a.total).toBe(6);
+    expect(a.returned).toBe(2);
+    // 0.16 + 0.20 = 0.36
+    expect(a.science).toBeCloseTo(0.36, 12);
+    const f = (id: string) => a.frames.find((x) => x.targetId === id)!;
+    expect(f('valles-marineris').status).toBe('home');
+    expect(f('deimos')).toMatchObject({ status: 'missing', why: 'refused-fuel' });
+    expect(f('olympus-mons')).toMatchObject({ status: 'missing', why: 'never-ordered' });
+    expect(a.frames.reduce((x, y) => x + y.weight, 0)).toBeCloseTo(1, 12);
+    // The Debrief's science score is the album's.
+    expect(operationsDebrief(s).scores.science).toBeCloseTo(100 * a.science, 9);
+  });
+
+  it('a lost flight: pictures already home count, one never sent does not', () => {
+    let s = advanceOperations(order(orbit(), 'phobos'), { days: 5 });
+    s = { ...s, status: 'lost', failureT: s.t, images: [...s.images, { ...s.images[0]!, targetId: 'limb', status: 'on-board', sentBits: 0, sentAt: undefined, homeAt: undefined }] };
+    const a = missionAlbum(s)!;
+    expect(a.ending).toBe('lost');
+    expect(a.day).toBe(Math.floor(s.t));
+    expect(a.returned).toBe(1);
+    expect(a.frames.find((x) => x.targetId === 'limb')).toMatchObject({ status: 'missing', why: 'never-sent' });
+  });
+
+  it('the Daily share carries the science returned', () => {
+    const s = runOperationsFrom(order(orbit(), 'valles-marineris'));
+    expect(dailyGrid(s).science).toBeCloseTo(0.16, 12);
+  });
+});
+
+/** Fly on to the end of the prime mission, the craft answering on its own; retire at the extension. */
+function runOperationsFrom(s: OpsState): OpsState {
+  let x = s;
+  for (let i = 0; i < 1000 && (x.status === 'flying' || x.status === 'awaiting-extension'); i++) {
+    if (x.status === 'awaiting-extension') x = decide(x, 'extension', 'end').state;
+    else x = advanceOperations(x);
+  }
+  return x;
+}

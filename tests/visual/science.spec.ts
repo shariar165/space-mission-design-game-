@@ -45,4 +45,12 @@ test('science targets and downlink', async ({ page }, info) => {
   await page.screenshot({ path: `${OUT}fly-downlink-printing-${p}.png` });
   await page.waitForTimeout(5000);
   await page.screenshot({ path: `${OUT}fly-downlink-${p}.png` });
+  // Finish the mission: the report opens with the album (design screen 03).
+  await drawer.getByRole('button', { name: /CLOSE/ }).click();
+  await page.getByRole('button', { name: 'FINISH MISSION ▸▸' }).first().click();
+  await page.getByRole('dialog', { name: 'FINISH THE MISSION?' }).getByRole('button', { name: 'FINISH MISSION ▸▸' }).click();
+  await page.getByRole('button', { name: 'SEE MISSION REPORT ▸' }).click();
+  await expect(page.getByRole('region', { name: 'Mission album' })).toBeVisible();
+  await page.waitForTimeout(1500);
+  await page.screenshot({ path: `${OUT}report-album-${p}.png` });
 });
