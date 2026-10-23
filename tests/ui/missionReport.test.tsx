@@ -3,12 +3,13 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { presetDesign } from '../../src/engine/missions';
-import { operationsDebrief, runOperations } from '../../src/engine/ops/index';
+import { advanceOperations, finishOperations, operationsDebrief, runOperations, sendCommand, startOperations } from '../../src/engine/ops/index';
+import { targetById } from '../../src/engine/targets';
 import { reportCompare, reportPanels } from '../../src/engine/ops/report';
 import type { Mode } from '../../src/ui/components/sd/ModeLever';
 import * as f from '../../src/ui/format';
 import { MissionReport, PANEL_STEP_MS } from '../../src/ui/screens/MissionReport';
-import { CATEGORY_NAME, panelWords, FINAL_WORDS } from '../../src/ui/sdWords';
+import { ALBUM, CATEGORY_NAME, panelWords, FINAL_WORDS } from '../../src/ui/sdWords';
 import './setup';
 
 const maven = presetDesign('maven');
@@ -48,6 +49,8 @@ describe('Mission Report', () => {
     // The final transmission prints first; feeding the paper starts the comic.
     act(() => vi.advanceTimersByTime(100));
     expect(figs[0]!.className).not.toContain('on');
+    // At Mars the album comes first (spec: UI rule 43): feeding it brings the final transmission.
+    fireEvent.click(screen.getByRole('button', { name: ALBUM.feed }));
     fireEvent.click(screen.getByRole('button', { name: FINAL_WORDS.feed }));
     act(() => vi.advanceTimersByTime(100));
     expect(figs[0]!.className).toContain('on');
@@ -80,5 +83,27 @@ describe('Mission Report', () => {
     if (d.hintCategory) expect(within(table).getByText(CATEGORY_NAME[d.hintCategory]).closest('[role=row]')!.className).toContain('hint');
     expect(screen.getByText(`NEXT STAR · ${d.hint}`)).toBeTruthy();
     expect(screen.getAllByRole('button', { name: /^Source of MAVEN/ }).length).toBeGreaterThan(2);
+  });
+});
+
+describe('Mission Album (spec: UI rule 43)', () => {
+  it('opens the report at Mars: targets returned, the science share, each picture with its NASA credit', () => {
+    let s = startOperations(maven, { rng: () => 0.999999 });
+    const sci = s.env.timeline.find((w) => w.phase === 'science')!;
+    s = advanceOperations(s, { until: sci.startDay + 0.1 });
+    for (const id of ['valles-marineris', 'phobos']) s = sendCommand(s, { kind: 'observe', targetId: id }).state;
+    s = finishOperations(s);
+    render(<MissionReport state={s} design={maven} mode="cadet" onMode={vi.fn()} missionName="Orbiter-1" onFlyAgain={vi.fn()} onHome={vi.fn()} homeLabel="HOME" />);
+    const album = screen.getByRole('region', { name: ALBUM.label });
+    // 0.16 + 0.20 = 36%
+    expect(within(album).getByText(ALBUM.returned('2', '6'))).toBeTruthy();
+    expect(within(album).getByText(ALBUM.ofScience('36%'))).toBeTruthy();
+    const valles = targetById('valles-marineris')!.image;
+    expect(within(album).getByText(ALBUM.credit(valles.credit, valles.mission))).toBeTruthy();
+    expect(within(album).getAllByText(ALBUM.notReturned).length).toBe(4);
+    // The final transmission waits for the paper to be fed.
+    expect(screen.queryByRole('region', { name: FINAL_WORDS.label })).toBeNull();
+    fireEvent.click(within(album).getByRole('button', { name: ALBUM.feed }));
+    expect(screen.getByRole('region', { name: FINAL_WORDS.label })).toBeTruthy();
   });
 });

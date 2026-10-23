@@ -275,7 +275,8 @@ export const PANEL_SOUND: Partial<Record<string, string>> = {
   'insertion-anomaly': 'FWUMP',
 };
 
-export const STAR_WORDS = (dest: string) => [`REACHED ${dest.toUpperCase()}`, 'SCIENCE GOAL', 'MARGINS IN THE BAND'] as const;
+/** The three stars (v0.8: they follow the science returned; the rules are the engine's STAR_RULES). */
+export const STAR_WORDS = (_dest: string) => ['FIRST SCIENCE HOME', 'HALF THE SCIENCE', 'MOST OF THE SCIENCE'] as const;
 
 const CATEGORY_WORD: Record<Category, string> = {
   science: 'science sent home',
@@ -1074,4 +1075,56 @@ export const GLOBE_WORDS = {
   toggleLabel: 'Switch the Mars globe between 3D and flat',
   to2d: '2D',
   to3d: '3D',
+};
+
+/** The Mission Album (spec: UI rule 43; design screen 03, TELETYPE 03 · MISSION ALBUM). */
+export const ALBUM = {
+  label: 'Mission album',
+  kicker: (name: string) => `TELETYPE 03 · MISSION ALBUM — ${name}`,
+  meta: {
+    complete: (day: string) => `DAY 001–${day}`,
+    lost: (day: string) => `LAST CONTACT · DAY ${day}`,
+    extended: (day: string) => `DAY 001–${day} · AND COUNTING`,
+  },
+  returned: (n: string, total: string) => `${n} OF ${total} TARGETS RETURNED`,
+  lostOn: (name: string, day: string) => `${name} WAS LOST ON DAY ${day} —`,
+  madeIt: (n: string, one: boolean) => `${n} ${one ? 'IMAGE' : 'IMAGES'} MADE IT HOME.`,
+  noneMadeIt: 'NO IMAGE MADE IT HOME.',
+  ofScience: (pct: string) => `${pct} OF MISSION SCIENCE`,
+  soFar: (pct: string) => `${pct} SO FAR · STILL FLYING`,
+  subComplete: (name: string, day: string) => `${name} · PRIMARY MISSION COMPLETE · DAY ${day}`,
+  subExtended: (name: string, day: string) => `${name} · MISSION EXTENDED · DAY ${day}`,
+  bar: 'MISSION SCIENCE · ONE BLOCK PER TARGET, SIZED BY WHAT IT TEACHES',
+  barPct: (pct: string) => `${pct} RETURNED`,
+  plus: (pct: string) => `+${pct} SCIENCE`,
+  missed: (pct: string) => `${pct} MISSED`,
+  partialSci: 'PART OF AN IMAGE · NO SCIENCE',
+  notReturned: 'NOT RETURNED',
+  signalLost: '— SIGNAL LOST —',
+  partialCap: (pct: string) => `SIGNAL LOST WITH ${pct} SENT`,
+  credit: (credit: string, mission: string) => `IMAGE CREDIT: ${credit} · ${mission}`,
+  why: {
+    'never-ordered': () => 'NEVER OBSERVED',
+    'order-lost': () => 'THE ORDER NEVER ARRIVED',
+    'refused-fuel': () => 'SKIPPED · NOT ENOUGH FUEL',
+    'refused-unreachable': () => 'SKIPPED · OUT OF SIGHT FROM THIS ORBIT',
+    refused: () => 'SKIPPED · THE ROBOT SAID NO',
+    'never-taken': () => 'STILL LOOKING WHEN IT ENDED',
+    'never-sent': (day: string) => `TAKEN ON DAY ${day} · NEVER SENT`,
+    'still-possible': () => 'STILL POSSIBLE · EXTENDED MISSION',
+  } as Record<string, (day: string) => string>,
+  foot: {
+    complete: 'Every empty frame is a target still up there. Not this mission.',
+    lost: 'Pictures already home still count. The rest stay in its memory, somewhere over Mars.',
+    extended: 'Empty frames, and a robot with fuel left to fill them.',
+    all: 'Every target home. Nothing left up there to see.',
+    none: 'No picture made it home. Next time, order a target early and wait for a DSN pass.',
+  },
+  feed: 'FEED THE PAPER · FINAL TRANSMISSION ▾',
+};
+
+/** The Daily's science line (v0.8: science returned is the main score). */
+export const DAILY_SCIENCE = {
+  card: (pct: string) => `SCIENCE HOME ${pct}`,
+  share: (pct: string) => `🔭 ${pct} of the science home`,
 };

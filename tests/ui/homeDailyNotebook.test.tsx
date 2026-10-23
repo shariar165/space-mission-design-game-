@@ -11,7 +11,7 @@ import { App } from '../../src/ui/App';
 import * as f from '../../src/ui/format';
 import { Daily, shareText } from '../../src/ui/screens/Daily';
 import { Notebook } from '../../src/ui/screens/Notebook';
-import { LESSON_WORDS, LIVE_WEATHER } from '../../src/ui/sdWords';
+import { DAILY_SCIENCE, LESSON_WORDS, LIVE_WEATHER } from '../../src/ui/sdWords';
 import './setup';
 
 describe('Home', () => {
@@ -63,6 +63,10 @@ describe('Daily share card', () => {
     const text = shareText(dailyNumber('2026-11-10'), g);
     expect(text).toContain(`DAILY #${f.num(dailyNumber('2026-11-10'))}`);
     expect(text).not.toMatch(/SHIELD|KEEP|WAIT|CLIMB/); // no spoilers: never what was picked
+    // Science returned is the main score (v0.8): on the card and in the share text.
+    expect(g.science).toBeDefined();
+    expect(text).toContain(DAILY_SCIENCE.share(f.pct(g.science!, 0)));
+    expect(screen.getByText(DAILY_SCIENCE.card(f.pct(g.science!, 0)))).toBeTruthy();
     expect(screen.getByText(/NEXT DAILY IN/)).toBeTruthy();
   });
 

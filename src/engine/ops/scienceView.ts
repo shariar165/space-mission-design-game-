@@ -6,7 +6,7 @@ import { MARS_MOONS, TARGETS, type Target } from '../targets';
 import { gameEstimate, type Sourced } from '../types';
 import { inMoratorium, oneWayAt } from './commands';
 import { segmentsFromFraction } from './fly';
-import { countsForScience, hasTargets, imageOf, OBSERVE_RULES, observationFor, scienceReturned } from './observe';
+import { countsForScience, hasTargets, imageOf, OBSERVE_RULES, observationFor, scienceReturned, targetScience } from './observe';
 import { defaultBooking, downlinkCapacity_bitsPerDay } from './resources';
 import { deltaVLeft_ms, deltaVStillNeeded_ms } from './timeline';
 import type { DsnBooking, ImageRecord, OpsState } from './types';
@@ -228,3 +228,56 @@ export function nextImageT(s: OpsState): number | undefined {
 }
 
 export { countsForScience };
+
+// ---------------------------------------------------------------------------
+// Mission Album (spec: UI rule 43): the report opens with one frame per target.
+
+export type AlbumEnding = 'complete' | 'lost' | 'extended';
+/** Why a frame is empty. */
+export type AlbumWhy = 'never-ordered' | 'order-lost' | 'refused-fuel' | 'refused-unreachable' | 'refused' | 'never-taken' | 'never-sent' | 'still-possible';
+
+export interface AlbumFrame {
+  targetId: string;
+  /** Share of the mission science (0–1). */
+  weight: number;
+  status: 'home' | 'partial' | 'missing';
+  /** Partial: share of the bits that made it home (0–1). */
+  sent?: number;
+  why?: AlbumWhy;
+  /** The day the picture was taken (never sent) or sent (home). */
+  day?: number;
+}
+
+export interface MissionAlbum {
+  ending: AlbumEnding;
+  frames: AlbumFrame[];
+  /** Targets home, and how many there are. */
+  returned: number;
+  total: number;
+  /** Science returned, 0–1 (the main score, spec: Scoring). */
+  science: number;
+  /** The day of the loss (lost) or of the last prime-mission day. */
+  day: number;
+}
+
+/** The album, at Mars only (undefined elsewhere: no targets). */
+export function missionAlbum(s: OpsState): MissionAlbum | undefined {
+  if (!hasTargets(s.env)) return undefined;
+  const ending: AlbumEnding = s.status === 'lost' ? 'lost' : s.extension ? 'extended' : 'complete';
+  const day = ending === 'lost' ? Math.floor(s.failureT ?? s.t) : s.env.primeEndDay + 1;
+  const ts = targetScience(s);
+  const frames = TARGETS.map((t): AlbumFrame => {
+    const base = { targetId: t.id, weight: t.weight.value };
+    const im = imageOf(s, t.id);
+    if (im && countsForScience(s, im)) return { ...base, status: 'home', day: Math.floor(im.sentAt!) };
+    const part = ts.partial.find((p) => p.targetId === t.id);
+    if (part) return { ...base, status: 'partial', sent: part.fraction };
+    const missing = (why: AlbumWhy, d?: number): AlbumFrame => ({ ...base, status: 'missing', why: ending === 'extended' && why === 'never-ordered' ? 'still-possible' : why, ...(d !== undefined ? { day: d } : {}) });
+    if (im) return im.status === 'observing' ? missing('never-taken') : missing('never-sent', Math.floor(im.takenAt));
+    if (s.commands.some((c) => c.command.kind === 'observe' && c.command.targetId === t.id && c.status === 'in-flight')) return missing('order-lost');
+    const refused = s.images.find((x) => x.targetId === t.id && x.status === 'refused');
+    if (refused) return missing(refused.reason === 'fuel' ? 'refused-fuel' : refused.reason === 'unreachable' ? 'refused-unreachable' : 'refused');
+    return missing('never-ordered');
+  });
+  return { ending, frames, returned: ts.home.length, total: TARGETS.length, science: ts.fraction, day };
+}
