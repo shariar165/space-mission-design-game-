@@ -48,7 +48,7 @@ export function apoapsisFromPeriod(mu: number, rp: number, period_s: number): nu
 }
 
 /** Speed on an orbit with apsides rp, ra at radius r (vis-viva): v = √(μ(2/r − 2/(rp + ra))). */
-function visViva(mu: number, r: number, rp: number, ra: number): number {
+export function visViva(mu: number, r: number, rp: number, ra: number): number {
   return Math.sqrt(mu * (2 / r - 2 / (rp + ra)));
 }
 
