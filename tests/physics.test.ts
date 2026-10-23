@@ -13,6 +13,8 @@ import * as MC from '../src/engine/massCost';
 import * as R from '../src/engine/risk';
 import * as CR from '../src/engine/crisis';
 import * as SC from '../src/engine/scoring';
+import * as SCI from '../src/engine/science';
+import { targetById } from '../src/engine/targets';
 import { evaluateDesign, monteCarloMission, simulateMission } from '../src/engine/index';
 import { presetDesign } from '../src/engine/missions';
 import type { Design, Sourced } from '../src/engine/types';
@@ -1415,5 +1417,123 @@ describe('ops: resources', () => {
     // Δv adds up across burns: Isp g₀ ln(m0/m1) + Isp g₀ ln(m1/m2) = Isp g₀ ln(m0/m2)
     expect(r.state.hazards).toEqual([]);
     expect(r.debrief.deltaV.left_ms).toBeCloseTo(d.deltaVCapability_ms - (d.deltaVRequired_ms - d.deltaVBudget.lifetimeReserve_ms), 6);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Science targets (spec: Science targets and downlink). Mars: R = 3396.2 km, μ = 42,828 km³/s².
+// The MAVEN-like orbit below is 150 × 6,300 km: rp = 3,546.2 km, ra = 9,696.2 km.
+
+describe('science: Mars upper atmosphere (MAVEN-fitted)', () => {
+  it('the scale height comes from MAVEN’s two published periapsis densities', () => {
+    // H = (158.5 − 121.2) km / ln(2.2 / 0.10) = 37.3 / ln 22 = 37.3 / 3.09104 = 12.067 km
+    expect(SCI.scaleHeight_m() / 1000).toBeCloseTo(12.067, 3);
+  });
+
+  it('the density passes through both anchors and grows downward', () => {
+    // ρ(158.5 km) = 0.10 kg/km³ = 1.0e-10 kg/m³; ρ(121.2 km) = 2.2 kg/km³ = 2.2e-9 kg/m³
+    expect(SCI.density_kgm3(158.5e3)).toBeCloseTo(1.0e-10, 15);
+    expect(SCI.density_kgm3(121.2e3) / 2.2e-9).toBeCloseTo(1, 10);
+    // ρ(150 km) = 0.10 · e^(8.5 / 12.067) = 0.10 · 2.0226 = 0.20226 kg/km³
+    expect(SCI.density_kgm3(150e3) / 1e-9).toBeCloseTo(0.20226, 4);
+    // ρ(125 km) = 0.10 · e^(33.5 / 12.067) = 0.10 · 16.057 = 1.6057 kg/km³ (inside MAVEN's 2–3.5 deep-dip corridor's edge)
+    expect(SCI.density_kgm3(125e3) / 1e-9).toBeCloseTo(1.6057, 3);
+  });
+});
+
+describe('science: drag on a periapsis pass', () => {
+  it('Δv_pass = (C_D A / 2m) ρ_p v_p √(2π r_p H)', () => {
+    // v_p = √(μ (2/rp − 2/(rp+ra))) = √(42828 (2/3546.2 − 2/13242.4)) = √17.686 = 4.20547 km/s
+    // √(2π · 3,546.2 km · 12.067 km) = √(2.6887e11 m²) = 518,530 m
+    // A = 16 m², m = 1,000 kg, C_D = 2.2 → 2.2·16 / 2000 = 0.0176 m²/kg
+    // Δv = 0.0176 · 2.0226e-10 · 4205.47 · 518,530 = 7.763e-3 m/s per pass
+    const dv = SCI.dragDeltaVPerPass({ rp_m: 3546.2e3, ra_m: 9696.2e3, area_m2: 16, mass_kg: 1000 });
+    expect(dv).toBeCloseTo(7.763e-3, 6);
+  });
+
+  it('a lower pass drags harder', () => {
+    const at = (h_km: number) => SCI.dragDeltaVPerPass({ rp_m: 3396.2e3 + h_km * 1e3, ra_m: 9696.2e3, area_m2: 16, mass_kg: 1000 });
+    // 125 km: ρ = 1.6057e-9, v_p = 4.2213 km/s → 0.0617 m/s per pass, about 8× the 150 km pass
+    expect(at(125)).toBeCloseTo(0.0617, 4);
+    expect(at(125)).toBeGreaterThan(at(150));
+  });
+
+  it('passes per day follow Kepler’s third law', () => {
+    // T = 2π √(a³/μ), a = 6,621.2 km → T = 4.5438 h → 24 / 4.5438 = 5.2819 passes a day (MAVEN publishes 4.5 h)
+    expect(SCI.passesPerDay(3546.2e3, 9696.2e3)).toBeCloseTo(5.2819, 3);
+  });
+});
+
+describe('science: what a picture costs', () => {
+  const orbit = { rp_m: 3546.2e3, ra_m: 9696.2e3, inclination_deg: 75 };
+  const craft = { area_m2: 16, mass_kg: 1000 };
+  const plan = (id: string, inDustSeason = false) => SCI.observationPlan(targetById(id)!, { ...orbit, ...craft, inDustSeason });
+
+  it('the altitude a target needs is resolution ÷ IFOV', () => {
+    // Olympus Mons: 6 m ÷ 45 µrad = 133.33 km
+    expect(SCI.altitudeNeeded_m(targetById('olympus-mons')!)).toBeCloseTo(133_333.33, 1);
+  });
+
+  it('a surface target below the periapsis is reached by lowering it and raising it again (vis-viva, two burns each way)', () => {
+    const p = plan('olympus-mons');
+    expect(p.obsAlt_m).toBeCloseTo(133_333.33, 1);
+    // 2 × orbitChangeDeltaV({3546.2, 9696.2} → {3529.53, 9696.2}): a few m/s
+    expect(p.dvOrbit_ms).toBeGreaterThan(1);
+    expect(p.dvOrbit_ms).toBeLessThan(10);
+    // ρ(133.3 km) / ρ(158.5 km) = e^(25.17/12.067) = 8.04
+    expect(p.dragFactor).toBeCloseTo(8.04, 1);
+    expect(p.dvDrag_ms).toBeGreaterThan(0);
+    expect(p.reachable).toBe(true);
+  });
+
+  it('a surface target above the needed altitude costs no burn', () => {
+    // Valles Marineris: 10 m ÷ 45 µrad = 222 km > 150 km periapsis → shoot from 150 km
+    const p = plan('valles-marineris');
+    expect(p.dvOrbit_ms).toBe(0);
+    expect(p.obsAlt_m).toBeCloseTo(150e3, 6);
+    expect(p.dvDrag_ms).toBe(0);
+    expect(p.dragFactor).toBe(0); // the usual orbit adds no drag-heating risk
+  });
+
+  it('the pole is seen at a slant from a 75° orbit', () => {
+    // Δ = 90° − 75° = 15°; s = √(R² + (R+h)² − 2R(R+h) cos 15°) at h = 150 km = 918.29 km
+    expect(SCI.slantRange_m(3396.2e3, 150e3, (15 * Math.PI) / 180) / 1000).toBeCloseTo(918.29, 1);
+    // The cap needs 50 m ÷ 45 µrad = 1,111 km of range: reachable from the 150 km periapsis with no burn
+    const p = plan('north-polar-cap');
+    expect(p.reachable).toBe(true);
+    expect(p.dvOrbit_ms).toBe(0);
+    // From a 30° orbit the gap is 60°: the range never gets under 1,111 km, so the cap cannot be seen
+    expect(SCI.observationPlan(targetById('north-polar-cap')!, { ...orbit, ...craft, inclination_deg: 30, inDustSeason: false }).reachable).toBe(false);
+  });
+
+  it('Phobos and Deimos need the apoapsis moved to the moon and back', () => {
+    // Phobos: apoapsis 9,696.2 → 9,375 km and back = 38.32 m/s; Deimos: → 23,457 km and back = 750.33 m/s
+    expect(plan('phobos').dvOrbit_ms).toBeCloseTo(38.32, 1);
+    expect(plan('deimos').dvOrbit_ms).toBeCloseTo(750.33, 1);
+    expect(plan('deimos').dragFactor).toBe(0);
+  });
+
+  it('the limb needs a deep dip to 125 km for MAVEN’s week', () => {
+    const p = plan('limb');
+    // lowering 150 → 125 km and back: 2 × 3.98 = 7.96 m/s
+    expect(p.dvOrbit_ms).toBeCloseTo(7.96, 1);
+    expect(p.days).toBe(7);
+    // ρ(125)/ρ(158.5) = 16.06
+    expect(p.dragFactor).toBeCloseTo(16.06, 1);
+    // extra drag: (0.0617 − 0.0078) m/s × 5.28 passes × 7 days ≈ 1.99 m/s
+    expect(p.dvDrag_ms).toBeCloseTo(1.99, 1);
+  });
+
+  it('dust costs power: repeat passes, more in the dust season', () => {
+    // camera 20 W × 1 h per pass: clear target 20 Wh; dusty 3 passes = 60 Wh; in the dust season 6 = 120 Wh
+    expect(plan('olympus-mons').energy_Wh).toBeCloseTo(20, 9);
+    expect(plan('valles-marineris').energy_Wh).toBeCloseTo(60, 9);
+    expect(plan('valles-marineris', true).energy_Wh).toBeCloseTo(120, 9);
+  });
+
+  it('an image goes down at that day’s link rate', () => {
+    // 24 Mbit at 500 kbit/s = 48 s
+    expect(SCI.imageDownlink_s(24e6, 500e3)).toBeCloseTo(48, 9);
+    expect(SCI.imageDownlink_s(24e6, 0)).toBe(Infinity);
   });
 });
