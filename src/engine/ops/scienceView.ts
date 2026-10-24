@@ -6,7 +6,7 @@ import { MARS_MOONS, TARGETS, type Target } from '../targets';
 import { gameEstimate, type Sourced } from '../types';
 import { inMoratorium, oneWayAt } from './commands';
 import { segmentsFromFraction } from './fly';
-import { countsForScience, hasTargets, imageOf, OBSERVE_RULES, observationFor, scienceReturned, targetScience } from './observe';
+import { countsForScience, hasTargets, imageOf, OBSERVE_RULES, observationFor, scienceOrbitOf, scienceReturned, targetScience } from './observe';
 import { defaultBooking, downlinkCapacity_bitsPerDay } from './resources';
 import { deltaVLeft_ms, deltaVStillNeeded_ms } from './timeline';
 import type { DsnBooking, ImageRecord, OpsState } from './types';
@@ -44,6 +44,14 @@ export interface TargetCard {
   /** The same costs on the five-segment tiles: fuel against the Δv to spare, energy against the battery. */
   fuelSegments: number;
   powerSegments: number;
+  /** The orbit flown while observing (altitudes, m): a dip lowers the periapsis, a moon raises the apoapsis. */
+  pass: { periapsis_m: number; apoapsis_m: number };
+  /** The pass flies lower than the orbit now (the globe draws the ring dipping to it). */
+  dips: boolean;
+  /** The pass moves the apoapsis to a moon's orbit and back (the globe draws the orbit-change path). */
+  moonTransfer: boolean;
+  /** ρ at the observing periapsis ÷ MAVEN's nominal ρ (0: no low pass): what scales the drag-heating hazard. */
+  dragFactor: number;
   /** Chance of a drag-heating hazard during the observation, and its level. */
   risk: number;
   riskLevel: RiskLevel;
@@ -57,6 +65,8 @@ export interface TargetCard {
 export interface ScienceTargetsView {
   /** The craft is in Mars orbit and flying: the panel can open. */
   available: boolean;
+  /** The science orbit now: periapsis and apoapsis altitudes (m) and inclination (deg). */
+  orbit: { periapsis_m: number; apoapsis_m: number; inclination_deg: number };
   cards: TargetCard[];
   /** Seconds an order sent now takes to reach the craft (one-way light time). */
   orderTakes_s: number;
@@ -86,6 +96,8 @@ export function scienceTargetsView(s: OpsState): ScienceTargetsView {
   const available = hasTargets(env) && s.status === 'flying' && (phase === 'science' || phase === 'extended');
   const spare = Math.max(0, deltaVLeft_ms(s) - deltaVStillNeeded_ms(s));
   const blackout = inMoratorium(env, s.t);
+  const o = scienceOrbitOf(env);
+  const orbit = { periapsis_m: o.periapsis_km * 1000, apoapsis_m: o.apoapsis_km * 1000, inclination_deg: o.inclination_deg };
   const cards = TARGETS.map((t, i): TargetCard => {
     const plan = observationFor(s, t);
     const state = stateOf(s, t.id);
@@ -117,6 +129,10 @@ export function scienceTargetsView(s: OpsState): ScienceTargetsView {
       dust: t.dust,
       dv_ms: plan.dv_ms,
       energy_Wh: plan.energy_Wh,
+      pass: { periapsis_m: plan.obsAlt_m, apoapsis_m: plan.obsApo_m },
+      dips: plan.obsAlt_m < orbit.periapsis_m - 1e-6,
+      moonTransfer: t.kind === 'moon',
+      dragFactor: plan.dragFactor,
       days: plan.days,
       fuelSegments: plan.dv_ms > 0 ? segmentsFromFraction(plan.dv_ms / Math.max(spare, 1e-9)) : 0,
       powerSegments: segmentsFromFraction(plan.energy_Wh / Math.max(env.battery_Wh, 1e-9)),
@@ -129,6 +145,7 @@ export function scienceTargetsView(s: OpsState): ScienceTargetsView {
   });
   return {
     available,
+    orbit,
     cards,
     orderTakes_s: oneWayAt(env, s.t),
     ordered: s.images.filter((im) => im.status !== 'refused').length + s.commands.filter((c) => c.status === 'in-flight' && c.command.kind === 'observe').length,

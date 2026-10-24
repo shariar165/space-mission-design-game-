@@ -33,7 +33,7 @@ import { Segments } from '../components/sd/Segments';
 import { Teletype } from '../components/sd/Teletype';
 import { useReducedMotion } from '../opsGeometry';
 import { BLOCKER, COMMAND_KIND, eventLine, FAILURE_EFFECT, OPTION_BLURB } from '../opsWords';
-import { GLOBE_PX, RIBBON_FLIP, RIBBON_PHONE_MAX, RING_MS, useCycle, useIsPhone } from '../sdGeometry';
+import { GLOBE_FLYOVER_MS, RIBBON_FLIP, RIBBON_PHONE_MAX, RING_MS, useCycle, useIsPhone } from '../sdGeometry';
 import {
   arrivesWords,
   CHIP_ICON,
@@ -177,13 +177,22 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
   };
   const seenEvents = useRef(0);
   const [banner, setBanner] = useState<{ kind: MomentKind; n: number }>();
+  const [flyover, setFlyover] = useState<{ targetId: string; n: number }>();
+  useEffect(() => {
+    if (!flyover) return;
+    const id = setTimeout(() => setFlyover(undefined), GLOBE_FLYOVER_MS);
+    return () => clearTimeout(id);
+  }, [flyover]);
   const [shake, setShake] = useState(false);
   useEffect(() => {
     if (!state) return;
     if (state.events.length < seenEvents.current) seenEvents.current = 0;
     const ms = momentsSince(state, seenEvents.current);
     seenEvents.current = state.events.length;
-    const last = ms[ms.length - 1];
+    // An OBSERVE order landing on the craft: the orbiter flies over its target on the globe.
+    const shot = [...ms].reverse().find((m) => m.kind === 'observe');
+    if (shot?.targetId) setFlyover((x) => ({ targetId: shot.targetId!, n: (x?.n ?? 0) + 1 }));
+    const last = [...ms].reverse().find((m) => m.kind !== 'observe');
     if (!last) return;
     if (ms.some((m) => m.kind === 'storm-hit')) {
       play('zap');
@@ -256,10 +265,13 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
   const openPostcard = POSTCARDS.find((c) => c.id === cardOpen);
 
   // An eclipse planning card, an overlay, an open postcard or the launch countdown holds the clock like a danger card does.
-  const held = eclipseOpen || overlay !== undefined || launching || openPostcard !== undefined || reply !== undefined || sciShown;
+  // Science Targets holds it too, but lets an OBSERVE order play its trip (and the robot's reply) while the panel is open.
+  const heldAll = eclipseOpen || overlay !== undefined || launching || openPostcard !== undefined || (reply !== undefined && !sciShown);
+  const held = heldAll || sciShown;
+  const hold = heldAll ? true : sciShown ? 'orders' : false;
   useEffect(() => {
-    ops.setHold(held);
-  }, [held]); // eslint-disable-line react-hooks/exhaustive-deps
+    ops.setHold(hold);
+  }, [hold]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const closeOverlay = () => {
     if (overlay === 'coach') onCoachSeen?.();
@@ -376,14 +388,13 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
   const openCard = hazardCard ?? eclipseView;
   const pickCard = (id: string) => (hazardCard ? respond(id) : chooseEclipse(id));
 
-  // OBSERVE: the order leaves now and lands one light time later; the next target still free is picked.
+  // OBSERVE: the order leaves now and lands one light time later. The globe stays on the target to watch it land.
   const observe = () => {
     const c = sci?.cards.find((x) => x.id === sciSelected);
     if (!c || c.blocker !== undefined) return;
     if (ops.observe(c.id)) {
       play('shutter');
-      const next = sci!.cards.find((x) => x.id !== c.id && x.blocker === undefined);
-      setSciPick(next?.id);
+      setSciPick(c.id);
     }
   };
 
@@ -558,7 +569,7 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
     </div>
   );
 
-  const replyBox = reply && !openCard && (
+  const replyBox = reply && !openCard && !sciShown && (
     <div className="fly-reply" role="status" aria-label={TX_WORDS.replyFrom(name.toUpperCase(), f.durationWords(reply.message!.delay_s))}>
       <span className="fly-reply-k">{TX_WORDS.replyFrom(name.toUpperCase(), f.durationWords(reply.message!.delay_s))}</span>
       <Teletype className="fly-reply-v" text={txLine(reply, voice).text} />
@@ -720,7 +731,23 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
       destName={dest.name}
       engineer={engineer}
       phone={phone}
-      globe={<MarsGlobe cards={sci.cards} selected={sciSelected} onPick={setSciPick} size={phone ? GLOBE_PX.phone : GLOBE_PX.desktop} phone={phone} shown={zoom.running ? zoom.shown : sci.cards.length} />}
+      orders={view.commands.filter((c) => c.kind === 'observe' && c.status === 'in-flight' && c.targetId).map((c) => ({ targetId: c.targetId!, timeLeft_s: c.timeLeft_s }))}
+      {...(flyover ? { scanning: flyover.targetId } : {})}
+      globe={
+        <MarsGlobe
+          cards={sci.cards}
+          orbit={sci.orbit}
+          selected={sciSelected}
+          onPick={setSciPick}
+          phone={phone}
+          engineer={engineer}
+          still={still}
+          robotName={name}
+          overview={zoom.running}
+          {...(flyover ? { flyover } : {})}
+          shown={zoom.running ? zoom.shown : sci.cards.length}
+        />
+      }
     />
   );
   const downlink = panel === 'downlink' && dl && (

@@ -67,6 +67,8 @@ export interface ObservationPlan {
   reachable: boolean;
   /** Periapsis altitude while observing (surface and limb), m; the current one for moons. */
   obsAlt_m: number;
+  /** Apoapsis altitude while observing, m: at the moon's orbit for Phobos and Deimos, the current one otherwise. */
+  obsApo_m: number;
   /** Orbit changes there and back (vis-viva), m/s. */
   dvOrbit_ms: number;
   /** Extra drag over the observation, against staying at the current periapsis, m/s. */
@@ -106,7 +108,7 @@ export function observationPlan(t: Target, o: ObservationInput): ObservationPlan
   if (t.kind === 'moon') {
     const a = MARS_MOONS[t.moon!].a_km.value * 1000;
     const dvOrbit_ms = there(o.rp_m, a);
-    return { ...base, reachable: a > o.rp_m, obsAlt_m: hp, dvOrbit_ms, dvDrag_ms: 0, dv_ms: dvOrbit_ms, days: SCIENCE_RULES.observeDays.value, dragFactor: 0 };
+    return { ...base, reachable: a > o.rp_m, obsAlt_m: hp, obsApo_m: a - R_MARS, dvOrbit_ms, dvDrag_ms: 0, dv_ms: dvOrbit_ms, days: SCIENCE_RULES.observeDays.value, dragFactor: 0 };
   }
 
   const days = t.kind === 'limb' ? DEEP_DIP.days.value : SCIENCE_RULES.observeDays.value;
@@ -121,5 +123,5 @@ export function observationPlan(t: Target, o: ObservationInput): ObservationPlan
     : 0;
   // Only a pass flown lower than usual (or the deep dip) adds drag-heating risk; the usual orbit's is already flown.
   const dragFactor = lowered || t.kind === 'limb' ? density_kgm3(obsAlt_m) / (MARS_ATMOSPHERE.nominalDensity_kgkm3.value * KGKM3) : 0;
-  return { ...base, reachable, obsAlt_m, dvOrbit_ms, dvDrag_ms, dv_ms: dvOrbit_ms + dvDrag_ms, days, dragFactor };
+  return { ...base, reachable, obsAlt_m, obsApo_m: o.ra_m - R_MARS, dvOrbit_ms, dvDrag_ms, dv_ms: dvOrbit_ms + dvDrag_ms, days, dragFactor };
 }

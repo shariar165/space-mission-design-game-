@@ -325,16 +325,27 @@ export function countdownAt(elapsed_s: number): { count: number; liftoff: boolea
   return { count: liftoff ? 0 : Math.ceil(from - e - 1e-9) || from, liftoff, done: e >= from + FLY_RULES.liftoffHold_s.value };
 }
 
-export type MomentKind = 'launch' | 'launch-failed' | 'arrived' | 'storm-hit';
+export type MomentKind = 'launch' | 'launch-failed' | 'arrived' | 'storm-hit' | 'observe';
 
-/** The big moments among the events logged since event index `from` (launch, the arrival burn, a solar storm hit). */
-export function momentsSince(s: OpsState, from: number): { kind: MomentKind; t: number }[] {
-  const out: { kind: MomentKind; t: number }[] = [];
+export interface Moment {
+  kind: MomentKind;
+  t: number;
+  /** observe: the target the craft starts to shoot (the globe flies the orbiter over it). */
+  targetId?: string;
+}
+
+/**
+ * The big moments among the events logged since event index `from`: launch, the arrival burn, a solar storm hit, and
+ * an OBSERVE order landing on the craft.
+ */
+export function momentsSince(s: OpsState, from: number): Moment[] {
+  const out: Moment[] = [];
   for (const e of s.events.slice(Math.max(0, from))) {
     if (e.code === 'launch') out.push({ kind: 'launch', t: e.t });
     else if (e.code === 'launch-failed') out.push({ kind: 'launch-failed', t: e.t });
     else if (e.code === 'burn' && e.values.kind === 'arrival') out.push({ kind: 'arrived', t: e.t });
     else if (e.code === 'hazard-onset' && FROM_THE_SUN.has(String(e.values.type))) out.push({ kind: 'storm-hit', t: e.t });
+    else if (e.code === 'observe-start') out.push({ kind: 'observe', t: e.t, targetId: String(e.values.targetId) });
   }
   return out;
 }

@@ -165,30 +165,42 @@ export function useCycle(ms: number, on: boolean): number {
 // ---------------------------------------------------------------------------
 // The Mars globe in the CRT (Science Targets): an orthographic view of the NASA surface map.
 
-/** Where the globe looks from: centred over Tharsis, tilted north so the polar cap shows (layout choice). */
-export const GLOBE_VIEW = { lat_deg: 22, lon_deg: -100 };
-/** Moon rings drawn around the globe, in globe radii (a picture, not to scale: Phobos is 2.8 and Deimos 6.9). */
-export const GLOBE_MOON_RING = { phobos: 1.32, deimos: 1.62 } as const;
-/** Where each moon sits on its ring (angle round the ring, radians) and the ring's tilt and squash. */
+/** Where the globe looks from at the overview: centred over Tharsis, tilted north so the polar cap shows (layout choice). */
+export const GLOBE_VIEW: GlobeView = { lat_deg: 22, lon_deg: -100 };
+/** Where each moon sits on its (equatorial) ring: angle round the ring, radians, from the view's right. */
 export const GLOBE_MOON_AT = { phobos: 2.7, deimos: 0.9 } as const;
-export const GLOBE_RING_TILT_DEG = -14;
-export const GLOBE_RING_SQUASH = 0.31;
 /** The limb target: a point on the lit edge of the disc (angle from +x, radians). */
 export const GLOBE_LIMB_AT = 0.42;
-/** Disc size in CSS px (desktop, phone). */
-export const GLOBE_PX = { desktop: 220, phone: 120 } as const;
 
 const R = Math.PI / 180;
 
+export interface GlobeView {
+  lat_deg: number;
+  lon_deg: number;
+}
+/** A point around the globe in the view frame: unit = Mars radius, x right, y up, z toward the viewer. */
+export interface Vec3 {
+  x: number;
+  y: number;
+  z: number;
+}
+
 /** Orthographic projection of (lat, lon) onto the unit disc seen from the view centre: x right, y down; front = visible. */
 export function globePoint(lat_deg: number, lon_deg: number, view = GLOBE_VIEW): { x: number; y: number; front: boolean } {
+  const v = globeVec(lat_deg, lon_deg, view);
+  return { x: v.x, y: -v.y, front: v.z > 0 };
+}
+
+/** A surface point (lat, lon) as a unit vector in the view frame. */
+export function globeVec(lat_deg: number, lon_deg: number, view = GLOBE_VIEW): Vec3 {
   const p = lat_deg * R;
   const l = (lon_deg - view.lon_deg) * R;
   const p0 = view.lat_deg * R;
-  const x = Math.cos(p) * Math.sin(l);
-  const y = Math.cos(p0) * Math.sin(p) - Math.sin(p0) * Math.cos(p) * Math.cos(l);
-  const c = Math.sin(p0) * Math.sin(p) + Math.cos(p0) * Math.cos(p) * Math.cos(l);
-  return { x, y: -y, front: c > 0 };
+  return {
+    x: Math.cos(p) * Math.sin(l),
+    y: Math.cos(p0) * Math.sin(p) - Math.sin(p0) * Math.cos(p) * Math.cos(l),
+    z: Math.sin(p0) * Math.sin(p) + Math.cos(p0) * Math.cos(p) * Math.cos(l),
+  };
 }
 
 /** Inverse orthographic: the (lat, lon) under a disc point, or undefined off the disc. */
@@ -206,13 +218,228 @@ export function globeLatLon(x: number, y: number, view = GLOBE_VIEW): { lat_deg:
   return { lat_deg: lat / R, lon_deg, z: Math.cos(c) };
 }
 
-/** A point on a tilted moon ring around the globe (unit = globe radius), x right, y down. */
-export function ringPoint(radius: number, angle: number): { x: number; y: number } {
-  const t = GLOBE_RING_TILT_DEG * R;
-  const ex = radius * Math.cos(angle);
-  const ey = radius * GLOBE_RING_SQUASH * Math.sin(angle);
-  return { x: ex * Math.cos(t) - ey * Math.sin(t), y: ex * Math.sin(t) + ey * Math.cos(t) };
+// ---------------------------------------------------------------------------
+// The hero globe (spec: UI rule 41): the same drawing for the three.js globe and the flat one, in the view frame.
+
+/**
+ * Altitudes are drawn compressed (a picture; every label shows the engine's real km): the band up to lowBand_km is
+ * stretched over lowSpan Mars radii so a dip of a few tens of km shows, and above it the drawn radius grows with the
+ * square root, so Deimos still fits. r = 1 + lowSpan · min(h, b)/b + highK · √(max(0, h − b)/R).
+ */
+export const GLOBE_ALT = { lowBand_km: 300, lowSpan: 0.8, highK: 0.5, marsRadius_km: 3396.2 } as const;
+
+export function orbitDrawRadius(alt_m: number): number {
+  const h = Math.max(0, alt_m / 1000);
+  const b = GLOBE_ALT.lowBand_km;
+  return 1 + (GLOBE_ALT.lowSpan * Math.min(h, b)) / b + GLOBE_ALT.highK * Math.sqrt(Math.max(0, h - b) / GLOBE_ALT.marsRadius_km);
 }
+
+/** The disc's diameter as a share of the globe box's shorter side at the overview (where the arrival lands). */
+export const GLOBE_DISC_FILL = { desktop: 0.7, phone: 0.62 } as const;
+/** The disc's radius at the overview for a globe box (CSS px). */
+export const globeDiscPx = (w: number, h: number, phone: boolean) => (GLOBE_DISC_FILL[phone ? 'phone' : 'desktop'] * Math.min(w, h)) / 2;
+/** How each kind of target is framed: the disc's scale against the overview (moons: their ring must fit). */
+export const GLOBE_ZOOM = { overview: 1, surface: 1.3, limb: 1.1, phobos: 0.52, deimos: 0.42 } as const;
+/** The camera eases to a new target in this long (3D only; the flat globe cuts). */
+export const GLOBE_EASE_MS = 900;
+/** The orbiter's pass over a target when an OBSERVE order lands, and the scan flash in it. */
+export const GLOBE_FLYOVER_MS = 1800;
+/** The orbit's arc swept by the flyover, either side of the periapsis (radians). */
+export const GLOBE_FLYOVER_ARC = 0.9;
+/** Where the orbiter is in a flyover at progress k (0–1): it slows over the target (the periapsis) for the scan. */
+export const flyoverTheta = (k: number) => {
+  const u = 2 * Math.max(0, Math.min(1, k)) - 1;
+  return GLOBE_FLYOVER_ARC * Math.sign(u) * Math.abs(u) ** 1.8;
+};
+/** The low (drag) arc tinted on a dipping pass, either side of the periapsis (radians). */
+export const GLOBE_DRAG_ARC = 0.55;
+/** The overview turns slowly, like the design (one turn in this many seconds). */
+export const GLOBE_SPIN_S = 90;
+/** A surface target is looked at from no further north or south than this (the pole stays readable). */
+export const GLOBE_MAX_TILT_DEG = 62;
+/**
+ * A surface target sits this far left of the view centre (deg of longitude), so the orbit over it is seen from the
+ * side: face on, a dip would point straight at the viewer and could not be seen.
+ */
+export const GLOBE_SIDE_DEG = 50;
+
+function norm(v: Vec3): Vec3 {
+  const n = Math.hypot(v.x, v.y, v.z) || 1;
+  return { x: v.x / n, y: v.y / n, z: v.z / n };
+}
+const dot = (a: Vec3, b: Vec3) => a.x * b.x + a.y * b.y + a.z * b.z;
+const cross = (a: Vec3, b: Vec3): Vec3 => ({ x: a.y * b.z - a.z * b.y, y: a.z * b.x - a.x * b.z, z: a.x * b.y - a.y * b.x });
+const scale = (a: Vec3, k: number): Vec3 => ({ x: a.x * k, y: a.y * k, z: a.z * k });
+const add = (a: Vec3, b: Vec3): Vec3 => ({ x: a.x + b.x, y: a.y + b.y, z: a.z + b.z });
+
+/** The overview's periapsis: front, lower left, so the far side of the orbit swings back behind the globe. */
+export const GLOBE_OVERVIEW_PERI: Vec3 = norm({ x: -0.62, y: -0.3, z: 0.72 });
+
+/** Mars' north pole in the view frame. */
+export const globeNorth = (view: GlobeView) => globeVec(90, 0, view);
+
+/** A moon on its equatorial ring (drawn radius), in the view frame. */
+export function moonVec(moon: 'phobos' | 'deimos', orbit_m: number, view: GlobeView): Vec3 {
+  const n = globeNorth(view);
+  const e1: Vec3 = { x: 1, y: 0, z: 0 };
+  const e2 = norm(cross(e1, n));
+  const a = GLOBE_MOON_AT[moon];
+  const r = orbitDrawRadius(orbit_m - GLOBE_ALT.marsRadius_km * 1000);
+  return scale(add(scale(e1, Math.cos(a)), scale(e2, Math.sin(a))), r);
+}
+
+/** A moon's whole ring (drawn radius), in the view frame. */
+export function moonRing(orbit_m: number, view: GlobeView, n = 120): Vec3[] {
+  const nn = globeNorth(view);
+  const e1: Vec3 = { x: 1, y: 0, z: 0 };
+  const e2 = norm(cross(e1, nn));
+  const r = orbitDrawRadius(orbit_m - GLOBE_ALT.marsRadius_km * 1000);
+  return Array.from({ length: n + 1 }, (_, i) => {
+    const a = (i / n) * 2 * Math.PI;
+    return scale(add(scale(e1, Math.cos(a)), scale(e2, Math.sin(a))), r);
+  });
+}
+
+/** The limb target's point on the disc's edge. */
+export const limbVec = (): Vec3 => ({ x: Math.cos(GLOBE_LIMB_AT), y: Math.sin(GLOBE_LIMB_AT), z: 0 });
+
+/** An orbit's plane: p points at the periapsis, q along the motion there. */
+export interface OrbitBasis {
+  p: Vec3;
+  q: Vec3;
+}
+
+/** The plane through a periapsis direction, tilted `incl_deg` to the equator where it can be (else as near as it gets). */
+export function orbitBasis(peri: Vec3, north: Vec3, incl_deg: number): OrbitBasis {
+  const p = norm(peri);
+  let u = add(north, scale(p, -dot(north, p)));
+  if (Math.hypot(u.x, u.y, u.z) < 1e-6) u = Math.abs(p.x) < 0.9 ? { x: 1, y: 0, z: 0 } : { x: 0, y: 1, z: 0 };
+  u = norm(add(u, scale(p, -dot(u, p))));
+  const v = cross(p, u);
+  const un = dot(u, north);
+  const c = un > 1e-9 ? Math.max(-1, Math.min(1, Math.cos(incl_deg * R) / un)) : 0;
+  const h = add(scale(u, c), scale(v, Math.sqrt(1 - c * c)));
+  return { p, q: norm(cross(h, p)) };
+}
+
+/** Points along a conic with drawn periapsis and apoapsis radii, from angle `from` to `to` past the periapsis. */
+export function orbitPoints(rp: number, ra: number, b: OrbitBasis, from = -Math.PI, to = Math.PI, n = 180): Vec3[] {
+  const out: Vec3[] = [];
+  for (let i = 0; i <= n; i++) out.push(orbitAt(rp, ra, b, from + ((to - from) * i) / n));
+  return out;
+}
+
+/** One point on the conic, `th` radians past the periapsis. */
+export function orbitAt(rp: number, ra: number, b: OrbitBasis, th: number): Vec3 {
+  const a = (rp + ra) / 2;
+  const e = (ra - rp) / (ra + rp);
+  const r = (a * (1 - e * e)) / (1 + e * Math.cos(th));
+  return add(scale(b.p, r * Math.cos(th)), scale(b.q, r * Math.sin(th)));
+}
+
+/** What the globe needs about a target to frame it and draw its orbit (a TargetCard's shape). */
+export interface GlobeTarget {
+  id: string;
+  kind: 'surface' | 'moon' | 'limb';
+  lat_deg?: number;
+  lon_deg?: number;
+  moonOrbit_m?: number;
+  pass: { periapsis_m: number; apoapsis_m: number };
+  dips: boolean;
+  moonTransfer: boolean;
+}
+export interface GlobeOrbit {
+  periapsis_m: number;
+  apoapsis_m: number;
+  inclination_deg: number;
+}
+
+/** Where the globe looks and how close, to show a target (the overview with none). */
+export function globeFrame(t: GlobeTarget | undefined): { view: GlobeView; zoom: number } {
+  if (!t) return { view: GLOBE_VIEW, zoom: GLOBE_ZOOM.overview };
+  if (t.kind === 'surface') {
+    const lat = Math.max(-GLOBE_MAX_TILT_DEG, Math.min(GLOBE_MAX_TILT_DEG, t.lat_deg ?? 0));
+    // At the pole every longitude meets: no side step, the tilt already shows it from the side.
+    const side = Math.abs(t.lat_deg ?? 0) > GLOBE_MAX_TILT_DEG ? 0 : GLOBE_SIDE_DEG;
+    return { view: { lat_deg: lat, lon_deg: (t.lon_deg ?? 0) + side }, zoom: GLOBE_ZOOM.surface };
+  }
+  if (t.kind === 'limb') return { view: GLOBE_VIEW, zoom: GLOBE_ZOOM.limb };
+  return { view: GLOBE_VIEW, zoom: t.id === 'deimos' ? GLOBE_ZOOM.deimos : GLOBE_ZOOM.phobos };
+}
+
+/** Where a target's marker sits in the view frame. */
+export function targetVec(t: Pick<GlobeTarget, 'id' | 'kind' | 'lat_deg' | 'lon_deg' | 'moonOrbit_m'>, view: GlobeView): Vec3 {
+  if (t.kind === 'surface') return scale(globeVec(t.lat_deg ?? 0, t.lon_deg ?? 0, view), 1.01);
+  if (t.kind === 'limb') return limbVec();
+  return moonVec(t.id === 'deimos' ? 'deimos' : 'phobos', t.moonOrbit_m ?? 0, view);
+}
+
+export interface GlobeOrbits {
+  basis: OrbitBasis;
+  /** The orbit drawn bright: the observing pass for a dip, the orbit now otherwise (drawn radii). */
+  rp: number;
+  ra: number;
+  /** A dip: the orbit now, drawn faint behind the pass. */
+  ghost?: { rp: number; ra: number };
+  /** A moon: the orbit-change path out to it and back (dashed). */
+  transfer?: { rp: number; ra: number };
+  /** The low arc is tinted by the drag-heating risk. */
+  dragArc: boolean;
+}
+
+/** The robot's orbit for the target in view: its plane runs over the target (or out to the moon). */
+export function globeOrbits(orbit: GlobeOrbit, t: GlobeTarget | undefined, view: GlobeView): GlobeOrbits {
+  const north = globeNorth(view);
+  const now = { rp: orbitDrawRadius(orbit.periapsis_m), ra: orbitDrawRadius(orbit.apoapsis_m) };
+  if (!t) return { basis: orbitBasis(GLOBE_OVERVIEW_PERI, north, orbit.inclination_deg), ...now, dragArc: false };
+  if (t.moonTransfer) {
+    // The periapsis opposite the moon, so the apoapsis reaches it where the orbit crosses the equator (no plane change).
+    const basis = orbitBasis(scale(targetVec(t, view), -1), north, orbit.inclination_deg);
+    return { basis, ...now, transfer: { rp: orbitDrawRadius(t.pass.periapsis_m), ra: orbitDrawRadius(t.pass.apoapsis_m) }, dragArc: false };
+  }
+  const peri = t.kind === 'limb' ? limbVec() : globeVec(t.lat_deg ?? 0, t.lon_deg ?? 0, view);
+  const basis = orbitBasis(peri, north, orbit.inclination_deg);
+  if (!t.dips) return { basis, ...now, dragArc: false };
+  return { basis, rp: orbitDrawRadius(t.pass.periapsis_m), ra: orbitDrawRadius(t.pass.apoapsis_m), ghost: now, dragArc: true };
+}
+
+/** The periapsis point of the bright orbit, and the transfer's far end (where their labels sit). */
+export const periapsisAt = (o: GlobeOrbits): Vec3 => scale(o.basis.p, o.rp);
+export const transferApoAt = (o: GlobeOrbits): Vec3 | undefined => (o.transfer ? scale(o.basis.p, -o.transfer.ra) : undefined);
+
+/** Hidden behind the globe: further from the viewer than the disc and inside its outline. */
+export const behindGlobe = (v: Vec3) => v.z < 0 && v.x * v.x + v.y * v.y < 1;
+
+/** Shortest turn from one longitude to another (deg), for easing the view. */
+export const lonDelta = (from: number, to: number) => ((((to - from + 180) % 360) + 360) % 360) - 180;
+export const easeInOutCubic = (x: number) => (x < 0.5 ? 4 * x * x * x : 1 - (-2 * x + 2) ** 3 / 2);
+
+/**
+ * Globe labels sit beside their point: the target's to the right, the orbit labels outward, each flipped or slid in
+ * so it stays inside the box. Their width is estimated from the text (CRT font px per character), so the flat globe
+ * can place them as it renders and the 3D globe without measuring every frame.
+ */
+export const GLOBE_LABEL = { pad: { sel: 22, orbit: 14, selPhone: 16, orbitPhone: 10 }, edge: 8, charPx: { desktop: 10, phone: 8 } } as const;
+
+export function labelPlace(name: string, x: number, w: number, width: number, phone: boolean): { x: number; left: boolean; below: boolean } {
+  const pad = name === 'sel' ? (phone ? GLOBE_LABEL.pad.selPhone : GLOBE_LABEL.pad.sel) : phone ? GLOBE_LABEL.pad.orbitPhone : GLOBE_LABEL.pad.orbit;
+  const e = GLOBE_LABEL.edge;
+  const fitsR = x + pad + width <= w - e;
+  const fitsL = x - pad - width >= e;
+  let left = name === 'sel' ? !fitsR && fitsL : x < w / 2;
+  if (left && !fitsL && fitsR) left = false;
+  if (!left && !fitsR && fitsL) left = true;
+  // Neither side fits: slide the point in so the label does.
+  const ax = left ? Math.max(x, e + width + pad) : Math.min(x, w - e - width - pad);
+  // An orbit label that has to read inward drops below the target's marker instead of covering it.
+  return { x: ax, left, below: name !== 'sel' && left !== x < w / 2 };
+}
+
+/** Bottom sheet on the phone (Science Targets): the share of the panel's height each snap point shows. */
+export const SHEET_SNAPS = { peek: 0.34, half: 0.58, full: 0.9 } as const;
+export type SheetSnap = keyof typeof SHEET_SNAPS;
+/** A drag shorter than this (px) is a tap on the handle. */
+export const SHEET_TAP_PX = 8;
 
 /** The print of a downlinked picture: its width in teletype dots, and how long the print takes. */
 export const PRINT_DOTS = 180;

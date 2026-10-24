@@ -68,3 +68,21 @@ Imported through the claude_design MCP, and the same check applies: each copy ma
 - The globe uses a real NASA surface map, the USGS Viking colorized global mosaic, not `mars-map.js`'s procedural map. The mockup's Jezero marker is replaced by the game's six targets.
 - The design's pictures (`signal-delay/assets/mars/*.jpg`) are binary, and the MCP returns text only, so they could not be copied. The game ships its own copies of the NASA images, each one checked against its Photojournal page (`src/data/targets.json`). The same files are placed under `signal-delay/assets/mars/` with the design's names, so the mockups render.
 - Every cost, risk, size and time on a target card or in the drawer is engine output.
+
+## The Mars globe as the hero of Science Targets (Oct 24, 2026)
+
+There is no new design file. The layout follows the user's brief, using the "Mars Globe" page (`3d/`) for the globe and the existing Fly & Survive shell. The project was re-read through the claude_design MCP:
+- **`3d/` copies:** each of `Mars Globe.html` (11,402), `crt.css` (2,323) and `three-d-stage.js` (18,742) still matches its local copy, apart from line endings (the local files are CRLF: one extra byte per line).
+- **Not imported:** the project now also holds `Orbit View.html` and `orbit-maps.js`, a 3D cruise view. They are left out because spec rule 41 keeps Fly & Survive on its 2D map, with no 3D orbit view.
+
+**From the "Mars Globe" page:**
+- the phosphor glow;
+- a reticle with a pulse on the selected target;
+- the moons on their rings;
+- an orbiter on an orbit ring;
+- labels in the page's `.lbl` style (a bright key line over a dim sub line).
+
+**Different on purpose:**
+- **The orbit:** the design draws an inclined circle at 1.42 Mars radii. The game draws the engine's ellipse on a compressed altitude scale, with real-km labels (spec rule 41).
+- **The camera:** the design's free orbit controls are replaced by camera moves to the target the player picks.
+- **The toolbar:** the design's export toolbar is not shipped.

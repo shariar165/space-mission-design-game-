@@ -1,12 +1,30 @@
-// The flat Mars globe (spec: UI rule 41): the NASA surface map drawn orthographically on a canvas, with a marker
-// for each science target. It is the fallback when WebGL is missing or slow, and the globe in component tests.
-// Pixel layout only: the projection lives in sdGeometry.
-import { useEffect, useRef } from 'react';
+// The flat Mars globe (spec: UI rule 41): the NASA surface map drawn orthographically on a canvas, with the same
+// orbit drawing and labels as the 3D globe (sdGeometry: globeFrame, globeOrbits). It is the fallback when WebGL is
+// missing or slow, and the globe in component tests. Same interactions, no camera motion: picking a target re-centres
+// the view at once. The orbiter still flies over a target when an OBSERVE order lands. Pixel layout only.
+import { useEffect, useRef, useState } from 'react';
 import { MARS_GLOBE } from '../../../engine/targets';
-import type { TargetCard } from '../../../engine/ops/index';
-import { GLOBE_LIMB_AT, GLOBE_MOON_AT, GLOBE_MOON_RING, globeLatLon, globePoint, ringPoint } from '../../sdGeometry';
-import * as f from '../../format';
-import { SCIENCE, targetName } from '../../sdWords';
+import {
+  behindGlobe,
+  GLOBE_DRAG_ARC,
+  GLOBE_FLYOVER_ARC,
+  GLOBE_FLYOVER_MS,
+  globeDiscPx,
+  globeFrame,
+  globeLatLon,
+  globeOrbits,
+  flyoverTheta,
+  moonRing,
+  orbitAt,
+  orbitPoints,
+  periapsisAt,
+  targetVec,
+  transferApoAt,
+  type GlobeView,
+  type Vec3,
+} from '../../sdGeometry';
+import { SCIENCE } from '../../sdWords';
+import { globeLabels, GlobeMarks, type GlobeProps, type ScreenAt } from './GlobeMarks';
 
 export const globeSrc = () => `${import.meta.env.BASE_URL}${MARS_GLOBE.file}`;
 
@@ -32,7 +50,7 @@ function loadMap(): Promise<ImageData | undefined> {
 }
 
 /** Draw the lit globe into a square canvas: each pixel samples the equirectangular map (lon −180…180). */
-function paint(canvas: HTMLCanvasElement, map: ImageData) {
+function paint(canvas: HTMLCanvasElement, map: ImageData, view: GlobeView) {
   const n = canvas.width;
   const g = canvas.getContext('2d');
   if (!g) return;
@@ -40,9 +58,9 @@ function paint(canvas: HTMLCanvasElement, map: ImageData) {
   const lon0 = MARS_GLOBE.lon0_deg.value;
   for (let j = 0; j < n; j++) {
     for (let i = 0; i < n; i++) {
-      const ll = globeLatLon((2 * (i + 0.5)) / n - 1, (2 * (j + 0.5)) / n - 1);
+      const ll = globeLatLon((2 * (i + 0.5)) / n - 1, (2 * (j + 0.5)) / n - 1, view);
       if (!ll) continue;
-      const u = Math.min(map.width - 1, Math.max(0, Math.floor(((ll.lon_deg - lon0) / 360) * map.width)));
+      const u = Math.min(map.width - 1, Math.max(0, Math.floor((((((ll.lon_deg - lon0) % 360) + 360) % 360) / 360) * map.width)));
       const v = Math.min(map.height - 1, Math.max(0, Math.floor(((90 - ll.lat_deg) / 180) * map.height)));
       const k = (v * map.width + u) * 4;
       const shade = 0.35 + 0.65 * Math.pow(ll.z, 0.45);
@@ -56,77 +74,124 @@ function paint(canvas: HTMLCanvasElement, map: ImageData) {
   g.putImageData(out, 0, 0);
 }
 
-/** Where a target's marker sits, as a fraction of the box (0–1 each way; the disc fills the middle 62%). */
-export function markerAt(c: TargetCard): { left: number; top: number; front: boolean } {
-  const disc = 0.31;
-  if (c.kind === 'surface') {
-    const p = globePoint(c.lat_deg ?? 0, c.lon_deg ?? 0);
-    return { left: 0.5 + p.x * disc, top: 0.5 + p.y * disc, front: p.front };
+/** Flyover progress 0–1 while the orbiter passes over a target (the middle at once under reduced motion). */
+export function useFlyoverProgress(fly: GlobeProps['flyover'], still: boolean): number | undefined {
+  const [k, setK] = useState<number>();
+  useEffect(() => {
+    if (!fly) return setK(undefined);
+    if (still) return setK(0.5);
+    // Wall-clock time (Date), so a test's fake clock can run it too.
+    const t0 = Date.now();
+    let raf = 0;
+    const step = () => {
+      const x = Math.min(1, (Date.now() - t0) / GLOBE_FLYOVER_MS);
+      setK(x);
+      if (x < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [fly?.n, fly?.targetId, still]); // eslint-disable-line react-hooks/exhaustive-deps
+  return k;
+}
+
+/** An SVG path through view-frame points, split where the globe hides them. */
+function paths(pts: Vec3[], to: (v: Vec3) => ScreenAt): { front: string; back: string } {
+  let front = '';
+  let back = '';
+  let prev: boolean | undefined;
+  for (const v of pts) {
+    const a = to(v);
+    const hidden = !a.front;
+    const xy = `${a.x.toFixed(1)} ${a.y.toFixed(1)}`;
+    if (hidden) back += `${prev === true ? 'L' : 'M'}${xy}`;
+    else front += `${prev === false ? 'L' : 'M'}${xy}`;
+    prev = hidden;
   }
-  if (c.kind === 'limb') return { left: 0.5 + Math.cos(GLOBE_LIMB_AT) * disc, top: 0.5 - Math.sin(GLOBE_LIMB_AT) * disc, front: true };
-  const moon = c.id === 'deimos' ? 'deimos' : 'phobos';
-  const r = ringPoint(GLOBE_MOON_RING[moon], GLOBE_MOON_AT[moon]);
-  return { left: 0.5 + r.x * disc, top: 0.5 + r.y * disc, front: true };
+  return { front, back };
 }
 
-interface Props {
-  cards: TargetCard[];
-  selected?: string;
-  onPick?: (id: string) => void;
-  /** Disc size in CSS px. */
-  size: number;
-  /** Markers appear one by one (arrival transition): how many show. */
-  shown?: number;
-  className?: string;
-}
-
-export function MarsGlobe2D({ cards, selected, onPick, size, shown = cards.length, className }: Props) {
+export function MarsGlobe2D(p: GlobeProps & { className?: string }) {
   const ref = useRef<HTMLCanvasElement>(null);
+  const focusId = p.flyover?.targetId ?? (p.overview ? undefined : p.selected);
+  const focus = p.cards.find((c) => c.id === focusId);
+  const { view, zoom } = globeFrame(focus);
+  const rD = globeDiscPx(p.w, p.h, p.phone);
+  const r = rD * zoom;
+  const cx = p.w / 2;
+  const cy = p.h / 2;
+  const px = Math.max(16, Math.min(1100, Math.round(2 * r * 1.5)));
+
   useEffect(() => {
     let live = true;
     void loadMap().then((map) => {
-      if (live && map && ref.current) paint(ref.current, map);
+      if (live && map && ref.current) paint(ref.current, map, view);
     });
     return () => {
       live = false;
     };
-  }, []);
-  const ringPath = (radius: number) => {
-    const pts = Array.from({ length: 73 }, (_, i) => ringPoint(radius, (i / 72) * 2 * Math.PI));
-    return pts.map((p, i) => `${i ? 'L' : 'M'}${(50 + p.x * 31).toFixed(2)} ${(50 + p.y * 31).toFixed(2)}`).join(' ');
+  }, [view.lat_deg, view.lon_deg, px]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const to = (v: Vec3): ScreenAt => ({ x: cx + v.x * r, y: cy - v.y * r, front: !behindGlobe(v) });
+  const o = globeOrbits(p.orbit, focus, view);
+  const ring = paths(orbitPoints(o.rp, o.ra, o.basis), to);
+  const ghost = o.ghost && paths(orbitPoints(o.ghost.rp, o.ghost.ra, o.basis), to);
+  const transfer = o.transfer && paths(orbitPoints(o.transfer.rp, o.transfer.ra, o.basis), to);
+  const drag = o.dragArc ? paths(orbitPoints(o.rp, o.ra, o.basis, -GLOBE_DRAG_ARC, GLOBE_DRAG_ARC, 40), to) : undefined;
+  const moons = p.cards.filter((c) => c.kind === 'moon' && c.moonOrbit_m).map((c) => ({ id: c.id, d: paths(moonRing(c.moonOrbit_m!, view), to) }));
+  const k = useFlyoverProgress(p.flyover, p.still);
+  // The orbiter waits a little before the periapsis; in a flyover it sweeps across it.
+  const th = k !== undefined ? flyoverTheta(k) : -GLOBE_FLYOVER_ARC;
+  const robot = to(orbitAt(o.rp, o.ra, o.basis, th));
+
+  const marks: Record<string, ScreenAt> = {};
+  for (const c of p.cards) marks[c.id] = to(targetVec(c, view));
+  const apo = transferApoAt(o);
+  const at = {
+    marks,
+    ...(focus ? { sel: marks[focus.id]! } : {}),
+    peri: to(periapsisAt(o)),
+    ...(apo ? { apo: to(apo) } : {}),
+    robot,
+    ...(p.flyover ? { scan: marks[p.flyover.targetId]! } : {}),
   };
-  const sel = cards.find((c) => c.id === selected);
-  const selAt = sel ? markerAt(sel) : undefined;
+  const tone = focus?.riskLevel ?? 'none';
   return (
-    <div className={`sci-globe${className ? ` ${className}` : ''}`} style={{ width: size / 0.62, height: size / 0.62 }}>
-      <svg className="sci-globe-rings" viewBox="0 0 100 100" aria-hidden="true">
-        <path d={ringPath(GLOBE_MOON_RING.phobos)} />
-        <path d={ringPath(GLOBE_MOON_RING.deimos)} />
+    <div
+      className={`sci-globe flat${p.className ? ` ${p.className}` : ''}${p.flyover ? ' flyover' : ''}`}
+      data-globe="2d"
+      data-focus={focus?.id ?? 'overview'}
+      {...(p.flyover ? { 'data-flyover': p.flyover.targetId } : {})}
+    >
+      <div className="sci-globe-anchor" style={{ left: cx - rD, top: cy - rD, width: 2 * rD, height: 2 * rD }} />
+      <svg className="sci-globe-orbits back" width={p.w} height={p.h} aria-hidden="true">
+        {moons.map((m) => (
+          <path key={m.id} className="moon" d={m.d.back} />
+        ))}
+        {ghost && <path className="ghost" d={ghost.back} />}
+        {transfer && <path className="transfer" d={transfer.back} />}
+        <path className="ring" d={ring.back} />
       </svg>
-      <canvas ref={ref} className="sci-globe-disc" width={Math.round(size * 1.5)} height={Math.round(size * 1.5)} role="img" aria-label={SCIENCE.globeCredit} />
-      <div className="sci-globe-edge" />
-      {cards.slice(0, shown).map((c) => {
-        const at = markerAt(c);
-        const state = c.id === selected ? ' on' : c.state === 'home' || c.state === 'sent' ? ' done' : c.state !== 'ready' && c.state !== 'refused' ? ' ordered' : '';
-        return (
-          <button
-            key={c.id}
-            type="button"
-            className={`sci-mark${state}${at.front ? '' : ' behind'}`}
-            style={{ left: `${at.left * 100}%`, top: `${at.top * 100}%` }}
-            aria-label={targetName(c.id)}
-            aria-pressed={c.id === selected}
-            onClick={() => onPick?.(c.id)}
-          >
-            {f.num(c.ordinal)}
-          </button>
-        );
-      })}
-      {sel && selAt && (
-        <span className={`sci-mark-label${selAt.left > 0.6 ? ' left' : ''}`} style={{ left: `${selAt.left * 100}%`, top: `${selAt.top * 100}%` }}>
-          {targetName(sel.id)}
-        </span>
-      )}
+      <canvas
+        ref={ref}
+        className="sci-globe-disc"
+        width={px}
+        height={px}
+        style={{ left: cx - r, top: cy - r, width: 2 * r, height: 2 * r }}
+        role="img"
+        aria-label={SCIENCE.globeCredit}
+      />
+      <div className="sci-globe-edge" style={{ left: cx - r, top: cy - r, width: 2 * r, height: 2 * r }} />
+      <svg className="sci-globe-orbits" width={p.w} height={p.h} aria-hidden="true">
+        {moons.map((m) => (
+          <path key={m.id} className="moon" d={m.d.front} />
+        ))}
+        {ghost && <path className="ghost" d={ghost.front} />}
+        {transfer && <path className="transfer" d={transfer.front} />}
+        <path className="ring" d={ring.front} />
+        {drag && <path className={`drag ${tone}`} d={drag.front} />}
+        <circle className="robot" cx={robot.x} cy={robot.y} r={p.phone ? 4 : 5} />
+      </svg>
+      <GlobeMarks p={p} labels={globeLabels(focus, p.orbit, p.engineer)} at={at} />
     </div>
   );
 }

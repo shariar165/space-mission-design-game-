@@ -144,6 +144,16 @@ export const rate = (bps: number) => (bps >= 1e6 ? `${num(bps / 1e6, 2)} Mbps` :
 /** An angle in degrees. */
 export const deg = (x: number, digits = 1) => `${num(x, digits)}°`;
 
+/** An altitude above Mars in whole km (the globe's orbit labels). */
+export const km = (m: number) => `${num(m / 1000)} km`;
+
+/** A place on Mars: "18.4°N 134.0°W" (the pole: "90°N"). */
+export function latLon(lat_deg: number, lon_deg: number): string {
+  const ns = `${num(Math.abs(lat_deg), Math.abs(lat_deg) >= 89.95 ? 0 : 1)}°${lat_deg >= 0 ? 'N' : 'S'}`;
+  if (Math.abs(lat_deg) >= 89.95) return ns;
+  return `${ns} ${num(Math.abs(lon_deg), 1)}°${lon_deg >= 0 ? 'E' : 'W'}`;
+}
+
 /** Distance in AU (Engineer). */
 export const au = (m: number) => `${num(m / AU_M, 3)} AU`;
 

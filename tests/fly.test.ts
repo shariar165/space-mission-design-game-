@@ -401,6 +401,23 @@ describe('moments (what the flight screen celebrates)', () => {
     for (const h of hits) expect(storms.some((x) => Math.abs(x.onset - h.t) < 1e-9)).toBe(true);
   });
 
+  it('an OBSERVE order landing on the craft is a moment for its target (the globe flies the orbiter over it)', () => {
+    const s0 = ops.startOperations(maven, { rng: () => 0.999999 });
+    const sci = s0.env.timeline.find((w) => w.phase === 'science')!;
+    const s1 = ops.advanceOperations(s0, { until: sci.startDay + 0.1 });
+    const { state, receipt } = ops.sendCommand(s1, { kind: 'observe', targetId: 'phobos' });
+    const n = state.events.length;
+    // Before the order lands: nothing
+    const before = ops.advanceOperations(state, { until: receipt.arrivesAt! - 1e-6 });
+    expect(momentsSince(before, n).filter((m) => m.kind === 'observe')).toEqual([]);
+    // One light time after it left: the craft starts the observation (observe-start)
+    const after = ops.advanceOperations(state, { until: receipt.arrivesAt! + 1e-6 });
+    const m = momentsSince(after, n).filter((x) => x.kind === 'observe');
+    expect(m).toHaveLength(1);
+    expect(m[0]!.targetId).toBe('phobos');
+    expect(m[0]!.t).toBeCloseTo(receipt.arrivesAt!, 9);
+  });
+
   it('a launch failure is its own moment', () => {
     const s = ops.runOperations(maven, { rng: () => 0 }).state;
     expect(momentsSince(s, 0).map((x) => x.kind)).toEqual(['launch-failed']);

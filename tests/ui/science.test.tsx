@@ -93,6 +93,109 @@ describe('Science Targets in Mars orbit', () => {
   }, 120_000);
 });
 
+const globe = () => document.querySelector<HTMLElement>('.sci-globe')!;
+const pickTarget = (name: string) => fireEvent.click(within(panel()!).getAllByRole('button', { name: new RegExp(name) })[0]!);
+const observeKey = (name: string) => within(panel()!).getByRole('button', { name: `${SCIENCE.observe}: ${name}` });
+const rowState = (name: string) => within(panel()!).getAllByRole('button', { name: new RegExp(name) })[0]!.querySelector('.sci-card-state')?.textContent;
+
+describe('the globe is the hero (spec: UI rules 39 and 41)', () => {
+  it('picking a target turns the globe to it and draws its risk: a dip with its drag label, a moon’s orbit change', () => {
+    fly();
+    toMarsOrbit();
+    // After the arrival the globe goes from the overview to the selected target.
+    expect(globe().dataset.focus).toBe('olympus-mons');
+    // The limb: the ring dips to the deep-dip periapsis, its low arc tinted by the drag-heating risk.
+    pickTarget('THIN AIR AT THE LIMB');
+    expect(globe().dataset.focus).toBe('limb');
+    expect(globe().querySelector('.sci-globe-orbits .ghost')).toBeTruthy();
+    expect(globe().querySelector('.sci-globe-orbits .drag.high')).toBeTruthy();
+    // MAVEN's 150 km periapsis down to the 125 km deep dip (missions.json, targets.json deepDip)
+    expect(within(globe()).getByText(SCIENCE.periapsis('150 km', '125 km'))).toBeTruthy();
+    expect(within(globe()).getByText(`⚠ ${SCIENCE.risk.high}`)).toBeTruthy();
+    // Phobos: the dashed path out to the moon and back; its apoapsis label (6,300 km → 9,375 − 3,396.2 km)
+    pickTarget('PHOBOS');
+    expect(globe().dataset.focus).toBe('phobos');
+    expect(globe().querySelector('.sci-globe-orbits .transfer')).toBeTruthy();
+    expect(globe().querySelector('.sci-globe-orbits .drag')).toBeNull();
+    expect(within(globe()).getByText(SCIENCE.apoapsis('6,300 km', '5,979 km'))).toBeTruthy();
+    // A marker on the globe selects too.
+    fireEvent.click(within(globe()).getByRole('button', { name: 'VALLES MARINERIS' }));
+    expect(globe().dataset.focus).toBe('valles-marineris');
+    expect(within(globe()).getByText(SCIENCE.periapsisNow('150 km'))).toBeTruthy();
+  }, 120_000);
+
+  it('OBSERVE plays the order’s trip with the panel open: the orbiter flies over the target, then IMAGE QUEUED; then the clock holds again', () => {
+    fly();
+    toMarsOrbit();
+    pickTarget('VALLES MARINERIS');
+    fireEvent.click(observeKey('VALLES MARINERIS'));
+    expect(rowState('VALLES MARINERIS')).toBe(SCIENCE.state.ordered);
+    // An OBSERVE leaves at once and crosses space: the strip over the globe counts it down.
+    expect(screen.getByText(/^ORDER TO VALLES MARINERIS · REACHES VOYA IN /)).toBeTruthy();
+    // The light-time trip out plays in 24 clock steps of 250 ms.
+    for (let i = 0; i < 80 && !globe().dataset.flyover; i++) pass(250, 50);
+    expect(globe().dataset.flyover).toBe('valles-marineris');
+    expect(screen.getByText(SCIENCE.scanning('VOYA', 'VALLES MARINERIS'))).toBeTruthy();
+    expect(rowState('VALLES MARINERIS')).toBe(SCIENCE.state.observing);
+    // The reply crosses back (16 steps): IMAGE QUEUED on the teletype, one light time later.
+    for (let i = 0; i < 80 && !screen.queryAllByText(/VALLES MARINERIS IMAGE QUEUED/).length; i++) pass(250, 50);
+    expect(screen.getAllByText(/ORDER RECEIVED\. VALLES MARINERIS IMAGE QUEUED\./).length).toBeGreaterThan(0);
+    // The panel holds the clock again: the one-day observation does not finish while it stays open.
+    pass(6000, 250);
+    expect(rowState('VALLES MARINERIS')).toBe(SCIENCE.state.observing);
+    expect((screen.getByRole('button', { name: '100× speed' }) as HTMLButtonElement).disabled).toBe(true);
+  }, 120_000);
+
+  it('two orders in a row each play their trip and each gets its reply', () => {
+    fly();
+    toMarsOrbit();
+    pickTarget('VALLES MARINERIS');
+    fireEvent.click(observeKey('VALLES MARINERIS'));
+    pickTarget('PHOBOS');
+    fireEvent.click(observeKey('PHOBOS'));
+    for (let i = 0; i < 160 && !screen.queryAllByText(/PHOBOS IMAGE QUEUED/).length; i++) pass(250, 50);
+    expect(screen.getAllByText(/VALLES MARINERIS IMAGE QUEUED/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/PHOBOS IMAGE QUEUED/).length).toBeGreaterThan(0);
+    expect(rowState('PHOBOS')).toBe(SCIENCE.state.observing);
+  }, 120_000);
+});
+
+describe('phone: a full-width globe and a bottom sheet', () => {
+  it('the sheet peeks with the selected target, and its handle steps it open and shut', () => {
+    vi.stubGlobal('matchMedia', (q: string) => ({ matches: q.includes('max-width'), media: q, addEventListener: () => {}, removeEventListener: () => {}, addListener: () => {}, removeListener: () => {} }));
+    vi.useFakeTimers();
+    render(<FlyAndSurvive design={maven} seed={2013} mode="cadet" onMode={vi.fn()} missionName="Orbiter-1" onHome={vi.fn()} onDone={vi.fn()} robotName="VOYA" />);
+    pass(100);
+    const phonePanel = () => screen.queryByRole('region', { name: SCIENCE.titlePhone });
+    for (let i = 0; i < 300 && !phonePanel(); i++) {
+      const go = screen.queryByRole('button', { name: 'CONTINUE ▸' }) ?? screen.queryByRole('button', { name: /LET THE ROBOT DECIDE/ });
+      if (go) act(() => fireEvent.click(go));
+      else {
+        const choice = document.querySelector<HTMLButtonElement>('.dc-choice:not([disabled])');
+        const next = screen.queryByRole('button', { name: 'Next event' }) as HTMLButtonElement | null;
+        if (choice) act(() => fireEvent.click(choice));
+        else if (next && !next.disabled) act(() => fireEvent.click(next));
+        else pass(250, 250);
+      }
+    }
+    pass(ZOOM_MS + 200);
+    const p = phonePanel()!;
+    const sheet = p.querySelector<HTMLElement>('.sci-sheet')!;
+    const handle = within(p).getByRole('button', { name: SCIENCE.sheet });
+    expect(sheet.dataset.snap).toBe('peek');
+    expect(handle.getAttribute('aria-expanded')).toBe('false');
+    fireEvent.click(handle);
+    expect(sheet.dataset.snap).toBe('half');
+    fireEvent.click(handle);
+    expect(sheet.dataset.snap).toBe('full');
+    fireEvent.click(handle);
+    expect(sheet.dataset.snap).toBe('peek');
+    // The keys stay below the sheet; the globe fills the width above it.
+    expect(within(p).getByRole('button', { name: /^OBSERVE/ })).toBeTruthy();
+    expect(p.querySelector('.sci-stage .sci-globe')).toBeTruthy();
+  }, 120_000);
+});
+
 describe('the arrival transition (spec: UI rule 42)', () => {
   it('zooms from the map into the globe in about two seconds, then the keys wake up; going back zooms out', () => {
     fly();
