@@ -1,47 +1,84 @@
 /* Science Targets and the Downlink drawer (Signal Delay design screen 01; spec UI rules 39–41). Display sizes are
    the mockup's × 0.75 (Orbitron is wider than Big Shoulders). */
 
-/* ---- Science Targets: fills the CRT after arrival ---- */
-.sci { position: absolute; inset: 0; z-index: 4; display: grid; grid-template-columns: 360px minmax(0, 1fr); gap: 18px; padding: 16px 18px; box-sizing: border-box; background: var(--sd-crt); }
-.sci::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: var(--sd-scanlines); }
-.sci-left { display: flex; flex-direction: column; gap: 4px; min-height: 0; }
+/* ---- Science Targets: the Mars globe fills the CRT, a slim target list beside it, OBSERVE along the bottom ---- */
+.sci { position: absolute; inset: 0; z-index: 4; display: grid; grid-template-columns: 300px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) 60px; gap: 12px 14px; padding: 14px 16px; box-sizing: border-box; background: var(--sd-crt); }
+.sci::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: var(--sd-scanlines); z-index: 7; }
+.sci-list { grid-column: 1; grid-row: 1; display: flex; flex-direction: column; gap: 7px; min-height: 0; overflow-y: auto; scrollbar-width: none; }
+.sci-stage { grid-column: 2; grid-row: 1; position: relative; min-width: 0; min-height: 0; overflow: hidden; }
+.sci-hud { position: absolute; left: 4px; top: 0; right: 60px; z-index: 3; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; pointer-events: none; }
+/* The orbit lines cross the HUD: a dark backing keeps it readable. */
+.sci-hud > .sci-title, .sci-hud > .sci-hint { padding: 1px 6px 2px 0; background: rgba(5, 12, 7, 0.72); box-shadow: 6px 0 10px rgba(5, 12, 7, 0.72); }
 .sci-title { font: 400 24px/1 var(--sd-crt-font); color: var(--sd-crt-hi); text-shadow: 0 0 8px rgba(140, 255, 158, 0.5); }
 .sci-hint { font: 400 18px/1.1 var(--sd-crt-font); color: var(--sd-crt-dim); }
-.sci-globe-wrap { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
-.sci-credit { font: 400 15px/1 var(--sd-crt-font); color: var(--sd-crt-line); }
-.sci-right { display: grid; grid-template-rows: minmax(0, 1fr) 58px; gap: 12px; min-height: 0; }
-.sci-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(3, minmax(0, 1fr)); gap: 10px; min-height: 0; }
+.sci-strip { margin-top: 6px; padding: 5px 9px; border: 1px solid var(--sd-amber); background: rgba(5, 12, 7, 0.82); font: 400 19px/1 var(--sd-crt-font); color: var(--sd-amber); text-shadow: 0 0 6px rgba(255, 181, 71, 0.45); }
+.sci-strip.scan { border-color: var(--sd-crt-hi); color: var(--sd-crt-hi); text-shadow: 0 0 8px rgba(140, 255, 158, 0.6); }
+.sci-credit { position: absolute; left: 4px; bottom: 2px; z-index: 3; font: 400 15px/1 var(--sd-crt-font); color: var(--sd-crt-line); pointer-events: none; }
 
-/* ---- The globe (2D): canvas disc, moon rings and target markers ---- */
-.sci-globe { position: relative; flex: none; }
-.sci-globe-rings { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; fill: none; stroke: var(--sd-crt-dim); stroke-width: 0.5; stroke-dasharray: 1 1.2; }
-.sci-globe-disc { position: absolute; left: 19%; top: 19%; width: 62%; height: 62%; border-radius: 50%; }
-.sci-globe-edge { position: absolute; left: 19%; top: 19%; width: 62%; height: 62%; border-radius: 50%; box-shadow: 0 0 0 1px var(--sd-crt-line), 0 0 26px rgba(140, 255, 158, 0.14); pointer-events: none; }
-.sci-mark { position: absolute; transform: translate(-50%, -50%); width: 30px; height: 30px; padding: 0; border-radius: 50%; border: 2px solid var(--sd-crt-mid); background: rgba(5, 12, 7, 0.75); color: var(--sd-crt-hi); font: 400 22px/1 var(--sd-crt-font); display: flex; align-items: center; justify-content: center; cursor: pointer; }
-.sci-mark.behind { opacity: 0.45; border-style: dashed; }
+/* ---- The globe: fills the stage (3D canvas or the flat disc), with the orbits, markers and labels over it ---- */
+.sci-globe-host { position: absolute; inset: 0; }
+.sci-globe { position: absolute; inset: 0; overflow: hidden; }
+.sci-globe-anchor { position: absolute; border-radius: 50%; pointer-events: none; }
+.sci-globe-gl { position: absolute; inset: 0; width: 100% !important; height: 100% !important; }
+.sci-globe-disc { position: absolute; border-radius: 50%; }
+.sci-globe-edge { position: absolute; border-radius: 50%; box-shadow: 0 0 0 1px var(--sd-crt-line), 0 0 26px rgba(140, 255, 158, 0.16); pointer-events: none; }
+.sci-globe-orbits { position: absolute; left: 0; top: 0; overflow: visible; fill: none; pointer-events: none; }
+.sci-globe-orbits .ring { stroke: #55ff84; stroke-width: 1.6; filter: drop-shadow(0 0 3px rgba(57, 255, 106, 0.55)); }
+.sci-globe-orbits.back .ring { stroke: #2a9a4a; stroke-width: 1.2; stroke-dasharray: 3 4; filter: none; }
+.sci-globe-orbits .ghost { stroke: #2a9a4a; stroke-width: 1.2; stroke-dasharray: 5 4; }
+.sci-globe-orbits .transfer { stroke: #b6ffc4; stroke-width: 1.5; stroke-dasharray: 7 5; }
+.sci-globe-orbits.back .ghost, .sci-globe-orbits.back .transfer { opacity: 0.45; }
+.sci-globe-orbits .moon { stroke: #2a9a4a; stroke-width: 1; stroke-dasharray: 2 5; }
+.sci-globe-orbits .drag { stroke-width: 4; stroke-linecap: round; stroke: var(--sd-amber); }
+.sci-globe-orbits .drag.low { stroke: #ffd27a; }
+.sci-globe-orbits .drag.high { stroke: var(--sd-alarm); }
+.sci-globe-orbits .robot { fill: var(--sd-amber); filter: drop-shadow(0 0 4px rgba(255, 181, 71, 0.8)); }
+.sci-mark { position: absolute; z-index: 2; transform: translate(-50%, -50%); width: 30px; height: 30px; padding: 0; border-radius: 50%; border: 2px solid var(--sd-crt-mid); background: rgba(5, 12, 7, 0.75); color: var(--sd-crt-hi); font: 400 22px/1 var(--sd-crt-font); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.sci-mark.behind { opacity: 0.4; border-style: dashed; }
 .sci-mark.ordered { background: var(--sd-crt-dim); color: var(--sd-crt); border-color: var(--sd-crt-hi); }
 .sci-mark.done { background: var(--sd-crt-hi); color: var(--sd-crt); border-color: var(--sd-crt-hi); }
 .sci-mark.on { background: var(--sd-amber); border-color: var(--sd-amber); color: var(--sd-crt); box-shadow: 0 0 14px rgba(255, 181, 71, 0.8); }
-.sci-mark-label { position: absolute; transform: translate(22px, -50%); padding: 4px 8px; background: var(--sd-crt); border: 1px solid var(--sd-amber); font: 400 20px/1 var(--sd-crt-font); color: var(--sd-amber); white-space: nowrap; pointer-events: none; }
-.sci-mark-label.left { transform: translate(calc(-100% - 22px), -50%); }
+/* Labels in the design's style (docs/design/3d/crt.css .lbl): a bright key line and a dim sub line. */
+.sci-lbl { position: absolute; z-index: 2; transform: translate(22px, -115%); white-space: nowrap; pointer-events: none; font: 400 18px/1.05 var(--sd-crt-font); letter-spacing: 0.06em; text-transform: uppercase; color: #8dffa8; text-shadow: 0 0 4px rgba(93, 255, 138, 0.8), 0 0 12px rgba(57, 255, 106, 0.35); }
+.sci-lbl.left { transform: translate(calc(-100% - 22px), -115%); }
+.sci-lbl .k { display: block; color: #d6ffdc; }
+.sci-lbl .s { display: block; color: rgba(93, 255, 138, 0.7); font-size: 15px; }
+.sci-lbl.sel .k { color: var(--sd-amber-hi); text-shadow: 0 0 8px rgba(255, 181, 71, 0.6); }
+.sci-lbl.peri, .sci-lbl.apo { transform: translate(14px, 14px); }
+.sci-lbl.peri.left, .sci-lbl.apo.left { transform: translate(calc(-100% - 14px), 14px); }
+.sci-lbl.below { transform: translate(14px, 40px); }
+.sci-lbl.below.left { transform: translate(calc(-100% - 14px), 40px); }
+.sci-lbl.medium .k { color: var(--sd-amber); }
+.sci-lbl.high .k { color: var(--sd-alarm); text-shadow: 0 0 8px rgba(255, 90, 74, 0.6); }
+.sci-lbl.behind { opacity: 0.35; }
+.sci-robot-tag { position: absolute; z-index: 2; transform: translate(10px, 6px); pointer-events: none; font: 400 14px/1 var(--sd-crt-font); letter-spacing: 0.1em; color: var(--sd-amber); }
+.sci-robot-tag.behind { opacity: 0; }
+/* The scan flash when an OBSERVE order lands: a bright line sweeps across the target, then a flash. */
+.sci-scan { position: absolute; z-index: 1; width: 130px; height: 130px; transform: translate(-50%, -50%); border-radius: 50%; overflow: hidden; pointer-events: none; }
+.sci-scan::before { content: ''; position: absolute; left: 0; right: 0; top: -24px; height: 20px; background: linear-gradient(to bottom, rgba(214, 255, 220, 0), rgba(214, 255, 220, 0.95), rgba(214, 255, 220, 0)); animation: sci-scan-line 1.8s ease-in-out both; }
+.sci-scan::after { content: ''; position: absolute; inset: 0; background: radial-gradient(circle, rgba(214, 255, 220, 0.6), rgba(93, 255, 138, 0) 70%); opacity: 0; animation: sci-scan-flash 1.8s ease-out both; }
+.sci-scan.still::before { animation: none; top: 55px; }
+.sci-scan.still::after { animation: none; opacity: 0.6; }
+@keyframes sci-scan-line { 0%, 25% { top: -24px; opacity: 1; } 70% { top: 134px; opacity: 1; } 100% { top: 134px; opacity: 0; } }
+@keyframes sci-scan-flash { 0%, 45% { opacity: 0; } 52% { opacity: 1; } 100% { opacity: 0; } }
 
-/* ---- Target cards ---- */
-.sci-card { cursor: pointer; text-align: left; border-radius: 5px; border: 1.5px solid var(--sd-crt-line); background: var(--sd-crt-chip); padding: 9px 11px; display: flex; flex-direction: column; gap: 5px; min-height: 0; overflow: hidden; box-sizing: border-box; color: inherit; }
+/* ---- Target rows (slim list; the selected row opens) ---- */
+.sci-card { flex: none; cursor: pointer; text-align: left; border-radius: 5px; border: 1.5px solid var(--sd-crt-line); background: var(--sd-crt-chip); padding: 7px 10px; display: flex; flex-direction: column; gap: 5px; box-sizing: border-box; color: inherit; }
 .sci-card.on { border-color: var(--sd-amber); background: #1c1a0c; box-shadow: 0 0 16px rgba(255, 181, 71, 0.25); }
 .sci-card.done { border-color: var(--sd-crt-mid); background: #0c2414; }
 .sci-card-head { display: flex; align-items: baseline; gap: 8px; width: 100%; }
-.sci-card-num { font: 400 18px/1 var(--sd-crt-font); color: var(--sd-crt-dim); }
+.sci-card-num { font: 400 17px/1 var(--sd-crt-font); color: var(--sd-crt-dim); }
 .sci-card.on .sci-card-num { color: var(--sd-amber); }
-.sci-card-name { flex: 1; font: 400 25px/0.95 var(--sd-crt-font); color: var(--sd-crt-hi); }
+.sci-card-name { flex: 1; min-width: 0; font: 400 21px/0.95 var(--sd-crt-font); color: var(--sd-crt-hi); }
 .sci-card.on .sci-card-name { color: var(--sd-amber-hi); }
 .sci-card.dead .sci-card-name { color: #3f7a50; }
-.sci-card-state { padding: 3px 6px; border-radius: 2px; background: var(--sd-crt-dim); color: var(--sd-crt); font: 400 16px/1 var(--sd-crt-font); white-space: nowrap; }
-.sci-card-q { font: 400 17px/1 var(--sd-crt-font); color: var(--sd-amber); white-space: nowrap; }
+.sci-card-state { padding: 3px 6px; border-radius: 2px; background: var(--sd-crt-dim); color: var(--sd-crt); font: 400 15px/1 var(--sd-crt-font); white-space: nowrap; }
+.sci-card-q { font: 400 16px/1 var(--sd-crt-font); color: var(--sd-amber); white-space: nowrap; }
 .sci-card-ql { color: var(--sd-crt-mid); }
 .sci-card-learn { font: 400 12.5px/1.3 var(--sd-body); color: #9fc7a6; text-wrap: pretty; }
-.sci-card-eng { font: 400 15px/1 var(--sd-crt-font); color: var(--sd-crt-mid); }
-.sci-card-chips { margin-top: auto; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; width: 100%; }
-.sci-chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 6px; border-radius: 3px; border: 1.5px solid var(--sd-amber); font: 400 18px/1 var(--sd-crt-font); color: var(--sd-amber); }
+.sci-card-eng { font: 400 14px/1 var(--sd-crt-font); color: var(--sd-crt-mid); }
+.sci-card-chips { display: flex; gap: 5px; flex-wrap: wrap; align-items: center; width: 100%; }
+.sci-chip { display: inline-flex; align-items: center; gap: 3px; padding: 2px 5px; border-radius: 3px; border: 1.5px solid var(--sd-amber); font: 400 16px/1 var(--sd-crt-font); color: var(--sd-amber); }
 .sci-chip.free { border-color: var(--sd-crt-dim); color: var(--sd-crt-dim); }
 .sci-chip.alarm { border-color: var(--sd-alarm); color: var(--sd-alarm); }
 .sci-chip.risk { border-style: dashed; }
@@ -49,8 +86,8 @@
 .sci-chip.risk.high { border-color: var(--sd-alarm); color: var(--sd-alarm); }
 .sci-chip.dust { border-color: var(--sd-soso); color: var(--sd-amber-hi); }
 
-/* ---- OBSERVE and DONE ---- */
-.sci-keys { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; }
+/* ---- OBSERVE and DONE: the bar along the bottom ---- */
+.sci-keys { grid-column: 1 / -1; grid-row: 2; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; }
 .sci-observe { cursor: pointer; border-radius: 6px; border: none; border-bottom: 5px solid var(--sd-amber-edge); background: var(--sd-amber); color: var(--sd-paper-ink); box-shadow: 0 0 24px rgba(255, 181, 71, 0.3); display: flex; align-items: center; gap: 16px; padding: 0 18px; text-align: left; }
 .sci-observe.off { cursor: not-allowed; background: var(--sd-bezel); color: var(--sd-ink-5); border-bottom-color: var(--sd-dark-key); box-shadow: none; }
 .sci-observe-k { font: 900 24px/1 var(--sd-display); letter-spacing: 0.08em; }
@@ -60,27 +97,44 @@
 .sci-done { cursor: pointer; padding: 0 16px; border-radius: 6px; border: 1.5px solid var(--sd-crt-mid); background: var(--sd-crt); color: var(--sd-crt-hi); font: 400 22px/1 var(--sd-crt-font); white-space: nowrap; }
 .fly-action.sci-key { border-color: var(--sd-amber); color: var(--sd-amber); }
 
-/* ---- Phone: an overlay under the log strip ---- */
-.sci.phone { position: fixed; left: 0; right: 0; top: 184px; bottom: 0; z-index: 30; display: flex; flex-direction: column; gap: 8px; padding: 2px 10px 14px; background: rgba(3, 6, 4, 0.96); grid-template-columns: none; }
+/* ---- Phone: the globe fills the width under the log strip; the targets are a bottom sheet over it ---- */
+.sci.phone { position: fixed; left: 0; right: 0; top: 184px; bottom: 0; z-index: 30; display: block; padding: 0; background: rgba(3, 6, 4, 0.98); }
 .sci.phone::after { display: none; }
-.sci-globe-box { flex: none; position: relative; height: 196px; border-radius: 14px; border: 6px solid var(--sd-bezel); background: var(--sd-crt); overflow: hidden; display: flex; align-items: center; justify-content: center; }
-.sci-globe-box::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: var(--sd-scanlines); }
-.sci-globe-k { position: absolute; left: 10px; top: 8px; font: 400 17px/1 var(--sd-crt-font); color: var(--sd-crt-hi); z-index: 1; }
-.sci-globe-sel { position: absolute; left: 10px; bottom: 7px; font: 400 17px/1 var(--sd-crt-font); color: var(--sd-amber); z-index: 1; }
-.sci.phone .sci-mark { width: 22px; height: 22px; font-size: 16px; }
-.sci.phone .sci-mark-label { display: none; }
-.sci-list { flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: none; display: flex; flex-direction: column; gap: 7px; }
-.sci.phone .sci-card { flex: none; padding: 8px 10px; }
-.sci.phone .sci-card-name { font-size: 22px; }
-.sci.phone .sci-card-q { font-size: 16px; }
+.sci.phone .sci-stage { position: absolute; left: 6px; right: 6px; top: 0; bottom: 34%; border-radius: 12px; background: var(--sd-crt); }
+.sci.phone .sci-stage::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: var(--sd-scanlines); z-index: 4; }
+.sci.phone .sci-hud { left: 10px; top: 8px; right: 50px; }
+.sci.phone .sci-title { font-size: 17px; }
+.sci.phone .sci-strip { margin-top: 2px; font-size: 15px; padding: 3px 7px; }
+.sci.phone .sci-mark { width: 24px; height: 24px; font-size: 17px; }
+.sci.phone .sci-lbl { font-size: 14px; transform: translate(16px, -115%); }
+.sci.phone .sci-lbl.left { transform: translate(calc(-100% - 16px), -115%); }
+.sci.phone .sci-lbl.peri, .sci.phone .sci-lbl.apo { transform: translate(10px, 10px); }
+.sci.phone .sci-lbl.peri.left, .sci.phone .sci-lbl.apo.left { transform: translate(calc(-100% - 10px), 10px); }
+.sci.phone .sci-lbl.below { transform: translate(10px, 30px); }
+.sci.phone .sci-lbl.below.left { transform: translate(calc(-100% - 10px), 30px); }
+.sci.phone .sci-lbl .s { font-size: 12px; }
+.sci.phone .sci-scan { width: 84px; height: 84px; }
+.sci-sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; height: calc(var(--sheet) * 100%); display: flex; flex-direction: column; box-sizing: border-box; padding: 0 10px 84px; border-radius: 14px 14px 0 0; border-top: 1.5px solid var(--sd-crt-line); background: #050c07; box-shadow: 0 -16px 40px rgba(0, 0, 0, 0.6); transition: height 0.25s ease; }
+.sci-sheet.dragging { transition: none; }
+.sci-sheet-handle { flex: none; height: 30px; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 0; border: none; background: none; color: var(--sd-crt-dim); font: 400 15px/1 var(--sd-crt-font); cursor: grab; touch-action: none; }
+.sci-sheet-grip { width: 44px; height: 4px; border-radius: 2px; background: var(--sd-crt-line); }
+.sci-sheet-body { flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: none; }
+.sci-sheet .sci-list { overflow: visible; }
+.sci-sheet.peek .sci-card:not(.on) { display: none; }
+.sci.phone .sci-card { padding: 7px 10px; }
+.sci.phone .sci-card-name { font-size: 20px; }
 .sci.phone .sci-card-learn { font-size: 12px; }
-.sci.phone .sci-chip { font-size: 16px; padding: 2px 5px; }
-.sci.phone .sci-card-state { margin-left: auto; font-size: 15px; }
-.sci.phone .sci-keys { gap: 8px; }
-.sci.phone .sci-observe { height: 62px; flex-direction: column; justify-content: center; gap: 4px; padding: 0 10px; text-align: center; border-radius: 7px; }
+.sci.phone .sci-chip { font-size: 15px; }
+.sci.phone .sci-keys { position: absolute; left: 10px; right: 10px; bottom: 12px; height: 62px; z-index: 6; gap: 8px; }
+.sci.phone .sci-observe { flex-direction: column; justify-content: center; gap: 4px; padding: 0 10px; text-align: center; border-radius: 7px; }
 .sci.phone .sci-observe-k { font-size: 20px; }
 .sci.phone .sci-observe-sub { flex: none; font-size: 10px; }
 .sci.phone .sci-done { padding: 0 14px; border-radius: 7px; font-size: 20px; }
+@media (prefers-reduced-motion: reduce) {
+  .sci-sheet { transition: none; }
+  .sci-scan::before { animation: none; top: 55px; }
+  .sci-scan::after { animation: none; opacity: 0.6; }
+}
 
 /* ---- DOWNLINK key on the teletype paper (replaces the paper's footer) ---- */
 .tx-downlink { cursor: pointer; border: none; border-top: 2px dashed var(--sd-paper-line); padding: 10px 38px 12px; background: var(--sd-amber); display: flex; align-items: center; gap: 12px; text-align: left; width: 100%; color: var(--sd-paper-ink); }
@@ -157,15 +211,10 @@
   .dn-print-color, .dn-voice { transition: none; }
 }
 
-/* ---- The Mars globe host: 3D canvas, the toggle, the selected target's tag ---- */
-.sci-globe-host { position: relative; display: flex; align-items: center; justify-content: center; }
-.sci-globe.gl { position: relative; }
-.sci-globe-gl { position: absolute; inset: 0; width: 100% !important; height: 100% !important; }
-.sci-globe-toggle { position: absolute; right: -6px; bottom: -6px; cursor: pointer; padding: 4px 8px; border-radius: 3px; border: 1px solid var(--sd-crt-line); background: rgba(5, 12, 7, 0.85); color: var(--sd-crt-mid); font: 400 16px/1 var(--sd-crt-font); z-index: 2; }
+/* ---- The 2D/3D toggle in the stage's corner ---- */
+.sci-globe-toggle { position: absolute; right: 4px; bottom: 2px; cursor: pointer; padding: 4px 8px; border-radius: 3px; border: 1px solid var(--sd-crt-line); background: rgba(5, 12, 7, 0.85); color: var(--sd-crt-mid); font: 400 16px/1 var(--sd-crt-font); z-index: 3; }
 .sci-globe-toggle:hover { border-color: var(--sd-amber); color: var(--sd-amber); }
-.sci-sel-tag { position: absolute; left: 50%; bottom: 2%; transform: translateX(-50%); padding: 4px 8px; background: var(--sd-crt); border: 1px solid var(--sd-amber); font: 400 20px/1 var(--sd-crt-font); color: var(--sd-amber); white-space: nowrap; pointer-events: none; }
-/* The phosphor glow: a ring behind the sphere (cheap), instead of a filter on the WebGL canvas. */
-.sci-globe.gl::before { content: ''; position: absolute; left: 19%; top: 19%; width: 62%; height: 62%; border-radius: 50%; box-shadow: 0 0 0 1px rgba(140, 255, 160, 0.35), 0 0 22px rgba(57, 255, 106, 0.22); pointer-events: none; }
+.sci.phone .sci-globe-toggle { right: 8px; top: 8px; bottom: auto; }
 
 /* ---- The arrival transition (spec: UI rule 42): the hook sets the variables; nothing moves without .zooming ---- */
 .fly.zooming .crt-map { transform-origin: var(--zo-x) var(--zo-y); transform: translate(var(--zt-x), var(--zt-y)) scale(var(--zs)); opacity: var(--map-out); }
@@ -173,13 +222,9 @@
 .fly.zooming .crt-dest text { opacity: var(--map-rest); }
 .fly.zooming .fly-log, .fly.zooming .fly-legend, .fly.zooming .fly-goal, .fly.zooming .fly-eng-readout { opacity: var(--map-rest); }
 .fly.zooming .sci { background: rgba(5, 12, 7, var(--sci-chrome)); }
-.fly.zooming .sci.phone { background: rgba(3, 6, 4, calc(0.96 * var(--sci-chrome))); }
-.fly.zooming .sci::after { opacity: var(--sci-chrome); }
-.fly.zooming .sci-title, .fly.zooming .sci-hint, .fly.zooming .sci-credit, .fly.zooming .sci-right, .fly.zooming .sci-globe-toggle, .fly.zooming .sci-globe-rings,
-.fly.zooming .sci-list, .fly.zooming .sci-keys, .fly.zooming .sci-globe-k, .fly.zooming .sci-globe-sel, .fly.zooming .sci-globe-box::after { opacity: var(--sci-chrome); }
-.fly.zooming .sci-globe-box { border-color: rgba(44, 47, 39, var(--sci-chrome)); background: transparent; }
+.fly.zooming .sci.phone { background: rgba(3, 6, 4, calc(0.98 * var(--sci-chrome))); }
+.fly.zooming .sci.phone .sci-stage { background: rgba(5, 12, 7, var(--sci-chrome)); }
+.fly.zooming .sci::after, .fly.zooming .sci.phone .sci-stage::after { opacity: var(--sci-chrome); }
+.fly.zooming .sci-list, .fly.zooming .sci-keys, .fly.zooming .sci-hud, .fly.zooming .sci-credit, .fly.zooming .sci-sheet, .fly.zooming .sci-globe-toggle,
+.fly.zooming .sci-globe-orbits, .fly.zooming .sci-lbl, .fly.zooming .sci-robot-tag { opacity: var(--sci-chrome); }
 .fly.zooming .sci-globe-host { opacity: var(--globe-in); transform: scale(var(--globe-scale)); }
-.fly.zooming .sci-mark-label, .fly.zooming .sci-sel-tag { opacity: var(--sci-chrome); }
-/* Phone: the toggle sits in the globe box's corner. */
-.sci.phone .sci-globe-host { position: static; }
-.sci.phone .sci-globe-toggle { right: 8px; bottom: 8px; }

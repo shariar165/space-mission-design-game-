@@ -767,7 +767,7 @@ export const VOICE: Record<Exclude<VoiceKind, 'hit' | 'status'>, string[]> = {
   extension: ['EXTENSION ORDER RECEIVED. {years} MORE. STILL HERE.'],
   'signing-off': ['{name} SIGNING OFF. THANK YOU, EARTH.'],
   targets: ['{name} IS IN {dest} ORBIT. WHAT SHOULD IT LOOK AT?'],
-  observing: ['ORDER RECEIVED. CAMERA ON {target}.', 'ORDER RECEIVED. LINING UP ON {target}.'],
+  observing: ['ORDER RECEIVED. {target} IMAGE QUEUED.'],
   'observe-refused': ['I CANNOT TAKE {target} NOW.'],
   'image-sent': ['PICTURE OF {target} SENT HOME. {comment}'],
 };
@@ -792,7 +792,7 @@ export const VOICE_ALT = {
   standingChoice: 'NO NEW ORDER. FOLLOWING YOUR STANDING ORDER: {option}.',
   goalMet: 'SCIENCE GOAL MET. EVERYTHING I CAME FOR IS SENT HOME.',
   hitUnknown: 'TROUBLE UP HERE. SOMETHING JUST WENT WRONG.',
-  observeDip: 'ORDER RECEIVED. DIPPING LOW FOR {target}. BACK UP IN {days}.',
+  observeDip: 'ORDER RECEIVED. DIPPING LOW FOR {target}. IMAGE QUEUED. BACK UP IN {days}.',
   refusedFuel: 'NOT ENOUGH FUEL FOR {target}. I KEEP WHAT I NEED TO STAY UP.',
   refusedUnreachable: 'I CANNOT SEE {target} CLEARLY FROM THIS ORBIT.',
   refusedAlready: '{target} IS ALREADY ON MY LIST.',
@@ -1021,6 +1021,24 @@ export const SCIENCE = {
   eng: (res: string, size: string, dv: string, days: string) => `RES ${res}/PX · ${size} · Δv ${dv} · ${days}`,
   marker: (n: string, name: string) => `${n} ${name}`,
   moonRing: (name: string) => `${name} ORBIT`,
+  /** The globe's labels (spec: UI rule 41): every number is the engine's, the drawing is not to scale. */
+  periapsis: (from: string, to: string) => `PERIAPSIS ${from} → ${to}`,
+  periapsisNow: (h: string) => `PERIAPSIS ${h}`,
+  apoapsis: (from: string, to: string) => `APOAPSIS ${from} → ${to}`,
+  dragEng: (p: string, rho: string) => `P(DRAG HEATING) ${p} · ρ/ρ₀ ×${rho}`,
+  moonSub: (a: string) => `ORBITS ${a} UP`,
+  orbitChange: 'ORBIT CHANGE · OUT AND BACK',
+  limbSub: 'UPPER ATMOSPHERE · SIDEWAYS LOOK',
+  notToScale: 'ALTITUDES NOT TO SCALE',
+  orbiter: (name: string) => name,
+  /** The order strip over the globe while an OBSERVE crosses space, and the flyover when it lands. */
+  orderOut: (target: string, name: string, time: string) => `ORDER TO ${target} · REACHES ${name} IN ${time}`,
+  orderOutShort: (time: string) => `ORDER ARRIVES IN ${time}`,
+  scanning: (name: string, target: string) => `${name} IS OVER ${target} · SCANNING`,
+  /** The phone's bottom sheet. */
+  sheet: 'Science targets',
+  sheetMore: 'MORE ▴',
+  sheetLess: 'LESS ▾',
 };
 
 /** The DOWNLINK drawer (spec: UI rule 40; design screen 01, DOWNLINK). */

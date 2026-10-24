@@ -27,11 +27,20 @@ test('report', async ({ page }, info) => {
   await page.getByRole('button', { name: 'LAUNCH', exact: true }).click();
   await expect(page.getByRole('img', { name: /Map: your robot/ })).toBeVisible({ timeout: 60_000 });
   await flyToEnd(page, mobile);
-  await expect(page.getByRole('region', { name: 'Final transmission' })).toBeVisible();
   await page.evaluate(() => document.fonts.ready);
+  // At Mars the report opens with the Mission Album (spec: UI rule 43). On a desktop its FEED THE PAPER leads to the
+  // final transmission; on the phone the two are stacked on one page.
+  const album = page.getByRole('region', { name: 'Mission album' });
+  if (await album.isVisible()) {
+    await page.waitForTimeout(1500);
+    await page.screenshot({ path: `test-results/shots/report-album-flight-${info.project.name}.png` });
+    const feed = album.getByRole('button', { name: /FEED THE PAPER/ });
+    if (await feed.count()) await feed.click();
+  }
+  await expect(page.getByRole('region', { name: 'Final transmission' })).toBeVisible();
   await page.waitForTimeout(15_000); // the robot's last words print line by line
   await page.screenshot({ path: `test-results/shots/report-final-${info.project.name}.png` });
-  await page.getByRole('button', { name: /FEED THE PAPER/ }).click();
+  await page.getByRole('region', { name: 'Final transmission' }).getByRole('button', { name: /FEED THE PAPER/ }).click();
   await page.waitForTimeout(11_000); // the comic prints panel by panel
   await page.screenshot({ path: `test-results/shots/report-${info.project.name}.png`, fullPage: mobile });
   if (!mobile) {

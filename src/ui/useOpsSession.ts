@@ -80,6 +80,22 @@ export interface Transit {
   resolveAt?: number;
 }
 
+/**
+ * An OBSERVE order's trip (spec: UI rule 39): sent from the Science Targets panel, which holds the clock, it still
+ * plays the light-time trip out (the globe flies the orbiter over the target when it lands) and the reply's trip back
+ * ("IMAGE QUEUED" in TRANSMISSIONS), in the same steps as a danger card's order. Then the panel's hold applies again.
+ */
+export interface OrderTrip {
+  targetId: string;
+  chosenAt: number;
+  departsAt: number;
+  arrivesAt: number;
+  replyAt: number;
+}
+
+/** What the screen holds: nothing, everything, or the free-running clock only (order trips still play). */
+export type Hold = boolean | 'orders';
+
 /** The outcome after an order lands plays in this many steps. */
 export const OUTCOME_STEPS = 8;
 
@@ -87,7 +103,7 @@ export const OUTCOME_STEPS = 8;
  * The next stop of a transit: the team's reaction in TEAM_STEPS steps, the light-time trip out in TRANSIT_STEPS, the
  * reply's trip back in REPLY_STEPS, then (if the danger has not struck yet) the wait for the outcome.
  */
-function transitStop(tr: Transit, t: number): number {
+function transitStop(tr: Pick<Transit, 'chosenAt' | 'departsAt' | 'arrivesAt' | 'replyAt' | 'resolveAt'>, t: number): number {
   if (t < tr.departsAt - 1e-12) return Math.min(tr.departsAt, t + Math.max(1e-6, (tr.departsAt - tr.chosenAt) / TEAM_STEPS));
   if (t < tr.arrivesAt - 1e-12) return Math.min(tr.arrivesAt, t + Math.max(1e-6, (tr.arrivesAt - tr.departsAt) / TRANSIT_STEPS));
   if (t < tr.replyAt - 1e-12) return Math.min(tr.replyAt, t + Math.max(1e-6, (tr.replyAt - tr.arrivesAt) / REPLY_STEPS));
@@ -107,12 +123,17 @@ export interface OpsSession {
   /** The open hazard alert is on screen (not left to the craft). */
   showAlert: boolean;
   transit?: Transit;
+  /** OBSERVE orders still crossing space or waiting for the robot's reply (the Science Targets panel plays them). */
+  orderTrips: OrderTrip[];
   /** The hazard whose response just reached the craft (or whose outcome just landed). */
   result?: { hazardId: string; optionId: string };
   notice?: Notice;
   setSpeed: (s: OpsSpeed) => void;
-  /** The screen holds the clock (a planning card or an overlay is open); time runs on when it is released. */
-  setHold: (on: boolean) => void;
+  /**
+   * The screen holds the clock (a planning card or an overlay is open); time runs on when it is released. 'orders':
+   * the Science Targets panel holds it, but an OBSERVE order's trip still plays.
+   */
+  setHold: (on: Hold) => void;
   /** The robot flies the rest of the mission on its own (engine finishOperations): the flight always ends. */
   finish: () => void;
   respond: (optionId: string) => void;
@@ -140,7 +161,8 @@ export function useOpsSession(design: Design, seed: number, storms?: RealStorm[]
   const [result, setResult] = useState<{ hazardId: string; optionId: string }>();
   const [notice, setNotice] = useState<Notice>();
   const [deferred, setDeferred] = useState<string[]>([]);
-  const [hold, setHold] = useState(false);
+  const [hold, setHold] = useState<Hold>(false);
+  const [trips, setTrips] = useState<OrderTrip[]>([]);
   const stateRef = useRef<OpsState>(undefined);
   stateRef.current = state;
   const transitRef = useRef<Transit>(undefined);
@@ -154,6 +176,7 @@ export function useOpsSession(design: Design, seed: number, storms?: RealStorm[]
     setError(undefined);
     setSpeedRaw(0);
     setTransit(undefined);
+    setTrips([]);
     setResult(undefined);
     setDeferred([]);
     const id = setTimeout(() => {
@@ -182,12 +205,29 @@ export function useOpsSession(design: Design, seed: number, storms?: RealStorm[]
   const showAlert = view?.alert !== undefined && !deferred.includes(view.alert.decisionId);
   // An open card holds the clock (in a conjunction too: "let the robot decide" releases it and time runs on).
   const over = state !== undefined && state.status !== 'flying';
-  const locked = !state || over || showAlert || result !== undefined || hold;
+  const locked = !state || over || showAlert || result !== undefined || hold !== false;
+  // Under the Science Targets hold, OBSERVE orders whose reply is not home yet still play their trip.
+  const pending = state ? trips.filter((tr) => tr.replyAt > state.t + 1e-12) : [];
+  const tripsRun = hold === 'orders' && !transit && !over && !showAlert && result === undefined && pending.length > 0;
 
   // The clock: one step per tick while running; a command in transit runs fast until it arrives.
   useEffect(() => {
     if (!state) return;
-    if (transit ? hold : speed === 0 || locked) {
+    if (tripsRun) {
+      const id = setTimeout(() => {
+        const s = stateRef.current;
+        if (!s || s.status !== 'flying') return setTrips([]);
+        const until = Math.min(...pending.map((tr) => transitStop(tr, s.t)));
+        const next = advanceOperations(s, { until });
+        apply(next, s);
+        // A new danger (its card replaces the panel), the end of the flight, or a clock that cannot move ends the trips.
+        const stalled = next.t <= s.t + 1e-12 && next.events.length === s.events.length;
+        if (next.status !== 'flying' || next.newDecisions.length || stalled) setTrips([]);
+        else setTrips((ts) => ts.filter((tr) => tr.replyAt > next.t + 1e-12));
+      }, OPS_TICK_MS);
+      return () => clearTimeout(id);
+    }
+    if (transit ? hold !== false : speed === 0 || locked) {
       lastTick.current = 0;
       return;
     }
@@ -230,7 +270,7 @@ export function useOpsSession(design: Design, seed: number, storms?: RealStorm[]
       apply(advanceOperations(s, { days: (speed * ms) / 60_000 }), s);
     }, OPS_TICK_MS);
     return () => clearTimeout(id);
-  }, [state, speed, locked, transit, hold, apply]);
+  }, [state, speed, locked, transit, hold, apply, tripsRun]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Save the action log and the clock whenever an action is taken or the clock stops.
   useEffect(() => {
@@ -264,8 +304,13 @@ export function useOpsSession(design: Design, seed: number, storms?: RealStorm[]
     if (!s) return false;
     const r = sendCommand(s, { kind: 'observe', targetId });
     setState(r.state);
-    if (!r.receipt.accepted) refuse(r.receipt);
-    return r.receipt.accepted;
+    if (!r.receipt.accepted) {
+      refuse(r.receipt);
+      return false;
+    }
+    const arrivesAt = r.receipt.arrivesAt!;
+    setTrips((ts) => [...ts, { targetId, chosenAt: s.t, departsAt: r.receipt.sentAt, arrivesAt, replyAt: newsArrival(s.env, arrivesAt) }]);
+    return true;
   };
 
   const book = (day: number, dish: 34 | 70, hours: number) => {
@@ -299,6 +344,7 @@ export function useOpsSession(design: Design, seed: number, storms?: RealStorm[]
     locked,
     showAlert,
     ...(transit ? { transit } : {}),
+    orderTrips: pending,
     ...(result ? { result } : {}),
     ...(notice ? { notice } : {}),
     setSpeed: (sp) => (sp === 0 || !locked) && setSpeedRaw(sp),
@@ -307,6 +353,7 @@ export function useOpsSession(design: Design, seed: number, storms?: RealStorm[]
       const s = stateRef.current;
       if (!s || s.status === 'complete' || s.status === 'lost' || s.status === 'not-launched') return;
       setTransit(undefined);
+      setTrips([]);
       setResult(undefined);
       setNotice(undefined);
       setState(finishOperations(s));
@@ -325,6 +372,7 @@ export function useOpsSession(design: Design, seed: number, storms?: RealStorm[]
       save(undefined);
       setSpeedRaw(0);
       setTransit(undefined);
+      setTrips([]);
       setResult(undefined);
       setDeferred([]);
       setNotice(undefined);

@@ -1492,6 +1492,8 @@ describe('science: what a picture costs', () => {
     expect(p.obsAlt_m).toBeCloseTo(150e3, 6);
     expect(p.dvDrag_ms).toBe(0);
     expect(p.dragFactor).toBe(0); // the usual orbit adds no drag-heating risk
+    // The apoapsis is not touched: 9,696.2 − 3,396.2 = 6,300 km
+    expect(p.obsApo_m).toBeCloseTo(6_300e3, 6);
   });
 
   it('the pole is seen at a slant from a 75° orbit', () => {
@@ -1510,6 +1512,11 @@ describe('science: what a picture costs', () => {
     expect(plan('phobos').dvOrbit_ms).toBeCloseTo(38.32, 1);
     expect(plan('deimos').dvOrbit_ms).toBeCloseTo(750.33, 1);
     expect(plan('deimos').dragFactor).toBe(0);
+    // While observing, the apoapsis sits at the moon: 9,375 − 3,396.2 = 5,978.8 km (Phobos), 23,457 − 3,396.2 = 20,060.8 km (Deimos)
+    expect(plan('phobos').obsApo_m).toBeCloseTo(5_978.8e3, 3);
+    expect(plan('deimos').obsApo_m).toBeCloseTo(20_060.8e3, 3);
+    // The periapsis stays where it is: 3,546.2 − 3,396.2 = 150 km
+    expect(plan('phobos').obsAlt_m).toBeCloseTo(150e3, 6);
   });
 
   it('the limb needs a deep dip to 125 km for MAVEN’s week', () => {

@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { presetDesign } from '../src/engine/missions';
 import * as ops from '../src/engine/ops/index';
 import { commandArrival, newsArrival } from '../src/engine/ops/commands';
+import { consoleView } from '../src/engine/ops/console';
 import { firstScienceHome, observationFor, scienceReturned, targetScience } from '../src/engine/ops/observe';
 import { dangerDeck } from '../src/engine/pack';
 import { SCIENCE_RULES } from '../src/engine/science';
@@ -34,6 +35,16 @@ describe('an OBSERVE order', () => {
     expect(state.actions.at(-1)).toEqual({ t: s0.t, kind: 'command', command: { kind: 'observe', targetId: 'valles-marineris' } });
     // Nothing happens on board before it lands.
     expect(state.images).toEqual([]);
+  });
+
+  it('the console lists it in flight with its target and time left (the globe’s order strip)', () => {
+    const s0 = inOrbit();
+    const { state, receipt } = observe(s0, 'phobos');
+    const c = consoleView(state).commands.find((x) => x.kind === 'observe')!;
+    expect(c.targetId).toBe('phobos');
+    expect(c.status).toBe('in-flight');
+    // (arrivesAt − t) days × 86,400 s
+    expect(c.timeLeft_s).toBeCloseTo((receipt.arrivesAt! - state.t) * DAY_S, 6);
   });
 
   it('when it lands the craft observes for the plan’s days, then keeps the picture until a DSN pass sends it', () => {
@@ -228,6 +239,37 @@ describe('Science Targets panel (view model)', () => {
     expect(card('valles-marineris').fuelSegments).toBe(0);
     expect(card('olympus-mons').fuelSegments).toBeGreaterThanOrEqual(1);
     expect(card('valles-marineris').powerSegments).toBeGreaterThanOrEqual(1);
+  });
+
+  it('draws the risk from the engine: the orbit now, each target’s observing orbit, and the drag on a low pass', () => {
+    const s = inOrbit();
+    const v = ops.scienceTargetsView(s);
+    // MAVEN's science orbit: 150 km × 6,300 km altitude, 75° inclination (missions.json)
+    expect(v.orbit.periapsis_m).toBeCloseTo(150e3, 6);
+    expect(v.orbit.apoapsis_m).toBeCloseTo(6_300e3, 6);
+    expect(v.orbit.inclination_deg).toBe(maven.scienceOrbit!.inclination_deg);
+    const card = (id: string) => v.cards.find((c) => c.id === id)!;
+    // The limb: a deep dip to 125 km (targets.json deepDip), apoapsis kept; ρ(125)/ρ(158.5) ≈ 16
+    expect(card('limb').pass.periapsis_m).toBeCloseTo(125e3, 6);
+    expect(card('limb').pass.apoapsis_m).toBeCloseTo(6_300e3, 6);
+    expect(card('limb').dips).toBe(true);
+    expect(card('limb').moonTransfer).toBe(false);
+    expect(card('limb').dragFactor).toBeGreaterThan(10);
+    // Valles Marineris needs 222 km of range: seen from the usual 150 km periapsis, no dip and no drag
+    expect(card('valles-marineris').dips).toBe(false);
+    expect(card('valles-marineris').pass.periapsis_m).toBeCloseTo(150e3, 6);
+    expect(card('valles-marineris').dragFactor).toBe(0);
+    // Phobos: the apoapsis moves to the moon, 9,375 − 3,396.2 = 5,978.8 km (in from 6,300 km); the periapsis stays at 150 km
+    expect(card('phobos').moonTransfer).toBe(true);
+    expect(card('phobos').dips).toBe(false);
+    expect(card('phobos').pass.apoapsis_m).toBeCloseTo(5_978.8e3, 3);
+    expect(card('phobos').pass.periapsis_m).toBeCloseTo(150e3, 6);
+    // Each card's pass is the observation plan's
+    for (const c of v.cards) {
+      const plan = observationFor(s, targetById(c.id)!);
+      expect(c.pass).toEqual({ periapsis_m: plan.obsAlt_m, apoapsis_m: plan.obsApo_m });
+      expect(c.dragFactor).toBe(plan.dragFactor);
+    }
   });
 
   it('follows each target from the order to home', () => {

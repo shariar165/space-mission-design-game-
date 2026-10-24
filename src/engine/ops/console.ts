@@ -200,6 +200,8 @@ export interface ConsoleCommand {
   kind: CommandRecord['command']['kind'];
   hazardId?: string;
   optionId?: string;
+  /** OBSERVE: the target ordered. */
+  targetId?: string;
   sentAt: number;
   arrivesAt: number;
   progress: number;
@@ -535,6 +537,7 @@ function commandsView(s: OpsState): ConsoleCommand[] {
       id: c.id,
       kind: c.command.kind,
       ...(c.command.kind === 'respond' ? { hazardId: c.command.hazardId, optionId: c.command.optionId } : {}),
+      ...(c.command.kind === 'observe' ? { targetId: c.command.targetId } : {}),
       sentAt: c.sentAt,
       arrivesAt: c.arrivesAt,
       progress,

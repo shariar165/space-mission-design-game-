@@ -43,6 +43,22 @@ export function useWidth<E extends HTMLElement>(fallback = 1000) {
   return [ref, w] as const;
 }
 
+/** Width and height of an element, kept up to date (falls back to `fallback` in tests). */
+export function useBoxSize<E extends HTMLElement>(fallback: { w: number; h: number }) {
+  const ref = useRef<E>(null);
+  const [box, setBox] = useState(fallback);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(([e]) => {
+      if (e && e.contentRect.width > 0 && e.contentRect.height > 0) setBox({ w: Math.round(e.contentRect.width), h: Math.round(e.contentRect.height) });
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  return [ref, box] as const;
+}
+
 /** The player asked for less motion. */
 export function useReducedMotion(): boolean {
   const [r, setR] = useState(() => typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches);

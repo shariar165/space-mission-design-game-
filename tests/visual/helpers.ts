@@ -19,10 +19,12 @@ export async function flyToEnd(page: Page, mobile: boolean) {
       await cont.click();
       continue;
     }
-    // Science Targets in Mars orbit (no pictures here): skip it and fly on.
+    // Science Targets in Mars orbit (no pictures here): skip it and fly on. The key is disabled while the globe zooms
+    // in or back out to the map; clicking it then would wait on a button that is about to leave the page.
     const sci = page.locator('.sci-done');
     if (await sci.isVisible()) {
-      await sci.click();
+      if (await sci.isEnabled()) await sci.click();
+      else await page.waitForTimeout(200);
       continue;
     }
     if (await page.getByRole('dialog', { name: /DANGER CARD|PLAN AHEAD/ }).isVisible()) {

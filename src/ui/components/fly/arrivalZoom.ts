@@ -24,7 +24,7 @@ interface Rects {
   mx: number;
   my: number;
   mr: number;
-  /** The globe's disc: centre and radius (px). */
+  /** The globe's disc at the overview: centre and radius (px). */
   gx: number;
   gy: number;
   gr: number;
@@ -38,7 +38,8 @@ function measure(root: HTMLElement): Rects | undefined {
   for (const [k, v] of [['--zs', '1'], ['--zt-x', '0px'], ['--zt-y', '0px'], ['--globe-scale', '1']] as const) root.style.setProperty(k, v);
   const dot = root.querySelector('.crt-dest-disc')?.getBoundingClientRect();
   const map = root.querySelector('.crt-map')?.getBoundingClientRect();
-  const globe = root.querySelector('.sci-globe')?.getBoundingClientRect();
+  // The globe's disc at the overview (both globes draw this anchor; the hero globe fills its box).
+  const globe = root.querySelector('.sci-globe-anchor')?.getBoundingClientRect();
   if (!dot || !map || !globe || !dot.width || !globe.width) return undefined;
   return {
     mx: dot.left + dot.width / 2,
@@ -46,7 +47,7 @@ function measure(root: HTMLElement): Rects | undefined {
     mr: dot.width / 2,
     gx: globe.left + globe.width / 2,
     gy: globe.top + globe.height / 2,
-    gr: globe.width * 0.31,
+    gr: globe.width / 2,
     sx: map.left,
     sy: map.top,
   };
