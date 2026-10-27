@@ -1,12 +1,12 @@
-// Science Targets and Downlink view models (spec: UI rules 39–40). What the Fly & Survive screen shows after
-// arrival at Mars: one card per target with its costs from the observation plan, the order's travel time, and the
-// pictures on their way down. Pure functions of the state; the UI formats only.
+// Science Targets and Downlink view models (spec: UI rules 39–40, 46). What the Fly & Survive screen shows after
+// arrival at Mars or on Moon 3: one card per target with its costs from the observation plan, the order's travel
+// time, and the pictures on their way down. Pure functions of the state; the UI formats only.
 import { SCIENCE_RULES } from '../science';
-import { MARS_MOONS, TARGETS, type Target } from '../targets';
+import { MARS_MOONS, type Target } from '../targets';
 import { gameEstimate, type Sourced } from '../types';
 import { inMoratorium, oneWayAt } from './commands';
 import { segmentsFromFraction } from './fly';
-import { countsForScience, hasTargets, imageOf, OBSERVE_RULES, observationFor, scienceOrbitOf, scienceReturned, targetScience } from './observe';
+import { countsForScience, hasTargets, imageOf, OBSERVE_RULES, observationFor, onFarSide, scienceOrbitOf, scienceReturned, targetScience, targetsOf } from './observe';
 import { defaultBooking, downlinkCapacity_bitsPerDay } from './resources';
 import { deltaVLeft_ms, deltaVStillNeeded_ms } from './timeline';
 import type { DsnBooking, ImageRecord, OpsState } from './types';
@@ -60,10 +60,12 @@ export interface TargetCard {
   blocker?: TargetBlocker;
   /** Science weight, 0–1. */
   weight: number;
+  /** Moon: the craft over this target is hidden from Earth, so the robot observes it alone (spec: Moon orbit). */
+  farSide: boolean;
 }
 
 export interface ScienceTargetsView {
-  /** The craft is in Mars orbit and flying: the panel can open. */
+  /** The craft is in orbit with targets (Mars, Moon 3) and flying: the panel can open. */
   available: boolean;
   /** The science orbit now: periapsis and apoapsis altitudes (m) and inclination (deg). */
   orbit: { periapsis_m: number; apoapsis_m: number; inclination_deg: number };
@@ -98,7 +100,7 @@ export function scienceTargetsView(s: OpsState): ScienceTargetsView {
   const blackout = inMoratorium(env, s.t);
   const o = scienceOrbitOf(env);
   const orbit = { periapsis_m: o.periapsis_km * 1000, apoapsis_m: o.apoapsis_km * 1000, inclination_deg: o.inclination_deg };
-  const cards = TARGETS.map((t, i): TargetCard => {
+  const cards = targetsOf(env).map((t, i): TargetCard => {
     const plan = observationFor(s, t);
     const state = stateOf(s, t.id);
     const expected = OBSERVE_RULES.dragHeatingRate_perDay.value * plan.dragFactor * plan.days;
@@ -141,6 +143,7 @@ export function scienceTargetsView(s: OpsState): ScienceTargetsView {
       state,
       ...(blocker ? { blocker } : {}),
       weight: t.weight.value,
+      farSide: onFarSide(env, t),
     };
   });
   return {
@@ -283,7 +286,8 @@ export function missionAlbum(s: OpsState): MissionAlbum | undefined {
   const ending: AlbumEnding = s.status === 'lost' ? 'lost' : s.extension ? 'extended' : 'complete';
   const day = ending === 'lost' ? Math.floor(s.failureT ?? s.t) : s.env.primeEndDay + 1;
   const ts = targetScience(s);
-  const frames = TARGETS.map((t): AlbumFrame => {
+  const targets = targetsOf(s.env);
+  const frames = targets.map((t): AlbumFrame => {
     const base = { targetId: t.id, weight: t.weight.value };
     const im = imageOf(s, t.id);
     if (im && countsForScience(s, im)) return { ...base, status: 'home', day: Math.floor(im.sentAt!) };
@@ -296,5 +300,5 @@ export function missionAlbum(s: OpsState): MissionAlbum | undefined {
     if (refused) return missing(refused.reason === 'fuel' ? 'refused-fuel' : refused.reason === 'unreachable' ? 'refused-unreachable' : 'refused');
     return missing('never-ordered');
   });
-  return { ending, frames, returned: ts.home.length, total: TARGETS.length, science: ts.fraction, day };
+  return { ending, frames, returned: ts.home.length, total: targets.length, science: ts.fraction, day };
 }

@@ -20,6 +20,8 @@ export interface Level {
   impossible?: boolean;
   /** Pack: the parts on the shelf (default: everything the destination offers). Early levels teach with fewer. */
   shelf?: PartId[];
+  /** The science is the destination's targets (Moon 3; Mars always flies its own). */
+  targets?: boolean;
 }
 
 /** The parts a level puts on the shelf. */
@@ -30,7 +32,7 @@ const ALL: CadetStep[] = ['science', 'power', 'radio', 'fuel', 'rocket'];
 export const LEVELS: Level[] = [
   { id: 'moon-1', destination: 'moon', title: 'First Light', concept: 'Power', blurb: 'Pick solar wings that keep your craft charged.', steps: ['power'], orders: false, shelf: ['computer', 'engine', 'camera', 'solar', 'battery'] },
   { id: 'moon-2', destination: 'moon', title: 'Heavy Lifting', concept: 'Fuel & weight', blurb: 'Every kilogram of fuel must be lifted too.', steps: ['power', 'fuel', 'rocket'], orders: false, shelf: ['computer', 'engine', 'camera', 'spectrometer', 'solar', 'battery', 'tank', 'dish'] },
-  { id: 'moon-3', destination: 'moon', title: 'Full Build', concept: 'Science & radio', blurb: 'Build the whole craft yourself.', steps: ALL, orders: false },
+  { id: 'moon-3', destination: 'moon', title: 'Full Build', concept: 'Science & radio', blurb: 'Build the whole craft yourself.', steps: ALL, orders: false, targets: true },
   { id: 'mars', destination: 'mars', title: 'Red Planet', concept: 'Light delay', blurb: 'Too far to steer live: give your craft orders.', steps: ALL, orders: true },
   { id: 'venus', destination: 'venus', title: 'Cloud Diver', concept: 'Budget', blurb: 'Big radar, small wallet. Watch the coin jar.', steps: ALL, orders: true },
   { id: 'bennu', destination: 'bennu', title: 'Pebble Catcher', concept: 'Rendezvous & return', blurb: 'Meet an asteroid and bring a sample home.', steps: ALL, orders: true },

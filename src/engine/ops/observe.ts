@@ -1,10 +1,11 @@
 // Science targets in Mission operations (spec: Science targets and downlink). An OBSERVE order is a command on the
 // light-delayed path; when it arrives the craft prices the picture with science.ts from its own orbit and mass,
 // observes, and keeps the picture in its image queue until a DSN pass sends it home. A picture is home one light
-// time after its last bit leaves the craft. Science returned at Mars is the weight of the targets home.
+// time after its last bit leaves the craft. Science returned at Mars and on Moon 3 is the weight of the targets home.
 import { DESTINATIONS, OPERATIONS } from '../data';
 import { observationPlan, SCIENCE_RULES, type ObservationPlan } from '../science';
-import { TARGETS, targetById, type Target } from '../targets';
+import { targetById, targetSetFor, type Target } from '../targets';
+import { inShadow } from './predictable';
 import { gameEstimate, type Sourced } from '../types';
 import type { ImageRecord, OpsEnvironment, OpsState } from './types';
 
@@ -17,8 +18,25 @@ export const OBSERVE_RULES = {
   ),
 } satisfies Record<string, Sourced<number>>;
 
-/** True at Mars: the destination with science targets. */
-export const hasTargets = (env: OpsEnvironment) => env.design.destination === 'mars';
+/** Science targets decide the science: always at Mars, and at the Moon on a level that flies them (Moon 3). */
+export const hasTargets = (env: OpsEnvironment) =>
+  env.design.destination === 'mars' || (env.design.destination === 'moon' && env.design.scienceTargets === true);
+
+/** The targets this flight can order (none where the science is data downlinked). */
+export const targetsOf = (env: OpsEnvironment): Target[] => (hasTargets(env) ? (targetSetFor(env.design.destination)?.targets ?? []) : []);
+
+/**
+ * A Moon target on the far side: the craft passing over it is hidden from Earth (spec: Moon orbit), so it observes
+ * alone. Earth sits over the sub-Earth point (0°, 0°) of the body-fixed frame; the eclipse test with that direction.
+ */
+export function onFarSide(env: OpsEnvironment, t: Target): boolean {
+  if (t.body !== 'moon' || !t.lat_deg || !t.lon_deg) return false;
+  const R = DESTINATIONS.moon.radius_km.value * 1000;
+  const r = R + scienceOrbitOf(env).periapsis_km * 1000;
+  const la = (t.lat_deg.value * Math.PI) / 180;
+  const lo = (t.lon_deg.value * Math.PI) / 180;
+  return inShadow([r * Math.cos(la) * Math.cos(lo), r * Math.cos(la) * Math.sin(lo), r * Math.sin(la)], [1, 0, 0], R);
+}
 
 /** The orbit the craft flies in the science phase (altitudes, km) and its inclination. */
 export function scienceOrbitOf(env: OpsEnvironment) {
@@ -36,7 +54,7 @@ export function inDustSeason(ls: number | undefined): boolean {
 export function observationFor(s: OpsState, target: Target, t = s.t): ObservationPlan {
   const env = s.env;
   const o = scienceOrbitOf(env);
-  const R_km = DESTINATIONS.mars.radius_km.value;
+  const R_km = DESTINATIONS[env.design.destination].radius_km.value;
   const day = env.days[Math.max(0, Math.min(Math.floor(t), env.horizonDay))]!;
   return observationPlan(target, {
     rp_m: (R_km + o.periapsis_km) * 1000,
@@ -79,7 +97,7 @@ export function targetScience(s: OpsState): TargetScience {
   const home: string[] = [];
   const partial: TargetScience['partial'] = [];
   let fraction = 0;
-  for (const t of TARGETS) {
+  for (const t of targetsOf(s.env)) {
     const im = imageOf(s, t.id);
     if (!im) continue;
     if (countsForScience(s, im)) {
@@ -90,7 +108,7 @@ export function targetScience(s: OpsState): TargetScience {
   return { fraction: Math.min(1, fraction), home, partial };
 }
 
-/** Prime science returned, 0–1 (spec: Scoring): target weights at Mars, data downlinked ÷ goal elsewhere. */
+/** Prime science returned, 0–1 (spec: Scoring): target weights at Mars and on Moon 3, data downlinked ÷ goal elsewhere. */
 export function scienceReturned(s: OpsState): number {
   if (hasTargets(s.env)) return targetScience(s).fraction;
   const sci = s.env.timeline.find((w) => w.phase === 'science')!;
@@ -98,7 +116,7 @@ export function scienceReturned(s: OpsState): number {
   return goal > 0 ? Math.min(1, s.downlinkedPrime_bits / goal) : 0;
 }
 
-/** The first science has come home (Mars: the first picture sent; elsewhere: the first data). */
+/** The first science has come home (with targets: the first picture sent; elsewhere: the first data). */
 export function firstScienceHome(s: OpsState): boolean {
   return hasTargets(s.env) ? s.images.some((im) => countsForScience(s, im)) : s.downlinkedPrime_bits > 0;
 }

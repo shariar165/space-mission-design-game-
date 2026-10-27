@@ -326,3 +326,78 @@ describe('the question reaches Earth', () => {
     expect(ops.nextEventT(s)).toBeCloseTo(newsArrival(s.env, sci.startDay), 12);
   });
 });
+
+describe('Moon 3: four targets with the Mars rules (spec: Moon orbit, Targets)', () => {
+  const moon3 = async () => {
+    const { starterDesign } = await import('../src/ui/starters');
+    return { ...starterDesign('moon', '2026-10-04'), scienceTargets: true };
+  };
+  const moonOrbit = async () => {
+    const s = ops.startOperations(await moon3(), calm);
+    const sci = s.env.timeline.find((w) => w.phase === 'science')!;
+    return ops.advanceOperations(s, { until: sci.startDay + 0.1 });
+  };
+
+  it('from LRO’s 50 km orbit no target needs a dip: the NAC sees 0.5 m per pixel there, and there is no air to drag', async () => {
+    const s = await moonOrbit();
+    for (const id of ['apollo-11', 'tycho', 'shackleton', 'tsiolkovskiy']) {
+      const plan = observationFor(s, targetById(id)!);
+      // Apollo 11 needs 0.5 m ÷ 10 µrad = 50 km: exactly the orbit; the others need more and stay at 50 km
+      expect(plan.reachable).toBe(true);
+      expect(plan.obsAlt_m).toBeCloseTo(50_000, 6);
+      expect(plan.dv_ms).toBe(0);
+      expect(plan.dragFactor).toBe(0);
+      expect(plan.days).toBe(SCIENCE_RULES.observeDays.value);
+    }
+  });
+
+  it('science returned is the weight of the pictures home; all four make three stars', async () => {
+    let s = await moonOrbit();
+    expect(scienceReturned(s)).toBe(0);
+    for (const id of ['apollo-11', 'tycho', 'shackleton', 'tsiolkovskiy']) s = observe(s, id).state;
+    s = fly(s, 10);
+    // 0.20 + 0.25 + 0.30 + 0.25 = 1
+    expect(targetScience(s).home).toEqual(['apollo-11', 'tycho', 'shackleton', 'tsiolkovskiy']);
+    expect(scienceReturned(s)).toBeCloseTo(1, 12);
+    expect(ops.operationsDebrief(ops.finishOperations(s)).stars).toBe(3);
+  });
+
+  it('Moon 1 and Moon 2 (no targets) keep the data ratio, and Mars targets are not offered at the Moon', async () => {
+    const { starterDesign } = await import('../src/ui/starters');
+    const s = ops.runOperations(starterDesign('moon', '2026-10-04'), calm).state;
+    const sci = s.env.timeline.find((w) => w.phase === 'science')!;
+    const goal = s.env.loads.instruments.reduce((a, i) => a + i.data_bitsPerDay, 0) * (sci.endDay - sci.startDay + 1);
+    expect(scienceReturned(s)).toBeCloseTo(Math.min(1, s.downlinkedPrime_bits / goal), 12);
+    const m3 = await moonOrbit();
+    const r = observe(m3, 'olympus-mons');
+    const landed = fly(r.state, 1);
+    expect(landed.images.find((im) => im.targetId === 'olympus-mons')!.status).toBe('refused');
+  });
+
+  it('Tsiolkovskiy is on the far side: the craft over it is hidden from Earth, so the robot observes alone', async () => {
+    const { scienceTargetsView } = await import('../src/engine/ops/scienceView');
+    const v = scienceTargetsView(await moonOrbit());
+    expect(v.available).toBe(true);
+    expect(v.cards.map((c) => c.id)).toEqual(['apollo-11', 'tycho', 'shackleton', 'tsiolkovskiy']);
+    // over Tsiolkovskiy (20.4° S, 129.0° E) at 50 km: r·ê = 1788.1 × cos 20.38° × cos 128.97° = −1052 km (behind),
+    // and the distance off the Earth line is √(1788.1² − 1052²) = 1446 km < R = 1738.1 km: hidden.
+    // Over Shackleton (89.67° S) the craft is 1788 km off that line, above the limb: in view.
+    expect(v.cards.map((c) => c.farSide)).toEqual([false, false, false, true]);
+    // the observing pass is the orbit itself: no dip, no moon transfer, no drag risk
+    for (const c of v.cards) {
+      expect(c.dips).toBe(false);
+      expect(c.moonTransfer).toBe(false);
+      expect(c.riskLevel).toBe('none');
+    }
+  });
+
+  it('the album counts four frames at the Moon', async () => {
+    const { missionAlbum } = await import('../src/engine/ops/scienceView');
+    let s = observe(await moonOrbit(), 'tycho').state;
+    s = ops.finishOperations(fly(s, 5));
+    const a = missionAlbum(s)!;
+    expect(a.total).toBe(4);
+    expect(a.frames.map((f) => f.targetId)).toEqual(['apollo-11', 'tycho', 'shackleton', 'tsiolkovskiy']);
+    expect(a.returned).toBe(1);
+  });
+});

@@ -17,6 +17,7 @@ import { SCIENCE_RULES } from '../src/engine/science';
 import { OBSERVE_RULES } from '../src/engine/ops/observe';
 import { SCIENCE_VIEW_RULES } from '../src/engine/ops/scienceView';
 import targets from '../src/data/targets.json';
+import moonTargets from '../src/data/moonTargets.json';
 import ranks from '../src/data/ranks.json';
 import orbitalElements from '../src/data/orbitalElements.json';
 import parts from '../src/data/parts.json';
@@ -90,6 +91,7 @@ const DATA_FILES: Record<string, unknown> = {
   'rideshares.json': rideshares,
   'spaceWeather.json': spaceWeather,
   'targets.json': targets,
+  'moonTargets.json': moonTargets,
 };
 
 const ENGINE_VALUES: Record<string, Record<string, Sourced<unknown>>> = {

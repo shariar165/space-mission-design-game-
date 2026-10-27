@@ -253,7 +253,7 @@ export function App() {
   };
 
   const playLevel = (l: Level) => {
-    const s = starterDesign(l.destination, today());
+    const s = { ...starterDesign(l.destination, today()), ...(l.targets ? { scienceTargets: true } : {}) };
     setCadet(cadetStart(s, l.id));
     setDesign(s);
     setMissionName(defaultMissionName(l.destination));

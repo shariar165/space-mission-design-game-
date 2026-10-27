@@ -5,7 +5,7 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { presetDesign } from '../../src/engine/missions';
-import { targetById } from '../../src/engine/targets';
+import { TARGETS, targetById } from '../../src/engine/targets';
 import { FlyAndSurvive } from '../../src/ui/screens/FlyAndSurvive';
 import { ZOOM_MS } from '../../src/ui/components/fly/arrivalZoom';
 import { DOWNLINK, SCIENCE, TARGET_WORDS } from '../../src/ui/sdWords';
@@ -52,7 +52,7 @@ describe('Science Targets in Mars orbit', () => {
     toMarsOrbit();
     const p = panel()!;
     expect(p).toBeTruthy();
-    for (const w of Object.values(TARGET_WORDS)) expect(within(p).getAllByText(w.name).length).toBeGreaterThan(0);
+    for (const t of TARGETS) expect(within(p).getAllByText(TARGET_WORDS[t.id]!.name).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/VOYA IS IN MARS ORBIT. WHAT SHOULD IT LOOK AT\?/).length).toBeGreaterThan(0);
     // The lesson on each card is the NASA caption's line (Sourced).
     expect(within(p).getByText(targetById('olympus-mons')!.learn.value)).toBeTruthy();
