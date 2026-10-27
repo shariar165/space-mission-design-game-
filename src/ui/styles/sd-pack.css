@@ -75,6 +75,7 @@
 .pk-space { font: 400 24px/1 var(--sd-crt-font); color: var(--sd-crt-hi); text-shadow: 0 0 8px var(--sd-crt-hi); }
 .pk-space.hot { color: var(--sd-amber); text-shadow: 0 0 8px var(--sd-amber); }
 .pk-block { font: 400 24px/1 var(--sd-crt-font); color: var(--sd-alarm); }
+.pk-fix { width: 100%; text-align: center; font: 400 18px/1.15 var(--sd-crt-font); color: var(--sd-crt-hi); }
 .pk-block-eng { width: 100%; text-align: center; font: 400 11px/1.4 var(--sd-mono); color: var(--sd-crt-mid); }
 .pk-lesson { position: relative; max-width: 560px; padding: 14px 18px; border-radius: 6px; display: flex; flex-direction: column; gap: 8px; }
 .pk-lesson .sd-cta { align-self: flex-start; font-size: 14px; padding: 10px 16px; }
@@ -149,6 +150,7 @@
 .pk.phone .pk-scale-v { font-size: 14px; }
 .pk.phone .pk-status { padding: 6px 10px; }
 .pk.phone .pk-space, .pk.phone .pk-block { font-size: 20px; }
+.pk.phone .pk-fix { font-size: 15px; }
 .pk.phone .pk-tray-list { flex-direction: row; overflow-x: auto; scrollbar-width: none; gap: 8px; flex: none; }
 .pk.phone .pk-tray-card { --mini: 9px; width: 96px; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 6px; background: var(--sd-panel); }
 .pk.phone .pk-mini-well { width: auto; height: 30px; background: none; }

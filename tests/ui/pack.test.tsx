@@ -154,3 +154,22 @@ describe('Pack: levels', () => {
     expect(loadProgress().jupiter).toBe(1);
   });
 });
+
+describe('Pack: "no fuel" says which part fixes it', () => {
+  it('Moon 3: the radar, big dish, solar and battery without the tank → pack the extra tank for the trim burns', () => {
+    openLevel(/^Full Build/, { 'moon-1': 1, 'moon-2': 1 });
+    for (const name of ['Radar sounder', 'Big dish antenna', 'Extra solar panel', 'Big battery']) {
+      const b = screen.queryByRole('button', { name: `Pack ${name}` });
+      if (b) fireEvent.click(b);
+    }
+    const unpack = screen.queryByRole('button', { name: 'Unpack Extra fuel tank' });
+    if (unpack) fireEvent.click(unpack);
+    pass(100);
+    expect(screen.getByText(/NOT ENOUGH FUEL/)).toBeTruthy();
+    expect(screen.getByText('PACK THE EXTRA FUEL TANK — THE 50 KM ORBIT NEEDS TRIM BURNS EVERY MONTH')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Pack Extra fuel tank' }));
+    pass(100);
+    expect(screen.queryByText(/NOT ENOUGH FUEL/)).toBeNull();
+    expect(screen.queryByText(/PACK THE EXTRA FUEL TANK/)).toBeNull();
+  });
+});
