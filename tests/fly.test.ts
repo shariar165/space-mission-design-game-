@@ -497,3 +497,91 @@ describe('live Daily: real DONKI dangers replace the seeded solar-storm and CME 
     }
   });
 });
+
+describe('the Moon globe view (spec: UI rules 45–46; Moon orbit)', () => {
+  // LRO's orbit: 50 km circular polar. R = 1738.1 km (NSSDC), so the drawn ring is k = r/R = 1788.1/1738.1 = 1.028767.
+  const DEG = Math.PI / 180;
+  const calm = { rng: () => 0.999999 };
+  const moonAt = (targets: boolean, dayInScience = 0.1) => {
+    const s = ops.startOperations({ ...starterDesign('moon', '2026-10-04'), ...(targets ? { scienceTargets: true } : {}) }, calm);
+    const sci = s.env.timeline.find((w) => w.phase === 'science')!;
+    return ops.advanceOperations(s, { until: sci.startDay + dayInScience });
+  };
+  const len = (a: { from: number; to: number } | undefined) => (a ? (a.to - a.from) / DEG : 0);
+  const dot = (a: number[], b: number[]) => a[0]! * b[0]! + a[1]! * b[1]! + a[2]! * b[2]!;
+
+  it('Moon orbit only: Mars and the cruise have none; in lunar orbit it is available on every Moon level', () => {
+    const mars = ops.startOperations(starterDesign('mars', '2026-10-04'), calm);
+    expect(ops.moonOrbitView(mars)).toBeUndefined();
+    const cruise = ops.startOperations(starterDesign('moon', '2026-10-04'), calm);
+    expect(ops.moonOrbitView(cruise)?.available ?? false).toBe(false);
+    expect(ops.moonOrbitView(moonAt(false))!.available).toBe(true);
+    expect(ops.moonOrbitView(moonAt(true))!.available).toBe(true);
+  });
+
+  it('Earth sits over the near side: the body-fixed (0°, 0°), 384,400 km and 1.28 s away', () => {
+    const v = ops.moonOrbitView(moonAt(false))!;
+    expect(v.earth.dir).toEqual([1, 0, 0]);
+    expect(v.earth.distance_m).toBeCloseTo(384_400e3, -3);
+    // 384,400 km / 299,792.458 km/s = 1.2822 s
+    expect(v.earth.oneWay_s).toBeCloseTo(1.2822, 4);
+  });
+
+  it('the far-side arc of the orbit now matches the day’s loss of signal, and the craft’s link matches linkUpAt', async () => {
+    const { linkUpAt } = await import('../src/engine/ops/link');
+    const { earthDirection, occultation } = await import('../src/engine/ops/predictable');
+    const s = moonAt(false, 3.3);
+    const v = ops.moonOrbitView(s)!;
+    const d = s.env.days[Math.floor(s.t)]!;
+    // the arc's share of the ring is the share of the orbit hidden at this moment: the engine's occultation with
+    // Earth's direction now (the day's visibleFraction is taken once a day, and Earth turns 13.2° a day)
+    const los = occultation(s.env.farSide!.orbit, earthDirection('moon', s.env.jdLaunch + s.t)!);
+    expect(len(v.now.farSide) / 360).toBeCloseTo(los.fraction, 4);
+    expect(len(v.now.farSide) / 360).toBeCloseTo(1 - d.visibleFraction!, 1);
+    expect(v.link.losPerOrbit_s).toBe(d.losPerOrbit_s);
+    // T = 2π √(1788.1³ / 4902.8) s = 6784.9 s
+    expect(v.link.period_s).toBeCloseTo(6784.9, 0);
+    expect(v.link.up).toBe(linkUpAt(s.env, s.t));
+    expect(ops.linkUpOnRing(v.now, v.now.theta)).toBe(v.link.up);
+    // the plane is the real orbit's: unit vectors at right angles, and polar (the pole lies in the plane)
+    expect(dot(v.now.p, v.now.p)).toBeCloseTo(1, 12);
+    expect(dot(v.now.p, v.now.q)).toBeCloseTo(0, 12);
+    const n = [v.now.p[1]! * v.now.q[2]! - v.now.p[2]! * v.now.q[1]!, v.now.p[2]! * v.now.q[0]! - v.now.p[0]! * v.now.q[2]!, v.now.p[0]! * v.now.q[1]! - v.now.p[1]! * v.now.q[0]!];
+    expect(Math.abs(n[2]!)).toBeLessThan(1e-6); // the pole drifts a little between the orbit's epoch and now
+  });
+
+  it('a pass over each Moon 3 target: polar through it, hidden where the far side hides it (hand-checked arcs)', () => {
+    const v = ops.moonOrbitView(moonAt(true))!;
+    expect(Object.keys(v.passes).sort()).toEqual(['apollo-11', 'shackleton', 'tsiolkovskiy', 'tycho']);
+    // A polar plane through longitude λ makes β = |λ| with Earth at (0°, 0°). Hidden while cos²θ > (k² − 1)/(k² cos²β),
+    // θ from the anti-Earth point, with (k² − 1)/k² = 0.0551438:
+    // Apollo 11, λ = 23.473°: cos²β = 0.841388 → cos θ > 0.256006 → θ < 75.166° → arc 150.33°
+    expect(len(v.passes['apollo-11']!.farSide)).toBeCloseTo(150.33, 0);
+    // Tsiolkovskiy, λ = 128.97°: sin β = 0.77749, cos²β = 0.395509 → cos θ > 0.373397 → θ < 68.077° → arc 136.15°
+    expect(len(v.passes.tsiolkovskiy!.farSide)).toBeCloseTo(136.15, 0);
+    // the target is at θ = 0 of its pass: Tsiolkovskiy is out of Earth's sight, Apollo 11 and Shackleton are not
+    // (Shackleton: r·ê = k cos 89.67° cos 129.78° = −0.0038 R, but its distance from the axis is k R > R)
+    expect(ops.linkUpOnRing(v.passes.tsiolkovskiy!, 0)).toBe(false);
+    expect(ops.linkUpOnRing(v.passes['apollo-11']!, 0)).toBe(true);
+    expect(ops.linkUpOnRing(v.passes.shackleton!, 0)).toBe(true);
+    // Moon 1 and 2 have no targets
+    expect(ops.moonOrbitView(moonAt(false))!.passes).toEqual({});
+  });
+
+  it('the shadow arc is the eclipse: its share of the ring is the day’s longest eclipse over the period', () => {
+    const s = moonAt(false, 3.3);
+    const v = ops.moonOrbitView(s)!;
+    const d = s.env.days[Math.floor(s.t)]!;
+    expect(v.link.eclipsePerOrbit_s).toBe(d.longestEclipse_s);
+    expect(len(v.now.shadow) / 360).toBeCloseTo(d.longestEclipse_s / v.link.period_s, 2);
+  });
+
+  it('station-keeping: the next trim burn pair and its Δv (LRO: 10.81 m/s every 27.32 days)', () => {
+    const s = moonAt(false, 3);
+    const v = ops.moonOrbitView(s)!;
+    // the first pair falls one sidereal period into the science phase: day start + round(27.3217) = start + 27
+    const sci = s.env.timeline.find((w) => w.phase === 'science')!;
+    expect(v.stationKeeping!.pairDeltaV_ms).toBeCloseTo(10.81, 2);
+    expect(v.stationKeeping!.nextBurn_s / 86_400).toBeCloseTo(sci.startDay + 27 - s.t, 6);
+  });
+});
