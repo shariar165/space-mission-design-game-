@@ -60,7 +60,9 @@ export type VoiceKind =
   | 'targets'
   | 'observing'
   | 'observe-refused'
-  | 'image-sent';
+  | 'image-sent'
+  | 'far-side'
+  | 'link-back';
 
 export interface RobotMessage {
   kind: VoiceKind;
@@ -99,6 +101,10 @@ export interface MessageValues {
   propellant_kg?: number;
   /** Eclipse season: its longest eclipse (s). */
   longestEclipse_s?: number;
+  /** Behind the Moon: the longest loss of signal per orbit and the orbit period (s); how long an order waited (s). */
+  lost_s?: number;
+  period_s?: number;
+  waited_s?: number;
   /** Routine status. */
   phase?: OpsPhase;
   daysToArrival?: number;
@@ -177,6 +183,10 @@ function voiceOf(e: OpsEvent, s: OpsState): { kind: VoiceKind; values: MessageVa
       return { kind: 'observe-refused', values: { commandId: Number(v.commandId), commandKind: 'observe', targetId: String(v.targetId), reason: String(v.reason) } };
     case 'image-sent':
       return { kind: 'image-sent', values: { targetId: String(v.targetId) } };
+    case 'far-side':
+      return { kind: 'far-side', values: { lost_s: Number(v.lost_s), period_s: Number(v.period_s) } };
+    case 'link-back':
+      return { kind: 'link-back', values: { commandId: Number(v.commandId), waited_s: Number(v.waited_s) } };
     default:
       return undefined;
   }

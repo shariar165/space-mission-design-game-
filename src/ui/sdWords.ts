@@ -737,7 +737,7 @@ export const fill = (template: string, slots: Record<string, string>) => templat
 
 /**
  * The robot's voice: terse uppercase telemetry, in the first person. Slots: {dest} {name} {option} {hazard}
- * {days} {dist} {fuel} {data} {dv} {burned} {dark} {pct} {years}. Each kind has one or more variants; the
+ * {days} {dist} {fuel} {data} {dv} {burned} {dark} {lost} {period} {waited} {pct} {years}. Each kind has one or more variants; the
  * message's seq picks one, so a repeated kind does not repeat itself word for word.
  */
 export const VOICE: Record<Exclude<VoiceKind, 'hit' | 'status'>, string[]> = {
@@ -770,6 +770,8 @@ export const VOICE: Record<Exclude<VoiceKind, 'hit' | 'status'>, string[]> = {
   observing: ['ORDER RECEIVED. {target} IMAGE QUEUED.'],
   'observe-refused': ['I CANNOT TAKE {target} NOW.'],
   'image-sent': ['PICTURE OF {target} SENT HOME. {comment}'],
+  'far-side': ['BEHIND THE MOON {lost} OF EVERY {period}. NO SIGNAL THERE. I FLY MYSELF.'],
+  'link-back': ['LINK BACK. YOUR ORDER WAITED {waited} BEHIND THE MOON.'],
 };
 
 /** The science targets in the robot's words (spec: UI rule 39): the name it uses and what it says when the picture goes home. */
@@ -843,6 +845,9 @@ export function robotSays(m: RobotMessage, ctx: VoiceContext): string {
     ...(v.dv_ms !== undefined ? { dv: f.speed(v.dv_ms).toUpperCase() } : {}),
     ...(v.propellant_kg !== undefined ? { burned: f.kg(v.propellant_kg).toUpperCase() } : {}),
     ...(v.longestEclipse_s !== undefined ? { dark: f.minutes(v.longestEclipse_s).toUpperCase() } : {}),
+    ...(v.lost_s !== undefined ? { lost: f.minutes(v.lost_s).toUpperCase() } : {}),
+    ...(v.period_s !== undefined ? { period: f.minutes(v.period_s).toUpperCase() } : {}),
+    ...(v.waited_s !== undefined ? { waited: f.minutes(v.waited_s).toUpperCase() } : {}),
     ...(v.fraction !== undefined ? { pct: f.pct(v.fraction, 0) } : {}),
     ...(v.years !== undefined ? { years: years(v.years) } : {}),
     ...(v.targetId !== undefined ? { target: targetName(v.targetId), comment: TARGET_WORDS[v.targetId]?.comment ?? '' } : {}),

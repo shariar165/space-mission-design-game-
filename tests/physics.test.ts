@@ -1229,6 +1229,148 @@ describe('ops: eclipses in the science orbit', () => {
   });
 });
 
+describe('ops: behind the Moon (far-side loss of signal; spec: Moon orbit)', () => {
+  // LRO's mission orbit: 50 km circular, polar. Moon R = 1738.1 km and μ = 4902.8 km³/s² (NSSDC fact sheet).
+  const Rm = 1738.1e3;
+  const muMoon = 4902.8e9;
+  const r50 = Rm + 50e3;
+  const moonLow = async (): Promise<Design> => {
+    const { starterDesign } = await import('../src/ui/starters');
+    return { ...starterDesign('moon', '2026-10-04'), scienceOrbit: { periapsis_km: 50, apoapsis_km: 50, inclination_deg: 90 } };
+  };
+  // First time after t0 at which the link is down, on a 1-minute grid.
+  const firstDown = (linkUpAt: (t: number) => boolean, t0: number) => {
+    for (let t = t0; t < t0 + 1; t += 1 / 1440) if (!linkUpAt(t)) return t;
+    throw new Error('no loss of signal within a day');
+  };
+
+  it('Earth in the orbit plane: 48.0 of every 113.1 minutes behind the Moon (the eclipse cylinder with Earth for the Sun)', async () => {
+    const { occultation, orbitFromVectors } = await import('../src/engine/ops/predictable');
+    const o = orbitFromVectors(muMoon, Rm, r50, r50, [1, 0, 0], [0, 1, 0]);
+    // T = 2π √(r³/μ) = 2π √(1788.1³ / 4902.8) s = 6784.9 s = 113.08 min
+    expect(o.period_s / 60).toBeCloseTo(113.08, 1);
+    // hidden while within asin(R/r) of the anti-Earth direction: asin(1738.1/1788.1) = asin(0.97204) = 76.42°,
+    // so 2 × 76.42° = 152.84° of 360° → fraction 0.42455 → 0.42455 × 6784.9 s = 2880.5 s = 48.01 min
+    const los = occultation(o, [1, 0, 0]);
+    expect(los.fraction).toBeCloseTo(0.42455, 4);
+    expect(los.longest_s / 60).toBeCloseTo(48.01, 1);
+  });
+
+  it('Earth along the orbit normal (β-Earth = 90°), or anywhere with |β| ≥ asin(R/r) = 76.4°: never out of sight', async () => {
+    const { occultation, orbitFromVectors } = await import('../src/engine/ops/predictable');
+    const o = orbitFromVectors(muMoon, Rm, r50, r50, [1, 0, 0], [0, 1, 0]);
+    expect(occultation(o, [0, 0, 1])).toEqual({ fraction: 0, longest_s: 0 });
+    // β = 77°: the orbit seen from Earth is an ellipse of half-width r·sin β = 1788.1 × 0.97437 = 1742.3 km > R
+    const b = 77 * DEG;
+    expect(occultation(o, [Math.cos(b), 0, Math.sin(b)]).fraction).toBe(0);
+  });
+
+  it('the near side faces Earth: Earth is the IAU prime meridian (0°, 0°) turned by W = W₀ + Ẇ·d about the pole', async () => {
+    const { earthDirection, planetFrame } = await import('../src/engine/ops/predictable');
+    const rot = DESTINATIONS.moon.rotation!;
+    // IAU WGCCRE 2015: W = 38.3213° + 13.17635815°/day · d (periodic terms left out)
+    expect(rot.W0_deg.value).toBeCloseTo(38.3213, 4);
+    expect(rot.Wdot_degPerDay.value).toBeCloseTo(13.17635815, 8);
+    const jd = E.julianDate('2027-03-01');
+    const f = planetFrame('moon', jd);
+    const W = (rot.W0_deg.value + rot.Wdot_degPerDay.value * (jd - 2451545)) * DEG;
+    const e = earthDirection('moon', jd)!;
+    for (let k = 0; k < 3; k++) expect(e[k]!).toBeCloseTo(Math.cos(W) * f.X[k]! + Math.sin(W) * f.Y[k]!, 12);
+    // in the Moon's equator plane, and it turns once per sidereal month: 360° / 13.17635815°/day = 27.3217 days
+    expect(e[0] * f.Z[0] + e[1] * f.Z[1] + e[2] * f.Z[2]).toBeCloseTo(0, 12);
+    expect(360 / rot.Wdot_degPerDay.value).toBeCloseTo(DESTINATIONS.moon.orbitPeriod_days.value, 3);
+    // only the Moon has a sub-Earth point
+    expect(earthDirection('mars', jd)).toBeUndefined();
+  });
+
+  it('a polar 50 km orbit over a sidereal month: from fully in view (|β| ≥ 76.4°) to 42.5% of each orbit hidden (β ≈ 0)', async () => {
+    const { prepareOps } = await import('../src/engine/ops/timeline');
+    const env = prepareOps(await moonLow());
+    const sci = env.timeline.find((w) => w.phase === 'science')!;
+    const month = env.days.slice(sci.startDay, sci.startDay + 28);
+    for (const d of month) {
+      expect(d.visibleFraction).toBeGreaterThan(0.5);
+      expect(d.visibleFraction).toBeLessThanOrEqual(1);
+      expect(d.losPerOrbit_s! / 60).toBeLessThanOrEqual(48.01 + 0.01);
+    }
+    // β-Earth sweeps 13.2°/day, so the worst day of the month is within half a step of β = 0
+    expect(Math.min(...month.map((d) => d.visibleFraction!))).toBeCloseTo(1 - 0.42455, 2);
+    expect(Math.max(...month.map((d) => d.visibleFraction!))).toBe(1);
+    // cruise and Mars have no far side
+    expect(env.days[1]!.visibleFraction).toBeUndefined();
+    expect(prepareOps(presetDesign('maven')).days.every((d) => d.visibleFraction === undefined)).toBe(true);
+  });
+
+  it('light time from the mean Earth–Moon distance: 384,400 km / c = 1.282 s each way', async () => {
+    const { prepareOps } = await import('../src/engine/ops/timeline');
+    const env = prepareOps(await moonLow());
+    expect(env.days[env.arrivalDay + 5]!.oneWay_s).toBeCloseTo(1.2822, 4);
+  });
+
+  it('an order that would reach the craft behind the Moon waits and arrives at the next acquisition of signal', async () => {
+    const { prepareOps } = await import('../src/engine/ops/timeline');
+    const { commandArrival, newsArrival, oneWayAt } = await import('../src/engine/ops/commands');
+    const { linkUpAt, nextAos } = await import('../src/engine/ops/link');
+    const env = prepareOps(await moonLow());
+    const sci = env.timeline.find((w) => w.phase === 'science')!;
+    // the worst day of the first month: 48 minutes out of sight each orbit
+    const day = env.days.slice(sci.startDay, sci.startDay + 28).reduce((a, b) => (b.visibleFraction! < a.visibleFraction! ? b : a)).day;
+    const down = firstDown((t) => linkUpAt(env, t), day);
+    const sentAt = down - oneWayAt(env, down) / 86_400; // light alone would land it at `down`
+    const arrives = commandArrival(env, sentAt);
+    expect(arrives).toBeCloseTo(nextAos(env, down), 9);
+    expect(linkUpAt(env, arrives)).toBe(true);
+    expect(linkUpAt(env, arrives - 1 / 86_400)).toBe(false);
+    // it waits at most one loss of signal
+    expect((arrives - down) * 86_400).toBeGreaterThan(0);
+    expect((arrives - down) * 86_400).toBeLessThanOrEqual(env.days[day]!.losPerOrbit_s! + 60);
+    // news from behind the Moon also waits for the link, then crosses in 1.28 s
+    expect(newsArrival(env, down)).toBeCloseTo(nextAos(env, down) + oneWayAt(env, down) / 86_400, 9);
+    // in sight, the light time alone
+    const up = day + 0.5;
+    const tUp = linkUpAt(env, up) ? up : nextAos(env, up);
+    expect(nextAos(env, tUp)).toBe(tUp);
+    expect((newsArrival(env, tUp) - tUp) * 86_400).toBeCloseTo(1.2822, 3);
+  });
+
+  it('the daily downlink is cut by the share of each orbit Earth can see', async () => {
+    const { prepareOps } = await import('../src/engine/ops/timeline');
+    const { downlinkCapacity_bitsPerDay } = await import('../src/engine/ops/resources');
+    const env = prepareOps(await moonLow());
+    const booking = { dish: 34 as const, hours: 8 };
+    const d = env.days.slice(env.arrivalDay + 1, env.arrivalDay + 29).reduce((a, b) => (b.visibleFraction! < a.visibleFraction! ? b : a));
+    // rate × hours × 3600 × visible fraction
+    expect(downlinkCapacity_bitsPerDay(d, booking)).toBeCloseTo(d.rate34_bps * 8 * 3600 * d.visibleFraction!, 3);
+    expect(downlinkCapacity_bitsPerDay(d, booking)).toBeLessThan(d.rate34_bps * 8 * 3600 * 0.6);
+  });
+
+  it('in a flight: the held order runs at AOS, after the robot says the link is back', async () => {
+    const ops = await import('../src/engine/ops/index');
+    const { linkUpAt, nextAos } = await import('../src/engine/ops/link');
+    const { oneWayAt } = await import('../src/engine/ops/commands');
+    const design = await moonLow();
+    let s = ops.startOperations(design, { rng: () => 0.999999 });
+    const sci = s.env.timeline.find((w) => w.phase === 'science')!;
+    const day = s.env.days.slice(sci.startDay, sci.startDay + 28).reduce((a, b) => (b.visibleFraction! < a.visibleFraction! ? b : a)).day;
+    const down = firstDown((t) => linkUpAt(s.env, t), day);
+    const sendAt = down - oneWayAt(s.env, down) / 86_400;
+    for (let i = 0; i < 200 && s.t < sendAt - 1e-12; i++) s = ops.advanceOperations(s, { until: sendAt });
+    const r = ops.sendCommand(s, { kind: 'power-plan', plan: s.plan });
+    expect(r.receipt.accepted).toBe(true);
+    expect(r.receipt.arrivesAt).toBeCloseTo(nextAos(s.env, down), 9);
+    const after = ops.advanceOperations(r.state, { until: r.receipt.arrivesAt! + 0.01 });
+    const back = after.events.find((e) => e.code === 'link-back');
+    expect(back).toBeDefined();
+    expect(back!.t).toBeCloseTo(r.receipt.arrivesAt!, 9);
+    expect(Number(back!.values.waited_s)).toBeCloseTo((r.receipt.arrivesAt! - down) * 86_400, 3);
+    const ran = after.events.find((e) => e.code === 'command-executed' && e.values.commandId === back!.values.commandId);
+    expect(ran!.t).toBeCloseTo(r.receipt.arrivesAt!, 9);
+    // the same seed and actions give the same flight
+    const again = ops.replayOperations(design, { rng: () => 0.999999 }, after.actions, after.t);
+    expect(again.events.filter((e) => e.code === 'link-back')).toEqual(after.events.filter((e) => e.code === 'link-back'));
+  });
+});
+
 describe('ops: Mars solar longitude', () => {
   it('Ls at perihelion ≈ 251.0° + 0.0065°·(yr − 2000) (Mars24), from the IAU pole and the ephemeris, ±2°', async () => {
     const { perihelionJd, solarLongitude } = await import('../src/engine/ops/predictable');

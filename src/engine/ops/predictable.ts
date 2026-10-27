@@ -211,6 +211,32 @@ export function eclipse(o: OrbitGeometry, sunDir: Vec3, n = 360): { fraction: nu
   return { fraction: total / (2 * Math.PI), longest_s: longest / o.n };
 }
 
+// ---------------------------------------------------------------------------
+// Behind the Moon (spec: Moon orbit)
+
+/**
+ * Earth's direction seen from the Moon (ecliptic unit vector), or undefined for a body without a sub-Earth point.
+ * The Moon is tidally locked and its IAU prime meridian is the mean sub-Earth point, so Earth lies along the
+ * body-fixed (0°, 0°): the node X of planetFrame turned by W = W₀ + Ẇ·d about the pole (periodic terms left out).
+ */
+export function earthDirection(dest: DestinationId, jd: number): Vec3 | undefined {
+  const rot = DESTINATIONS[dest].rotation;
+  if (!rot) return undefined;
+  const f = planetFrame(dest, jd);
+  const W = (rot.W0_deg.value + rot.Wdot_degPerDay.value * (jd - J2000)) * DEG;
+  const c = Math.cos(W);
+  const s = Math.sin(W);
+  return [c * f.X[0] + s * f.Y[0], c * f.X[1] + s * f.Y[1], c * f.X[2] + s * f.Y[2]];
+}
+
+/**
+ * Loss of signal in one orbit: the eclipse test with Earth's direction ê for the Sun's (the craft is hidden while
+ * r·ê < 0 and |r − (r·ê)ê| < R; Earth is about 221 Moon radii away, so the cylinder is close enough).
+ */
+export function occultation(o: OrbitGeometry, earthDir: Vec3, n = 360): { fraction: number; longest_s: number } {
+  return eclipse(o, earthDir, n);
+}
+
 /** Sun direction seen from a destination: ŝ = −r_planet/|r_planet| (the Moon sits at Earth's position). */
 export function sunDirection(dest: DestinationId, jd: number): Vec3 {
   return unit(scale(heliocentricPosition(dest, jd), -1));
