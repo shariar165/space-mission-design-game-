@@ -1367,8 +1367,10 @@ describe('Rideshare (Moon: LRO 2009, the LCROSS secondary slot)', () => {
     expect(withLauncher(d, 'atlas-v-411').rideshareId).toBeUndefined();
   });
 
-  it('the Moon’s mass margin: in band on the shared ride (radar kit, safe fuel), not on a whole Atlas V', () => {
-    const choices = { ...cadet.defaultChoices(moon), science: 'radar', fuel: 'balanced', rocket: 'lro-lcross-2009' };
+  it('the Moon’s mass margin: in band on the shared ride (snapshot kit, safe fuel), not on a whole Atlas V', () => {
+    // Since the 50 km LRO orbit and its station-keeping (spec: Moon orbit) the radar kit is too heavy for this:
+    // 989 kg wet on safe fuel leaves the 1000 kg slot a 1.1% margin, below the band. The lighter snapshot kit fits.
+    const choices = { ...cadet.defaultChoices(moon), science: 'snapshot', fuel: 'balanced', rocket: 'lro-lcross-2009' };
     const shared = cadet.buildCadetDesign(moon, choices);
     const whole = cadet.buildCadetDesign(moon, { ...choices, rocket: 'atlas-v-401' });
     const noLuck = { seed: 1, rng: () => 0.999999 };

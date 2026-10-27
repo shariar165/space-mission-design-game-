@@ -62,7 +62,8 @@ export type VoiceKind =
   | 'observe-refused'
   | 'image-sent'
   | 'far-side'
-  | 'link-back';
+  | 'link-back'
+  | 'trim-burn';
 
 export interface RobotMessage {
   kind: VoiceKind;
@@ -185,6 +186,10 @@ function voiceOf(e: OpsEvent, s: OpsState): { kind: VoiceKind; values: MessageVa
       return { kind: 'image-sent', values: { targetId: String(v.targetId) } };
     case 'far-side':
       return { kind: 'far-side', values: { lost_s: Number(v.lost_s), period_s: Number(v.period_s) } };
+    case 'burn':
+      // The first station-keeping pair at the Moon (spec: Moon orbit); the ones after it are routine.
+      if (v.kind !== 'station-keeping' || s.events.find((x) => x.code === 'burn' && x.values.kind === 'station-keeping') !== e) return undefined;
+      return { kind: 'trim-burn', values: { dv_ms: Number(v.dv_ms) } };
     case 'link-back':
       return { kind: 'link-back', values: { commandId: Number(v.commandId), waited_s: Number(v.waited_s) } };
     default:

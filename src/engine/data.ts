@@ -30,6 +30,13 @@ export interface Destination {
   poleDec_deg?: Sourced<[number, number]>;
   /** IAU rotation angle W = W₀ + Ẇ·d (d in days from J2000), measured from the IAU node: the Moon's prime meridian is the mean sub-Earth point. */
   rotation?: { W0_deg: Sourced<number>; Wdot_degPerDay: Sourced<number> };
+  /** Low-orbit station-keeping (Moon: LRO's published plan, spec Moon orbit): a burn pair every sidereal period. */
+  stationKeeping?: {
+    pairDeltaV_ms: Sourced<number>;
+    allocation_msPerYear: Sourced<number>;
+    meanAltitude_km: Sourced<number>;
+    altitudeBand_km: Sourced<number>;
+  };
   /** Radiation belts (Mission operations, Jupiter only): every value is a game estimate. */
   radiation?: {
     doseRateRef_radPerHour: Sourced<number>;

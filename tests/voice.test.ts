@@ -363,3 +363,14 @@ describe('behind the Moon (spec: Moon orbit)', () => {
     expect(msgs.indexOf(back)).toBeLessThan(msgs.indexOf(got));
   });
 });
+
+describe('trim burns at the Moon (spec: Moon orbit)', () => {
+  it('the first station-keeping pair gets one line with its Δv; the rest are quiet', async () => {
+    const { starterDesign } = await import('../src/ui/starters');
+    const s = ops.runOperations(starterDesign('moon', '2026-10-04'), { rng: () => 0.999999 }).state;
+    const trim = robotMessages(s).filter((m) => m.kind === 'trim-burn');
+    expect(trim).toHaveLength(1);
+    expect(trim[0]!.values.dv_ms).toBeCloseTo(10.81, 9);
+    expect(Math.floor(trim[0]!.sentAt)).toBe(s.env.burns.find((b) => b.kind === 'station-keeping')!.day);
+  });
+});

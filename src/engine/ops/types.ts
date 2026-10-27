@@ -95,7 +95,7 @@ export interface EnvDay {
 export interface PlannedBurn {
   day: number;
   dv_ms: number;
-  kind: 'trajectory-correction' | 'route-manoeuvre' | 'arrival' | 'maintenance';
+  kind: 'trajectory-correction' | 'route-manoeuvre' | 'arrival' | 'maintenance' | 'station-keeping';
 }
 
 export interface ConjunctionWindow {

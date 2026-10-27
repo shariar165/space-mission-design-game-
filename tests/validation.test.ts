@@ -344,6 +344,18 @@ describe('Moon: Earth’s direction from the IAU rotation angle — USNO phases 
   });
 });
 
+describe('LRO station-keeping (Moon, 2009) — Beckman & Lamb, NTRS 20080012683', () => {
+  it('a year of the engine’s trim-burn pairs fits LRO’s 150 m/s station-keeping allocation', () => {
+    // Table 2's chosen pattern (270° LLAN, high transfer) is one 5.46 + 5.34 m/s pair per sidereal period; the paper's
+    // conclusion allocates 150 m/s for the one-year mission. The engine flies a Moon Cadet craft in LRO's 50 km orbit.
+    const env = prepareOps(starterDesign('moon', '2026-10-04'));
+    const perYear = env.maintenancePerDay_ms * 365.25;
+    const ok = perYear <= 150;
+    flag('LRO (Moon)', 'Station-keeping Δv for a year (10.81 m/s pair × 365.25 / 27.3217 d) within the allocation', ok, `${perYear.toFixed(1)} m/s`, '≤ 150 m/s (Beckman & Lamb, Conclusions)', '');
+    expect(ok).toBe(true);
+  });
+});
+
 describe('Moon rideshare (LRO 2009, the LCROSS secondary slot)', () => {
   it('info: Moon Cadet crafts in the 1000 kg secondary slot vs a whole Atlas V 401', () => {
     const base = starterDesign('moon', '2026-10-04');

@@ -9,7 +9,7 @@ import { launchMassCheck, launchSuccessProbability, payloadAtC3, rideshareMassCh
 import { componentMasses, costBreakdown, costEvaluation, massRollup, wetMass, type CostBreakdown } from './massCost';
 import { ETA_SYS, longestEclipse_s, powerMeter, powerOnDay, solarPower } from './power';
 import { designLoads, eclipseSeasons, powerProfile, worstPowerDay, type EclipseSeasonSummary, type PowerDay, type PowerProfile } from './powerProfile';
-import { deltaVBudget, deltaVCapability, deltaVMeter, engineBlockers, propellantBurned, type DeltaVBudget } from './propulsion';
+import { deltaVBudget, deltaVCapability, deltaVMeter, engineBlockers, propellantBurned, stationKeeping, type DeltaVBudget } from './propulsion';
 import { makeRng, phaseRisks, type Phase, type PhaseRisk } from './risk';
 import { budgetScore, marginBandScore, missionSuccessScore, nextStar, scienceGoal_Gbit, scienceScore, stars, totalScore, type Category } from './scoring';
 import { arrivalDeltaV, maxFlightDays, orbitChangeDeltaV, sunDistanceExtremes, transferForDesign } from './trajectory';
@@ -180,12 +180,14 @@ export function evaluateDesign(design: Design): FullEvaluation {
   const wet_kg = wetMass(dry_kg, design.propellant_kg);
 
   // --- Δv ---
+  const sk = stationKeeping(design);
   const budget = deltaVBudget({
     arrival_ms: arrivalDeltaV(design.destination, transfer.vInfArr_ms, design.captureOrbit),
     orbitTransfer_ms,
     scienceDays,
     lifetimeDays: design.lifetimeDays,
     other_ms: routeDeltaV_ms,
+    ...(sk ? { stationKeeping: sk } : {}),
   });
   const dvCapability = deltaVCapability(engine.isp_s.value, wet_kg, dry_kg);
   const deltaV = deltaVMeter(dvCapability, budget.total_ms, {
@@ -196,7 +198,7 @@ export function evaluateDesign(design: Design): FullEvaluation {
     arrivalBurn: derived(budget.arrival_ms, 'm/s', dest.missionType === 'rendezvous' ? 'v∞ at arrival' : 'capture equation'),
     scienceOrbitTransfer: derived(orbitTransfer_ms, 'm/s', 'vis-viva two-burn change, capture → science orbit'),
     trajectoryCorrections: GAME_RULES.trajectoryCorrection_ms,
-    orbitMaintenance: GAME_RULES.orbitMaintenance_msPerYear,
+    orbitMaintenance: sk ? DESTINATIONS[design.destination].stationKeeping!.pairDeltaV_ms : GAME_RULES.orbitMaintenance_msPerYear,
     lifetimeReserve: derived(budget.lifetimeReserve_ms, 'm/s', 'maintenance rate × (lifetime − science days)'),
     ...(transfer.method === 'fixed-route' && 'inputs' in transfer ? transfer.inputs : {}),
   });

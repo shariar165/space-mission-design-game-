@@ -772,6 +772,7 @@ export const VOICE: Record<Exclude<VoiceKind, 'hit' | 'status'>, string[]> = {
   'image-sent': ['PICTURE OF {target} SENT HOME. {comment}'],
   'far-side': ['BEHIND THE MOON {lost} OF EVERY {period}. NO SIGNAL THERE. I FLY MYSELF.'],
   'link-back': ['LINK BACK. YOUR ORDER WAITED {waited} BEHIND THE MOON.'],
+  'trim-burn': ['TRIM BURN: {dv}. THE MOON’S LUMPY GRAVITY PULLS ME DOWN. HOLDING MY ORBIT.'],
 };
 
 /** The science targets in the robot's words (spec: UI rule 39): the name it uses and what it says when the picture goes home. */

@@ -379,6 +379,50 @@ describe('propulsion', () => {
   });
 });
 
+describe('propulsion: lunar station-keeping (LRO; spec: Moon orbit)', () => {
+  const low = { destination: 'moon' as const, captureOrbit: { periapsis_km: 50, apoapsis_km: 1800 }, scienceOrbit: { periapsis_km: 50, apoapsis_km: 50 } };
+
+  it('LRO’s published plan: a 5.46 + 5.34 = 10.81 m/s pair every sidereal period (27.3217 d), 150 m/s a year allocated', () => {
+    const sk = DESTINATIONS.moon.stationKeeping!;
+    expect(sk.pairDeltaV_ms.value).toBeCloseTo(10.81, 6);
+    expect(sk.pairDeltaV_ms.isGameEstimate).toBe(false);
+    expect(sk.allocation_msPerYear.value).toBe(150);
+    expect(sk.meanAltitude_km.value).toBe(50);
+    expect(sk.altitudeBand_km.value).toBe(20);
+    expect(P.stationKeeping(low)).toEqual({ pair_ms: 10.81, period_days: 27.3217 });
+  });
+
+  it('only for Moon orbits in LRO’s 50 ± 20 km band (mean altitude ≤ 70 km); elsewhere the generic estimate', () => {
+    // mean altitude (50 + 50)/2 = 50 km: in the band; (50 + 1800)/2 = 925 km: out of it
+    expect(P.stationKeeping({ destination: 'moon', captureOrbit: { periapsis_km: 50, apoapsis_km: 1800 } })).toBeUndefined();
+    expect(P.stationKeeping({ ...low, scienceOrbit: { periapsis_km: 30, apoapsis_km: 110 } })).toBeDefined(); // mean 70 km
+    expect(P.stationKeeping({ ...low, scienceOrbit: { periapsis_km: 30, apoapsis_km: 112 } })).toBeUndefined(); // mean 71 km
+    expect(P.stationKeeping(presetDesign('maven'))).toBeUndefined();
+  });
+
+  it('Δv budget: one pair per whole sidereal period of science; the lifetime reserve at the same average rate', () => {
+    const sk = { pair_ms: 10.81, period_days: 27.3217 };
+    // 365 days: floor(365 / 27.3217) = floor(13.359) = 13 pairs × 10.81 = 140.53 m/s
+    const b = P.deltaVBudget({ arrival_ms: 800, scienceDays: 365, stationKeeping: sk });
+    expect(b.maintenance_ms).toBeCloseTo(140.53, 6);
+    // reserve for 365 more days: 10.81 × 365 / 27.3217 = 144.41 m/s
+    expect(P.deltaVBudget({ arrival_ms: 800, scienceDays: 365, lifetimeDays: 730, stationKeeping: sk }).lifetimeReserve_ms).toBeCloseTo(144.41, 2);
+    // a year of it fits LRO's allocation: 10.81 × 365.25 / 27.3217 = 144.51 ≤ 150 m/s
+    expect((10.81 * 365.25) / 27.3217).toBeLessThanOrEqual(150);
+  });
+
+  it('evaluateDesign uses it for a 50 km lunar orbit; Mars keeps 20 m/s a year', async () => {
+    const { starterDesign } = await import('../src/ui/starters');
+    const moon = starterDesign('moon', '2026-10-04');
+    const ev = evaluateDesign(moon);
+    expect(moon.scienceOrbit).toMatchObject({ periapsis_km: 50, apoapsis_km: 50, inclination_deg: 90 });
+    expect(ev.details.deltaVBudget.maintenance_ms).toBeCloseTo(10.81 * Math.floor(ev.details.scienceDays / 27.3217), 6);
+    expect(ev.meters.deltaV.inputs.orbitMaintenance!.value).toBeCloseTo(10.81, 6);
+    const maven = evaluateDesign(presetDesign('maven'));
+    expect(maven.details.deltaVBudget.maintenance_ms).toBeCloseTo(20 * (maven.details.scienceDays / 365.25), 6);
+  });
+});
+
 // ---------------------------------------------------------------------------
 describe('launch', () => {
   const curve: [number, number][] = [
@@ -1557,6 +1601,29 @@ describe('ops: resources', () => {
     const d = evaluateDesign(maven).details;
     // Δv adds up across burns: Isp g₀ ln(m0/m1) + Isp g₀ ln(m1/m2) = Isp g₀ ln(m0/m2)
     expect(r.state.hazards).toEqual([]);
+    expect(r.debrief.deltaV.left_ms).toBeCloseTo(d.deltaVCapability_ms - (d.deltaVRequired_ms - d.deltaVBudget.lifetimeReserve_ms), 6);
+  });
+
+  it('at the Moon, maintenance is a trim-burn pair every sidereal period, and the same invariant holds', async () => {
+    const { runOperations } = await import('../src/engine/ops/index');
+    const { prepareOps } = await import('../src/engine/ops/timeline');
+    const { starterDesign } = await import('../src/ui/starters');
+    const moon = starterDesign('moon', '2026-10-04');
+    const env = prepareOps(moon);
+    const sci = env.timeline.find((w) => w.phase === 'science')!;
+    const trims = env.burns.filter((b) => b.kind === 'station-keeping');
+    expect(env.burns.some((b) => b.kind === 'maintenance')).toBe(false);
+    // floor(365 / 27.3217) = 13 pairs, one at the end of each sidereal period after science starts
+    expect(trims).toHaveLength(Math.floor((sci.endDay - sci.startDay + 1) / 27.3217));
+    trims.forEach((b, k) => {
+      expect(b.dv_ms).toBeCloseTo(10.81, 9);
+      expect(b.day).toBe(sci.startDay + Math.round((k + 1) * 27.3217));
+    });
+    expect(trims.reduce((a, b) => a + b.dv_ms, 0)).toBeCloseTo(env.ev.details.deltaVBudget.maintenance_ms, 9);
+    // the extension pays the same average rate each day: 10.81 / 27.3217 = 0.39566 m/s per day
+    expect(env.maintenancePerDay_ms).toBeCloseTo(0.39566, 5);
+    const r = runOperations(moon, { rng: () => 0.999999 });
+    const d = env.ev.details;
     expect(r.debrief.deltaV.left_ms).toBeCloseTo(d.deltaVCapability_ms - (d.deltaVRequired_ms - d.deltaVBudget.lifetimeReserve_ms), 6);
   });
 });
