@@ -554,9 +554,11 @@ Validation: at a full Moon the directions to Earth and to the Sun, seen from the
 **Station-keeping.** Mascons make a 50 km lunar orbit unstable: left alone, the periapsis sinks into the surface.
 - **What LRO did:** it held 50 ± 20 km with one pair of burns every sidereal period (27.32 d). The pattern LRO chose (270° LLAN, high transfer; Beckman & Lamb Table 2) costs 5.46 + 5.34 = 10.81 m/s per pair, within a 150 m/s per year allocation.
 - **Which orbits use it:** Moon orbits whose mean altitude lies in LRO's band (≤ 70 km) use the 10.81 m/s pair:
-  - in the Δv budget as 10.81 × science days / 27.32;
-  - in Ops as a burn pair every sidereal period after arrival (`trim-burn`).
+  - in the Δv budget, one pair for each whole sidereal period of science (13 pairs, 140.5 m/s, for 365 days);
+  - in Ops as a burn pair at the end of each of those periods (`station-keeping` burns; the robot speaks at the first);
+  - in an extension and the lifetime reserve, at the same average rate, 10.81 / 27.32 = 0.396 m/s a day.
   Other orbits keep the generic orbit-maintenance estimate.
+- **The Moon levels' craft** flies LRO's orbit: captured at 50 × 1,800 km, then lowered to 50 km circular, polar. The extra Δv is real: on Moon 3 a heavy pack (the radar with the big dish, no extra tank) now needs the fuel tank, and the radar kit no longer fits the 1,000 kg shared ride within the mass band.
 - **Check:** 365.25 / 27.32 × 10.81 = 144.5 m/s per year, within the 150 m/s allocation (a validation row).
 - A pair the tank cannot pay for loses the craft, like any planned burn (Propellant).
 

@@ -143,7 +143,8 @@ export function eventLine(e: OpsEvent, ctx: { destName: string; optionLabel: (ha
     case 'phase-start':
       return `${OPS_PHASE[v.phase as OpsPhase] ?? 'A new phase'} begins.`;
     case 'burn':
-      return v.kind === 'maintenance' ? undefined : `Engine burn: ${f.speed(Number(v.dv_ms))}.`;
+      if (v.kind === 'maintenance') return undefined;
+      return v.kind === 'station-keeping' ? `Trim burn: ${f.speed(Number(v.dv_ms))}.` : `Engine burn: ${f.speed(Number(v.dv_ms))}.`;
     case 'conjunction-start':
       return 'Solar conjunction: no radio contact until the Sun moves away.';
     case 'conjunction-end':

@@ -22,6 +22,7 @@ import type {
   OpsEvent,
   OpsState,
   OpsStatus,
+  PlannedBurn,
   PowerPlan,
   ResponseSource,
 } from './types';
@@ -117,7 +118,7 @@ export interface TimelineEvent {
   kind: 'burn' | 'dsn' | 'open-slot' | 'phase' | 'dose';
   day: number;
   left: number;
-  burnKind?: 'trajectory-correction' | 'route-manoeuvre' | 'arrival' | 'maintenance';
+  burnKind?: PlannedBurn['kind'];
   dv_ms?: number;
   dish?: 34 | 70;
   hours?: number;

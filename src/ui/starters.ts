@@ -25,6 +25,8 @@ const GENERIC: Record<'moon' | 'venus' | 'jupiter', Parts> = {
     propellant_kg: 350,
     scienceDays: 365,
     captureOrbit: { periapsis_km: 50, apoapsis_km: 1800 },
+    // LRO's mission orbit: 50 km mean altitude, polar (spec: Moon orbit).
+    scienceOrbit: { periapsis_km: 50, apoapsis_km: 50, inclination_deg: 90 },
   },
   venus: {
     launchVehicleId: 'atlas-v-401',

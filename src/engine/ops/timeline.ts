@@ -9,7 +9,7 @@ import { earthDistance, heliocentricPosition, julianDate } from '../ephemeris';
 import { craftPosition, signalDelay } from '../flightMap';
 import { evaluateDesign, type FullEvaluation } from '../index';
 import { powerProfileFor } from '../powerProfile';
-import { propellantBurned } from '../propulsion';
+import { propellantBurned, stationKeeping } from '../propulsion';
 import type { Design, Vec3 } from '../types';
 import { commandArrival, inMoratorium, moratoriumEndDay, newsArrival, oneWayAt } from './commands';
 import { END_MISSION, extensionOptions } from './extension';
@@ -92,7 +92,10 @@ function plannedBurns(design: Design, ev: FullEvaluation, tl: PhaseWindow[], jdL
   }
   burns.push({ day: arrival, dv_ms: b.arrival_ms + b.orbitTransfer_ms, kind: 'arrival' });
   const n = science.endDay - science.startDay + 1;
-  for (let d = science.startDay; d <= science.endDay; d++) burns.push({ day: d, dv_ms: b.maintenance_ms / n, kind: 'maintenance' });
+  const sk = stationKeeping(design);
+  // A low lunar orbit: LRO's trim-burn pair at the end of each sidereal period (spec: Moon orbit).
+  if (sk) for (let k = 1; k * sk.period_days <= n; k++) burns.push({ day: Math.min(science.endDay, science.startDay + Math.round(k * sk.period_days)), dv_ms: sk.pair_ms, kind: 'station-keeping' });
+  else for (let d = science.startDay; d <= science.endDay; d++) burns.push({ day: d, dv_ms: b.maintenance_ms / n, kind: 'maintenance' });
   return burns.sort((x, y) => x.day - y.day);
 }
 
@@ -125,6 +128,7 @@ export function prepareOps(design: Design): OpsEnvironment {
   const orbit = scienceOrbitGeometry(design, jdLaunch + arrivalDay);
   const doseRate = orbit ? orbitDoseRate_radPerDay(design.destination, orbit) : 0;
   const threshold = OPERATIONS.conjunction.commandThreshold_deg.value;
+  const sk = stationKeeping(design);
   // Power, Sun distance and eclipses: the same days the Power meter reads (one model).
   const power = powerProfileFor(design, ev, horizonDay);
 
@@ -214,7 +218,7 @@ export function prepareOps(design: Design): OpsEnvironment {
     dryMass_kg: ev.details.dryMass_kg,
     isp_s: ev.details.isp_s,
     lifetimeReserve_ms: ev.details.deltaVBudget.lifetimeReserve_ms,
-    maintenancePerDay_ms: GAME_RULES.orbitMaintenance_msPerYear.value / YEAR,
+    maintenancePerDay_ms: sk ? sk.pair_ms / sk.period_days : GAME_RULES.orbitMaintenance_msPerYear.value / YEAR,
     ...(orbit && days.some((d) => d.visibleFraction !== undefined) ? { farSide: { orbit } } : {}),
   };
 }
