@@ -3,11 +3,12 @@
 // bottom sheet over it), and OBSERVE runs along the bottom. Every number is the engine's (scienceTargetsView, and the
 // console's commands for an order still crossing space); the screen only lays them out. Picking a row or a marker
 // selects a target and the globe turns to it; OBSERVE sends the order, which plays its trip while the panel is open.
+// On Moon 1 and Moon 2 (no targets) the same panel shows the globe and the orbit only, with DONE (spec: UI rule 46).
 import type { ReactNode } from 'react';
 import type { ScienceTargetsView, TargetCard } from '../../../engine/ops/index';
 import { targetById, type TargetBody } from '../../../engine/targets';
 import * as f from '../../format';
-import { SCIENCE, targetName } from '../../sdWords';
+import { MOON_WORDS, SCIENCE, targetName } from '../../sdWords';
 import { SDIcon } from '../sd/SDIcon';
 import { TargetSheet } from './TargetSheet';
 
@@ -80,7 +81,36 @@ function Row({ c, on, open, onSelect, engineer, phone }: { c: TargetCard; on: bo
   );
 }
 
-export function ScienceTargets({ view, selected, onSelect, onObserve, onDone, robotName, destName, body, engineer, phone, globe, busy = false, orders = [], scanning }: Props) {
+/** Moon 1 and Moon 2: the globe and the orbit, no targets (spec: UI rule 46). */
+function OrbitOnly({ view, onDone, phone, globe, busy, body }: Pick<Props, 'view' | 'onDone' | 'phone' | 'globe' | 'busy' | 'body'>) {
+  const title = MOON_WORDS.titleOf(f.km(view.orbit.periapsis_m).toUpperCase());
+  return (
+    <section className={`sci hero orbit-only${phone ? ' phone' : ''}`} aria-label={title}>
+      <div className="sci-stage">
+        {globe}
+        <div className="sci-hud">
+          <span className="sci-title">{title}</span>
+          {!phone && <span className="sci-hint">{MOON_WORDS.hint}</span>}
+        </div>
+        <span className="sci-credit">
+          {phone ? MOON_WORDS.notToScale : `${SCIENCE.globeCredit[body]} · ${MOON_WORDS.notToScale}`}
+        </span>
+      </div>
+      <div className="sci-keys">
+        <button type="button" className="sci-done" disabled={busy} onClick={onDone}>
+          {phone ? MOON_WORDS.doneShort : MOON_WORDS.done} ▸
+        </button>
+      </div>
+    </section>
+  );
+}
+
+export function ScienceTargets(props: Props) {
+  if (props.view.cards.length === 0) return <OrbitOnly {...props} busy={props.busy ?? false} />;
+  return <TargetPanel {...props} />;
+}
+
+function TargetPanel({ view, selected, onSelect, onObserve, onDone, robotName, destName, body, engineer, phone, globe, busy = false, orders = [], scanning }: Props) {
   const sel = view.cards.find((c) => c.id === selected) ?? view.cards[0]!;
   const ok = sel.blocker === undefined;
   const takes = f.durationWords(view.orderTakes_s);
@@ -143,7 +173,7 @@ export function ScienceTargets({ view, selected, onSelect, onObserve, onDone, ro
           {stripEl}
         </div>
         <span className="sci-credit">
-          {SCIENCE.globeCredit[body]} · {SCIENCE.notToScale}
+          {SCIENCE.globeCredit[body]} · {body === 'moon' ? MOON_WORDS.notToScale : SCIENCE.notToScale}
         </span>
       </div>
       {keys}

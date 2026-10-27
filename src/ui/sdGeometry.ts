@@ -243,9 +243,11 @@ export const globeDiscPx = (w: number, h: number, phone: boolean) => (GLOBE_DISC
 export const GLOBE_ZOOM = { overview: 1, surface: 1.3, limb: 1.1, phobos: 0.52, deimos: 0.42 } as const;
 
 /** Each globe's look (spec: UI rule 44): where the overview looks and how each target is framed. */
-export const GLOBE_BODY: Record<TargetBody, { view: GlobeView; zoom: typeof GLOBE_ZOOM }> = {
+export const GLOBE_BODY: Record<TargetBody, { view: GlobeView; zoom: Record<keyof typeof GLOBE_ZOOM, number> }> = {
   mars: { view: GLOBE_VIEW, zoom: GLOBE_ZOOM },
-  moon: { view: GLOBE_VIEW, zoom: GLOBE_ZOOM },
+  // From the south-east, like the design: the four Moon targets face the camera and Earth sits up and to the left.
+  // Smaller than Mars at the overview, so Earth fits beside it.
+  moon: { view: { lat_deg: -45, lon_deg: 50 }, zoom: { ...GLOBE_ZOOM, overview: 0.78, surface: 1.05 } },
 };
 /** The camera eases to a new target in this long (3D only; the flat globe cuts). */
 export const GLOBE_EASE_MS = 900;
@@ -441,6 +443,139 @@ export function labelPlace(name: string, x: number, w: number, width: number, ph
   const ax = left ? Math.max(x, e + width + pad) : Math.min(x, w - e - width - pad);
   // An orbit label that has to read inward drops below the target's marker instead of covering it.
   return { x: ax, left, below: name !== 'sel' && left !== x < w / 2 };
+}
+
+// ---------------------------------------------------------------------------
+// The Moon scene (spec: UI rule 45; design 3d/Moon Globe.html): Earth over the near side at a shortened distance,
+// the signal line with its // break, the ring solid where Earth sees the craft and dashed behind the Moon, the
+// shadow arc and the trim-burn tag. Every arc and plane is the engine's (moonOrbitView, in the Moon's body frame:
+// x through (0°, 0°), z north); this only turns them into the view frame and lays them out.
+
+export const MOON_SCENE = {
+  /** Earth's drawn distance (Moon radii; really about 221) and its drawn radius. */
+  earthDistance: 2.3,
+  earthRadius: 0.14,
+  /** The // break sits this far along the signal line from Earth. */
+  breakAt: 0.34,
+  /** The orbiter laps its drawn ring in this many seconds (a sped-up picture; the link state is the engine's). */
+  lapS: 24,
+  /** Margin (px) the scene keeps from the box's edges, and the band along the top it leaves to the HUD lines. */
+  edge: 14,
+  hud: { desktop: 52, phone: 56 },
+  /** The night side keeps this much light (earthshine, and so the map still reads). */
+  nightGlow: 0.3,
+  /** The overview looks at the ring this far off face-on (radians): it opens to an ellipse cos(55°) = 0.57 wide. */
+  ringTilt: (55 * Math.PI) / 180,
+} as const;
+
+/**
+ * The Moon's overview: the camera looks at the orbit from the side, `ringTilt` off face-on, so the ring opens up with
+ * the near half on Earth's side and the far half away from it, and Earth sits beside the Moon (like the design). The
+ * orbit is fixed in space while the Moon turns under it, so this view follows the plane through the month. From the
+ * south, where the Moon 3 targets are; whole degrees, so the flat globe repaints only when it has moved.
+ */
+export function moonOverview(pl: { p: readonly [number, number, number]; q: readonly [number, number, number] }): GlobeView {
+  const v = (a: readonly [number, number, number]): Vec3 => ({ x: a[0], y: a[1], z: a[2] });
+  const e: Vec3 = { x: 1, y: 0, z: 0 };
+  let n = norm(cross(v(pl.p), v(pl.q)));
+  if (dot(n, e) < 0) n = scale(n, -1);
+  let m = add(e, scale(n, -dot(e, n)));
+  m = Math.hypot(m.x, m.y, m.z) < 1e-6 ? { x: 0, y: 0, z: -1 } : norm(m);
+  let w = cross(n, m);
+  if (w.z > 0) w = scale(w, -1);
+  const a = MOON_SCENE.ringTilt;
+  const c = add(scale(n, Math.cos(a)), scale(w, Math.sin(a)));
+  const lat = Math.max(-GLOBE_MAX_TILT_DEG, Math.min(GLOBE_MAX_TILT_DEG, Math.asin(Math.max(-1, Math.min(1, c.z))) / R));
+  return { lat_deg: Math.round(lat), lon_deg: Math.round(Math.atan2(c.y, c.x) / R) };
+}
+
+/** Where the Moon globe looks: at a picked target like Mars, else the overview along the orbit now. */
+export function moonFrame(now: Parameters<typeof moonOverview>[0], t: GlobeTarget | undefined): { view: GlobeView; zoom: number } {
+  return t ? globeFrame(t, 'moon') : { view: moonOverview(now), zoom: GLOBE_BODY.moon.zoom.overview };
+}
+
+/** A body-frame vector (engine moonOrbitView) in the view frame. */
+export function bodyToView(v: readonly [number, number, number], view: GlobeView): Vec3 {
+  const ex = globeVec(0, 0, view);
+  const ey = globeVec(0, 90, view);
+  const ez = globeVec(90, 0, view);
+  return add(add(scale(ex, v[0]), scale(ey, v[1])), scale(ez, v[2]));
+}
+
+/** Earth in the view frame at its drawn distance. */
+export const moonEarthAt = (dir: readonly [number, number, number], view: GlobeView): Vec3 => scale(bodyToView(dir, view), MOON_SCENE.earthDistance);
+
+/**
+ * Where the Moon's disc sits in its box, so the Moon (with its ring) and Earth fit together: the pair is centred,
+ * then the disc shrinks if it still does not fit. Returns the disc's centre and radius (px).
+ */
+export function moonLayout(w: number, h: number, phone: boolean, zoom: number, earth: Vec3): { cx: number; cy: number; r: number } {
+  const ring = orbitDrawRadius(50_000) + 0.06;
+  const er = MOON_SCENE.earthRadius * 1.6;
+  // The pair's extent in disc radii, about the Moon's centre (y up).
+  const x0 = Math.min(-ring, earth.x - er);
+  const x1 = Math.max(ring, earth.x + er);
+  const y0 = Math.min(-ring, earth.y - er);
+  const y1 = Math.max(ring, earth.y + er);
+  const e = MOON_SCENE.edge;
+  const top = MOON_SCENE.hud[phone ? 'phone' : 'desktop'];
+  const fit = Math.min((w - 2 * e) / (x1 - x0), (h - top - 2 * e) / (y1 - y0));
+  const r = Math.min(globeDiscPx(w, h, phone) * zoom, fit);
+  return { cx: w / 2 - ((x0 + x1) / 2) * r, cy: top / 2 + h / 2 + ((y0 + y1) / 2) * r, r };
+}
+
+/** The Moon's orbit as drawn: its plane in the view frame, its drawn radius and the engine's arcs. */
+export interface LunarRing {
+  basis: OrbitBasis;
+  r: number;
+  farSide?: { from: number; to: number };
+  shadow?: { from: number; to: number };
+}
+
+export function lunarRing(pl: { p: readonly [number, number, number]; q: readonly [number, number, number]; farSide?: { from: number; to: number }; shadow?: { from: number; to: number } }, view: GlobeView, alt_m: number): LunarRing {
+  return {
+    basis: { p: bodyToView(pl.p, view), q: bodyToView(pl.q, view) },
+    r: orbitDrawRadius(alt_m),
+    ...(pl.farSide ? { farSide: pl.farSide } : {}),
+    ...(pl.shadow ? { shadow: pl.shadow } : {}),
+  };
+}
+
+/** Points along the ring outside an arc (the near side), and inside it (the far side). */
+export function ringSplit(m: LunarRing, n = 180): { near: Vec3[]; far: Vec3[] } {
+  const a = m.farSide;
+  if (!a) return { near: orbitPoints(m.r, m.r, m.basis, 0, 2 * Math.PI, n), far: [] };
+  const k = Math.max(8, Math.round((n * (a.to - a.from)) / (2 * Math.PI)));
+  return { near: orbitPoints(m.r, m.r, m.basis, a.to, a.from + 2 * Math.PI, n - k), far: orbitPoints(m.r, m.r, m.basis, a.from, a.to, k) };
+}
+
+/** Points along an arc of the ring (the shadow). */
+export const ringArc = (m: LunarRing, a: { from: number; to: number }, n = 40): Vec3[] => orbitPoints(m.r, m.r, m.basis, a.from, a.to, n);
+/** Where the trim-burn tag sits: the ring's point nearest the viewer (a picture: the burns are a pair, anywhere). */
+export function trimAt(m: LunarRing): Vec3 {
+  let best = orbitAt(m.r, m.r, m.basis, 0);
+  for (let i = 1; i < 36; i++) {
+    const v = orbitAt(m.r, m.r, m.basis, (i / 36) * 2 * Math.PI);
+    if (v.z > best.z) best = v;
+  }
+  return best;
+}
+
+
+
+/**
+ * The signal line's far end: the craft when Earth can see it; otherwise where the line from Earth first meets the
+ * Moon (the break shows it does not get through), or half way if it misses the drawn disc.
+ */
+export function signalEnd(earth: Vec3, craft: Vec3, linked: boolean): Vec3 {
+  if (linked) return craft;
+  const d = { x: craft.x - earth.x, y: craft.y - earth.y, z: craft.z - earth.z };
+  const a = dot(d, d);
+  const b = 2 * dot(earth, d);
+  const c = dot(earth, earth) - 1;
+  const disc = b * b - 4 * a * c;
+  const t = disc > 0 ? Math.max(MOON_SCENE.breakAt + 0.12, (-b - Math.sqrt(disc)) / (2 * a) - 0.02) : 0.55;
+  return add(earth, scale(d, Math.min(1, t)));
 }
 
 /** Bottom sheet on the phone (Science Targets): the share of the panel's height each snap point shows. */

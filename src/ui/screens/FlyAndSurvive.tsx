@@ -5,7 +5,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { DESTINATIONS, HAZARDS, PARTS } from '../../engine/data';
 import { flightMap, ghostFor, pathAhead } from '../../engine/flightMap';
-import { comingUp, downlinkView, eclipseCard, flyCard, flyTiles, FLY_RULES, missionProgress, momentsSince, nextImageT, outcomeIn_s, scienceTargetsView, stormFront, transmissionFeed, type FeedEntry, type FlyChip, type MomentKind, type OpsState } from '../../engine/ops/index';
+import { comingUp, downlinkView, eclipseCard, flyCard, flyTiles, FLY_RULES, missionProgress, momentsSince, moonOrbitView, nextImageT, outcomeIn_s, scienceTargetsView, stormFront, transmissionFeed, type FeedEntry, type FlyChip, type MomentKind, type OpsState } from '../../engine/ops/index';
 import type { Design, Sourced } from '../../engine/types';
 import { SPEED_OF_LIGHT } from '../../engine/constants';
 import { BookCall } from '../components/ops/BookCall';
@@ -54,6 +54,7 @@ import {
   quietLine,
   LIVE_WEATHER,
   MOMENT_WORDS,
+  MOON_WORDS,
   POSTCARD_WORDS,
   robotNameOr,
   stormLine,
@@ -96,6 +97,8 @@ interface Props {
   onPostcards?: (ids: string[]) => void;
   /** The robot's name (Pack); the default when empty. */
   robotName?: string;
+  /** The build steps the level teaches: the Moon globe shows the trim-burn tag where fuel is taught (spec: UI rule 46). */
+  teaches?: string[];
 }
 
 type Panel = 'power' | 'call' | 'queue' | 'eqs' | 'downlink';
@@ -112,7 +115,7 @@ function chipViews(chips: FlyChip[]): ChipView[] {
   return chips.map((k) => ({ icon: CHIP_ICON[k.gauge], text: k.gauge === 'coins' ? `${f.signedInt(k.delta)} COINS` : f.signedInt(k.delta), tone: 'cost' as const }));
 }
 
-export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName, onHome, onDone, onBack, coach, onCoachSeen, brief, robotName, launchMoment, onLaunchSeen, onPostcards }: Props) {
+export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName, onHome, onDone, onBack, coach, onCoachSeen, brief, robotName, launchMoment, onLaunchSeen, onPostcards, teaches }: Props) {
   const name = robotNameOr(robotName);
   const engineer = mode === 'engineer';
   const ops = useOpsSession(design, seed, storms);
@@ -144,6 +147,10 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
 
   // ---- Science targets (Mars orbit): the panel opens when the robot's question reaches Earth, and holds the clock ----
   const sci = useMemo(() => (state ? scienceTargetsView(state) : undefined), [state]);
+  // The Moon orbit (spec: UI rules 45–46): Earth, the link and the arcs on the globe; on Moon 1 and 2 the panel shows
+  // the orbit alone.
+  const moonView = useMemo(() => (state ? moonOrbitView(state) : undefined), [state]);
+  const panelOk = sci?.available === true || moonView?.available === true;
   const dl = useMemo(() => (state ? downlinkView(state) : undefined), [state]);
   const [sciOpen, setSciOpen] = useState(false);
   // The arrival transition (spec: UI rule 42): in when the panel opens, out when the player goes back to the map.
@@ -159,14 +166,14 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
     setZoomDir(undefined);
   });
   const [sciPick, setSciPick] = useState<string>();
-  const asked = feed?.entries.some((e) => e.from === 'robot' && e.message?.kind === 'targets') ?? false;
+  const asked = feed?.entries.some((e) => e.from === 'robot' && (e.message?.kind === 'targets' || (moonView !== undefined && e.message?.kind === 'science'))) ?? false;
   const askedSeen = useRef(false);
   useEffect(() => {
     if (!asked || askedSeen.current) return;
     askedSeen.current = true;
-    if ((state?.t ?? 0) > 0 && sci?.available) openScience();
+    if ((state?.t ?? 0) > 0 && panelOk) openScience();
   }, [asked]); // eslint-disable-line react-hooks/exhaustive-deps
-  const sciShown = sciOpen && sci?.available === true;
+  const sciShown = sciOpen && panelOk;
   const sciSelected = sciPick ?? sci?.cards.find((c) => c.blocker === undefined)?.id ?? sci?.cards[0]?.id ?? '';
 
   // ---- Big moments: the launch countdown, banners for the arrival burn and a storm hit, and their sounds ----
@@ -629,10 +636,10 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
           EQUATIONS
         </button>
       )}
-      {sci?.available && (
+      {panelOk && (
         <button type="button" className="fly-action sci-key" onClick={openScience}>
-          <SDIcon icon="camera" size={16} />
-          {SCIENCE.reopen}
+          <SDIcon icon={sci?.available ? 'camera' : 'orbit'} size={16} />
+          {sci?.available ? SCIENCE.reopen : MOON_WORDS.reopen}
         </button>
       )}
       {phone && dl && dl.rows.length > 0 && (
@@ -737,6 +744,7 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
       globe={
         <Globe
           body={sci.body}
+          {...(moonView ? { moon: moonView, trimTag: !teaches || teaches.includes('fuel') } : {})}
           cards={sci.cards}
           orbit={sci.orbit}
           selected={sciSelected}

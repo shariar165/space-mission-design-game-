@@ -1060,6 +1060,30 @@ export const SCIENCE = {
   sheetLess: 'LESS ▾',
 };
 
+/** The Moon scene on the globe (spec: UI rules 45–46; design 3d/Moon Globe.html). Numbers come from moonOrbitView. */
+export const MOON_WORDS = {
+  earth: (dist: string, oneWay: string) => `EARTH · ${dist} · ${oneWay}`,
+  earthSub: 'ALWAYS SEES THE NEAR SIDE',
+  linkUp: (oneWay: string) => `LINK · LOCKED · ${oneWay}`,
+  linkLost: 'LINK · LOST · FAR SIDE',
+  far: 'NO SIGNAL — BEHIND THE MOON',
+  farSub: (lost: string, period: string) => `≈${lost} OF EVERY ${period} MIN`,
+  allInView: 'EARTH SEES THE WHOLE ORBIT TODAY',
+  shadow: 'IN THE MOON’S SHADOW',
+  shadowSub: (dark: string, period: string) => `${dark} OF EVERY ${period} MIN · ON BATTERY`,
+  trim: 'STATION-KEEPING',
+  trimNext: (when: string, dv: string) => `MASCONS PULL LOW ORBITS DOWN · NEXT TRIM BURNS IN ${when} · ${dv}`,
+  legend: 'What the ring shows',
+  notToScale: 'NOT TO SCALE · // EARTH DISTANCE SHORTENED',
+  farTarget: 'FAR SIDE · NO SIGNAL WHILE OBSERVING',
+  /** The orbit-only panel on Moon 1 and Moon 2. */
+  titleOf: (alt: string) => `MOON ORBIT · ${alt} UP`,
+  hint: 'EARTH CAN’T SEE YOU BEHIND THE MOON. ORDERS WAIT FOR THE LINK.',
+  reopen: 'MOON ORBIT',
+  done: 'DONE · KEEP FLYING',
+  doneShort: 'DONE',
+};
+
 /** The DOWNLINK drawer (spec: UI rule 40; design screen 01, DOWNLINK). */
 export const DOWNLINK = {
   button: 'DOWNLINK',

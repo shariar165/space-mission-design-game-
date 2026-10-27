@@ -802,9 +802,10 @@ export function nextEventT(s: OpsState): number {
   for (const c of s.commands) if (c.status === 'in-flight') after(c.arrivesAt);
   for (const b of env.burns.slice(s.burnsDone)) if (b.kind !== 'maintenance') after(b.day);
   for (const w of env.timeline) after(w.startDay);
-  // At Mars: the robot's question ("what should it look at?") reaching Earth, so Science Targets opens on time.
+  // At Mars and on Moon 3: the robot's question ("what should it look at?") reaching Earth, so Science Targets opens
+  // on time; on Moon 1 and 2 its news from the science orbit, so the orbit panel does (spec: UI rule 46).
   const sci = env.timeline.find((w) => w.phase === 'science');
-  if (sci && hasTargets(env)) after(newsArrival(env, sci.startDay));
+  if (sci && (hasTargets(env) || env.farSide !== undefined)) after(newsArrival(env, sci.startDay));
   for (const w of env.conjunctions) {
     // The warning comes first, so commands can still be queued before the Sun blocks the radio.
     after(w.startDay - CONSOLE_RULES.conjunctionWarning_days.value);

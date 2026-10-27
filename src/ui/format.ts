@@ -20,6 +20,12 @@ export function speed(ms: number): string {
   return Math.abs(ms) < 10_000 ? `${num(ms)} m/s` : `${num(ms / 1000, 2)} km/s`;
 }
 
+/** Small speeds to a tenth (a trim burn: "10.8 m/s"). */
+export const speedFine = (ms: number) => `${num(ms, 1)} m/s`;
+
+/** A short time to a tenth of a second (the Moon's light time: "1.3 s"). */
+export const secondsFine = (s: number) => `${num(s, 1)} s`;
+
 /** Distances in million km. */
 export const millionKm = (m: number) => `${num(m / 1e9, 1)} million km`;
 

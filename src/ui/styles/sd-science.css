@@ -226,5 +226,62 @@
 .fly.zooming .sci.phone .sci-stage { background: rgba(5, 12, 7, var(--sci-chrome)); }
 .fly.zooming .sci::after, .fly.zooming .sci.phone .sci-stage::after { opacity: var(--sci-chrome); }
 .fly.zooming .sci-list, .fly.zooming .sci-keys, .fly.zooming .sci-hud, .fly.zooming .sci-credit, .fly.zooming .sci-sheet, .fly.zooming .sci-globe-toggle,
-.fly.zooming .sci-globe-orbits, .fly.zooming .sci-lbl, .fly.zooming .sci-robot-tag { opacity: var(--sci-chrome); }
+.fly.zooming .sci-globe-orbits, .fly.zooming .sci-lbl, .fly.zooming .sci-robot-tag,
+.fly.zooming .sci-earth-mark, .fly.zooming .sci-brk, .fly.zooming .sci-trim, .fly.zooming .sci-link, .fly.zooming .sci-earth { opacity: var(--sci-chrome); }
 .fly.zooming .sci-globe-host { opacity: var(--globe-in); transform: scale(var(--globe-scale)); }
+
+/* The Moon scene (spec: UI rule 45; design 3d/Moon Globe.html): Earth with its brackets, the signal line and its //
+   break, the ring dashed behind the Moon, the shadow arc, the trim-burn tag and the link line. */
+.sci-globe-orbits .far { stroke: #2a9a4a; stroke-width: 1.3; stroke-dasharray: 4 4; opacity: 0.85; }
+.sci-globe-orbits .shadow { stroke: var(--sd-amber); stroke-width: 4; stroke-linecap: round; stroke-dasharray: 0.5 7; opacity: 0.9; }
+.sci-globe-orbits .signal { stroke: #8dffa8; stroke-width: 1.2; filter: drop-shadow(0 0 3px rgba(57, 255, 106, 0.5)); }
+.sci-globe-orbits .signal.lost { stroke: #2a9a4a; stroke-dasharray: 6 6; filter: none; }
+.sci-earth { position: absolute; z-index: 1; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle at 34% 32%, #a9d4ff 0%, #4a8fe4 30%, #1d5bb0 62%, #0a2550 100%); box-shadow: 0 0 12px rgba(74, 143, 228, 0.55); }
+.sci-earth.behind { opacity: 0.3; }
+.sci-earth-mark { --c: #8dffa8; --l: 9px; --t: 1.5px; position: absolute; z-index: 2; width: 44px; height: 44px; transform: translate(-50%, -50%); pointer-events: none;
+  background:
+    linear-gradient(var(--c), var(--c)) left top / var(--l) var(--t), linear-gradient(var(--c), var(--c)) left top / var(--t) var(--l),
+    linear-gradient(var(--c), var(--c)) right top / var(--l) var(--t), linear-gradient(var(--c), var(--c)) right top / var(--t) var(--l),
+    linear-gradient(var(--c), var(--c)) left bottom / var(--l) var(--t), linear-gradient(var(--c), var(--c)) left bottom / var(--t) var(--l),
+    linear-gradient(var(--c), var(--c)) right bottom / var(--l) var(--t), linear-gradient(var(--c), var(--c)) right bottom / var(--t) var(--l);
+  background-repeat: no-repeat; filter: drop-shadow(0 0 3px rgba(93, 255, 138, 0.6)); }
+.sci-earth-mark.behind { opacity: 0.35; }
+.sci-brk { position: absolute; left: 0; top: 0; z-index: 2; transform: translate(-50%, -50%) rotate(var(--a, 0rad)); padding: 1px 4px; background: #000; color: #c8ffd2; font: 500 15px/1 var(--sd-mono); letter-spacing: -0.08em; pointer-events: none; }
+.sci-trim { position: absolute; z-index: 2; width: 10px; height: 10px; transform: translate(-50%, -50%) rotate(45deg); border: 1.5px solid var(--sd-amber); background: rgba(255, 181, 71, 0.25); pointer-events: none; }
+.sci-trim.behind { opacity: 0.35; }
+.sci-link { position: absolute; right: 8px; top: 6px; z-index: 3; padding: 2px 6px; background: rgba(5, 12, 7, 0.72); font: 400 18px/1 var(--sd-crt-font); letter-spacing: 0.06em; color: #8dffa8; text-shadow: 0 0 6px rgba(93, 255, 138, 0.6); pointer-events: none; }
+.sci-link:empty { display: none; }
+.sci-link.lost { color: var(--sd-amber); text-shadow: 0 0 6px rgba(255, 181, 71, 0.6); }
+.sci-lbl.far .k { color: rgba(93, 255, 138, 0.65); }
+.sci-lbl.trim .k { color: var(--sd-amber); }
+.sci.phone .sci-link { left: 10px; right: auto; top: 30px; font-size: 14px; }
+.sci.phone .sci-brk { font-size: 12px; }
+
+/* The orbit-only panel (Moon 1 and Moon 2, spec: UI rule 46): the globe takes the whole screen, DONE along the bottom. */
+.sci.orbit-only .sci-stage { grid-column: 1 / -1; }
+.sci.orbit-only .sci-keys { grid-template-columns: minmax(0, 1fr); }
+.sci.orbit-only .sci-done { font-size: 24px; }
+.sci.phone.orbit-only .sci-stage { bottom: 92px; }
+.sci.phone.orbit-only .sci-credit { left: 10px; bottom: 6px; font-size: 12px; }
+.sci-globe-orbits .robot.behind { opacity: 0.3; }
+.sci-lbl.earth { transform: translate(30px, -50%); }
+.sci-lbl.earth.left { transform: translate(calc(-100% - 30px), -50%); }
+.sci.phone .sci-lbl.earth { transform: translate(22px, -50%); }
+.sci.phone .sci-lbl.earth.left { transform: translate(calc(-100% - 22px), -50%); }
+.sci-earth-mark.behind, .sci-brk.behind { display: none; }
+/* The ring's legend (Moon): the dashed far side, the shadow beads, the trim-burn diamond. */
+.sci-legend { position: absolute; left: 4px; bottom: 24px; z-index: 3; margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; align-items: flex-start; gap: 5px; pointer-events: none; }
+.sci-legend li { display: grid; grid-template-columns: 26px auto; column-gap: 8px; align-items: center; padding: 1px 6px 1px 0; background: rgba(5, 12, 7, 0.72); font: 400 16px/1.05 var(--sd-crt-font); letter-spacing: 0.05em; color: #d6ffdc; }
+.sci-legend .key { grid-row: 1 / span 2; width: 26px; height: 0; }
+.sci-legend .far .key { border-top: 2px dashed #2a9a4a; }
+.sci-legend .shadow .key { border-top: 4px dotted var(--sd-amber); }
+.sci-legend .trim .key { width: 9px; height: 9px; margin-left: 8px; transform: rotate(45deg); border: 1.5px solid var(--sd-amber); background: rgba(255, 181, 71, 0.25); }
+.sci-legend .s { color: rgba(93, 255, 138, 0.7); font-size: 14px; }
+.sci-legend .trim .k, .sci-legend .shadow .k { color: var(--sd-amber); }
+.sci.phone .sci-legend { left: 10px; right: 10px; bottom: 24px; gap: 3px; }
+.sci.phone .sci-legend li { grid-template-columns: 20px auto; column-gap: 6px; font-size: 13px; }
+.sci.phone .sci-legend .key { width: 20px; }
+.sci.phone .sci-legend .trim .key { width: 8px; height: 8px; margin-left: 6px; }
+.sci.phone .sci-legend .s { font-size: 11px; }
+.sci-legend .k, .sci-legend .s { grid-column: 2; }

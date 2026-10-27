@@ -37,6 +37,8 @@ export interface MoonOrbitView {
   available: boolean;
   /** Earth: its direction in the body frame (the sub-Earth point), its distance and the one-way light time. */
   earth: { dir: Vec3; distance_m: number; oneWay_s: number };
+  /** The Sun's direction in the body frame (what lights the globe and casts the shadow arc). */
+  sun: Vec3;
   /** The science orbit now, and the craft's angle on it. */
   now: OrbitPlane & { theta: number };
   /** Moon 3: the pass flown over each target, polar and through it, with the target at θ = 0 (none on Moon 1 and 2). */
@@ -133,6 +135,7 @@ export function moonOrbitView(s: OpsState): MoonOrbitView | undefined {
   return {
     available: s.status === 'flying' && day.visibleFraction !== undefined && (phase === 'science' || phase === 'extended'),
     earth: { dir: earth, distance_m: day.earthDistance_m, oneWay_s: day.oneWay_s },
+    sun,
     now: { ...plane(p, q), theta },
     passes,
     link: { up: linkUpAt(env, s.t), losPerOrbit_s: day.losPerOrbit_s ?? 0, eclipsePerOrbit_s: day.longestEclipse_s, period_s: o.period_s },

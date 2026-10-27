@@ -574,6 +574,23 @@ describe('the Moon globe view (spec: UI rules 45–46; Moon orbit)', () => {
     const d = s.env.days[Math.floor(s.t)]!;
     expect(v.link.eclipsePerOrbit_s).toBe(d.longestEclipse_s);
     expect(len(v.now.shadow) / 360).toBeCloseTo(d.longestEclipse_s / v.link.period_s, 2);
+    // the shadow is on the night side: the arc's middle points away from the Sun
+    const sh = v.now.shadow!;
+    const mid = (sh.from + sh.to) / 2;
+    const at = [0, 1, 2].map((i) => Math.cos(mid) * v.now.p[i]! + Math.sin(mid) * v.now.q[i]!);
+    expect(dot(v.sun, v.sun)).toBeCloseTo(1, 12);
+    expect(dot(at, v.sun)).toBeLessThan(-0.9);
+  });
+
+  it('Next event stops when the robot’s news from the science orbit reaches Earth, so the orbit panel opens on time', async () => {
+    const { newsArrival } = await import('../src/engine/ops/commands');
+    for (const targets of [false, true]) {
+      const s0 = ops.startOperations({ ...starterDesign('moon', '2026-10-04'), ...(targets ? { scienceTargets: true } : {}) }, calm);
+      const sci = s0.env.timeline.find((w) => w.phase === 'science')!;
+      const s = ops.advanceOperations(s0, { until: sci.startDay });
+      // the news leaves at the start of the science phase (or at the next AOS) and crosses in 1.28 s
+      expect(ops.nextEventT(s)).toBeCloseTo(newsArrival(s.env, sci.startDay), 9);
+    }
   });
 
   it('station-keeping: the next trim burn pair and its Δv (LRO: 10.81 m/s every 27.32 days)', () => {

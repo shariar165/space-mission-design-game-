@@ -863,12 +863,16 @@ The UI (`src/ui/`, React + Vite) follows the Claude Design mockups for Build Bay
     - **The ring:** solid where Earth can see the craft and dashed behind the Moon (arcs from the engine).
     - **The link:** the signal line is solid while linked and broken while not. The HUD reads LINK · LOCKED · 1.3 S or LINK · LOST · FAR SIDE, and the far arc's label gives the minutes lost per orbit.
     - **The orbiter:** its run around the ring is a sped-up drawing, but whether it is linked comes from the engine (`linkUpAt`).
+    - **The view** (v1.0, built): the engine gives everything in the Moon's body frame (`moonOrbitView`): Earth's direction, the Sun's, the orbit plane now, the far-side and shadow arcs (the same cylinder test as the physics, on the true orbit radius), a polar pass over each Moon 3 target, the link and the next trim burns. The orbit is fixed in space while the Moon turns under it, so the overview looks at the ring 55° off face-on from the side, following the plane through the month; the near half lies on Earth's side and the dashed far half away from it. The globe is lit by the real Sun, with a glow left on the night side so the map still reads.
+    - **A legend, not ring labels:** the far side (minutes lost per orbit), the shadow (minutes on battery per orbit) and the trim burns (when, and the pair's Δv) are a small legend keyed to the ring's dashes, beads and diamond. On the ring they crowded each other and the targets, worst on a phone. Earth keeps its label until a target is picked.
 46. **The Moon levels' orbit panel.** When the craft arrives on Moon 1 or Moon 2, the globe opens without target cards:
     - Moon 1 shows the shadow arc and the eclipse minutes per orbit, which the battery has to cover.
     - Moon 2 adds the station-keeping tag on the ring: the next trim burn and its Δv.
     - DONE · KEEP FLYING resumes the clock.
 
     Moon 3 opens the four target cards (rule 39) on the same scene. The far-side target's card says the robot will observe alone.
+
+    The panel opens when the robot's first news from the science orbit reaches Earth: NEXT EVENT stops there (`nextEventT`), as it does for the Mars question. MOON ORBIT on the action bar reopens it.
 
 ## Decision log
 
@@ -952,3 +956,4 @@ The UI (`src/ui/`, React + Vite) follows the Claude Design mockups for Build Bay
 | 76 | Oct 27, 2026 | **Moon texture: NASA SVS CGI Moon Kit** (user's choice; svs.gsfc.nasa.gov/4720, the LROC WAC Hapke-normalised mosaic), not the mockup's procedural `moon-map.js`. |
 | 77 | Oct 27, 2026 | **Moon target pictures** (verified on their catalogue pages): Apollo 11 M175124932R, Tycho M162350671L/R (the same frame as NASA SVS 4220), Tsiolkovskiy M113107391L (LROC's own feature frame). For Shackleton the 2009 nadir frames were mostly shadow and the 100 m WAC browse is interleaved framelets, so the game uses the 2020 oblique M1346257675L. The pole falls on its rim there (frame line 0.63), as expected. It is squeezed by cos 66.7° to undo the slant, which the image record says. The polar NAC mosaics (2–8 GB) were too large to fetch for one crop. |
 | 78 | Oct 28, 2026 | **"No fuel" names its fix** (user request). On Moon 3 the station-keeping pairs put 15 heavy packings out of fuel; the blocker now says to pack the extra tank and why (the 50 km orbit's monthly trim burns). The engine only suggests the tank after evaluating the craft with it, so the hint is never wrong. |
+| 79 | Oct 28, 2026 | **The Moon scene as built** (rule 45). The overview follows the real orbit plane (55° off face-on) rather than the mockup's fixed camera, since a fixed view saw the ring edge-on on some days. The far side, the shadow and the trim burns are a legend keyed to the ring instead of labels on it, which collided on a phone. The trim tag is a picture on the ring's nearest point (the burns are a pair, anywhere). Moon 1 shows the shadow; the trim tag shows where the level teaches fuel (Moon 2 and Moon 3). |
