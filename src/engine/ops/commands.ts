@@ -1,5 +1,6 @@
 // Command queue with real one-way light delay (spec: Mission operations, "Commands and light time").
 // t_arrive = t_send + d(t_send)/c. Nothing is instant, and nothing can be sent in a conjunction moratorium.
+import { nextAos } from './link';
 import type { OpsEnvironment } from './types';
 
 /** One-way light time (s) at mission time t (days), linear between whole days. */
@@ -12,14 +13,15 @@ export function oneWayAt(env: OpsEnvironment, t: number): number {
   return a.oneWay_s + (b.oneWay_s - a.oneWay_s) * f;
 }
 
-/** When a command sent at t (days) reaches the craft (days). */
+/** When a command sent at t (days) reaches the craft (days). Behind the Moon it waits for the link (spec: Moon orbit). */
 export function commandArrival(env: OpsEnvironment, sentAt: number): number {
-  return sentAt + oneWayAt(env, sentAt) / 86_400;
+  return nextAos(env, sentAt + oneWayAt(env, sentAt) / 86_400);
 }
 
-/** When news of something that happens on the craft at t reaches Earth (days). */
+/** When news of something that happens on the craft at t reaches Earth (days): sent once Earth can see the craft. */
 export function newsArrival(env: OpsEnvironment, t: number): number {
-  return t + oneWayAt(env, t) / 86_400;
+  const sent = nextAos(env, t);
+  return sent + oneWayAt(env, sent) / 86_400;
 }
 
 /** True during a solar-conjunction moratorium (no commands, no downlink). */

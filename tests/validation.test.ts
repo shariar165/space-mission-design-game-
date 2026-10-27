@@ -15,7 +15,7 @@ import { bestArrival, bestLaunchWindow, hohmann, lambertTransfer, orbitPeriod } 
 import { julianDate } from '../src/engine/ephemeris';
 import { OPERATIONS } from '../src/engine/data';
 import { runOperations } from '../src/engine/ops/index';
-import { bodyConjunctions, perihelionJd, solarLongitude } from '../src/engine/ops/predictable';
+import { bodyConjunctions, earthDirection, perihelionJd, solarLongitude, sunDirection } from '../src/engine/ops/predictable';
 import { prepareOps } from '../src/engine/ops/timeline';
 import { opsRiskEstimate } from '../src/engine/ops/riskEstimate';
 import { riskMeter } from '../src/engine/risk';
@@ -318,6 +318,28 @@ describe('Mars solar conjunction, Jan 2026 (Mars right now) — NASA MAVEN blog'
     const ok = c.closestDate >= '2025-12-29' && c.closestDate <= '2026-01-16';
     flag('Mars (2026)', 'Closest Sun–Earth–Mars angle inside the NASA commanding pause', ok, c.closestDate, 'Dec 29, 2025 – Jan 16, 2026 (science.nasa.gov MAVEN blog)', 'JPL approximate elements; 2° threshold (JPL 2015)');
     info('Mars (2026)', 'Engine 2° conjunction window vs the NASA commanding pause', `${c.startDate} → ${c.endDate}`, 'Dec 29, 2025 – Jan 16, 2026');
+    expect(ok).toBe(true);
+  });
+});
+
+describe('Moon: Earth’s direction from the IAU rotation angle — USNO phases of the Moon, April 2024', () => {
+  it('from the Moon, Earth lines up with the Sun at full Moon and faces away from it at new Moon', () => {
+    // USNO: new Moon 2024-04-08 18:21 UTC (the total solar eclipse), full Moon 2024-04-23 23:49 UTC. At full Moon the
+    // Sun, Earth and Moon line up with Earth in the middle, so seen from the Moon Earth and the Sun are in the same
+    // direction; at new Moon they are opposite. The engine's Earth direction is the IAU prime meridian (periodic
+    // terms left out) and the Sun direction is −r_earth, so libration (≤ 8°) and the Moon's latitude (≤ 5.1°) are
+    // what the angle may be off by: 15° allowed.
+    const angle = (iso: string) => {
+      const jd = julianDate(iso);
+      const e = earthDirection('moon', jd)!;
+      const s = sunDirection('moon', jd);
+      return (Math.acos(Math.max(-1, Math.min(1, e[0] * s[0] + e[1] * s[1] + e[2] * s[2]))) * 180) / Math.PI;
+    };
+    const full = angle('2024-04-23T23:49:00Z');
+    const fresh = angle('2024-04-08T18:21:00Z');
+    const ok = full < 15 && fresh > 165;
+    flag('Moon (2024)', 'Earth–Sun angle seen from the Moon at full Moon (< 15°) and new Moon (> 165°)', ok, `${full.toFixed(1)}° / ${fresh.toFixed(1)}°`,
+      'Full Moon Apr 23 23:49 UTC, new Moon Apr 8 18:21 UTC (USNO)', 'Moon pole and rotation: IAU WGCCRE 2015 without periodic terms');
     expect(ok).toBe(true);
   });
 });

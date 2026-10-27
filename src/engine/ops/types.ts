@@ -4,6 +4,7 @@ import type { PhaseWindow } from '../crisis';
 import type { HazardOption, OpsPhase } from '../data';
 import type { FullEvaluation } from '../index';
 import type { Design } from '../types';
+import type { OrbitGeometry } from './predictable';
 import type { RealStorm } from '../spaceWeather';
 
 export type { OpsPhase } from '../data';
@@ -49,7 +50,9 @@ export type OpsEventCode =
   | 'observe-start'
   | 'observe-refused'
   | 'image-taken'
-  | 'image-sent';
+  | 'image-sent'
+  | 'far-side'
+  | 'link-back';
 
 export interface OpsEvent {
   /** Mission time, days from launch (fractional). */
@@ -84,6 +87,9 @@ export interface EnvDay {
   solarActivity: number;
   /** Mars only: areocentric solar longitude (deg). */
   ls_deg?: number;
+  /** Moon, in the science orbit: the share of each orbit Earth can see, and the longest loss of signal (s). */
+  visibleFraction?: number;
+  losPerOrbit_s?: number;
 }
 
 export interface PlannedBurn {
@@ -141,6 +147,8 @@ export interface OpsEnvironment {
   lifetimeReserve_ms: number;
   /** Δv per day of orbit maintenance (m/s). */
   maintenancePerDay_ms: number;
+  /** Moon only: the science orbit Earth's line of sight is tested against, with mean anomaly 0 at the start of arrivalDay. */
+  farSide?: { orbit: OrbitGeometry };
 }
 
 /** What the craft does with its power: instrument duty cycles (0–1), heater fraction of need, radio on/off. */
@@ -169,6 +177,8 @@ export interface CommandRecord {
   arrivesAt: number;
   command: Command;
   status: 'in-flight' | 'executed' | 'too-late';
+  /** Behind the Moon: how long the order waited for the link before it could reach the craft (s). */
+  held_s?: number;
 }
 
 export interface CommandReceipt {

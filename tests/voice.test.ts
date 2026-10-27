@@ -325,3 +325,41 @@ describe('transmission feed (the teletype: the robot in black, your orders in re
     for (const e of transmissionFeed(s).entries.filter((x) => x.from === 'robot')) expect(e.message!.delay_s).toBeCloseTo(oneWayAt(s.env, e.message!.sentAt), 6);
   });
 });
+
+describe('behind the Moon (spec: Moon orbit)', () => {
+  const moonLow = async (): Promise<import('../src/engine/types').Design> => {
+    const { starterDesign } = await import('../src/ui/starters');
+    return { ...starterDesign('moon', '2026-10-04'), scienceOrbit: { periapsis_km: 50, apoapsis_km: 50, inclination_deg: 90 } };
+  };
+
+  it('on the first science day the robot says it goes behind the Moon, once, with the minutes lost per orbit', async () => {
+    const s = ops.runOperations(await moonLow(), { rng: () => 0.999999 }).state;
+    const far = robotMessages(s).filter((m) => m.kind === 'far-side');
+    expect(far).toHaveLength(1);
+    const sci = s.env.timeline.find((w) => w.phase === 'science')!;
+    expect(Math.floor(far[0]!.sentAt)).toBe(sci.startDay);
+    // the values are the engine's: that day's longest loss of signal and the orbit period (113.1 min at 50 km)
+    expect(far[0]!.values.lost_s).toBeCloseTo(s.env.days[sci.startDay]!.losPerOrbit_s!, 6);
+    expect(far[0]!.values.period_s! / 60).toBeCloseTo(113.08, 1);
+    // MAVEN never goes behind the Moon
+    expect(robotMessages(calm()).some((m) => m.kind === 'far-side' || m.kind === 'link-back')).toBe(false);
+  });
+
+  it('an order that waited behind the Moon: LINK BACK with the wait, then ORDER RECEIVED', async () => {
+    const { linkUpAt } = await import('../src/engine/ops/link');
+    let s = ops.startOperations(await moonLow(), { rng: () => 0.999999 });
+    const sci = s.env.timeline.find((w) => w.phase === 'science')!;
+    let down = sci.startDay + 2;
+    while (linkUpAt(s.env, down)) down += 1 / 1440;
+    const sendAt = down - oneWayAt(s.env, down) / DAY_S;
+    while (s.t < sendAt - 1e-12) s = ops.advanceOperations(s, { until: sendAt });
+    const r = ops.sendCommand(s, { kind: 'power-plan', plan: defaultPowerPlan(s.env) });
+    const after = ops.advanceOperations(r.state, { until: r.receipt.arrivesAt! + 0.01 });
+    const msgs = robotMessages(after);
+    const back = msgs.find((m) => m.kind === 'link-back')!;
+    expect(back.sentAt).toBeCloseTo(r.receipt.arrivesAt!, 9);
+    expect(back.values.waited_s).toBeGreaterThan(0);
+    const got = msgs.find((m) => m.kind === 'order-received' && m.values.commandKind === 'power-plan')!;
+    expect(msgs.indexOf(back)).toBeLessThan(msgs.indexOf(got));
+  });
+});

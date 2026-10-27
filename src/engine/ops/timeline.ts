@@ -11,9 +11,9 @@ import { evaluateDesign, type FullEvaluation } from '../index';
 import { powerProfileFor } from '../powerProfile';
 import { propellantBurned } from '../propulsion';
 import type { Design, Vec3 } from '../types';
-import { commandArrival, inMoratorium, moratoriumEndDay, newsArrival } from './commands';
+import { commandArrival, inMoratorium, moratoriumEndDay, newsArrival, oneWayAt } from './commands';
 import { END_MISSION, extensionOptions } from './extension';
-import { orbitDoseRate_radPerDay, scienceOrbitGeometry, solarLongitude, sunEarthProbeAngle } from './predictable';
+import { earthDirection, occultation, orbitDoseRate_radPerDay, scienceOrbitGeometry, solarLongitude, sunEarthProbeAngle } from './predictable';
 import {
   debrisRate_perDay,
   drawCandidates,
@@ -147,6 +147,9 @@ export function prepareOps(design: Design): OpsEnvironment {
     const sepAngle_deg = rCraft && earthDistance_m > 5e9 ? sunEarthProbeAngle(heliocentricPosition('earth', jd), rCraft) : undefined;
     const inOrbit = orbit && (phase === 'science' || phase === 'extended');
     const link = (dish: 34 | 70) => dataRate({ ...design.comms, groundDish_m: dish, distance_m: earthDistance_m });
+    // Behind the Moon (spec: Moon orbit): the share of each orbit Earth can see that day.
+    const earth = inOrbit ? earthDirection(design.destination, jd) : undefined;
+    const los = earth && orbit ? occultation(orbit, earth) : undefined;
     days.push({
       day,
       jd,
@@ -167,6 +170,7 @@ export function prepareOps(design: Design): OpsEnvironment {
       doseRate_radPerDay: inOrbit ? doseRate : 0,
       solarActivity: solarActivity(jd),
       ...(design.destination === 'mars' ? { ls_deg: solarLongitude('mars', jd) } : {}),
+      ...(los ? { visibleFraction: 1 - los.fraction, losPerOrbit_s: los.longest_s } : {}),
     });
   }
 
@@ -211,6 +215,7 @@ export function prepareOps(design: Design): OpsEnvironment {
     isp_s: ev.details.isp_s,
     lifetimeReserve_ms: ev.details.deltaVBudget.lifetimeReserve_ms,
     maintenancePerDay_ms: GAME_RULES.orbitMaintenance_msPerYear.value / YEAR,
+    ...(orbit && days.some((d) => d.visibleFraction !== undefined) ? { farSide: { orbit } } : {}),
   };
 }
 
@@ -641,6 +646,7 @@ function applyDeadline(s: OpsState, rec: HazardRecord, t: number) {
 
 function executeCommand(s: OpsState, cmd: Command, t: number, id: number) {
   const rec = s.commands.find((c) => c.id === id)!;
+  if (rec.held_s !== undefined) emit(s, t, 'link-back', { commandId: id, waited_s: rec.held_s });
   if (cmd.kind === 'observe') {
     rec.status = 'executed';
     observe(s, cmd.targetId, t, id);
@@ -673,7 +679,9 @@ export function queueCommand(s: OpsState, command: Command, sentAt: number): Com
   }
   const arrivesAt = commandArrival(s.env, sentAt);
   const id = s.commands.length + 1;
-  s.commands.push({ id, sentAt, arrivesAt, command, status: 'in-flight' });
+  // Behind the Moon the order waits for the link (spec: Moon orbit).
+  const held_s = (arrivesAt - sentAt) * DAY_S - oneWayAt(s.env, sentAt);
+  s.commands.push({ id, sentAt, arrivesAt, command, status: 'in-flight', ...(held_s > 1e-3 ? { held_s } : {}) });
   emit(s, sentAt, 'command-sent', { commandId: id, kind: command.kind, arrivesAt });
   return { accepted: true, sentAt, arrivesAt };
 }
@@ -808,6 +816,9 @@ function startDay(s: OpsState, day: number) {
   if (!prev || prev.phase !== e.phase) emit(s, day, 'phase-start', { phase: e.phase });
   if (e.conjunction && !prev?.conjunction) emit(s, day, 'conjunction-start', { minAngle_deg: e.sepAngle_deg ?? 0 });
   if (!e.conjunction && prev?.conjunction) emit(s, day, 'conjunction-end', {});
+  // The first day in the science orbit at the Moon: the robot tells Earth it will go behind the Moon every orbit.
+  if (env.farSide && e.visibleFraction !== undefined && prev?.visibleFraction === undefined && e.phase === 'science')
+    emit(s, day, 'far-side', { lost_s: e.losPerOrbit_s ?? 0, period_s: env.farSide.orbit.period_s });
   for (const season of env.eclipseSeasons) {
     if (season.startDay === day) emit(s, day, 'eclipse-season-start', { endDay: season.endDay, longestEclipse_s: season.longestEclipse_s });
     if (season.endDay + 1 === day) emit(s, day, 'eclipse-season-end', {});

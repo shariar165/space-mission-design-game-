@@ -54,10 +54,13 @@ export function shedLoads(available_W: number, d: Loads): Loads {
   return { bus, heaters, instruments, radio };
 }
 
-/** Downlink capacity for a day (bits): link rate to the booked dish × booked hours; zero in a conjunction. */
+/**
+ * Downlink capacity for a day (bits): link rate to the booked dish × booked hours; zero in a conjunction. At the
+ * Moon only the share of each orbit Earth can see counts (spec: Moon orbit; orbit-averaged).
+ */
 export function downlinkCapacity_bitsPerDay(day: EnvDay, booking: DsnBooking): number {
   if (day.conjunction || booking.hours <= 0) return 0;
-  return (booking.dish === 70 ? day.rate70_bps : day.rate34_bps) * booking.hours * 3600;
+  return (booking.dish === 70 ? day.rate70_bps : day.rate34_bps) * booking.hours * 3600 * (day.visibleFraction ?? 1);
 }
 
 /** DSN aperture fee per hour ($, FY09): AF = R_B [A_W (0.9 + F_C/10)] (NASA MO&CS Eq. 2-1). */

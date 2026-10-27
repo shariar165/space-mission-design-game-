@@ -47,6 +47,10 @@
     },
     "poleRA_deg": {"value": [269.9949, 0.0031], "unit": "deg, deg per Julian century (J2000 equatorial, T from J2000)", "source": "IAU WGCCRE mean lunar pole (Archinal et al. 2018), right ascension; to verify", "isGameEstimate": true},
     "poleDec_deg": {"value": [66.5392, 0.013], "unit": "deg, deg per Julian century (J2000 equatorial, T from J2000)", "source": "IAU WGCCRE mean lunar pole (Archinal et al. 2018), declination; to verify", "isGameEstimate": true},
+    "rotation": {
+      "W0_deg": {"value": 38.3213, "unit": "deg (prime meridian from the IAU node at J2000)", "source": "IAU WGCCRE 2015 (Archinal et al. 2018), Moon: W = 38.3213 + 13.17635815 d, with the periodic (libration) terms left out (game simplification). The prime meridian is the mean sub-Earth point, so Earth's direction from the Moon follows; to verify", "url": "https://doi.org/10.1007/s10569-017-9805-5", "isGameEstimate": true},
+      "Wdot_degPerDay": {"value": 13.17635815, "unit": "deg per day", "source": "IAU WGCCRE 2015 (Archinal et al. 2018), Moon rotation rate, periodic terms left out (game simplification); to verify", "url": "https://doi.org/10.1007/s10569-017-9805-5", "isGameEstimate": true}
+    },
     "notes": []
   },
   "venus": {
