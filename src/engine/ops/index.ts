@@ -386,6 +386,8 @@ export type * from './fly';
 export { heardMessages, robotMessages, transmissionFeed, VOICE_RULES } from './voice';
 export { downlinkView, missionAlbum, nextImageT, nextPass, scienceTargetsView, SCIENCE_VIEW_RULES } from './scienceView';
 export type * from './scienceView';
+export { hiddenArc, linkUpOnRing, moonOrbitView, onArc } from './moonView';
+export type * from './moonView';
 export { scienceReturned, targetScience } from './observe';
 export type * from './voice';
 export type * from './types';

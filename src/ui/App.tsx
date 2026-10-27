@@ -495,6 +495,7 @@ export function App() {
           launchMoment={!seen.includes(launchKey)}
           onLaunchSeen={() => markSeen(launchKey)}
           onPostcards={addPostcards}
+          {...(level ? { teaches: level.steps } : {})}
         />
       )}
       {step === 'report' && flown && flyDesign && (

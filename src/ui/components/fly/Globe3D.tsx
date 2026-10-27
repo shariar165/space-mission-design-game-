@@ -1,37 +1,51 @@
-// The Mars globe in three.js (spec: UI rule 41; Claude Design "Mars Globe", docs/design/3d/), the hero of Science
-// Targets. The only 3D element in the game: the NASA surface map on a sphere in its true rust and ochre, a green
+// The globe in three.js (spec: UI rules 41, 44; Claude Design "Mars Globe" and "Moon Globe", docs/design/3d/), the
+// hero of Science Targets. The only 3D element in the game: the body's NASA surface map on a sphere in its true colours, a green
 // graticule, a reticle on each surface target, the moons on their rings, and the robot's orbit from the engine
 // (drawn compressed, sdGeometry). Picking a target eases the camera to it; a dipping pass bends the ring down with
 // its low arc tinted by the drag-heating risk; a moon shows the orbit change out to it. When an OBSERVE order lands
-// the orbiter sweeps over the target. Loaded on demand (its own chunk). The markers and labels are the same HTML as
-// the flat globe's (GlobeMarks), moved every frame from the projection.
+// the orbiter sweeps over the target. The Moon (spec: UI rule 45) adds Earth at a shortened distance, the signal line,
+// the ring solid where Earth sees the craft and dashed behind the Moon, the shadow arc, all from the engine
+// (moonOrbitView), and the real Sun's light. Loaded on demand (its own chunk). The markers and labels are the same
+// HTML as the flat globe's (GlobeMarks, MoonMarks), moved every frame from the projection.
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
-import { MARS_GLOBE } from '../../../engine/targets';
+import { linkUpOnRing } from '../../../engine/ops/index';
+import { TARGET_SETS } from '../../../engine/targets';
 import { GLOBE_MIN_FPS, GLOBE_WATCH_MS } from '../../globeRules';
 import {
   behindGlobe,
+  bodyToView,
   easeInOutCubic,
   GLOBE_DRAG_ARC,
   GLOBE_EASE_MS,
   GLOBE_FLYOVER_ARC,
   GLOBE_FLYOVER_MS,
   GLOBE_SPIN_S,
-  GLOBE_VIEW,
+  GLOBE_BODY,
   globeDiscPx,
   globeFrame,
   globeOrbits,
   flyoverTheta,
   labelPlace,
   lonDelta,
+  lunarRing,
+  moonEarthAt,
+  moonFrame,
+  moonLayout,
   moonRing,
+  MOON_SCENE,
   orbitAt,
   orbitPoints,
+  ringArc,
+  ringSplit,
+  signalEnd,
   targetVec,
+  trimAt,
   type Vec3,
 } from '../../sdGeometry';
 import { SCIENCE } from '../../sdWords';
-import { globeLabels, GlobeMarks, type GlobeProps } from './GlobeMarks';
+import { moonAnchor } from './Globe2D';
+import { globeLabels, GlobeMarks, linkWords, moonLabels, MoonMarks, type GlobeProps } from './GlobeMarks';
 
 const D = Math.PI / 180;
 const FOV = 30;
@@ -61,7 +75,7 @@ function liveLine(n: number, mat: THREE.LineBasicMaterial | THREE.LineDashedMate
   return { line, set };
 }
 
-export default function MarsGlobe3D(props: GlobeProps & { onSlow?: () => void }) {
+export default function Globe3D(props: GlobeProps & { onSlow?: () => void }) {
   const host = useRef<HTMLDivElement>(null);
   const refs = useRef<Record<string, HTMLElement | null>>({});
   const live = useRef(props);
@@ -86,7 +100,7 @@ export default function MarsGlobe3D(props: GlobeProps & { onSlow?: () => void })
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, phone ? 1.25 : 1.5));
     renderer.domElement.className = 'sci-globe-gl';
     renderer.domElement.setAttribute('role', 'img');
-    renderer.domElement.setAttribute('aria-label', SCIENCE.globeCredit);
+    renderer.domElement.setAttribute('aria-label', SCIENCE.globeCredit[live.current.body]);
     el.prepend(renderer.domElement);
 
     const scene = new THREE.Scene();
@@ -103,7 +117,7 @@ export default function MarsGlobe3D(props: GlobeProps & { onSlow?: () => void })
     size.current(live.current.w, live.current.h);
 
     const add = THREE.AdditiveBlending;
-    const tex = new THREE.TextureLoader().load(`${import.meta.env.BASE_URL}${MARS_GLOBE.file}`);
+    const tex = new THREE.TextureLoader().load(`${import.meta.env.BASE_URL}${TARGET_SETS[live.current.body].globe.file}`);
     tex.colorSpace = THREE.SRGBColorSpace;
     tex.anisotropy = 4;
     const M = {
@@ -174,18 +188,43 @@ export default function MarsGlobe3D(props: GlobeProps & { onSlow?: () => void })
     const robot = new THREE.Mesh(new THREE.OctahedronGeometry(0.04), M.robot);
     scene.add(ring.line, ghost.line, transfer.line, drag, robot);
 
-    scene.add(new THREE.AmbientLight(0xffffff, 0.35));
+    // The Moon scene: Earth, the far side of the ring (dashed, seen through the Moon like the design), the shadow
+    // arc (amber beads) and the signal line (solid when linked, dashed and broken when not).
+    const moonScene = live.current.body === 'moon';
+    const MM = {
+      earth: new THREE.MeshStandardMaterial({ color: 0x3f86e0, emissive: 0x0b2a5c, emissiveIntensity: 0.7, roughness: 0.8, metalness: 0 }),
+      far: new THREE.LineDashedMaterial({ color: 0x2a9a4a, transparent: true, opacity: 0.8, blending: add, dashSize: 0.04, gapSize: 0.035, depthTest: false }),
+      shade: new THREE.PointsMaterial({ color: 0xffb547, size: phone ? 3 : 4, sizeAttenuation: false, transparent: true, opacity: 0.85, blending: add, depthWrite: false }),
+      sigOn: new THREE.LineBasicMaterial({ color: 0x8dffa8, transparent: true, blending: add }),
+      sigOff: new THREE.LineDashedMaterial({ color: 0x2a9a4a, transparent: true, opacity: 0.7, blending: add, dashSize: 0.06, gapSize: 0.06 }),
+    };
+    const earthMesh = new THREE.Mesh(new THREE.SphereGeometry(MOON_SCENE.earthRadius, 40, 28), MM.earth);
+    const far = liveLine(RING_N, MM.far);
+    far.line.renderOrder = 2;
+    const SHADE_N = 40;
+    const shadeGeo = new THREE.BufferGeometry();
+    shadeGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array((SHADE_N + 1) * 3), 3));
+    const shadeBeads = new THREE.Points(shadeGeo, MM.shade);
+    shadeBeads.frustumCulled = false;
+    const sigOn = liveLine(1, MM.sigOn);
+    const sigOff = liveLine(1, MM.sigOff);
+    if (moonScene) scene.add(earthMesh, far.line, shadeBeads, sigOn.line, sigOff.line);
+
+    scene.add(new THREE.AmbientLight(0xffffff, moonScene ? 0.18 : 0.35));
     const sun = new THREE.DirectionalLight(0xffffff, 2.6);
+    if (moonScene) M.surface.emissiveIntensity = 0.07;
     sun.position.set(-4, 1.6, 3.2);
     scene.add(sun);
+    let linkedNow: boolean | undefined;
 
     // The camera's state: where it looks (lat, lon), how close (zoom), easing from one target to the next.
-    const cur = { lat: GLOBE_VIEW.lat_deg, lon: GLOBE_VIEW.lon_deg, zoom: 1 };
+    const home = live.current.moon ? moonFrame(live.current.moon.now, undefined).view : GLOBE_BODY[live.current.body].view;
+    const cur = { lat: home.lat_deg, lon: home.lon_deg, zoom: 1 };
     let goalId: string | undefined | null = null;
     let from = { ...cur };
     let goal = { lat: cur.lat, lon: cur.lon, zoom: 1 };
     let t0 = performance.now();
-    let theta = -GLOBE_FLYOVER_ARC;
+    let theta = live.current.moon ? live.current.moon.now.theta : -GLOBE_FLYOVER_ARC;
 
     const v3 = new THREE.Vector3();
     const toScreen = (v: Vec3) => {
@@ -217,16 +256,18 @@ export default function MarsGlobe3D(props: GlobeProps & { onSlow?: () => void })
       if (focusId !== goalId) {
         goalId = focusId;
         from = { ...cur };
-        const g = globeFrame(card);
+        const g = P.moon ? moonFrame(P.moon.now, card) : globeFrame(card, P.body);
         goal = { lat: g.view.lat_deg, lon: g.view.lon_deg, zoom: g.zoom };
         t0 = now;
       }
       const e = P.still ? 1 : easeInOutCubic(Math.min(1, (now - t0) / GLOBE_EASE_MS));
+      // A new plane on the Moon (a target's pass): the orbiter starts just before the target, like Mars.
+      if (P.moon && focusId !== undefined && e === 0) theta = -GLOBE_FLYOVER_ARC;
       cur.lat = from.lat + (goal.lat - from.lat) * e;
       cur.lon = from.lon + lonDelta(from.lon, goal.lon) * e;
       cur.zoom = from.zoom + (goal.zoom - from.zoom) * e;
       // The overview turns slowly, like the design; a selected target stays put.
-      if (!card && e >= 1 && !P.still) {
+      if (!card && e >= 1 && !P.still && !P.moon) {
         cur.lon -= (360 / GLOBE_SPIN_S) * dt;
         from.lon = goal.lon = cur.lon;
       }
@@ -234,11 +275,101 @@ export default function MarsGlobe3D(props: GlobeProps & { onSlow?: () => void })
       axis.rotation.x = cur.lat * D;
       body.rotation.y = -(cur.lon + 90) * D;
 
+      // The Moon: Earth beside it, so the disc moves over and shrinks to fit the pair (moonLayout); the camera's view
+      // is shifted by the same pixels.
+      const mv = moonScene ? P.moon : undefined;
+      const E = mv ? moonEarthAt(mv.earth.dir, view) : undefined;
+      const lay = E ? moonLayout(W, H, P.phone, cur.zoom, E) : undefined;
       // Fit the disc to its radius at this zoom: the sphere's apparent half-angle a satisfies tan a = k, d = 1/sin a.
-      const k = ((globeDiscPx(W, H, P.phone) * cur.zoom) / (H / 2)) * Math.tan((FOV * D) / 2);
+      const k = ((lay ? lay.r : globeDiscPx(W, H, P.phone) * cur.zoom) / (H / 2)) * Math.tan((FOV * D) / 2);
       camera.position.set(0, 0, 1 / Math.sin(Math.atan(k)));
       camera.lookAt(0, 0, 0);
+      if (lay) camera.setViewOffset(W, H, W / 2 - lay.cx, H / 2 - lay.cy, W, H);
       camera.updateMatrixWorld();
+
+      if (mv && E) {
+        const pass = card ? mv.passes[card.id] : undefined;
+        const plane = pass ?? mv.now;
+        const lr = lunarRing(plane, view, P.orbit.periapsis_m);
+        const split = ringSplit(lr, RING_N);
+        ring.set(split.near);
+        far.line.visible = split.far.length > 0;
+        if (split.far.length) far.set(split.far);
+        shadeBeads.visible = !card && lr.shadow !== undefined;
+        if (!card && lr.shadow) {
+          const a = shadeGeo.attributes.position as THREE.BufferAttribute;
+          ringArc(lr, lr.shadow, SHADE_N).forEach((v, i) => a.setXYZ(i, v.x, v.y, v.z));
+          a.needsUpdate = true;
+        }
+        ghost.line.visible = transfer.line.visible = drag.visible = false;
+        earthMesh.position.set(E.x, E.y, E.z);
+        earthMesh.rotation.y += dt * 0.25;
+        const s = bodyToView(mv.sun, view);
+        sun.position.set(s.x * 6, s.y * 6, s.z * 6);
+        for (const [id, pulse] of Object.entries(pulses)) {
+          pulse.visible = id === focusId;
+          pulse.scale.setScalar(1 + ((now / 1600) % 1) * 0.9);
+        }
+        if (flying) {
+          const f = P.still ? 0.5 : Math.min(1, (now - flying.t0) / GLOBE_FLYOVER_MS);
+          theta = flyoverTheta(f);
+        } else if (!P.still) theta += ((2 * Math.PI) / MOON_SCENE.lapS) * dt;
+        const rb = orbitAt(lr.r, lr.r, lr.basis, theta);
+        robot.position.set(rb.x, rb.y, rb.z);
+        robot.rotation.set(now / 900, now / 700, 0);
+        const linked = linkUpOnRing(plane, theta);
+        const end = signalEnd(E, rb, linked);
+        sigOn.line.visible = linked;
+        sigOff.line.visible = !linked;
+        (linked ? sigOn : sigOff).set([E, end]);
+        if (linked !== linkedNow) {
+          linkedNow = linked;
+          const el = refs.current.link;
+          if (el) {
+            el.textContent = linkWords(mv, linked);
+            el.classList.toggle('lost', !linked);
+          }
+          host.current?.setAttribute('data-link', linked ? 'up' : 'lost');
+        }
+
+        // The HTML: targets, labels, Earth's brackets and the // break.
+        for (const c of P.cards) {
+          const v = targetVec(c, view);
+          put(`mark:${c.id}`, v, v.z > 0.05);
+        }
+        const sel = card ? targetVec(card, view) : undefined;
+        put('lbl:sel', sel, sel ? sel.z > 0.05 : true);
+        const peri = card ? orbitAt(lr.r, lr.r, lr.basis, 0) : undefined;
+        put('lbl:peri', peri, peri ? !behindGlobe(peri) : true);
+        put('lbl:robot', rb, !behindGlobe(rb));
+        const es = toScreen(E);
+        const eb = refs.current.earth;
+        if (eb) {
+          const er = MOON_SCENE.earthRadius * lay!.r * 2 + 18;
+          eb.style.width = eb.style.height = `${er.toFixed(1)}px`;
+        }
+        const eFront = !behindGlobe(E);
+        put('earth', E, eFront);
+        refs.current.brk?.classList.toggle('behind', !eFront);
+        put('lbl:earth', card ? undefined : E);
+        const ee = toScreen(end);
+        const bk = refs.current.brk;
+        if (bk) {
+          let ang = Math.atan2(ee.y - es.y, ee.x - es.x);
+          if (ang > Math.PI / 2) ang -= Math.PI;
+          if (ang < -Math.PI / 2) ang += Math.PI;
+          bk.style.left = `${(es.x + (ee.x - es.x) * MOON_SCENE.breakAt).toFixed(1)}px`;
+          bk.style.top = `${(es.y + (ee.y - es.y) * MOON_SCENE.breakAt).toFixed(1)}px`;
+          bk.style.setProperty('--a', `${ang.toFixed(3)}rad`);
+        }
+        const tr = trimAt(lr);
+        put('trim', tr, !behindGlobe(tr));
+        if (flying) {
+          const ft = P.cards.find((c) => c.id === flying.targetId);
+          put('scan', ft ? targetVec(ft, view) : undefined);
+        }
+        return;
+      }
 
       const o = globeOrbits(P.orbit, card, view);
       // A dipping pass bends down from the orbit now as the camera arrives.
@@ -326,12 +457,13 @@ export default function MarsGlobe3D(props: GlobeProps & { onSlow?: () => void })
         if (o instanceof THREE.Mesh || o instanceof THREE.Line || o instanceof THREE.Points) o.geometry.dispose();
       });
       Object.values(M).forEach((m) => m.dispose());
+      Object.values(MM).forEach((m) => m.dispose());
       renderer.dispose();
       tex.dispose();
       renderer.domElement.remove();
       size.current = undefined;
     };
-  }, [props.phone]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [props.phone, props.body]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     size.current?.(props.w, props.h);
@@ -340,16 +472,21 @@ export default function MarsGlobe3D(props: GlobeProps & { onSlow?: () => void })
   const focusId = props.flyover?.targetId ?? (props.overview ? undefined : props.selected);
   const focus = props.cards.find((c) => c.id === focusId);
   const rD = globeDiscPx(props.w, props.h, props.phone);
+  const mv = props.body === 'moon' ? props.moon : undefined;
   return (
     <div
       ref={host}
-      className={`sci-globe gl${props.flyover ? ' flyover' : ''}`}
+      className={`sci-globe gl${mv ? ' moon' : ''}${props.flyover ? ' flyover' : ''}`}
       data-globe="3d"
       data-focus={focus?.id ?? 'overview'}
       {...(props.flyover ? { 'data-flyover': props.flyover.targetId } : {})}
     >
-      <div className="sci-globe-anchor" style={{ left: props.w / 2 - rD, top: props.h / 2 - rD, width: 2 * rD, height: 2 * rD }} />
+      <div
+        className="sci-globe-anchor"
+        style={mv ? moonAnchor(mv, props.w, props.h, props.phone) : { left: props.w / 2 - rD, top: props.h / 2 - rD, width: 2 * rD, height: 2 * rD }}
+      />
       <GlobeMarks p={props} labels={globeLabels(focus, props.orbit, props.engineer)} refs={refs} />
+      {mv && <MoonMarks p={props} labels={moonLabels(mv, focus !== undefined, props.trimTag ?? false)} refs={refs} />}
     </div>
   );
 }
