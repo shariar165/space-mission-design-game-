@@ -5,7 +5,7 @@
 // selects a target and the globe turns to it; OBSERVE sends the order, which plays its trip while the panel is open.
 import type { ReactNode } from 'react';
 import type { ScienceTargetsView, TargetCard } from '../../../engine/ops/index';
-import { targetById } from '../../../engine/targets';
+import { targetById, type TargetBody } from '../../../engine/targets';
 import * as f from '../../format';
 import { SCIENCE, targetName } from '../../sdWords';
 import { SDIcon } from '../sd/SDIcon';
@@ -25,6 +25,8 @@ interface Props {
   onDone: () => void;
   robotName: string;
   destName: string;
+  /** Which globe: the credit line. */
+  body: TargetBody;
   engineer: boolean;
   phone: boolean;
   /** The globe (3D or 2D); it fills the stage. */
@@ -78,7 +80,7 @@ function Row({ c, on, open, onSelect, engineer, phone }: { c: TargetCard; on: bo
   );
 }
 
-export function ScienceTargets({ view, selected, onSelect, onObserve, onDone, robotName, destName, engineer, phone, globe, busy = false, orders = [], scanning }: Props) {
+export function ScienceTargets({ view, selected, onSelect, onObserve, onDone, robotName, destName, body, engineer, phone, globe, busy = false, orders = [], scanning }: Props) {
   const sel = view.cards.find((c) => c.id === selected) ?? view.cards[0]!;
   const ok = sel.blocker === undefined;
   const takes = f.durationWords(view.orderTakes_s);
@@ -114,11 +116,11 @@ export function ScienceTargets({ view, selected, onSelect, onObserve, onDone, ro
   );
   if (phone)
     return (
-      <section className="sci hero phone" aria-label={SCIENCE.titlePhone}>
+      <section className="sci hero phone" aria-label={SCIENCE.titlePhone(destName.toUpperCase())}>
         <div className="sci-stage">
           {globe}
           <div className="sci-hud">
-            <span className="sci-title">{SCIENCE.titlePhone}</span>
+            <span className="sci-title">{SCIENCE.titlePhone(destName.toUpperCase())}</span>
             {stripEl}
           </div>
         </div>
@@ -141,7 +143,7 @@ export function ScienceTargets({ view, selected, onSelect, onObserve, onDone, ro
           {stripEl}
         </div>
         <span className="sci-credit">
-          {SCIENCE.globeCredit} · {SCIENCE.notToScale}
+          {SCIENCE.globeCredit[body]} · {SCIENCE.notToScale}
         </span>
       </div>
       {keys}

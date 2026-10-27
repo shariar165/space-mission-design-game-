@@ -1,15 +1,18 @@
-// The HTML over the Mars globe, the same for the three.js globe and the flat one (spec: UI rule 41): a marker per
+// The HTML over the globe, the same for the three.js globe and the flat one (spec: UI rule 41): a marker per
 // target, the selected target's label, the orbit labels (the periapsis of a dipping pass with its drag-heating risk,
 // a moon's apoapsis), the orbiter's name and the scan flash when an OBSERVE order lands. The flat globe places them
 // as it renders; the 3D globe moves them every frame through `refs`. Every number is the engine's (TargetCard,
 // ScienceTargetsView.orbit); the drawing itself is not to scale.
 import type { MutableRefObject } from 'react';
 import type { ScienceTargetsView, TargetCard } from '../../../engine/ops/index';
+import type { TargetBody } from '../../../engine/targets';
 import * as f from '../../format';
 import { GLOBE_LABEL, labelPlace } from '../../sdGeometry';
 import { SCIENCE, targetName } from '../../sdWords';
 
 export interface GlobeProps {
+  /** Which globe (spec: UI rule 44): its map, view and words. */
+  body: TargetBody;
   cards: TargetCard[];
   orbit: ScienceTargetsView['orbit'];
   selected?: string;

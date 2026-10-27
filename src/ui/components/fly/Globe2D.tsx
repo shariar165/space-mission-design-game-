@@ -1,9 +1,9 @@
-// The flat Mars globe (spec: UI rule 41): the NASA surface map drawn orthographically on a canvas, with the same
+// The flat globe (spec: UI rules 41, 44): the body's NASA surface map drawn orthographically on a canvas, with the same
 // orbit drawing and labels as the 3D globe (sdGeometry: globeFrame, globeOrbits). It is the fallback when WebGL is
 // missing or slow, and the globe in component tests. Same interactions, no camera motion: picking a target re-centres
 // the view at once. The orbiter still flies over a target when an OBSERVE order lands. Pixel layout only.
 import { useEffect, useRef, useState } from 'react';
-import { MARS_GLOBE } from '../../../engine/targets';
+import { TARGET_SETS, type GlobeMap, type TargetBody } from '../../../engine/targets';
 import {
   behindGlobe,
   GLOBE_DRAG_ARC,
@@ -26,12 +26,14 @@ import {
 import { SCIENCE } from '../../sdWords';
 import { globeLabels, GlobeMarks, type GlobeProps, type ScreenAt } from './GlobeMarks';
 
-export const globeSrc = () => `${import.meta.env.BASE_URL}${MARS_GLOBE.file}`;
+export const globeSrc = (body: TargetBody) => `${import.meta.env.BASE_URL}${TARGET_SETS[body].globe.file}`;
 
-/** The surface map's pixels, loaded once and shared by every globe on the page. */
-let mapPixels: Promise<ImageData | undefined> | undefined;
-function loadMap(): Promise<ImageData | undefined> {
-  mapPixels ??= new Promise((resolve) => {
+/** Each body's surface map pixels, loaded once and shared by every globe on the page. */
+const mapPixels = new Map<TargetBody, Promise<ImageData | undefined>>();
+function loadMap(body: TargetBody): Promise<ImageData | undefined> {
+  let pixels = mapPixels.get(body);
+  if (pixels) return pixels;
+  pixels = new Promise((resolve) => {
     if (typeof Image === 'undefined') return resolve(undefined);
     const img = new Image();
     img.onload = () => {
@@ -44,18 +46,19 @@ function loadMap(): Promise<ImageData | undefined> {
       resolve(g.getImageData(0, 0, c.width, c.height));
     };
     img.onerror = () => resolve(undefined);
-    img.src = globeSrc();
+    img.src = globeSrc(body);
   });
-  return mapPixels;
+  mapPixels.set(body, pixels);
+  return pixels;
 }
 
 /** Draw the lit globe into a square canvas: each pixel samples the equirectangular map (lon −180…180). */
-function paint(canvas: HTMLCanvasElement, map: ImageData, view: GlobeView) {
+function paint(canvas: HTMLCanvasElement, map: ImageData, view: GlobeView, globe: GlobeMap) {
   const n = canvas.width;
   const g = canvas.getContext('2d');
   if (!g) return;
   const out = g.createImageData(n, n);
-  const lon0 = MARS_GLOBE.lon0_deg.value;
+  const lon0 = globe.lon0_deg.value;
   for (let j = 0; j < n; j++) {
     for (let i = 0; i < n; i++) {
       const ll = globeLatLon((2 * (i + 0.5)) / n - 1, (2 * (j + 0.5)) / n - 1, view);
@@ -110,11 +113,11 @@ function paths(pts: Vec3[], to: (v: Vec3) => ScreenAt): { front: string; back: s
   return { front, back };
 }
 
-export function MarsGlobe2D(p: GlobeProps & { className?: string }) {
+export function Globe2D(p: GlobeProps & { className?: string }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const focusId = p.flyover?.targetId ?? (p.overview ? undefined : p.selected);
   const focus = p.cards.find((c) => c.id === focusId);
-  const { view, zoom } = globeFrame(focus);
+  const { view, zoom } = globeFrame(focus, p.body);
   const rD = globeDiscPx(p.w, p.h, p.phone);
   const r = rD * zoom;
   const cx = p.w / 2;
@@ -123,13 +126,13 @@ export function MarsGlobe2D(p: GlobeProps & { className?: string }) {
 
   useEffect(() => {
     let live = true;
-    void loadMap().then((map) => {
-      if (live && map && ref.current) paint(ref.current, map, view);
+    void loadMap(p.body).then((map) => {
+      if (live && map && ref.current) paint(ref.current, map, view, TARGET_SETS[p.body].globe);
     });
     return () => {
       live = false;
     };
-  }, [view.lat_deg, view.lon_deg, px]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [view.lat_deg, view.lon_deg, px, p.body]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const to = (v: Vec3): ScreenAt => ({ x: cx + v.x * r, y: cy - v.y * r, front: !behindGlobe(v) });
   const o = globeOrbits(p.orbit, focus, view);
@@ -178,7 +181,7 @@ export function MarsGlobe2D(p: GlobeProps & { className?: string }) {
         height={px}
         style={{ left: cx - r, top: cy - r, width: 2 * r, height: 2 * r }}
         role="img"
-        aria-label={SCIENCE.globeCredit}
+        aria-label={SCIENCE.globeCredit[p.body]}
       />
       <div className="sci-globe-edge" style={{ left: cx - r, top: cy - r, width: 2 * r, height: 2 * r }} />
       <svg className="sci-globe-orbits" width={p.w} height={p.h} aria-hidden="true">

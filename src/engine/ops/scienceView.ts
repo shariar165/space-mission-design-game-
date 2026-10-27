@@ -2,7 +2,7 @@
 // arrival at Mars or on Moon 3: one card per target with its costs from the observation plan, the order's travel
 // time, and the pictures on their way down. Pure functions of the state; the UI formats only.
 import { SCIENCE_RULES } from '../science';
-import { MARS_MOONS, type Target } from '../targets';
+import { MARS_MOONS, type Target, type TargetBody } from '../targets';
 import { gameEstimate, type Sourced } from '../types';
 import { inMoratorium, oneWayAt } from './commands';
 import { segmentsFromFraction } from './fly';
@@ -67,6 +67,8 @@ export interface TargetCard {
 export interface ScienceTargetsView {
   /** The craft is in orbit with targets (Mars, Moon 3) and flying: the panel can open. */
   available: boolean;
+  /** Which globe: Mars, or the Moon (spec: UI rule 44). */
+  body: TargetBody;
   /** The science orbit now: periapsis and apoapsis altitudes (m) and inclination (deg). */
   orbit: { periapsis_m: number; apoapsis_m: number; inclination_deg: number };
   cards: TargetCard[];
@@ -148,6 +150,7 @@ export function scienceTargetsView(s: OpsState): ScienceTargetsView {
   });
   return {
     available,
+    body: env.design.destination === 'moon' ? 'moon' : 'mars',
     orbit,
     cards,
     orderTakes_s: oneWayAt(env, s.t),

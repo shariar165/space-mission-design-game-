@@ -21,7 +21,7 @@ import { play } from '../sound';
 import { DangerCard, type CardView, type ChipView, type ChoiceView } from '../components/fly/DangerCard';
 import { EquationsPanel } from '../components/fly/EquationsPanel';
 import { Downlink } from '../components/fly/Downlink';
-import { MarsGlobe } from '../components/fly/MarsGlobe';
+import { Globe } from '../components/fly/Globe';
 import { useArrivalZoom, type ZoomDirection } from '../components/fly/arrivalZoom';
 import { ScienceTargets } from '../components/fly/ScienceTargets';
 import { BackButton } from '../components/sd/BackButton';
@@ -729,12 +729,14 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
       busy={zoom.running}
       robotName={name}
       destName={dest.name}
+      body={sci.body}
       engineer={engineer}
       phone={phone}
       orders={view.commands.filter((c) => c.kind === 'observe' && c.status === 'in-flight' && c.targetId).map((c) => ({ targetId: c.targetId!, timeLeft_s: c.timeLeft_s }))}
       {...(flyover ? { scanning: flyover.targetId } : {})}
       globe={
-        <MarsGlobe
+        <Globe
+          body={sci.body}
           cards={sci.cards}
           orbit={sci.orbit}
           selected={sciSelected}

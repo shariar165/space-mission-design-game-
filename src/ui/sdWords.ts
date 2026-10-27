@@ -4,6 +4,7 @@ import type { FailureEffect, OpsPhase } from '../engine/data';
 import type { ComingUpKind, ConsoleOutcome, FlyChip, RobotMessage, VoiceKind } from '../engine/ops/index';
 import type { DeckCard, FuelFix, PackBlockerCode, PartId } from '../engine/pack';
 import type { FinalTransmission, Hurt, ReportPanel, Saved } from '../engine/ops/report';
+import type { TargetBody } from '../engine/targets';
 import type { Category } from '../engine/scoring';
 import type { LessonCategory, LessonUnlock } from '../engine/notebook';
 import type { SDIconName } from './components/sd/SDIcon';
@@ -1005,7 +1006,7 @@ export const BADGE_WORDS: Record<string, { name: string; how: string }> = {
 /** Science Targets in the CRT after arrival (spec: UI rule 39; design screen 01, SCIENCE TARGETS). */
 export const SCIENCE = {
   title: (dest: string) => `${dest} ORBIT · SCIENCE TARGETS`,
-  titlePhone: 'MARS ORBIT · PICK TARGETS',
+  titlePhone: (dest: string) => `${dest} ORBIT · PICK TARGETS`,
   hint: 'EVERY PICTURE COSTS FUEL, BATTERY OR RISK. YOU CAN’T SEE IT ALL.',
   hintSome: (n: string) => `${n} ORDERED · EVERY PICTURE COSTS FUEL, BATTERY OR RISK`,
   image: 'IMAGE',
@@ -1035,7 +1036,7 @@ export const SCIENCE = {
   skip: 'SKIP SCIENCE',
   skipShort: 'SKIP',
   reopen: 'SCIENCE',
-  globeCredit: 'MARS · NASA/USGS VIKING MOSAIC',
+  globeCredit: { mars: 'MARS · NASA/USGS VIKING MOSAIC', moon: 'MOON · NASA SVS CGI MOON KIT (LROC)' } as Record<TargetBody, string>,
   eng: (res: string, size: string, dv: string, days: string) => `RES ${res}/PX · ${size} · Δv ${dv} · ${days}`,
   marker: (n: string, name: string) => `${n} ${name}`,
   moonRing: (name: string) => `${name} ORBIT`,
@@ -1106,9 +1107,12 @@ export const DOWNLINK = {
   credit: (credit: string, mission: string, id: string) => `IMAGE CREDIT: ${credit} · ${mission} · ${id}`,
 };
 
-/** The Mars globe's 2D/3D toggle (spec: UI rule 41). */
+/** A globe's body in words. */
+export const bodyWord = (b: TargetBody) => ({ mars: 'Mars', moon: 'Moon' })[b];
+
+/** The globe's 2D/3D toggle (spec: UI rules 41, 44). */
 export const GLOBE_WORDS = {
-  toggleLabel: 'Switch the Mars globe between 3D and flat',
+  toggleLabel: (body: string) => `Switch the ${body} globe between 3D and flat`,
   to2d: '2D',
   to3d: '3D',
 };

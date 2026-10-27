@@ -166,7 +166,7 @@ describe('phone: a full-width globe and a bottom sheet', () => {
     vi.useFakeTimers();
     render(<FlyAndSurvive design={maven} seed={2013} mode="cadet" onMode={vi.fn()} missionName="Orbiter-1" onHome={vi.fn()} onDone={vi.fn()} robotName="VOYA" />);
     pass(100);
-    const phonePanel = () => screen.queryByRole('region', { name: SCIENCE.titlePhone });
+    const phonePanel = () => screen.queryByRole('region', { name: SCIENCE.titlePhone('MARS') });
     for (let i = 0; i < 300 && !phonePanel(); i++) {
       const go = screen.queryByRole('button', { name: 'CONTINUE ▸' }) ?? screen.queryByRole('button', { name: /LET THE ROBOT DECIDE/ });
       if (go) act(() => fireEvent.click(go));

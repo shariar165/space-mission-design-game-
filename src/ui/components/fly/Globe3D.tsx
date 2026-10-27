@@ -1,5 +1,5 @@
-// The Mars globe in three.js (spec: UI rule 41; Claude Design "Mars Globe", docs/design/3d/), the hero of Science
-// Targets. The only 3D element in the game: the NASA surface map on a sphere in its true rust and ochre, a green
+// The globe in three.js (spec: UI rules 41, 44; Claude Design "Mars Globe" and "Moon Globe", docs/design/3d/), the
+// hero of Science Targets. The only 3D element in the game: the body's NASA surface map on a sphere in its true colours, a green
 // graticule, a reticle on each surface target, the moons on their rings, and the robot's orbit from the engine
 // (drawn compressed, sdGeometry). Picking a target eases the camera to it; a dipping pass bends the ring down with
 // its low arc tinted by the drag-heating risk; a moon shows the orbit change out to it. When an OBSERVE order lands
@@ -7,7 +7,7 @@
 // the flat globe's (GlobeMarks), moved every frame from the projection.
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
-import { MARS_GLOBE } from '../../../engine/targets';
+import { TARGET_SETS } from '../../../engine/targets';
 import { GLOBE_MIN_FPS, GLOBE_WATCH_MS } from '../../globeRules';
 import {
   behindGlobe,
@@ -17,7 +17,7 @@ import {
   GLOBE_FLYOVER_ARC,
   GLOBE_FLYOVER_MS,
   GLOBE_SPIN_S,
-  GLOBE_VIEW,
+  GLOBE_BODY,
   globeDiscPx,
   globeFrame,
   globeOrbits,
@@ -61,7 +61,7 @@ function liveLine(n: number, mat: THREE.LineBasicMaterial | THREE.LineDashedMate
   return { line, set };
 }
 
-export default function MarsGlobe3D(props: GlobeProps & { onSlow?: () => void }) {
+export default function Globe3D(props: GlobeProps & { onSlow?: () => void }) {
   const host = useRef<HTMLDivElement>(null);
   const refs = useRef<Record<string, HTMLElement | null>>({});
   const live = useRef(props);
@@ -86,7 +86,7 @@ export default function MarsGlobe3D(props: GlobeProps & { onSlow?: () => void })
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, phone ? 1.25 : 1.5));
     renderer.domElement.className = 'sci-globe-gl';
     renderer.domElement.setAttribute('role', 'img');
-    renderer.domElement.setAttribute('aria-label', SCIENCE.globeCredit);
+    renderer.domElement.setAttribute('aria-label', SCIENCE.globeCredit[live.current.body]);
     el.prepend(renderer.domElement);
 
     const scene = new THREE.Scene();
@@ -103,7 +103,7 @@ export default function MarsGlobe3D(props: GlobeProps & { onSlow?: () => void })
     size.current(live.current.w, live.current.h);
 
     const add = THREE.AdditiveBlending;
-    const tex = new THREE.TextureLoader().load(`${import.meta.env.BASE_URL}${MARS_GLOBE.file}`);
+    const tex = new THREE.TextureLoader().load(`${import.meta.env.BASE_URL}${TARGET_SETS[live.current.body].globe.file}`);
     tex.colorSpace = THREE.SRGBColorSpace;
     tex.anisotropy = 4;
     const M = {
@@ -180,7 +180,8 @@ export default function MarsGlobe3D(props: GlobeProps & { onSlow?: () => void })
     scene.add(sun);
 
     // The camera's state: where it looks (lat, lon), how close (zoom), easing from one target to the next.
-    const cur = { lat: GLOBE_VIEW.lat_deg, lon: GLOBE_VIEW.lon_deg, zoom: 1 };
+    const home = GLOBE_BODY[live.current.body].view;
+    const cur = { lat: home.lat_deg, lon: home.lon_deg, zoom: 1 };
     let goalId: string | undefined | null = null;
     let from = { ...cur };
     let goal = { lat: cur.lat, lon: cur.lon, zoom: 1 };
@@ -217,7 +218,7 @@ export default function MarsGlobe3D(props: GlobeProps & { onSlow?: () => void })
       if (focusId !== goalId) {
         goalId = focusId;
         from = { ...cur };
-        const g = globeFrame(card);
+        const g = globeFrame(card, P.body);
         goal = { lat: g.view.lat_deg, lon: g.view.lon_deg, zoom: g.zoom };
         t0 = now;
       }
@@ -331,7 +332,7 @@ export default function MarsGlobe3D(props: GlobeProps & { onSlow?: () => void })
       renderer.domElement.remove();
       size.current = undefined;
     };
-  }, [props.phone]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [props.phone, props.body]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     size.current?.(props.w, props.h);

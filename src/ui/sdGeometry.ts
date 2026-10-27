@@ -2,6 +2,7 @@
 // positions come from the engine in metres and are only scaled into the drawing.
 import { useEffect, useState } from 'react';
 import type { XY } from '../engine/flightMap';
+import type { TargetBody } from '../engine/targets';
 
 /** The CRT map's drawing: 1000 × 600 units, the Sun (or Earth for the Moon) at the centre (as the design). */
 export const MAP_W = 1000;
@@ -240,6 +241,12 @@ export const GLOBE_DISC_FILL = { desktop: 0.7, phone: 0.62 } as const;
 export const globeDiscPx = (w: number, h: number, phone: boolean) => (GLOBE_DISC_FILL[phone ? 'phone' : 'desktop'] * Math.min(w, h)) / 2;
 /** How each kind of target is framed: the disc's scale against the overview (moons: their ring must fit). */
 export const GLOBE_ZOOM = { overview: 1, surface: 1.3, limb: 1.1, phobos: 0.52, deimos: 0.42 } as const;
+
+/** Each globe's look (spec: UI rule 44): where the overview looks and how each target is framed. */
+export const GLOBE_BODY: Record<TargetBody, { view: GlobeView; zoom: typeof GLOBE_ZOOM }> = {
+  mars: { view: GLOBE_VIEW, zoom: GLOBE_ZOOM },
+  moon: { view: GLOBE_VIEW, zoom: GLOBE_ZOOM },
+};
 /** The camera eases to a new target in this long (3D only; the flat globe cuts). */
 export const GLOBE_EASE_MS = 900;
 /** The orbiter's pass over a target when an OBSERVE order lands, and the scan flash in it. */
@@ -355,16 +362,17 @@ export interface GlobeOrbit {
 }
 
 /** Where the globe looks and how close, to show a target (the overview with none). */
-export function globeFrame(t: GlobeTarget | undefined): { view: GlobeView; zoom: number } {
-  if (!t) return { view: GLOBE_VIEW, zoom: GLOBE_ZOOM.overview };
+export function globeFrame(t: GlobeTarget | undefined, body: TargetBody = 'mars'): { view: GlobeView; zoom: number } {
+  const { view: home, zoom: Z } = GLOBE_BODY[body];
+  if (!t) return { view: home, zoom: Z.overview };
   if (t.kind === 'surface') {
     const lat = Math.max(-GLOBE_MAX_TILT_DEG, Math.min(GLOBE_MAX_TILT_DEG, t.lat_deg ?? 0));
     // At the pole every longitude meets: no side step, the tilt already shows it from the side.
     const side = Math.abs(t.lat_deg ?? 0) > GLOBE_MAX_TILT_DEG ? 0 : GLOBE_SIDE_DEG;
-    return { view: { lat_deg: lat, lon_deg: (t.lon_deg ?? 0) + side }, zoom: GLOBE_ZOOM.surface };
+    return { view: { lat_deg: lat, lon_deg: (t.lon_deg ?? 0) + side }, zoom: Z.surface };
   }
-  if (t.kind === 'limb') return { view: GLOBE_VIEW, zoom: GLOBE_ZOOM.limb };
-  return { view: GLOBE_VIEW, zoom: t.id === 'deimos' ? GLOBE_ZOOM.deimos : GLOBE_ZOOM.phobos };
+  if (t.kind === 'limb') return { view: home, zoom: Z.limb };
+  return { view: home, zoom: t.id === 'deimos' ? Z.deimos : Z.phobos };
 }
 
 /** Where a target's marker sits in the view frame. */
