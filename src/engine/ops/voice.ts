@@ -90,6 +90,8 @@ export interface MessageValues {
   /** Science targets: the target, how long the observation lasts (days), why an order was refused. */
   targetId?: string;
   days?: number;
+  /** The Moon's far side: the robot observes alone, out of Earth's sight. */
+  farSide?: boolean;
   reason?: string;
   commandId?: number;
   by?: string;
@@ -179,7 +181,10 @@ function voiceOf(e: OpsEvent, s: OpsState): { kind: VoiceKind; values: MessageVa
     case 'prime-complete':
       return { kind: 'prime-complete', values: {} };
     case 'observe-start':
-      return { kind: 'observing', values: { commandId: Number(v.commandId), commandKind: 'observe', targetId: String(v.targetId), days: Number(v.days) } };
+      return {
+        kind: 'observing',
+        values: { commandId: Number(v.commandId), commandKind: 'observe', targetId: String(v.targetId), days: Number(v.days), ...(v.farSide ? { farSide: true } : {}) },
+      };
     case 'observe-refused':
       return { kind: 'observe-refused', values: { commandId: Number(v.commandId), commandKind: 'observe', targetId: String(v.targetId), reason: String(v.reason) } };
     case 'image-sent':

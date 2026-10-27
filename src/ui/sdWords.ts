@@ -783,6 +783,10 @@ export const TARGET_WORDS: Record<string, { name: string; comment: string }> = {
   phobos: { name: 'PHOBOS', comment: 'CLOSE ENOUGH TO SEE THE GROOVES. IT IS FALLING TOWARD MARS. SLOWLY.' },
   deimos: { name: 'DEIMOS', comment: 'SMALL. QUIET. SMOOTH, LIKE SAND POURED OVER IT.' },
   limb: { name: 'THIN AIR AT THE LIMB', comment: 'THE SKY HERE IS ONE THIN LINE. I FLEW LOW TO SEE IT.' },
+  'apollo-11': { name: 'THE APOLLO 11 SITE', comment: 'THE LANDER IS STILL THERE. SO ARE THEIR FOOTPRINTS.' },
+  tycho: { name: 'TYCHO', comment: 'SUNRISE ON THE CENTRAL PEAK. ITS SHADOW REACHED ACROSS THE FLOOR.' },
+  shackleton: { name: 'SHACKLETON', comment: 'THE RIM IS LIT. THE FLOOR HAS NEVER SEEN THE SUN.' },
+  tsiolkovskiy: { name: 'TSIOLKOVSKIY', comment: 'DARK LAVA ON THE FAR SIDE. NO ONE ON EARTH HAS EVER SEEN THIS WITH THEIR OWN EYES.' },
 };
 
 export const targetName = (id: string) => TARGET_WORDS[id]?.name ?? id.toUpperCase();
@@ -796,6 +800,7 @@ export const VOICE_ALT = {
   goalMet: 'SCIENCE GOAL MET. EVERYTHING I CAME FOR IS SENT HOME.',
   hitUnknown: 'TROUBLE UP HERE. SOMETHING JUST WENT WRONG.',
   observeDip: 'ORDER RECEIVED. DIPPING LOW FOR {target}. IMAGE QUEUED. BACK UP IN {days}.',
+  observeFarSide: 'ORDER RECEIVED. {target} IS ON THE FAR SIDE. I WILL SHOOT IT ALONE, OUT OF YOUR SIGHT. IMAGE QUEUED.',
   refusedFuel: 'NOT ENOUGH FUEL FOR {target}. I KEEP WHAT I NEED TO STAY UP.',
   refusedUnreachable: 'I CANNOT SEE {target} CLEARLY FROM THIS ORBIT.',
   refusedAlready: '{target} IS ALREADY ON MY LIST.',
@@ -865,6 +870,7 @@ export function robotSays(m: RobotMessage, ctx: VoiceContext): string {
   else if (m.kind === 'acted-alone' && v.by === 'standing-order') t = VOICE_ALT.standingChoice;
   else if (m.kind === 'science-milestone' && (v.fraction ?? 0) >= 1) t = VOICE_ALT.goalMet;
   else if (m.kind === 'observing' && (v.days ?? 1) > 1) t = VOICE_ALT.observeDip;
+  else if (m.kind === 'observing' && v.farSide) t = VOICE_ALT.observeFarSide;
   else if (m.kind === 'observe-refused' && v.reason === 'fuel') t = VOICE_ALT.refusedFuel;
   else if (m.kind === 'observe-refused' && v.reason === 'unreachable') t = VOICE_ALT.refusedUnreachable;
   else if (m.kind === 'observe-refused' && v.reason === 'already-ordered') t = VOICE_ALT.refusedAlready;

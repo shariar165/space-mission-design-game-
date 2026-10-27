@@ -574,7 +574,12 @@ They follow the Mars rules (Science targets and downlink), with these difference
 - **No dips needed.** The camera is LROC's Narrow Angle Camera: IFOV 10 µrad, so 0.5 m per pixel at 50 km. The game's resolutions are met without lowering the orbit, and there is no atmosphere, so no drag.
 - **Tsiolkovskiy** lies on the far side, so its pass is always out of contact. The robot takes the picture alone and keeps it until the link is back.
 - **Shackleton** sits under every orbit of a polar ground track.
-- **Pictures** are LROC frames from the PDS archive (public domain), credited NASA/GSFC/Arizona State University.
+- **Pictures** are LROC frames from the PDS archive (public domain), credited NASA/GSFC/Arizona State University (`moonTargets.json`, made by `scripts/fetch-targets.py`):
+  - Apollo 11: M175124932R, from 24 km;
+  - Tycho: the oblique pair M162350671L/R, side by side;
+  - Shackleton: the oblique M1346257675L, squeezed along the strip by cos(emission) to undo the slant;
+  - Tsiolkovskiy: M113107391L.
+- **Words:** the robot's order reply for a far-side target says it will shoot alone, out of Earth's sight. Its picture still comes home on the next pass Earth can see.
 - **Scoring:** science returned is Σ wᵢ over the pictures home, with the same star rules. Moon 1 and Moon 2 keep the data ratio.
 
 ## Validation set
@@ -944,3 +949,4 @@ The UI (`src/ui/`, React + Vite) follows the Claude Design mockups for Build Bay
 | 74 | Oct 27, 2026 | **Moon pictures from the PDS** (user's choice). LROC website images are copyrighted by ASU (educational use is allowed with credit), while PDS products are public domain. So the game crops PDS frames, credited NASA/GSFC/Arizona State University. |
 | 75 | Oct 27, 2026 | **Shackleton at the IAU Gazetteer centre** (user's choice), 89.67°S 129.78°E (Feature 5450), not the mockup's 89.9°S 0°. |
 | 76 | Oct 27, 2026 | **Moon texture: NASA SVS CGI Moon Kit** (user's choice; svs.gsfc.nasa.gov/4720, the LROC WAC Hapke-normalised mosaic), not the mockup's procedural `moon-map.js`. |
+| 77 | Oct 27, 2026 | **Moon target pictures** (verified on their catalogue pages): Apollo 11 M175124932R, Tycho M162350671L/R (the same frame as NASA SVS 4220), Tsiolkovskiy M113107391L (LROC's own feature frame). For Shackleton the 2009 nadir frames were mostly shadow and the 100 m WAC browse is interleaved framelets, so the game uses the 2020 oblique M1346257675L. The pole falls on its rim there (frame line 0.63), as expected. It is squeezed by cos 66.7° to undo the slant, which the image record says. The polar NAC mosaics (2–8 GB) were too large to fetch for one crop. |

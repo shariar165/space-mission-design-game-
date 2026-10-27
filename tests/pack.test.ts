@@ -14,6 +14,7 @@ import {
   fitPart,
   initialPack,
   noseSquares,
+  onDay,
   PACK,
   packBlockers,
   packPart,
@@ -220,5 +221,21 @@ describe('the launch calendar', () => {
     const days = calendarTransfers('moon', moon.launchDate);
     expect(new Set(days.map((t) => t.c3)).size).toBe(1);
     expect(PARTS.power.batteryMaxDepthOfDischarge.value).toBe(0.3);
+  });
+});
+
+describe('Moon 3 flies its science targets (spec: Moon orbit, Targets)', () => {
+  it('only Moon 3 is flagged, and the flag survives packing and the launch day', async () => {
+    const { LEVELS } = await import('../src/ui/levels');
+    const { hasTargets } = await import('../src/engine/ops/observe');
+    const { prepareOps } = await import('../src/engine/ops/timeline');
+    expect(LEVELS.filter((l) => l.targets).map((l) => l.id)).toEqual(['moon-3']);
+    const base = { ...starterDesign('moon', FROM), scienceTargets: true };
+    const d = buildPackDesign(base, initialPack(base, shelfFor('moon')));
+    expect(d.scienceTargets).toBe(true);
+    const day = calendarTransfers('moon', d.launchDate)[0]!;
+    expect(onDay(d, day).scienceTargets).toBe(true);
+    expect(hasTargets(prepareOps(d))).toBe(true);
+    expect(hasTargets(prepareOps(starterDesign('moon', FROM)))).toBe(false);
   });
 });

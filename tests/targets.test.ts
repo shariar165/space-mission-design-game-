@@ -62,3 +62,63 @@ describe('science targets data', () => {
     expect(targetById('nope')).toBeUndefined();
   });
 });
+
+describe('Moon targets data (src/data/moonTargets.json; spec: Moon orbit, Targets)', () => {
+  it('has the design’s four targets, in order, each from the Gazetteer or LROC’s published Apollo 11 position', async () => {
+    const { TARGET_SETS } = await import('../src/engine/targets');
+    const moon = TARGET_SETS.moon;
+    expect(moon.targets.map((t) => t.id)).toEqual(['apollo-11', 'tycho', 'shackleton', 'tsiolkovskiy']);
+    // IAU Gazetteer solution 1 (planetographic, +East) and LROC 2016 for the lunar module
+    const at = (id: string) => [moon.targets.find((t) => t.id === id)!.lat_deg!.value, moon.targets.find((t) => t.id === id)!.lon_deg!.value];
+    expect(at('apollo-11')).toEqual([0.67416, 23.47314]);
+    expect(at('tycho')).toEqual([-43.3, -11.22]);
+    expect(at('shackleton')).toEqual([-89.67, 129.78]);
+    expect(at('tsiolkovskiy')).toEqual([-20.38, 128.97]);
+    for (const t of moon.targets) {
+      expect(t.kind).toBe('surface');
+      expect(t.body).toBe('moon');
+      expect(t.lat_deg!.isGameEstimate).toBe(false);
+      expect(t.lat_deg!.url).toMatch(/planetarynames\.wr\.usgs\.gov\/Feature|nssdc\.gsfc\.nasa\.gov/);
+    }
+  });
+
+  it('weights share out the whole of Moon 3’s science: 0.20 + 0.25 + 0.30 + 0.25 = 1', async () => {
+    const { TARGET_SETS } = await import('../src/engine/targets');
+    expect(TARGET_SETS.moon.targets.reduce((a, t) => a + t.weight.value, 0)).toBeCloseTo(1, 12);
+  });
+
+  it('every picture is a public-domain LROC PDS frame, credited NASA/GSFC/Arizona State University, shipped under 250 KB', async () => {
+    const { TARGET_SETS } = await import('../src/engine/targets');
+    for (const t of TARGET_SETS.moon.targets) {
+      expect(t.image.nasaId).toMatch(/^M\d{9,10}[LR](\/R)?$/);
+      expect(t.image.credit).toBe('NASA/GSFC/Arizona State University');
+      expect(t.image.usage.value).toMatch(/^Public domain: an LROC data product from the PDS archive/);
+      expect(t.image.usage.url).toMatch(/^https:\/\/data\.lroc\.im-ldi\.com\/lroc\/view_lroc\/LRO-L-LROC-3-CDR-V1\.0\//);
+      const f = publicFile(t.image.file);
+      expect(existsSync(f), t.image.file).toBe(true);
+      expect(statSync(f).size).toBeLessThan(250 * 1024);
+    }
+  });
+
+  it('the camera is LROC’s NAC (10 µrad: 0.5 m per pixel from 50 km) and the globe map is NASA SVS’s CGI Moon Kit', async () => {
+    const { TARGET_SETS } = await import('../src/engine/targets');
+    const moon = TARGET_SETS.moon;
+    expect(moon.camera.ifov_urad.value).toBe(10);
+    // 0.5 m ÷ 10 µrad = 50,000 m
+    expect(moon.camera.ifov_urad.isGameEstimate).toBe(false);
+    expect(existsSync(publicFile(moon.globe.file))).toBe(true);
+    expect(moon.globe.credit).toMatch(/Scientific Visualization Studio/);
+    expect(moon.globe.lon0_deg.value).toBe(-180);
+    // Mars keeps its own set
+    expect(TARGET_SETS.mars.targets).toBe(TARGETS);
+    expect(TARGET_SETS.mars.globe).toBe(MARS_GLOBE);
+  });
+
+  it('target ids are unique across both bodies, and targetById finds either', async () => {
+    const { TARGET_SETS } = await import('../src/engine/targets');
+    const ids = [...TARGET_SETS.mars.targets, ...TARGET_SETS.moon.targets].map((t) => t.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(targetById('tycho')!.body).toBe('moon');
+    expect(targetById('phobos')!.body).toBe('mars');
+  });
+});

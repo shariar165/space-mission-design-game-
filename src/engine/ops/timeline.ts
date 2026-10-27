@@ -51,7 +51,7 @@ import type {
 import { stormCandidates, type RealStorm } from '../spaceWeather';
 import { density_kgm3, SCIENCE_RULES } from '../science';
 import { MARS_ATMOSPHERE, TARGETS, targetById } from '../targets';
-import { dragFactorAt, hasTargets, imageOf, OBSERVE_RULES, observationFor, observeLoadAt } from './observe';
+import { dragFactorAt, imageOf, OBSERVE_RULES, observationFor, observeLoadAt, onFarSide, targetsOf } from './observe';
 
 const EPS = 1e-9;
 const YEAR = 365.25;
@@ -699,7 +699,7 @@ function observe(s: OpsState, targetId: string, t: number, commandId: number) {
     s.images.push({ ...base, status: 'refused', reason });
     emit(s, t, 'observe-refused', { commandId, targetId, reason });
   };
-  if (!target || !hasTargets(s.env)) return refuse('unknown-target');
+  if (!target || !targetsOf(s.env).some((x) => x.id === targetId)) return refuse('unknown-target');
   if (phase !== 'science' && phase !== 'extended') return refuse('not-in-orbit');
   if (imageOf(s, targetId)) return refuse('already-ordered');
   const plan = observationFor(s, target, t);
@@ -716,7 +716,7 @@ function observe(s: OpsState, targetId: string, t: number, commandId: number) {
     dv_ms: plan.dv_ms,
     status: 'observing',
   });
-  emit(s, t, 'observe-start', { commandId, targetId, dv_ms: plan.dv_ms, days: plan.days, takenAt: t + plan.days });
+  emit(s, t, 'observe-start', { commandId, targetId, dv_ms: plan.dv_ms, days: plan.days, takenAt: t + plan.days, farSide: onFarSide(s.env, target) });
 }
 
 /**

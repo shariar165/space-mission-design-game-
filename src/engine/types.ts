@@ -69,6 +69,8 @@ export interface Design {
    * Signal Delay Pack: extras packed in the nose (pack.ts). Real missions carry none, so every factor defaults to 1.
    */
   kit?: DesignKit;
+  /** The Moon 3 level: the science is the Moon's targets (Mars always flies its targets). */
+  scienceTargets?: boolean;
 }
 
 export interface DesignKit {

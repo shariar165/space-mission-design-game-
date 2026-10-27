@@ -1,9 +1,10 @@
-// Spec section: "Science targets and downlink". What a picture of a Mars target costs, from existing physics:
-// vis-viva orbit changes (trajectory.ts), a MAVEN-fitted exponential upper atmosphere for drag, the camera's
-// power, and the link budget for the downlink. Mission operations charges these when an OBSERVE order arrives.
+// Spec section: "Science targets and downlink" (and "Moon orbit", Targets). What a picture of a target costs, from
+// existing physics: vis-viva orbit changes (trajectory.ts), a MAVEN-fitted exponential upper atmosphere for drag at
+// Mars (the Moon has none), the camera's power, and the link budget for the downlink. Mission operations charges
+// these when an OBSERVE order arrives.
 import { mu } from './constants';
 import { DESTINATIONS } from './data';
-import { DEEP_DIP, MARS_ATMOSPHERE, MARS_MOONS, SCIENCE_CAMERA, type Target } from './targets';
+import { DEEP_DIP, MARS_ATMOSPHERE, MARS_MOONS, TARGET_SETS, type Target, type TargetBody } from './targets';
 import { orbitChangeDeltaV, orbitPeriod, visViva } from './trajectory';
 import { gameEstimate, type Sourced } from './types';
 
@@ -18,6 +19,17 @@ export const SCIENCE_RULES = {
 
 const R_MARS = DESTINATIONS.mars.radius_km.value * 1000;
 const MU_MARS = mu(DESTINATIONS.mars.gm_km3s2.value);
+
+/** The body a target sits on: radius (m), μ (m³/s²), its camera and the lowest pass allowed (m). */
+function bodyOf(b: TargetBody) {
+  const set = TARGET_SETS[b];
+  return {
+    R: DESTINATIONS[b].radius_km.value * 1000,
+    mu: mu(DESTINATIONS[b].gm_km3s2.value),
+    camera: set.camera,
+    lowest_m: (set.lowestAlt_km ?? SCIENCE_RULES.lowestAlt_km).value * 1000,
+  };
+}
 const KGKM3 = 1e-9; // kg/km³ → kg/m³
 
 /** H = (h_nominal − h_deep) / ln(ρ_deep / ρ_nominal), from MAVEN's two published periapsis densities. */
@@ -43,8 +55,8 @@ export function dragDeltaVPerPass(o: { rp_m: number; ra_m: number; area_m2: numb
 /** Periapsis passes per day: 86,400 s / T. */
 export const passesPerDay = (rp_m: number, ra_m: number) => 86_400 / orbitPeriod(MU_MARS, rp_m, ra_m);
 
-/** The range a target's resolution allows: resolution ÷ IFOV  [m]. */
-export const altitudeNeeded_m = (t: Target) => t.resolution_m.value / (SCIENCE_CAMERA.ifov_urad.value * 1e-6);
+/** The range a target's resolution allows: resolution ÷ IFOV of its body's camera  [m]. */
+export const altitudeNeeded_m = (t: Target) => t.resolution_m.value / (TARGET_SETS[t.body].camera.ifov_urad.value * 1e-6);
 
 /** Range to a point Δ of arc beyond the ground track, from altitude h: √(R² + (R+h)² − 2R(R+h) cos Δ)  [m] */
 export const slantRange_m = (R: number, h: number, gap_rad: number) => Math.sqrt(R ** 2 + (R + h) ** 2 - 2 * R * (R + h) * Math.cos(gap_rad));
@@ -53,7 +65,7 @@ export const slantRange_m = (R: number, h: number, gap_rad: number) => Math.sqrt
 export const imageDownlink_s = (bits: number, rate_bps: number) => (rate_bps > 0 ? bits / rate_bps : Infinity);
 
 export interface ObservationInput {
-  /** Current orbit, radii from Mars' centre. */
+  /** Current orbit, radii from the body's centre. */
   rp_m: number;
   ra_m: number;
   inclination_deg: number;
@@ -85,38 +97,42 @@ export interface ObservationPlan {
 }
 
 /** The lowest periapsis that sees a surface point at the needed range, or undefined if none does. */
-function surfaceAltitude(t: Target, o: ObservationInput, need_m: number): number | undefined {
+function surfaceAltitude(t: Target, o: ObservationInput, need_m: number, R: number): number | undefined {
   const maxLat = o.inclination_deg <= 90 ? o.inclination_deg : 180 - o.inclination_deg;
   const gap = Math.max(0, Math.abs(t.lat_deg?.value ?? 0) - maxLat) * (Math.PI / 180);
   if (gap === 0) return need_m;
   // Solve s(h) = need for x = R + h: x² − 2R cos Δ x + R² − s² = 0 → x = R cos Δ + √(R² cos² Δ − R² + s²)
-  const disc = R_MARS ** 2 * Math.cos(gap) ** 2 - R_MARS ** 2 + need_m ** 2;
+  const disc = R ** 2 * Math.cos(gap) ** 2 - R ** 2 + need_m ** 2;
   if (disc < 0) return undefined;
-  const h = R_MARS * Math.cos(gap) + Math.sqrt(disc) - R_MARS;
+  const h = R * Math.cos(gap) + Math.sqrt(disc) - R;
   return h > 0 ? h : undefined;
 }
 
 /** What observing a target costs from the current orbit (spec: Science targets and downlink). */
 export function observationPlan(t: Target, o: ObservationInput): ObservationPlan {
-  const hp = o.rp_m - R_MARS;
-  const lowest = SCIENCE_RULES.lowestAlt_km.value * 1000;
-  const cam = SCIENCE_CAMERA;
-  const imagingPasses = t.dust ? (o.inDustSeason ? cam.dustSeasonRepeats.value : cam.dustRepeats.value) : 1;
+  const body = bodyOf(t.body);
+  const R = body.R;
+  const hp = o.rp_m - R;
+  const lowest = body.lowest_m;
+  const cam = body.camera;
+  const imagingPasses = t.dust ? ((o.inDustSeason ? cam.dustSeasonRepeats : cam.dustRepeats)?.value ?? 1) : 1;
   const base = { imagingPasses, energy_Wh: cam.power_W.value * cam.imaging_h.value * imagingPasses, image_bits: t.image_Mbit.value * 1e6 };
-  const there = (rp: number, ra: number) => 2 * orbitChangeDeltaV(MU_MARS, { rp: o.rp_m, ra: o.ra_m }, { rp, ra });
+  const there = (rp: number, ra: number) => 2 * orbitChangeDeltaV(body.mu, { rp: o.rp_m, ra: o.ra_m }, { rp, ra });
 
   if (t.kind === 'moon') {
     const a = MARS_MOONS[t.moon!].a_km.value * 1000;
     const dvOrbit_ms = there(o.rp_m, a);
-    return { ...base, reachable: a > o.rp_m, obsAlt_m: hp, obsApo_m: a - R_MARS, dvOrbit_ms, dvDrag_ms: 0, dv_ms: dvOrbit_ms, days: SCIENCE_RULES.observeDays.value, dragFactor: 0 };
+    return { ...base, reachable: a > o.rp_m, obsAlt_m: hp, obsApo_m: a - R, dvOrbit_ms, dvDrag_ms: 0, dv_ms: dvOrbit_ms, days: SCIENCE_RULES.observeDays.value, dragFactor: 0 };
   }
 
   const days = t.kind === 'limb' ? DEEP_DIP.days.value : SCIENCE_RULES.observeDays.value;
-  const want = t.kind === 'limb' ? DEEP_DIP.alt_km.value * 1000 : surfaceAltitude(t, o, altitudeNeeded_m(t));
+  const want = t.kind === 'limb' ? DEEP_DIP.alt_km.value * 1000 : surfaceAltitude(t, o, altitudeNeeded_m(t), R);
   const reachable = want !== undefined && want >= lowest;
   const obsAlt_m = reachable ? Math.min(hp, want) : hp;
   const lowered = obsAlt_m < hp;
-  const dvOrbit_ms = lowered ? there(R_MARS + obsAlt_m, o.ra_m) : 0;
+  const dvOrbit_ms = lowered ? there(R + obsAlt_m, o.ra_m) : 0;
+  // Only Mars has air: at the Moon a lower pass costs the orbit change and nothing more.
+  if (t.body !== 'mars') return { ...base, reachable, obsAlt_m, obsApo_m: o.ra_m - R, dvOrbit_ms, dvDrag_ms: 0, dv_ms: dvOrbit_ms, days, dragFactor: 0 };
   const craft = { ra_m: o.ra_m, area_m2: o.area_m2, mass_kg: o.mass_kg };
   const dvDrag_ms = lowered
     ? (dragDeltaVPerPass({ ...craft, rp_m: R_MARS + obsAlt_m }) - dragDeltaVPerPass({ ...craft, rp_m: o.rp_m })) * passesPerDay(R_MARS + obsAlt_m, o.ra_m) * days
