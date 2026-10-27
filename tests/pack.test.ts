@@ -136,6 +136,37 @@ describe('blockers name the limit that failed', () => {
   });
 });
 
+describe('"no fuel" names the part that fixes it (Moon 3: the trim burns)', () => {
+  const moon = { ...starterDesign('moon', FROM), scienceTargets: true };
+  const shelf = shelfFor('moon');
+  const pack = (ids: (keyof typeof PACK.parts)[]) => ids.reduce<Packed>((p, id) => packPart(p, id)!, []);
+  // The radar with the big dish, solar wings and battery, no tank: one of the 15 Moon 3 packings that the LRO
+  // station-keeping pairs (10.81 m/s every 27.32 d, 13 pairs = 140.5 m/s over 365 days) put out of fuel.
+  const heavy = pack(['computer', 'engine', 'radar', 'dish', 'solar', 'battery']);
+
+  it('the heavy pack is out of fuel, and the fix is the extra tank because of the trim burns', () => {
+    const b = packBlockers(heavy, evaluateDesign(buildPackDesign(moon, heavy)), { base: moon, shelf });
+    const fuel = b.find((x) => x.code === 'no-fuel');
+    expect(fuel?.fix).toEqual({ part: 'tank', why: 'station-keeping', orbitAlt_m: 50_000 });
+  });
+
+  it('the hint is true: with the tank packed, "no fuel" is gone', () => {
+    const p = packPart(heavy, 'tank')!;
+    expect(packBlockers(p, evaluateDesign(buildPackDesign(moon, p))).map((x) => x.code)).not.toContain('no-fuel');
+  });
+
+  it('no hint when the tank is not on the shelf, or is already packed', () => {
+    const ev = evaluateDesign(buildPackDesign(moon, heavy));
+    const noTank = shelf.filter((id) => id !== 'tank');
+    expect(packBlockers(heavy, ev, { base: moon, shelf: noTank }).find((x) => x.code === 'no-fuel')?.fix).toBeUndefined();
+    // The tank already packed and still out of fuel (a base tank of 1 kg): nothing left to suggest.
+    const hopeless = { ...moon, propellant_kg: 1 };
+    const p = packPart(heavy, 'tank')!;
+    const b = packBlockers(p, evaluateDesign(buildPackDesign(hopeless, p)), { base: hopeless, shelf });
+    expect(b.find((x) => x.code === 'no-fuel')?.fix).toBeUndefined();
+  });
+});
+
 describe('the danger deck', () => {
   it('Mars: the destination’s hazards plus the foreseeable eclipse season and solar conjunction', () => {
     const deck = dangerDeck('mars', []);

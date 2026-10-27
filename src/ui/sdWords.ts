@@ -2,7 +2,7 @@
 // formatted here, through format.ts. Cadet reads short uppercase lines; Engineer adds the numbers.
 import type { FailureEffect, OpsPhase } from '../engine/data';
 import type { ComingUpKind, ConsoleOutcome, FlyChip, RobotMessage, VoiceKind } from '../engine/ops/index';
-import type { DeckCard, PackBlockerCode, PartId } from '../engine/pack';
+import type { DeckCard, FuelFix, PackBlockerCode, PartId } from '../engine/pack';
 import type { FinalTransmission, Hurt, ReportPanel, Saved } from '../engine/ops/report';
 import type { Category } from '../engine/scoring';
 import type { LessonCategory, LessonUnlock } from '../engine/notebook';
@@ -180,6 +180,12 @@ export const PACK_BLOCKER: Record<PackBlockerCode, string> = {
 };
 
 export const NO_ROOM = 'NO ROOM IN THE NOSE';
+
+/** "No fuel" with the part that clears it (engine packBlockers `fix`), so the player learns why. */
+export function fuelFixWords(fix: FuelFix): string {
+  const pack = `PACK THE ${PART_LOOK[fix.part].name.toUpperCase()}`;
+  return fix.why === 'station-keeping' ? `${pack} — THE ${f.km(fix.orbitAlt_m).toUpperCase()} ORBIT NEEDS TRIM BURNS EVERY MONTH` : pack;
+}
 
 export const DAY_WORDS: Record<'good' | 'soso' | 'bad', { msg: (dest: string) => string; short: string }> = {
   good: { msg: (d) => `GOOD DAY · ${d.toUpperCase()} IS IN REACH`, short: 'GOOD' },

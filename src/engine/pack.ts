@@ -6,9 +6,10 @@
 import packJson from '../data/pack.json';
 import { DISH_SIZES, PACKAGES_FOR, SCIENCE_PACKAGES } from './cadet';
 import { DESTINATIONS, HAZARDS, LAUNCH_VEHICLES, lookup, RIDESHARES } from './data';
-import type { FullEvaluation } from './index';
+import { evaluateDesign, type FullEvaluation } from './index';
 import { launchMassCheck, rideshareMassCheck } from './launch';
 import { marginStatus } from './meter';
+import { stationKeeping } from './propulsion';
 import { SCIENCE_RULES } from './science';
 import { arrivalDeltaV, bestArrival, maxFlightDays, transferForDesign } from './trajectory';
 import type { Design, DesignKit, DestinationId, MeterStatus, Sourced } from './types';
@@ -173,10 +174,40 @@ export interface PackBlocker {
   code: PackBlockerCode;
   /** The engine's own sentence (with its numbers), for Engineer mode. */
   engine?: string;
+  /** "No fuel": the shelf part that clears it (checked by evaluating the craft with it), and why the craft needs it. */
+  fix?: FuelFix;
 }
 
-export function packBlockers(packed: Packed, ev: FullEvaluation): PackBlocker[] {
+export interface FuelFix {
+  part: PartId;
+  /** 'station-keeping': the low Moon orbit's trim burns (spec: Moon orbit); 'fuel': the trip itself. */
+  why: 'station-keeping' | 'fuel';
+  /** The science orbit's mean altitude (m), for the words. */
+  orbitAlt_m: number;
+}
+
+/** What packBlockers needs to suggest a fix: the unpacked design (with the launch day) and the level's shelf. */
+export interface FixContext {
+  base: Design;
+  shelf: PartId[];
+}
+
+/** The extra tank, if it is on the shelf, not packed, fits in the nose and really clears "no fuel". */
+function fuelFix(packed: Packed, ctx: FixContext): FuelFix | undefined {
+  const tank: PartId = 'tank';
+  if (!ctx.shelf.includes(tank) || packed.some((q) => q.id === tank)) return undefined;
+  const withTank = packPart(packed, tank);
+  if (!withTank) return undefined;
+  const d = buildPackDesign(ctx.base, withTank);
+  if (evaluateDesign(d).blockers.some((b) => /propellant|Δv/i.test(b))) return undefined;
+  const o = d.scienceOrbit ?? d.captureOrbit;
+  return { part: tank, why: stationKeeping(d) ? 'station-keeping' : 'fuel', orbitAlt_m: ((o.periapsis_km + o.apoapsis_km) / 2) * 1000 };
+}
+
+export function packBlockers(packed: Packed, ev: FullEvaluation, ctx?: FixContext): PackBlocker[] {
   const out: PackBlocker[] = [];
+  // Worked out once, on the first "no fuel" (null: not yet).
+  let fix: FuelFix | undefined | null = null;
   if (!packed.some((q) => part(q.id).kind === 'instrument')) out.push({ code: 'no-science' });
   for (const b of ev.blockers) {
     const code: PackBlockerCode = /too heavy|cannot reach C3|secondary slot/i.test(b)
@@ -190,7 +221,8 @@ export function packBlockers(packed: Packed, ev: FullEvaluation): PackBlocker[] 
             : /revolution|loop/i.test(b)
               ? 'flight-too-long'
               : 'other';
-    out.push({ code, engine: b });
+    if (code === 'no-fuel' && ctx && fix === null) fix = fuelFix(packed, ctx);
+    out.push({ code, engine: b, ...(code === 'no-fuel' && fix ? { fix } : {}) });
   }
   return out;
 }

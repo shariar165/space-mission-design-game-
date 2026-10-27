@@ -2,7 +2,7 @@
 // squares, and weight is a separate limit on the scale beside it. The Danger Deck shows what is coming, so you pack
 // for it, then arm and launch on the best day (or change it on the Launch Day step; Engineer always goes there). Every number comes from the engine (pack.ts,
 // evaluateDesign, cadetGauges); this screen only lays them out.
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { cadetGauges } from '../../engine/cadet';
 import { DESTINATIONS, HAZARDS, LESSONS } from '../../engine/data';
 import {
@@ -12,6 +12,7 @@ import {
   footprint,
   initialPack,
   noseSquares,
+  onDay,
   PACK,
   packBlockers,
   packPart,
@@ -33,6 +34,7 @@ import { useIsPhone } from '../sdGeometry';
 import {
   DAY_WORDS,
   dangerLook,
+  fuelFixWords,
   deckWhen,
   GAME_NAME,
   LAUNCH_CHECKS,
@@ -97,7 +99,8 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
   // The launch day: the best one (engine bestLaunchDay) unless the player picked one on the Launch Day step.
   const plan = useLaunchPlan(base, packed, pick);
   const { days, day, design, ev, q } = plan;
-  const blockers = packBlockers(packed, ev);
+  // "No fuel" says which shelf part fixes it (the engine tries it: Moon 3's trim burns need the extra tank).
+  const blockers = useMemo(() => packBlockers(packed, ev, { base: plan.day ? onDay(base, plan.day) : base, shelf }), [packed, ev, base, plan.day, shelf]);
   const deck = dangerDeck(base.destination, packed);
   const sq = noseSquares(packed);
   const weight = cadetGauges(ev).weight;
@@ -132,6 +135,7 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
   const spaceText = full ? 'FULL · NOTHING ELSE FITS' : sq.free === 0 ? 'FULL' : `${f.num(sq.free)} SQUARES LEFT`;
   const spaceHot = full || sq.free === 0;
   const status = noRoom ? NO_ROOM : blockers[0] ? PACK_BLOCKER[blockers[0].code] : undefined;
+  const fix = !noRoom ? blockers.find((b) => b.fix)?.fix : undefined;
 
   const nose = (
     <div className="pk-nose" aria-label="Rocket nose">
@@ -339,6 +343,7 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
     <div className="pk-status sd-well" role="status">
       <span className={`pk-space${spaceHot ? ' hot' : ''}`}>{spaceText}</span>
       {status && <span className="pk-block">· {status}</span>}
+      {fix && <span className="pk-fix">{fuelFixWords(fix)}</span>}
       {engineer && !phone && blockers[0]?.engine && <span className="pk-block-eng">{blockers[0].engine}</span>}
     </div>
   );
