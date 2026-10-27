@@ -1,8 +1,8 @@
-# Signal Delay — Science Spec v0.9
+# Signal Delay — Science Spec v1.0
 
 Oct 3, 2026 · @Shariar
 
-v0.2 (Oct 3, 2026) added the decisions taken while building the engine. v0.3 (Oct 3, 2026) adds the UI rules. v0.4 (Oct 4, 2026) adds Mission operations (engine only). v0.5 (Oct 4, 2026) makes the Risk and Power meters come from the Mission operations model (Monte Carlo; worst day with eclipses), sizes batteries by depth of discharge, adds the Moon rideshare and copies the fact-sheet values. v0.6 (Oct 5, 2026) renames the game Signal Delay and rebuilds the UI from the Claude Design "Signal Delay" screens: Pack, Fly & Survive and the Mission Report, with one flight model (Mission operations) in both modes. v0.7 (Oct 21, 2026) states the game's vision and adds the name screen, the robot's transmissions and the final transmission. v0.8 (Oct 23, 2026) adds the vision's second line ("Keep it alive long enough to bring the science home."), Mars science targets, the image downlink, the mission album and the Mars globe, and makes science returned the main score. v0.9 (Oct 24, 2026) makes the Mars globe the hero of Science Targets: it fills the CRT, the camera goes to the target picked, the orbit shows each target's risk, and an OBSERVE order plays its trip while the panel is open. All decisions are applied in the sections below and listed in the **Decision log** at the end.
+v0.2 (Oct 3, 2026) added the decisions taken while building the engine. v0.3 (Oct 3, 2026) adds the UI rules. v0.4 (Oct 4, 2026) adds Mission operations (engine only). v0.5 (Oct 4, 2026) makes the Risk and Power meters come from the Mission operations model (Monte Carlo; worst day with eclipses), sizes batteries by depth of discharge, adds the Moon rideshare and copies the fact-sheet values. v0.6 (Oct 5, 2026) renames the game Signal Delay and rebuilds the UI from the Claude Design "Signal Delay" screens: Pack, Fly & Survive and the Mission Report, with one flight model (Mission operations) in both modes. v0.7 (Oct 21, 2026) states the game's vision and adds the name screen, the robot's transmissions and the final transmission. v0.8 (Oct 23, 2026) adds the vision's second line ("Keep it alive long enough to bring the science home."), Mars science targets, the image downlink, the mission album and the Mars globe, and makes science returned the main score. v0.9 (Oct 24, 2026) makes the Mars globe the hero of Science Targets: it fills the CRT, the camera goes to the target picked, the orbit shows each target's risk, and an OBSERVE order plays its trip while the panel is open. v1.0 (Oct 27, 2026) adds the Moon globe and four Moon targets: one globe for Mars and the Moon, far-side loss of signal from geometry, LRO's station-keeping, and the Moon levels in LRO's 50 km polar orbit. All decisions are applied in the sections below and listed in the **Decision log** at the end.
 
 ## Vision
 
@@ -403,7 +403,7 @@ The planned Δv budget (Propulsion section) is spent on the day each part happen
 - trajectory corrections in four equal burns at fixed fractions of cruise (game estimate);
 - the Bennu deep-space manoeuvre on its route date;
 - the arrival burn and the capture → science orbit change on the arrival day;
-- orbit maintenance on each science and extension day.
+- orbit maintenance on each science and extension day; in a low lunar orbit, a pair of trim burns every sidereal period instead (Moon orbit).
 
 Responses to hazards are extra burns. Because Δv adds up across burns, with no hazards the prime mission ends with exactly capability − (required − lifetime reserve) left. A planned burn the remaining propellant cannot make loses the craft.
 
@@ -469,6 +469,7 @@ t_{arrive} = t_{send} + \frac{d(t_{send})}{c}
 - A response cannot be sent before the team has reacted (game estimate, 4 h).
 - Every hazard has a deadline. If no response has reached the craft by then, the craft follows its standing order if one is set and affordable; otherwise it does its fault-protection default, the free option.
 - No command can be sent during a conjunction moratorium; the receipt names the first day it can be.
+- At the Moon an order that would reach the craft while it is behind the Moon waits and arrives at the next acquisition of signal (Moon orbit).
 
 ### Responses
 
@@ -494,7 +495,7 @@ Extensions are paid with new money, so they do not draw on the prime budget. The
 ### Debrief
 
 The prime mission is scored with the Scoring section's weights and band rules:
-- **science:** at Mars, the weights of the targets whose pictures came home by the end of the prime mission; elsewhere, data downlinked by then against the goal;
+- **science:** at Mars and on Moon 3, the weights of the targets whose pictures came home by the end of the prime mission; elsewhere, data downlinked by then against the goal;
 - **mission success:** phases completed;
 - **budget:** development plus any operations overspend;
 - **Δv margin:** after response burns;
@@ -506,7 +507,7 @@ Messages from Ops are codes with values, never English sentences with numbers, s
 
 ### Science targets and downlink (Mars, v0.8)
 
-At Mars the science phase is a choice of targets (`targets.json`): **Olympus Mons, Valles Marineris, the North Polar Cap, Phobos, Deimos and Thin Air at the Limb**. Each has a location, a one-line "what we learn", a science weight wᵢ (game estimate; Σ wᵢ = 1), what its picture needs (ground resolution, image size, dust) and one real NASA image, Sourced with its Photojournal id, credit line and usage terms. The other destinations keep data-downlinked science until they have target lists.
+At Mars the science phase is a choice of targets (`targets.json`): **Olympus Mons, Valles Marineris, the North Polar Cap, Phobos, Deimos and Thin Air at the Limb**. Each has a location, a one-line "what we learn", a science weight wᵢ (game estimate; Σ wᵢ = 1), what its picture needs (ground resolution, image size, dust) and one real NASA image, Sourced with its Photojournal id, credit line and usage terms. The Moon 3 level has its own four targets (Moon orbit, v1.0); Moon 1 and Moon 2, Venus and Bennu keep data-downlinked science until they have target lists.
 
 **Ordering a picture.** OBSERVE is a command (`{kind: 'observe', target}`) on the existing light-delayed path: it is refused in a conjunction, arrives one light time later, and is replayed from the action log like every other order. It does not hold the clock. When it arrives the engine works out the cost from the physics below, charges it, and takes the picture on the next suitable pass. A target can be ordered once; an order the craft can no longer pay for when it arrives is refused by the robot (`observe-refused`) and costs nothing.
 
@@ -526,6 +527,53 @@ At Mars the science phase is a choice of targets (`targets.json`): **Olympus Mon
 **Run length.** The Cadet Mars level (and the Daily, which flies to Mars) packs a prime science campaign of `SCIENCE_RULES.cadetCampaign_days` = 100 days (game rule). With a 285–311 day cruise the clock runs about four minutes at 100× (`flightClock_s`), and the decisions bring a run to about five. Engineer mode and the real MAVEN preset keep their planned science days.
 
 **The extension review stays on data.** The Senior Review stand-in (Mission extension) still judges the prime data sent home against the data goal at every destination, not the target weights, so a Mars flight that mapped all year can still be extended.
+
+### Moon orbit (v1.0)
+
+The Moon levels fly LRO's mission orbit: 50 km mean altitude, polar ([Beckman & Lamb, "Stationkeeping for the Lunar Reconnaissance Orbiter (LRO)", NASA GSFC, NTRS 20080012683](https://ntrs.nasa.gov/citations/20080012683)). Flying that low over a body that always shows Earth the same face has three consequences.
+
+**Earth's direction.** The Moon is tidally locked, and its prime meridian is the mean sub-Earth point. The engine rotates the body-fixed point (0°, 0°) into the inertial frame:
+- it uses the IAU rotation angle W = W₀ + Ẇ·d, with d in days from J2000 ([Archinal et al. 2018, IAU WGCCRE 2015](https://doi.org/10.1007/s10569-017-9805-5));
+- it turns about the IAU pole already used for eclipses (`planetFrame`).
+
+So the near side faces Earth by construction. The periodic (libration) terms are left out, so Earth's true direction can be several degrees away. This is a game simplification, labelled as one.
+
+Validation: at a full Moon the directions to Earth and to the Sun, seen from the Moon, nearly coincide; at a new Moon they point opposite ways.
+
+**Behind the Moon (loss of signal).** The science orbit is fixed in inertial space, as for eclipses, while Earth's direction ê turns once per sidereal month. The craft has no link while it is in the Moon's cylinder seen from Earth: r·ê < 0 and |r − (r·ê)ê| < R_Moon. This is the eclipse test with ê in place of ŝ; Earth is about 221 Moon radii away, so a cylinder is close enough.
+- **Hand check:**
+  - With Earth in the orbit plane (β-Earth = 0), a 50 km circular orbit is hidden for 2·asin(1737.4 / 1787.4) = 152.8° of every orbit.
+  - That is 48.0 min of T = 2π√(a³/μ) = 113.1 min.
+  - With Earth along the orbit normal (β-Earth = 90°) the whole orbit is in view, as Beckman & Lamb describe.
+- **Both directions are blocked.** The orbit phase is M = n·(t − t_arrival), so each loss of signal (LOS) and acquisition of signal (AOS) has an exact time.
+  - An order that would reach the craft during LOS waits and arrives at the next AOS. It is not refused.
+  - The downlink capacity and the image pass of each day are scaled by that day's visible fraction. This is orbit-averaged: passes are not lined up with single orbits, a game simplification.
+- **Light time** uses the mean Earth–Moon distance, 384,400 km, so 1.28 s each way. There is no lunar ephemeris yet.
+- **The robot** says BEHIND THE MOON and LINK BACK on its first far-side pass, and again whenever an order or a picture waits for the link. It does not speak every orbit, which would be about twelve times a day.
+
+**Station-keeping.** Mascons make a 50 km lunar orbit unstable: left alone, the periapsis sinks into the surface.
+- **What LRO did:** it held 50 ± 20 km with one pair of burns every sidereal period (27.32 d). The pattern LRO chose (270° LLAN, high transfer; Beckman & Lamb Table 2) costs 5.46 + 5.34 = 10.81 m/s per pair, within a 150 m/s per year allocation.
+- **Which orbits use it:** Moon orbits whose mean altitude lies in LRO's band (≤ 70 km) use the 10.81 m/s pair:
+  - in the Δv budget as 10.81 × science days / 27.32;
+  - in Ops as a burn pair every sidereal period after arrival (`trim-burn`).
+  Other orbits keep the generic orbit-maintenance estimate.
+- **Check:** 365.25 / 27.32 × 10.81 = 144.5 m/s per year, within the 150 m/s allocation (a validation row).
+- A pair the tank cannot pay for loses the craft, like any planned burn (Propellant).
+
+**Eclipses at 50 km.** The physics is unchanged (Events known in advance): the Moon's cylindrical shadow on the fixed orbit. With the Sun in the orbit plane the longest eclipse is the same 48.0 min, since the geometry is the same. Earth's shadow (a lunar eclipse) is not modelled.
+
+**Targets (Moon 3).** The Moon 3 level has four targets (`targets.json`, Moon set), with coordinates from the IAU Gazetteer of Planetary Nomenclature:
+- the Apollo 11 landing site;
+- Tycho;
+- Shackleton (its floor is in permanent shadow);
+- Tsiolkovskiy (far side).
+
+They follow the Mars rules (Science targets and downlink), with these differences:
+- **No dips needed.** The camera is LROC's Narrow Angle Camera: IFOV 10 µrad, so 0.5 m per pixel at 50 km. The game's resolutions are met without lowering the orbit, and there is no atmosphere, so no drag.
+- **Tsiolkovskiy** lies on the far side, so its pass is always out of contact. The robot takes the picture alone and keeps it until the link is back.
+- **Shackleton** sits under every orbit of a polar ground track.
+- **Pictures** are LROC frames from the PDS archive (public domain), credited NASA/GSFC/Arizona State University.
+- **Scoring:** science returned is Σ wᵢ over the pictures home, with the same star rules. Moon 1 and Moon 2 keep the data ratio.
 
 ## Validation set
 
@@ -614,6 +662,8 @@ These are stated openly in the game. Each one is a standard simplification for e
     - hazards are independent Poisson processes;
     - the solar cycle is a two-part cosine between published minima and maxima;
     - the Moon has no conjunctions (no lunar ephemeris);
+    - at the Moon, Earth's direction is the IAU rotation angle without its periodic (libration) terms, and the Earth–Moon distance is the mean 384,400 km;
+    - the Moon's shadow and Earth's are cylinders, and Earth's shadow on the Moon (a lunar eclipse) is not modelled;
     - cruise positions are drawn in the ecliptic plane;
     - DSN fees are in FY09 dollars.
 12. Real-mission presets use published as-built dry mass (no 30% growth margin on top) and their planned prime-mission duration.
@@ -798,7 +848,19 @@ The UI (`src/ui/`, React + Vite) follows the Claude Design mockups for Build Bay
    - When an OBSERVE order lands (engine moment `observe`), the orbiter sweeps over the target with a scan-line flash (a single still frame under reduced motion).
    - The flat globe has the same layout, drawing and interactions without camera motion: picking a target re-centres it at once.
 42. **Arrival transition** (presentation only, about 2 s, ease-in-out). When the arrival news reaches Earth, the map zooms into Mars while the rest fades; the flat Mars dot crossfades into the globe at the same place and size (the large globe's disc at its overview); the camera eases back while the orbit ring and markers appear one by one and the robot's question types out. Going back to the map plays it in reverse. Reduced motion cuts instantly. The 2D globe gets the same zoom and fade. Once it has landed, the camera eases on to the selected target (rule 41).
-43. **Mission Album** (design screen 03). The report opens with the album: "n OF 6 TARGETS RETURNED · p% OF MISSION SCIENCE" (or "n IMAGES MADE IT HOME" when the robot was lost), a science bar with one block per target sized by its weight, and a frame per target (the picture in colour, SIGNAL LOST, or NOT RETURNED with why). FEED THE PAPER leads to the FINAL TRANSMISSION, then the comic. Numbers from `missionAlbum`.
+43. **Mission Album** (design screen 03). The report opens with the album: "n OF N TARGETS RETURNED · p% OF MISSION SCIENCE", where N is the level's target count, 6 at Mars and 4 on Moon 3 (or "n IMAGES MADE IT HOME" when the robot was lost), a science bar with one block per target sized by its weight, and a frame per target (the picture in colour, SIGNAL LOST, or NOT RETURNED with why). FEED THE PAPER leads to the FINAL TRANSMISSION, then the comic. Numbers from `missionAlbum`.
+44. **One globe for Mars and the Moon** (v1.0). The globe of rule 41 is one component fed by a body record from the engine: texture, prime-meridian offset, radius, view, zoom table and credit. Mars is unchanged. The Moon texture is NASA SVS's CGI Moon Kit (the LROC WAC mosaic), Sourced with its credit. The 2D fallback, the 2D/3D toggle and the arrival transition (rule 42) are shared.
+45. **The Moon scene** (design `3d/Moon Globe.html`).
+    - **Earth:** it sits over the near side in the engine's direction, at a shortened distance. A // break marks the signal line, and the screen says NOT TO SCALE · // EARTH DISTANCE SHORTENED.
+    - **The ring:** solid where Earth can see the craft and dashed behind the Moon (arcs from the engine).
+    - **The link:** the signal line is solid while linked and broken while not. The HUD reads LINK · LOCKED · 1.3 S or LINK · LOST · FAR SIDE, and the far arc's label gives the minutes lost per orbit.
+    - **The orbiter:** its run around the ring is a sped-up drawing, but whether it is linked comes from the engine (`linkUpAt`).
+46. **The Moon levels' orbit panel.** When the craft arrives on Moon 1 or Moon 2, the globe opens without target cards:
+    - Moon 1 shows the shadow arc and the eclipse minutes per orbit, which the battery has to cover.
+    - Moon 2 adds the station-keeping tag on the ring: the next trim burn and its Δv.
+    - DONE · KEEP FLYING resumes the clock.
+
+    Moon 3 opens the four target cards (rule 39) on the same scene. The far-side target's card says the robot will observe alone.
 
 ## Decision log
 
@@ -873,3 +935,10 @@ The UI (`src/ui/`, React + Vite) follows the Claude Design mockups for Build Bay
 | 67 | Oct 23, 2026 | **Copy fix:** Olympus Mons is about 2.5 times taller than Everest (21.9 km vs 8.85 km, both Sourced), not "two and a half times" from the mockup without a source. |
 | 68 | Oct 23, 2026 | **Science targets in Ops** (spec section Science targets and downlink): OBSERVE is a command kind; refused orders cost nothing; the drag-heating hazard (`science: true`, not in Pack's deck) is its own stream, so observing never reshuffles other draws. Pictures take the head of each day's pass; routine data gets what is left. At Mars the robot's science-phase line becomes the targets question and data milestones give way to a line per picture sent. The extension review stays on data (decision above). |
 | 69 | Oct 24, 2026 | **The Mars globe is the hero of Science Targets** (user request; Claude Design "Mars Globe", no new design file): the globe fills the CRT, with a slim target list and a phone bottom sheet. Picking a target moves the camera to it. The orbit is drawn on a compressed altitude scale with real-km labels (the user's choice: at true scale the 150 → 125 km deep dip is under 1% of Mars' radius). An OBSERVE order plays its light-time trip and the robot's reply while the panel is open, so the player sees it land; otherwise the panel still holds the clock (the user's choice; amends rule 39). The robot's acknowledgement now says IMAGE QUEUED. |
+| 70 | Oct 27, 2026 | **Moon globe and Moon targets** (user request; Claude Design "Moon Globe", copied into `docs/design/3d/`). One globe component serves Mars and the Moon. Moon 3 is scored by four targets with the Mars rules. Moon 1 and Moon 2 show the globe and orbit only, and keep the data ratio. |
+| 71 | Oct 27, 2026 | **Far-side loss of signal from geometry** (user request). It is the eclipse test with Earth's direction in place of the Sun's. Earth's direction comes from the IAU rotation angle, with the periodic terms left out (game simplification). Orders wait for the link instead of being refused. The downlink is scaled by each day's visible fraction. |
+| 72 | Oct 27, 2026 | **Lunar station-keeping from LRO's published plan** (user request; Beckman & Lamb, NTRS 20080012683). A burn pair of 10.81 m/s every sidereal period, inside the 50 ± 20 km band, checked against the 150 m/s per year allocation. The burns show on the ring. |
+| 73 | Oct 27, 2026 | **The Moon levels fly LRO's 50 km circular polar orbit**, replacing the 50 × 1,800 km capture orbit, so the globe and the physics agree. |
+| 74 | Oct 27, 2026 | **Moon pictures from the PDS** (user's choice). LROC website images are copyrighted by ASU (educational use is allowed with credit), while PDS products are public domain. So the game crops PDS frames, credited NASA/GSFC/Arizona State University. |
+| 75 | Oct 27, 2026 | **Shackleton at the IAU Gazetteer centre** (user's choice), 89.67°S 129.78°E (Feature 5450), not the mockup's 89.9°S 0°. |
+| 76 | Oct 27, 2026 | **Moon texture: NASA SVS CGI Moon Kit** (user's choice; svs.gsfc.nasa.gov/4720, the LROC WAC Hapke-normalised mosaic), not the mockup's procedural `moon-map.js`. |

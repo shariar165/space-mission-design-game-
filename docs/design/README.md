@@ -86,3 +86,25 @@ There is no new design file. The layout follows the user's brief, using the "Mar
 - **The orbit:** the design draws an inclined circle at 1.42 Mars radii. The game draws the engine's ellipse on a compressed altitude scale, with real-km labels (spec rule 41).
 - **The camera:** the design's free orbit controls are replaced by camera moves to the target the player picks.
 - **The toolbar:** the design's export toolbar is not shipped.
+
+## The Moon globe (Oct 27, 2026)
+
+Imported through the claude_design MCP from the same project (https://claude.ai/design/p/b3c517da-8be3-4c68-b563-65378ba39d71). Each file was decoded from the escaped text and its size checked against the project listing, byte for byte.
+- **`3d/` copies:** `Moon Globe.html` 19,973; `Moon Globe Frames.dc.html` 4,503; `moon-map.js` 12,353; `orbit-maps.js` 4,405 (it supplies the Earth map that the Moon page imports).
+- **`support.js`:** `Moon Globe Frames.dc.html` loads `./support.js`, the same 69,150-byte runtime as `signal-delay/support.js`, so that file is copied next to it.
+- **The pages:** the Moon page has three states, `?level=1` (globe and orbit, night side shaded), `?level=2` (the station-keeping tag) and `?level=3` (four targets). The Frames page shows each state at 1440 × 900 and 390 × 844.
+- **Not imported:** the project's `shots/*.png` are binary, and the MCP returns text only. The game's screenshot run shoots the local copies instead (`npm run shots -- design`, added with the Moon shots).
+
+**From the "Moon Globe" page:**
+- Earth fixed over the near side, with corner brackets;
+- the signal line, solid while linked and dashed and cut short behind the Moon, with a `//` break for the shortened distance;
+- "Not to scale · // Earth distance shortened";
+- the polar orbit, solid on the near half and dashed on the far half, with "No signal — behind the Moon · ≈48 of every 113 min";
+- the station-keeping tag on the ring (level 2) and four target reticles (level 3);
+- the HUD link line (LINK · LOCKED · 1.3 S / LINK · LOST · FAR SIDE).
+
+**Different on purpose:**
+- **The surface:** a real NASA map, the SVS CGI Moon Kit (LROC WAC mosaic), not `moon-map.js`'s procedural map.
+- **Shackleton:** placed at the IAU Gazetteer centre, 89.67°S 129.78°E, not 89.9°S 0°.
+- **The link and the orbit:** where the craft is out of sight and the minutes per orbit come from the engine's geometry. The page instead takes the half of the ring away from Earth. The page's figure (48 of 113 min) is the engine's worst case, with Earth in the orbit plane.
+- **The rest:** as on the Mars globe, the camera moves to the picked target instead of free orbit controls, and the export toolbar is not shipped.
