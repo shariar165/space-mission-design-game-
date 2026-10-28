@@ -474,7 +474,8 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
         <div ref={finalTop}>{finalEl}</div>
         <header className="rp-head" ref={reportTop as React.RefObject<HTMLElement | null>}>
           <div className="rp-head-l">
-            {onBack && !ft && <BackButton onBack={onBack} className="rp-back" />}
+            {/* One Back: the album's when there is one (a lost robot has an album but no final transmission). */}
+            {onBack && !ft && !album && <BackButton onBack={onBack} className="rp-back" />}
             <span className="rp-kicker">
               TELETYPE · {missionName.toUpperCase()} · {dest.name.toUpperCase()} · DAY 000–{f.dayPad(panels.at(-1)!.day)}
             </span>

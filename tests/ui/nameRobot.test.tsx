@@ -12,9 +12,9 @@ function pass(ms: number, step = 50) {
   for (let t = 0; t < ms; t += step) act(() => vi.advanceTimersByTime(step));
 }
 
-/** A brand-new player: nothing seen, no name. */
+/** A brand-new player: no name, nothing seen but the cold open (tests/ui/coldOpen.test.tsx plays that). */
 function newPlayer() {
-  localStorage.removeItem('sd.seen');
+  localStorage.setItem('sd.seen', JSON.stringify(['cold-open']));
   localStorage.removeItem('sd.robot');
 }
 

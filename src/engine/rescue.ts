@@ -97,3 +97,31 @@ export function rescueConsequence(caseId: RescueCaseId): {
 export function rescueStars(attempts: number): number {
   return Math.max(1, RESCUE_MAX_STARS.value - Math.max(0, attempts - 1));
 }
+
+/** The cold open (spec UI rule 47): Mars Climate Orbiter's arrival, told only from this case's Sourced facts. */
+export interface ColdOpenFacts {
+  craft: string;
+  /** The arrival date (press kit). */
+  arrival: Sourced<string>;
+  /** The burn: the main engine fired for orbit insertion (press kit). */
+  burn: Sourced<number>;
+  /** Lost on arrival. */
+  lost: Sourced<string>;
+  /** The root cause: the thruster file was in pound-force seconds, read as newton-seconds (board report). */
+  units: Sourced<string>;
+  /** The report the root cause comes from, for the credit line. */
+  citation: string;
+}
+
+export function coldOpenFacts(): ColdOpenFacts {
+  const c = rescueCase('mco');
+  const units = inspectClue('mco', 'amd-units').evidence;
+  return {
+    craft: c.title,
+    arrival: c.facts.arrivalDate,
+    burn: c.facts.mainEngineThrust_N,
+    lost: c.lost,
+    units,
+    citation: units.source.replace(/\s*\(.*$/, ''),
+  };
+}

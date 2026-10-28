@@ -72,7 +72,7 @@
 .hm-daily { border-color: var(--sd-amber-edge); border-bottom-color: var(--sd-amber-edge); justify-content: space-between; }
 .hm-daily .hm-key-label { font-size: 21px; letter-spacing: 0.04em; }
 .hm-daily .hm-key-icon { width: 48px; height: 48px; }
-.hm-second { display: flex; align-items: center; gap: 8px; }
+.hm-second { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 .hm-mini { cursor: pointer; display: grid; grid-template-columns: auto auto; grid-template-rows: auto auto; column-gap: 8px; row-gap: 4px; align-items: center; justify-items: start; padding: 7px 12px 6px 10px; border-radius: 6px; background: var(--sd-panel); border: 1px solid var(--sd-line); border-bottom: 3px solid var(--sd-deep); color: var(--sd-ink-2); }
 .hm-mini:hover { border-color: var(--sd-amber); }
 .hm-mini-label { font: 700 11px/1 var(--sd-mono); letter-spacing: 0.12em; white-space: nowrap; }
@@ -84,7 +84,7 @@
 .hm.phone .hm-daily .hm-key-icon { width: 40px; height: 40px; grid-column: 1; grid-row: 1; }
 .hm.phone .hm-daily .hm-key-label { grid-column: 2; grid-row: 1; font-size: 17px; }
 .hm.phone .hm-daily .hm-key-tag { grid-column: 3; grid-row: 1; }
-.hm.phone .hm-second { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.hm.phone .hm-second { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
 .hm.phone .hm-mini { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 5px; padding: 8px 4px; min-width: 0; }
 .hm.phone .hm-mini-label { font-size: 9px; letter-spacing: 0.06em; white-space: normal; text-align: center; }
 .hm.phone .hm-second-mode { grid-column: 1 / -1; margin-left: 0; display: flex; justify-content: center; padding-top: 4px; }

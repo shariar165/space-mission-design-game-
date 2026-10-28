@@ -18,7 +18,7 @@ import { COST_CAPS } from '../src/engine/massCost';
 import { LAUNCH_VEHICLES as LVS, RIDESHARES } from '../src/engine/data';
 import { withLauncher } from '../src/engine/designEdits';
 import { starterDesign } from '../src/ui/starters';
-import { inspectClue, rescueCase, rescueConsequence, rescueStars } from '../src/engine/rescue';
+import { coldOpenFacts, inspectClue, rescueCase, rescueConsequence, rescueStars } from '../src/engine/rescue';
 import { mergeTallies, opsRiskEstimate, riskBatch, riskEnvironment, riskEstimateFromTally, RISK_RUNS, RISK_SEED, runSeed } from '../src/engine/ops/riskEstimate';
 
 const maven = presetDesign('maven');
@@ -751,6 +751,30 @@ describe('Rescue History: Mars Climate Orbiter (rescue.ts)', () => {
     expect(inspectClue('mco', 'amd-units').isBug).toBe(true);
     expect(inspectClue('mco', 'tcm-5').isBug).toBe(false);
     expect(() => inspectClue('mco', 'nope')).toThrow();
+  });
+  it('the cold open tells MCO from its own Sourced facts: arrival Sept. 23, 1999, the insertion burn, lost, lbf·s read as N·s', () => {
+    const c = coldOpenFacts();
+    const mco = rescueCase('mco');
+    expect(c.craft).toBe('Mars Climate Orbiter');
+    // SEPTEMBER 23, 1999: the press kit's arrival date
+    expect(c.arrival).toBe(mco.facts.arrivalDate);
+    expect(c.arrival.value).toBe('1999-09-23');
+    // ORBIT INSERTION BURN: the 640 N main engine fired for orbit insertion (press kit)
+    expect(c.burn).toBe(mco.facts.mainEngineThrust_N);
+    expect(c.burn.source).toMatch(/orbit insertion/);
+    // NO SIGNAL: lost on arrival on that day
+    expect(c.lost).toBe(mco.lost);
+    expect(c.lost.value).toMatch(/^Lost on arrival at Mars on Sept\. 23, 1999/);
+    // ONE TEAM USED POUNDS. THE OTHER, NEWTONS.: the board's root cause, the bug clue's evidence
+    expect(c.units).toBe(inspectClue('mco', 'amd-units').evidence);
+    expect(c.units.value).toMatch(/newton-seconds \(N·s\)/);
+    expect(c.units.value).toMatch(/pound-force seconds \(lbf·s\)/);
+    // the credit line names the report, without its date and section
+    expect(c.citation).toBe('MCO Mishap Investigation Board Phase I Report');
+    for (const x of [c.arrival, c.burn, c.lost, c.units]) {
+      expect(x.isGameEstimate).toBe(false);
+      expect(x.url).toBeTruthy();
+    }
   });
   it('consequence: planned 226 km − estimated 57 km = 169 km too low (report: ~170 km); 23 km under the 80 km limit', () => {
     const k = rescueConsequence('mco');
