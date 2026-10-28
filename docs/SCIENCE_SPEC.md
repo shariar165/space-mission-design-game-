@@ -873,9 +873,9 @@ The UI (`src/ui/`, React + Vite) follows the Claude Design mockups for Build Bay
     Moon 3 opens the four target cards (rule 39) on the same scene. The far-side target's card says the robot will observe alone.
 
     The panel opens when the robot's first news from the science orbit reaches Earth: NEXT EVENT stops there (`nextEventT`), as it does for the Mars question. MOON ORBIT on the action bar reopens it.
-47. **Cold open** (first launch only). A new player (Cadet; no robot name; neither the name screen nor the cold open seen) opens on black with a teletype, about 15 s:
+47. **Cold open** (first launch only). A new player (Cadet; no robot name; neither the name screen nor the cold open seen) first sees a blinking cursor on black and one key, ▶ RECEIVE TRANSMISSION: the tap lets the sound start (browsers allow audio only after an interaction). Under reduced motion with the sound muted there is nothing for the tap to start, so the gate is skipped. After the tap, a teletype, about 15 s:
     - "SEPTEMBER 23, 1999 · MARS CLIMATE ORBITER · ORBIT INSERTION BURN";
-    - "SIGNAL EXPECTED IN A FEW MINUTES";
+    - "SIGNAL EXPECTED WHEN IT COMES OUT FROM BEHIND MARS" (no waiting time is claimed);
     - a wait on a flat trace with radio static;
     - "— NO SIGNAL —";
     - then a second screen: "ONE TEAM USED POUNDS. THE OTHER, NEWTONS." and "EVERY ORDER YOU SEND ARRIVES LATE. MAKE IT COUNT.", credited to the MCO Mishap Investigation Board Phase I Report.
@@ -883,6 +883,7 @@ The UI (`src/ui/`, React + Vite) follows the Claude Design mockups for Build Bay
     The facts come only from the MCO rescue case (`coldOpenFacts`):
     - the arrival date and craft from the press kit;
     - the insertion burn from the main engine's press-kit entry;
+    - the signal due from behind Mars from NSSDCA's news of Sept. 23, 1999 (the burn took MCO behind Mars as planned; contact was to come back when it reappeared);
     - the loss from NASA Science;
     - the units from the board's root cause (the AMD file in lbf·s, read as N·s).
 
@@ -975,3 +976,4 @@ The UI (`src/ui/`, React + Vite) follows the Claude Design mockups for Build Bay
 | 81 | Oct 28, 2026 | **One sound manager** (user request). The cues of rule 33 and new loops share one manager with an autoplay gate (no AudioContext before the first interaction), shared holds for loops, a saved mute in every top bar and a low default volume. It is unit-tested against a mocked AudioContext. |
 | 82 | Oct 28, 2026 | **The game's sounds** (user request). Five sounds are tied to what the player watches: the clack while the teletype types, the hum of the CRT, static while a signal is in transit, a beep when an order or reply arrives, and the print rattle during a downlink. The danger card's alarm became a shorter two-tone alert. Static plays only while the clock moves, so a paused game is quiet. The one-shot print chatter gave way to the rattle loop. |
 | 83 | Oct 28, 2026 | **Cold open** (user request, rule 47). The game's premise (orders arrive late, and mistakes are unrecoverable at a distance) is introduced through Mars Climate Orbiter, already the first Rescue History case, so every fact is one the game already cites. The user's copy is kept as written; the dates, names and units on screen come from the Sourced records. It shows only to a player who is genuinely new, so existing players are not interrupted; Home's INTRO replays it. Sound joins only after the player's first click or key (autoplay rules), so a player who just watches sees it silent. |
+| 84 | Oct 28, 2026 | **Cold open, revised** (user request, rule 47). "SIGNAL EXPECTED IN A FEW MINUTES" became "SIGNAL EXPECTED WHEN IT COMES OUT FROM BEHIND MARS": the game claims no waiting time it cannot source, and the occultation is a cited fact (`signalBehindMars`, NSSDCA). A one-tap gate, ▶ RECEIVE TRANSMISSION, comes first so a player who only watches still hears it; it is skipped only under reduced motion with the sound muted. |

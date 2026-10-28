@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 // The cold open (spec UI rule 47): a new player's first launch opens on black with Mars Climate Orbiter's arrival,
 // told from the MCO rescue case's Sourced facts (engine coldOpenFacts), in about 15 s, then Name Your Robot, then
-// Home. SKIP is always there (and Esc); Home's INTRO key replays it; reduced motion keeps every pause short.
+// Home. It waits behind a one-tap gate (▶ RECEIVE TRANSMISSION) so the sound can start. SKIP is always there (and
+// Esc); Home's INTRO key replays it; reduced motion keeps every pause short.
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { coldOpenFacts } from '../../src/engine/rescue';
@@ -20,16 +21,18 @@ function pass(ms: number, step = 33) {
 }
 
 /** A brand-new player: nothing seen, no robot name. */
-function newPlayer() {
+function newPlayer({ tap = true } = {}) {
   localStorage.removeItem('sd.seen');
   localStorage.removeItem('sd.robot');
   vi.useFakeTimers();
   render(<App />);
+  if (tap) fireEvent.click(receive()!);
 }
 
 const cold = () => screen.queryByRole('main', { name: COLD_OPEN.label });
 const beat = () => cold()?.getAttribute('data-beat');
 const skip = () => screen.getByRole('button', { name: COLD_OPEN.skip });
+const receive = () => screen.queryByRole('button', { name: COLD_OPEN.receive });
 const nameScreen = () => screen.queryByRole('main', { name: 'Name your robot' });
 const home = () => screen.queryByRole('button', { name: /^Play: mission/ });
 
@@ -51,7 +54,7 @@ describe('the cold open', () => {
       t += 99;
     }
     expect(order).toEqual(['burn', 'expected', 'wait', 'lost', 'units', 'moral']);
-    // holds 8.4 s + typing (64 + 32 + 13 + 41 + 49 = 199 characters, one per 33 ms ≈ 6.6 s) ≈ 15.0 s
+    // holds 8.4 s + typing (64 + 50 + 13 + 41 + 49 = 217 characters, one per 33 ms ≈ 7.2 s) ≈ 15.6 s
     const holds = Object.values(COLD_OPEN_HOLD_MS).reduce((a, b) => a + b, 0);
     expect(holds).toBe(8400);
     expect(t).toBeGreaterThanOrEqual(12_000);
@@ -63,14 +66,29 @@ describe('the cold open', () => {
     expect(home()).toBeTruthy();
   });
 
+  it('waits on black behind ▶ RECEIVE TRANSMISSION: nothing types or sounds until the tap, which lets the sound start', () => {
+    vi.stubGlobal('AudioContext', Ctx);
+    newPlayer({ tap: false });
+    expect(beat()).toBe('gate');
+    expect(cold()!.textContent).toBe('█' + COLD_OPEN.receive);
+    expect(skip()).toBeTruthy();
+    pass(5000);
+    // it waits as long as it takes
+    expect(beat()).toBe('gate');
+    expect(screen.queryByText(/ORBIT INSERTION BURN/)).toBeNull();
+    expect(sound.playing()).toEqual([]);
+    fireEvent.click(receive()!);
+    expect(sound.unlocked()).toBe(true);
+    expect(beat()).toBe('burn');
+    expect(sound.playing()).toContain('clack');
+  });
+
   it('prints each line from the data, the wait hisses with static, and the second screen credits the board report', () => {
     vi.stubGlobal('AudioContext', Ctx);
     newPlayer();
-    // a first click anywhere lets the sound start (autoplay rules)
-    fireEvent.pointerDown(window);
     while (beat() !== 'wait') pass(33);
     expect(screen.getByText('SEPTEMBER 23, 1999 · MARS CLIMATE ORBITER · ORBIT INSERTION BURN')).toBeTruthy();
-    expect(screen.getAllByText(COLD_OPEN.expected).length).toBeGreaterThan(0);
+    expect(screen.getAllByText('SIGNAL EXPECTED WHEN IT COMES OUT FROM BEHIND MARS').length).toBeGreaterThan(0);
     expect(screen.getByText(COLD_OPEN.waiting)).toBeTruthy();
     expect(sound.playing()).toContain('static');
     while (beat() !== 'units') pass(33);
@@ -106,20 +124,32 @@ describe('the cold open', () => {
     expect(home()).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: new RegExp(`^${COLD_OPEN.menu}:`) }));
     expect(cold()).toBeTruthy();
+    fireEvent.click(receive()!);
     pass(17_000);
     expect(cold()).toBeNull();
     expect(nameScreen()).toBeNull();
     expect(home()).toBeTruthy();
   });
 
-  it('reduced motion: every line prints whole and the pauses are short (under 4 s in all)', () => {
+  it('reduced motion with the sound muted: no gate; every line prints whole and the pauses are short (under 4 s in all)', () => {
     vi.stubGlobal('matchMedia', (q: string) => ({ matches: q.includes('reduce'), media: q, addEventListener: () => {}, removeEventListener: () => {}, addListener: () => {}, removeListener: () => {} }));
-    newPlayer();
+    sound.setOn(false);
+    newPlayer({ tap: false });
+    expect(receive()).toBeNull();
     expect(cold()!.textContent).toContain('SEPTEMBER 23, 1999 · MARS CLIMATE ORBITER · ORBIT INSERTION BURN█');
     // six beats of 0.6 s
     expect(6 * COLD_OPEN_STILL_MS).toBe(3600);
     pass(3600 + 300);
     expect(cold()).toBeNull();
     expect(nameScreen()).toBeTruthy();
+  });
+
+  it('reduced motion with the sound on still shows the gate (the tap is what lets the sound start)', () => {
+    vi.stubGlobal('matchMedia', (q: string) => ({ matches: q.includes('reduce'), media: q, addEventListener: () => {}, removeEventListener: () => {}, addListener: () => {}, removeListener: () => {} }));
+    sound.setOn(true);
+    newPlayer({ tap: false });
+    expect(beat()).toBe('gate');
+    fireEvent.click(receive()!);
+    expect(cold()!.textContent).toContain('ORBIT INSERTION BURN█');
   });
 });

@@ -1,26 +1,28 @@
 // Game shots of the cold open (spec UI rule 47): a brand-new player's first launch, at 1440 × 900 and 390 × 844.
+// - coldopen-gate: ▶ RECEIVE TRANSMISSION on black, before the tap that lets the sound start;
 // - coldopen-wait: the burn and "signal expected" printed, the wait on the flat trace;
 // - coldopen-lost: — NO SIGNAL —;
 // - coldopen-moral: the second screen (pounds and newtons, every order arrives late) with the report's credit;
 // - coldopen-name: where it goes on to, Name Your Robot;
-// - coldopen-still: reduced motion, every line printed whole.
+// - coldopen-still: reduced motion with the sound muted (no gate), every line printed whole.
 // Run: npm run shots -- coldopen
 import { expect, test, type Page } from '@playwright/test';
 
 const OUT = 'test-results/shots/';
 
-async function newPlayer(page: Page) {
+async function newPlayer(page: Page, query = '') {
   await page.addInitScript(() => {
     try {
       localStorage.setItem('mdt.mode', 'cadet');
       localStorage.removeItem('sd.seen');
       localStorage.removeItem('sd.robot');
       localStorage.removeItem('mdt.ops');
+      if (new URLSearchParams(location.search).has('muted')) localStorage.setItem('sd.sound', JSON.stringify({ on: false }));
     } catch {
       /* ignore */
     }
   });
-  await page.goto('/?seed=2013');
+  await page.goto(`/?seed=2013${query}`);
   await page.evaluate(() => document.fonts.ready);
 }
 
@@ -33,6 +35,9 @@ test('the cold open', async ({ page }, info) => {
   const p = info.project.name;
   await newPlayer(page);
   await expect(page.getByRole('button', { name: 'SKIP ▸' })).toBeVisible();
+  await screenAt(page, 'gate');
+  await page.screenshot({ path: `${OUT}coldopen-gate-${p}.png` });
+  await page.getByRole('button', { name: '▶ RECEIVE TRANSMISSION' }).click();
   await screenAt(page, 'wait');
   await page.waitForTimeout(1200);
   await page.screenshot({ path: `${OUT}coldopen-wait-${p}.png` });
@@ -48,9 +53,9 @@ test('the cold open', async ({ page }, info) => {
   await page.screenshot({ path: `${OUT}coldopen-name-${p}.png` });
 });
 
-test('the cold open, reduced motion', async ({ page }, info) => {
+test('the cold open, reduced motion and muted: no gate', async ({ page }, info) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await newPlayer(page);
+  await newPlayer(page, '&muted');
   await screenAt(page, 'lost');
   await page.screenshot({ path: `${OUT}coldopen-still-${info.project.name}.png` });
   // six short beats: on to the name screen in under 4 s

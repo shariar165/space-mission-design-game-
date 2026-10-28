@@ -25,6 +25,12 @@
 .co-line.moral { font-size: 40px; color: var(--sd-amber); text-shadow: 0 0 10px rgba(255, 181, 71, 0.4); }
 .co-source { margin: 12px 0 0; font: 400 12px/1.4 var(--sd-mono); letter-spacing: 0.14em; color: var(--sd-ink-2); text-shadow: none; }
 
+/* The gate: one tap on black lets the sound start. */
+.co-gate { justify-content: center; align-items: center; text-align: center; padding-top: 0; gap: 36px; }
+.co-gate-cursor { font-size: 40px; color: var(--sd-crt-hi); }
+.co-receive { font: 400 36px/1 var(--sd-crt-font); letter-spacing: 0.08em; color: var(--sd-amber); background: transparent; border: 2px solid var(--sd-amber); padding: 18px 34px; cursor: pointer; text-shadow: 0 0 10px rgba(255, 181, 71, 0.45); box-shadow: 0 0 18px rgba(255, 181, 71, 0.18); }
+.co-receive:hover, .co-receive:focus-visible { background: rgba(255, 181, 71, 0.12); outline: none; }
+
 .co.still .co-trace::after { animation: none; }
 @media (prefers-reduced-motion: reduce) { .co-trace::after { animation: none; } }
 
@@ -35,4 +41,5 @@
   .co-wait { font-size: 17px; }
   .co-line.units, .co-line.moral { font-size: 28px; }
   .co-source { font-size: 10px; }
+  .co-receive { font-size: 26px; padding: 14px 20px; }
 }
