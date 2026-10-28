@@ -113,6 +113,8 @@ describe('Bangla words (spec UI rule 48)', () => {
     // NASA mission names stay in English; planet names are said in Bangla
     expect(W.COLD_OPEN.burn('SEPTEMBER 23, 1999', 'Mars Climate Orbiter')).toContain('MARS CLIMATE ORBITER');
     expect(W.POSTCARD_WORDS.toast('Mars')).toBe('📮 মঙ্গল থেকে পোস্টকার্ড!');
+    // dates in Bangla month names, Latin digits
+    expect(W.COLD_OPEN.date('1999-09-23')).toBe('23 সেপ্টেম্বর, 1999');
     expect(place('Bennu (asteroid)')).toBe('গ্রহাণু Bennu');
     // with the case endings Bangla puts on a place: to Mars, Mars's orbit
     expect(placeIn('Mars')).toBe('মঙ্গলে');
@@ -121,6 +123,17 @@ describe('Bangla words (spec UI rule 48)', () => {
     expect(W.STAR_GOALS('Moon')[0]).toBe('চাঁদে পৌঁছাও আর প্রথম বিজ্ঞান-তথ্য বাড়ি পাঠাও।');
     setLang('en');
     expect(W.COLD_OPEN.receive).toBe('▶ RECEIVE TRANSMISSION');
+  });
+
+  it('a table kept before a switch follows the switch (screens keep some as module constants)', () => {
+    const metric = W.REPORT_WORDS.metric;
+    const call = OPS.DRAWER_WORDS.call;
+    expect(metric.wetMass).toBe('LAUNCH MASS');
+    setLang('bn');
+    expect(metric.wetMass).toBe('উৎক্ষেপণের ভর');
+    expect(call.title).toBe('বাড়িতে কল বুক করো');
+    setLang('en');
+    expect(call.title).toBe('Book a call home');
   });
 
   it('the choice is saved in the browser as sd.lang', () => {

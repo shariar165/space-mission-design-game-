@@ -736,6 +736,7 @@ export const LAUNCH_CHECKS = tr('LAUNCH_CHECKS', {
 export const NAV = tr('NAV', {
   back: '◂ BACK',
   backLabel: 'Back',
+  home: 'HOME',
   info: 'MISSION INFO',
   help: 'HOW TO FLY',
   start: 'GOT IT ▸',
@@ -1141,6 +1142,8 @@ export const LANG_WORDS = tr('LANG_WORDS', { label: 'Language', en: 'EN', bn: '�
  */
 export const COLD_OPEN = tr('COLD_OPEN', {
   label: 'Mars Climate Orbiter, 1999: the signal that never came back',
+  /** The headline date: "SEPTEMBER 23, 1999". */
+  date: (iso: string) => f.longDate(iso),
   burn: (date: string, craft: string) => `${date} · ${craft.toUpperCase()} · ORBIT INSERTION BURN`,
   expected: 'SIGNAL EXPECTED WHEN IT COMES OUT FROM BEHIND MARS',
   /** The one-tap gate before it: the tap lets the sound start (browser autoplay rules). */

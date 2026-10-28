@@ -36,7 +36,7 @@ export const PANEL_STEP_MS = 2400;
 const CAPTION_CPS = 38;
 const TICK_MS = 40;
 
-const METRIC = REPORT_WORDS.metric as Record<CompareMetric, string>;
+const metricName = (m: CompareMetric) => (REPORT_WORDS.metric as Record<CompareMetric, string>)[m];
 const metricValue = (m: CompareMetric, v: number) => (m === 'powerAtArrival' ? f.watts(v) : m === 'deltaVCapability' ? f.speed(v) : f.kg(v));
 const DEST_COLOR: Record<Design['destination'], string> = { moon: '#cfcabb', venus: '#e8c27a', mars: 'var(--sd-mars)', bennu: '#8f8676', jupiter: '#d9a066' };
 
@@ -199,7 +199,7 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
           : []),
         ...compare.rows
           .filter((r) => engineer || r.metric === 'wetMass' || r.metric === 'powerAtArrival')
-          .map((r) => ({ k: METRIC[r.metric], you: metricValue(r.metric, r.you), them: metricValue(r.metric, r.them), s: r.themSource, gap: r.metric === compare.biggestGap })),
+          .map((r) => ({ k: metricName(r.metric), you: metricValue(r.metric, r.you), them: metricValue(r.metric, r.them), s: r.themSource, gap: r.metric === compare.biggestGap })),
       ]
     : [];
 
@@ -232,7 +232,7 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
           </div>
         ))}
       </div>
-      {engineer && <span className="rp-compare-src">BIGGEST GAP · {METRIC[compare.biggestGap]} · HISTORY · {compare.history}</span>}
+      {engineer && <span className="rp-compare-src">BIGGEST GAP · {metricName(compare.biggestGap)} · HISTORY · {compare.history}</span>}
     </div>
   );
 

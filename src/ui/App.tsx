@@ -33,7 +33,7 @@ import { NameRobot } from './screens/NameRobot';
 import { Notebook } from './screens/Notebook';
 import { Pack } from './screens/Pack';
 import { RescueCaseView, RescueSelect } from './screens/Rescue';
-import { BRIEFING, DAILY_BRIEFING, FREE_BRIEFING, LESSON_WORDS, LIVE_WEATHER } from './sdWords';
+import { BRIEFING, DAILY_BRIEFING, FREE_BRIEFING, LESSON_WORDS, LIVE_WEATHER, NAV } from './sdWords';
 import { loadSpaceWeather, type SpaceWeather } from './donki';
 import { useLang } from './lang';
 import { defaultMissionName, starterDesign, today } from './starters';
@@ -551,7 +551,7 @@ export function App() {
           onFlyAgain={dailyRun ? home : flyAgain}
           onHome={home}
           onBack={back}
-          homeLabel="HOME"
+          homeLabel={NAV.home}
         />
       )}
     </div>

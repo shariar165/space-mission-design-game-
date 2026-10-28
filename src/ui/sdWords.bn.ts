@@ -236,15 +236,16 @@ const BN_CATEGORY_WORD: Record<string, string> = {
   mass: 'ওজনের মার্জিন',
   crisis: 'সংকট সামলানো',
 };
+/** "Face …" in an unlock hint: the hazard with Bangla's genitive ending, ready for "মুখোমুখি হও". */
 const BN_HAZARD_PHRASE: Record<string, string> = {
-  'solar-storm': 'একটা সৌরঝড়',
-  'cme-shock': 'একটা CME-এর ধাক্কা',
-  'mars-dust-storm': 'একটা ধুলোঝড়',
-  debris: 'ধূমকেতুর ধুলো',
-  'reaction-wheel': 'একটা চাকা বিকল',
-  'memory-corruption': 'একটা মেমরির গোলমাল',
-  'insertion-anomaly': 'পৌঁছানোর বার্নের গোলমাল',
-  'radiation-damage': 'বিকিরণের ক্ষতি',
+  'solar-storm': 'একটা সৌরঝড়ের',
+  'cme-shock': 'একটা CME-এর ধাক্কার',
+  'mars-dust-storm': 'একটা ধুলোঝড়ের',
+  debris: 'ধূমকেতুর ধুলোর',
+  'reaction-wheel': 'চাকা বিকল হওয়ার',
+  'memory-corruption': 'একটা মেমরির গোলমালের',
+  'insertion-anomaly': 'পৌঁছানোর বার্নের গোলমালের',
+  'radiation-damage': 'বিকিরণের ক্ষতির',
 };
 const BN_FINAL = {
   opening: {
@@ -420,9 +421,9 @@ export const BN: Bangla = {
   unlockHint: (u, ctx) => {
     switch (u.kind) {
       case 'face-hazard':
-        return `${BN_HAZARD_PHRASE[u.id] ?? ctx.hazard(u.id)}-এর মুখোমুখি হও`;
+        return BN_HAZARD_PHRASE[u.id] ? `${BN_HAZARD_PHRASE[u.id]} মুখোমুখি হও` : `${ctx.hazard(u.id)}-এর মুখোমুখি হও`;
       case 'finish-level':
-        return `${ctx.level(u.id)}-এ একটা তারা জেতো`;
+        return `${ctx.level(u.id)} মিশনে একটা তারা জেতো`;
       case 'solve-rescue':
         return `উদ্ধার-ইতিহাসে ${ctx.rescue(u.id)}-কে বাঁচাও`;
       case 'conjunction':
@@ -1182,6 +1183,7 @@ export const BN: Bangla = {
   NAV: {
     back: '◂ ফিরে যাও',
     backLabel: 'ফিরে যাও',
+    home: 'হোম',
     info: 'মিশনের তথ্য',
     help: 'কীভাবে ওড়াবে',
     start: 'বুঝেছি ▸',
@@ -1241,6 +1243,7 @@ export const BN: Bangla = {
   LANG_WORDS: { label: 'ভাষা', en: 'EN', bn: 'বাংলা' },
   COLD_OPEN: {
     label: 'Mars Climate Orbiter, 1999: যে সিগন্যাল আর ফেরেনি',
+    date: (iso) => new Date(`${iso.slice(0, 10)}T00:00:00Z`).toLocaleDateString(BN_DATES, { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }),
     burn: (date, craft) => `${date} · ${craft.toUpperCase()} · কক্ষপথে ঢোকার বার্ন`,
     expected: 'মঙ্গলের আড়াল থেকে বেরোলেই সিগন্যাল আসার কথা',
     receive: '▶ বার্তা গ্রহণ করো',
