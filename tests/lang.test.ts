@@ -10,10 +10,9 @@ import { BN, place, placeIn, placeOf } from '../src/ui/sdWords.bn';
 /** Exports that are not words, or that read their words from translated tables (sdWords.bn.ts `NotTranslated`). */
 const NOT_TRANSLATED = ['GAME_NAME', 'EFFECT_ICON', 'CHIP_ICON', 'SCIENCE_PARTS', 'ROBOT_NAMES', 'ROBOT_NAME_MAX', 'cleanRobotName', 'robotNameOr', 'nextRobotName', 'fill', 'optionShort', 'dangerLook', 'targetName'];
 
-/** Not translated yet: the next pull requests of the Bangla series take these (Pack and Fly, then Report and Notebook). */
+/** Not translated yet: the next pull requests of the Bangla series take these (Fly, science, then Report and Notebook). */
 const PENDING = [
   'TILE', 'OPTION_SHORT', 'arrivesWords', 'COMING', 'monthsWords', 'monthsShort', 'quietLine', 'milestoneLine', 'resultLines', 'RESULT_EFFECT_CHIP',
-  'PART_LOOK', 'DANGER_LOOK', 'deckWhen', 'STAMP', 'PACK_BLOCKER', 'PACK_WORDS', 'fuelFixWords', 'DAY_WORDS', 'LAUNCH_DAY_WORDS', 'WEIGHT_WORDS', 'shortDate', 'monthSpan',
   'panelWords', 'PANEL_SOUND', 'STAR_WORDS', 'CATEGORY_NAME', 'savedWords', 'hurtWords', 'REPORT_STAMP', 'FINAL_WORDS', 'finalLines',
   'CATEGORY_LOOK', 'LESSON_WORDS', 'unlockHint', 'LIVE_WEATHER',
   'FLY_WORDS', 'endsInWords', 'playNudge', 'MAP_WORDS', 'stormLine', 'VOICE', 'TARGET_WORDS', 'VOICE_ALT', 'STATUS_VOICE', 'robotSays', 'TX_WORDS',
@@ -23,7 +22,7 @@ const PENDING = [
 const BENGALI = /[ঀ-৿]/;
 const BENGALI_DIGIT = /[০-৯]/;
 /** Strings that are the same in both languages: names (robots, NASA, the language's own), keys and sound effects. */
-const SAME_IN_BOTH = new Set(['EN', 'VOYA', 'TALLY', 'KESTREL']);
+const SAME_IN_BOTH = new Set(['EN', 'VOYA', 'TALLY', 'KESTREL', 'ARM', 'CME']);
 
 const words = W as unknown as Record<string, unknown>;
 const bangla = BN as Record<string, unknown>;

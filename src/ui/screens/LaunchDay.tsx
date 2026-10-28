@@ -16,7 +16,7 @@ import { SDIcon } from '../components/sd/SDIcon';
 import * as f from '../format';
 import { useLaunchPlan } from '../launchPlan';
 import { useIsPhone } from '../sdGeometry';
-import { DAY_WORDS, GAME_NAME, LAUNCH_CHECKS, LAUNCH_DAY_WORDS, PACK_BLOCKER, shortDate } from '../sdWords';
+import { BRAND_WORDS, DAY_WORDS, GAME_NAME, LAUNCH_CHECKS, LAUNCH_DAY_WORDS, PACK_BLOCKER, PACK_WORDS, shortDate } from '../sdWords';
 
 interface Props {
   base: Design;
@@ -99,12 +99,10 @@ export function LaunchDay({ base, packed, pick, onPick, mode, onMode, missionNam
           <BackButton onBack={onBack} />
           {!phone && (
             <div className="sd-brand">
-              <button type="button" className="sd-brand-name" onClick={onHome} aria-label="Signal Delay: home">
+              <button type="button" className="sd-brand-name" onClick={onHome} aria-label={BRAND_WORDS.home}>
                 {GAME_NAME}
               </button>
-              <span className="sd-brand-sub">
-                {missionName.toUpperCase()} · TO {dest.name.toUpperCase()}
-              </span>
+              <span className="sd-brand-sub">{BRAND_WORDS.sub(missionName, dest.name)}</span>
             </div>
           )}
         </div>
@@ -132,7 +130,7 @@ export function LaunchDay({ base, packed, pick, onPick, mode, onMode, missionNam
         {blockers[0] && <p className="ld-block">{PACK_BLOCKER[blockers[0].code]}</p>}
       </main>
       <footer className="pk-panel pk-launch-panel ld-foot">
-        <ol className="pk-checks" aria-label="Launch checklist">
+        <ol className="pk-checks" aria-label={PACK_WORDS.checklist}>
           {checks.map((c) => (
             <li key={c.id} className={`${c.done ? 'done' : ''}${todo === c.id ? ' todo' : ''}`} aria-checked={c.done} role="checkbox" aria-disabled="true">
               <span className="pk-check-box">{c.done && <SDIcon icon="check" size={12} color="var(--sd-crt-hi)" />}</span>
@@ -141,14 +139,14 @@ export function LaunchDay({ base, packed, pick, onPick, mode, onMode, missionNam
           ))}
         </ol>
         <div className="pk-launch">
-          <button type="button" className={`pk-arm${armed ? ' on' : ''}`} role="switch" aria-checked={armed} aria-label="Arm" onClick={() => setArmed((a) => !a)}>
+          <button type="button" className={`pk-arm${armed ? ' on' : ''}`} role="switch" aria-checked={armed} aria-label={PACK_WORDS.armLabel} onClick={() => setArmed((a) => !a)}>
             <span className="pk-arm-slot">
               <span className="pk-arm-knob" />
             </span>
-            <span className="pk-arm-word">ARM</span>
+            <span className="pk-arm-word">{PACK_WORDS.arm}</span>
           </button>
           <button type="button" className={`pk-go${ready ? ' ready' : ''}`} disabled={!ready} onClick={() => onLaunch(plan.design)}>
-            LAUNCH
+            {PACK_WORDS.launch}
           </button>
         </div>
       </footer>

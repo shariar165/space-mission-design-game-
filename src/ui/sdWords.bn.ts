@@ -56,7 +56,158 @@ export const placeIn = (name: string) => lookup(name)?.in ?? `${name}-এ`;
 /** Of the place ("মঙ্গলের"). */
 export const placeOf = (name: string) => lookup(name)?.of ?? `${name}-এর`;
 
+/** Dates in Bangla month names, with the same (Latin) digits as English. */
+const BN_DATES = 'bn-BD-u-nu-latn';
+
+/** The parts' names, for lines that name one (fuelFixWords; the table itself is PART_LOOK below). */
+const BN_PART_NAME: Record<string, string> = {
+  computer: 'ফ্লাইট কম্পিউটার',
+  engine: 'প্রধান ইঞ্জিন',
+  camera: 'ক্যামেরা',
+  spectrometer: 'স্পেকট্রোমিটার',
+  magnetometer: 'ম্যাগনেটোমিটার',
+  radar: 'রাডার সাউন্ডার',
+  sniffer: 'বাতাস শোঁকার যন্ত্র (MAVEN-এর যন্ত্রগুচ্ছ)',
+  dish: 'বড় ডিশ অ্যান্টেনা',
+  solar: 'বাড়তি সোলার প্যানেল',
+  battery: 'বড় ব্যাটারি',
+  tank: 'বাড়তি জ্বালানি ট্যাংক',
+  heater: 'হিটার প্যাক',
+  shield: 'বিকিরণ-ঢাল',
+  bumper: 'ধুলিকণা-বাম্পার',
+  spare: 'বাড়তি কম্পিউটার',
+  autopilot: 'অটোপাইলট চিপ',
+};
+
 export const BN: Partial<Bangla> = {
+  // -------------------------------------------------------------------------
+  // Pack and Launch Day
+
+  PART_LOOK: {
+    computer: { name: 'ফ্লাইট কম্পিউটার', short: 'মগজ' },
+    engine: { name: 'প্রধান ইঞ্জিন', short: 'ইঞ্জিন' },
+    camera: { name: 'ক্যামেরা', short: 'ক্যামেরা' },
+    spectrometer: { name: 'স্পেকট্রোমিটার', short: 'স্পেকট্রো' },
+    magnetometer: { name: 'ম্যাগনেটোমিটার', short: 'ম্যাগ' },
+    radar: { name: 'রাডার সাউন্ডার', short: 'রাডার' },
+    sniffer: { name: 'বাতাস শোঁকার যন্ত্র (MAVEN-এর যন্ত্রগুচ্ছ)', short: 'শোঁকা' },
+    dish: { name: 'বড় ডিশ অ্যান্টেনা', short: 'ডিশ' },
+    solar: { name: 'বাড়তি সোলার প্যানেল', short: 'সোলার' },
+    battery: { name: 'বড় ব্যাটারি', short: 'ব্যাটারি' },
+    tank: { name: 'বাড়তি জ্বালানি ট্যাংক', short: 'জ্বালানি' },
+    heater: { name: 'হিটার প্যাক', short: 'হিটার' },
+    shield: { name: 'বিকিরণ-ঢাল', short: 'ঢাল' },
+    bumper: { name: 'ধুলিকণা-বাম্পার', short: 'বাম্পার' },
+    spare: { name: 'বাড়তি কম্পিউটার', short: 'বাড়তি' },
+    autopilot: { name: 'অটোপাইলট চিপ', short: 'অটো' },
+  },
+  DANGER_LOOK: {
+    eclipse: { title: 'গ্রহণের মৌসুম', short: 'গ্রহণ', line: 'গ্রহটা সূর্যকে আড়াল করে। বিদ্যুৎ কমে যায়।' },
+    conjunction: { title: 'সূর্য মাঝখানে', short: 'সূর্য', line: 'প্রায় দুই সপ্তাহ বাড়িতে কোনো কল নেই।' },
+    'solar-storm': { title: 'বিকিরণ-ঝড়', short: 'ঝড়', line: 'সূর্য দ্রুতগামী কণা ছোড়ে, যা ইলেকট্রনিকস পুড়িয়ে দেয়।' },
+    'cme-shock': { title: 'CME-এর ধাক্কা', short: 'CME', line: 'সৌর প্লাজমার একটা মেঘ মঙ্গলে আছড়ে পড়ে।' },
+    'mars-dust-storm': { title: 'ধুলোঝড়', short: 'ধুলো', line: 'মঙ্গলের বাতাস ফুলে ওঠে আর নিচু কক্ষপথকে টেনে ধরে।' },
+    debris: { title: 'ধূমকেতুর ধুলো', short: 'কণা', line: 'ছোট্ট কণাগুলো বুলেটের চেয়েও জোরে আঘাত করে।' },
+    'reaction-wheel': { title: 'চাকা বিকল', short: 'চাকা', line: 'যে ঘূর্ণি-চাকা রোবটকে ঠিক দিকে ঘোরায়, সেটা ক্ষয়ে যায়।' },
+    'memory-corruption': { title: 'মেমরির গোলমাল', short: 'মেমরি', line: 'বিকিরণ কম্পিউটারের বিট উল্টে দেয়।' },
+    'insertion-anomaly': { title: 'পৌঁছানোর বার্নে গোলমাল', short: 'পৌঁছানো', line: 'গতি কমানোর বার্ন পরিকল্পনামতো হয় না।' },
+  },
+  deckWhen: (c) => {
+    if (c.kind === 'eclipse' || c.kind === 'conjunction') return 'নিশ্চিত · আগেই দেখা যায়';
+    return c.detectedBy === 'earth' ? 'আচমকা · আগাম সতর্কতাসহ' : 'আচমকা · কোনো সতর্কতা ছাড়া';
+  },
+  STAMP: {
+    covered: { word: 'সামলানো', short: 'ঠিক' },
+    some: { word: 'কিছুটা সামলানো', short: 'কিছুটা' },
+    none: { word: 'অরক্ষিত', short: 'নেই' },
+  },
+  PACK_BLOCKER: {
+    'too-heavy': 'এই রকেটের জন্য খুব ভারী',
+    'no-power': 'যথেষ্ট বিদ্যুৎ নেই',
+    'no-fuel': 'সেখানে যাওয়ার মতো জ্বালানি নেই',
+    'no-capture': 'এই ইঞ্জিন গতি কমিয়ে কক্ষপথে ঢুকতে পারে না',
+    'flight-too-long': 'এই যাত্রা খেলার জন্য খুব লম্বা',
+    'no-science': 'অন্তত একটি বিজ্ঞানযন্ত্র নাও',
+    other: 'উৎক্ষেপণের জন্য তৈরি নয়',
+  },
+  PACK_WORDS: {
+    noRoom: 'নাকে আর জায়গা নেই',
+    step: 'গোছাও',
+    shelf: 'যন্ত্রাংশের তাক',
+    shelfLabel: 'যন্ত্রাংশের তাক',
+    tapToPack: 'নিতে ছোঁও',
+    shelfEmpty: 'তাক খালি। সব গোছানো হয়ে গেছে।',
+    pack: (name, fits) => `${name} নাও${fits ? '' : ' (জায়গা নেই)'}`,
+    fits: (n) => `আঁটবে · ${n} ঘর`,
+    fitsShort: (n) => `${n} ঘর`,
+    wontFit: 'আঁটবে না',
+    noRoomShort: 'জায়গা নেই',
+    earnsData: 'ডেটা আনে',
+    covers: (danger) => `সামলায়: ${danger}`,
+    fairing: 'নাক আর ওজন',
+    nose: 'রকেটের নাক',
+    noseLabel: 'রকেটের নাক',
+    noseState: (state) => `নাক: ${state}`,
+    full: 'ভরা · আর কিছু আঁটবে না',
+    fullShort: 'ভরা',
+    left: (n) => `আর ${n}টি ঘর খালি`,
+    alwaysPacked: (name) => `${name} · সবসময় থাকে`,
+    alwaysPackedLabel: (name) => `${name} (সবসময় থাকে)`,
+    tapToUnpack: (name) => `${name} · সরাতে ছোঁও`,
+    unpack: (name) => `${name} সরাও`,
+    weight: 'ওজন',
+    weightLabel: 'ওজন',
+    deck: 'বিপদের তাস',
+    deckOf: (dest) => `বিপদের তাস · ${place(dest)}`,
+    deckLabel: (dest) => `বিপদের তাস: ${place(dest)}`,
+    deckSub: 'সব তাস খোলা। কী আসছে, তুমি জানো।',
+    checklist: 'উৎক্ষেপণের তালিকা',
+    arm: 'ARM',
+    armLabel: 'আর্ম',
+    launch: 'উৎক্ষেপণ',
+    lesson: (title) => `শিক্ষা · ${title.toUpperCase()}`,
+    lessonTitle: 'শিক্ষাটি',
+    lessonLearned: '★ শিক্ষা পেলাম',
+  },
+  BRAND_WORDS: {
+    home: 'Signal Delay: হোম',
+    sub: (mission, dest) => `${mission.toUpperCase()} · গন্তব্য ${place(dest)}`,
+  },
+  STEP_WORDS: { label: 'মিশনের ধাপ', pack: 'গোছাও', build: 'বানাও', fly: 'ওড়াও', report: 'রিপোর্ট' },
+  fuelFixWords: (fix) => {
+    const pack = `${BN_PART_NAME[fix.part]} নাও`;
+    return fix.why === 'station-keeping' ? `${pack} — ${f.km(fix.orbitAlt_m).toUpperCase()} কক্ষপথে প্রতি মাসে ট্রিম বার্ন লাগে` : pack;
+  },
+  DAY_WORDS: {
+    good: { msg: (d) => `ভালো দিন · ${place(d)} নাগালে`, short: 'ভালো' },
+    soso: { msg: () => 'চলনসই · হাতে বাড়তি কম', short: 'চলনসই' },
+    bad: { msg: (d) => `খারাপ দিন · ${place(d)} নাগালের বাইরে`, short: 'খারাপ' },
+  },
+  LAUNCH_DAY_WORDS: {
+    title: 'উৎক্ষেপণের দিন',
+    head: (span) => `উৎক্ষেপণের দিন · ${span}`,
+    daysLabel: 'উৎক্ষেপণের দিন',
+    sub: 'ছয় সপ্তাহের উৎক্ষেপণের দিন। সবুজ: সহজ যাত্রা। হলুদ: হাতে বাড়তি কম। লাল: নাগালের বাইরে।',
+    line: 'উৎক্ষেপণের দিন',
+    auto: 'সেরা দিন · তোমার জন্য বাছা',
+    yours: 'তোমার বাছাই',
+    change: 'বদলাও ▸',
+    arrives: 'পৌঁছাবে',
+    flight: 'যাত্রা',
+    best: 'সেরা দিন',
+    useBest: 'সেরা দিনটা নাও',
+    working: 'উৎক্ষেপণের দিনগুলো হিসাব হচ্ছে…',
+    c3: 'C3 · পৌঁছানোর v∞',
+    margins: 'মার্জিন · ভর · Δv',
+  },
+  WEIGHT_WORDS: { ok: 'যথেষ্ট হালকা', warning: 'প্রায় বেশি ভারী', over: 'এই রকেটের জন্য খুব ভারী' },
+  shortDate: (iso) => new Date(`${iso.slice(0, 10)}T00:00:00Z`).toLocaleDateString(BN_DATES, { month: 'short', day: 'numeric', timeZone: 'UTC' }),
+  monthSpan: (fromIso, toIso) => {
+    const m = (iso: string) => new Date(`${iso.slice(0, 10)}T00:00:00Z`).toLocaleDateString(BN_DATES, { month: 'short', timeZone: 'UTC' });
+    const y = toIso.slice(0, 4);
+    return m(fromIso) === m(toIso) ? `${m(fromIso)} ${y}` : `${m(fromIso)}–${m(toIso)} ${y}`;
+  },
+
   // -------------------------------------------------------------------------
   // Briefings, coach panels, launch checklist and navigation
 

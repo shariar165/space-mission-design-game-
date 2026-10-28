@@ -34,6 +34,7 @@ import { SDIcon } from '../components/sd/SDIcon';
 import { useLaunchPlan } from '../launchPlan';
 import { useIsPhone } from '../sdGeometry';
 import {
+  BRAND_WORDS,
   DAY_WORDS,
   dangerLook,
   fuelFixWords,
@@ -130,20 +131,20 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
   const badges = (id: PartId) => [
     ...coversOf(id)
       .filter((d) => deck.some((c) => c.id === d))
-      .map((d) => ({ icon: dangerLook(d, HAZARDS[d]?.title ?? d).icon, color: 'var(--sd-coral)', title: `Covers ${dangerLook(d, HAZARDS[d]?.title ?? d).title.toLowerCase()}` })),
-    ...(SCIENCE_PARTS.includes(id) ? [{ icon: 'star' as const, color: 'var(--sd-crt-hi)', title: 'Earns data' }] : []),
+      .map((d) => ({ icon: dangerLook(d, HAZARDS[d]?.title ?? d).icon, color: 'var(--sd-coral)', title: PACK_WORDS.covers(dangerLook(d, HAZARDS[d]?.title ?? d).title) })),
+    ...(SCIENCE_PARTS.includes(id) ? [{ icon: 'star' as const, color: 'var(--sd-crt-hi)', title: PACK_WORDS.earnsData }] : []),
   ];
 
-  const spaceText = full ? 'FULL · NOTHING ELSE FITS' : sq.free === 0 ? 'FULL' : `${f.num(sq.free)} SQUARES LEFT`;
+  const spaceText = full ? PACK_WORDS.full : sq.free === 0 ? PACK_WORDS.fullShort : PACK_WORDS.left(f.num(sq.free));
   const spaceHot = full || sq.free === 0;
   const status = noRoom ? PACK_WORDS.noRoom : blockers[0] ? PACK_BLOCKER[blockers[0].code] : undefined;
   const fix = !noRoom ? blockers.find((b) => b.fix)?.fix : undefined;
 
   const nose = (
-    <div className="pk-nose" aria-label="Rocket nose">
-      <div className="pk-cone">{!phone && <span>ROCKET NOSE</span>}</div>
+    <div className="pk-nose" aria-label={PACK_WORDS.noseLabel}>
+      <div className="pk-cone">{!phone && <span>{PACK_WORDS.nose}</span>}</div>
       <div className="pk-hull">
-        <div className="pk-grid" role="group" aria-label={`Nose: ${spaceText}`}>
+        <div className="pk-grid" role="group" aria-label={PACK_WORDS.noseState(spaceText)}>
           {Array.from({ length: sq.total }, (_, i) => (
             <span key={`c${i}`} className="pk-cell" style={{ gridColumn: `${(i % PACK.grid.cols.value) + 1}`, gridRow: `${Math.floor(i / PACK.grid.cols.value) + 1}` }} />
           ))}
@@ -157,8 +158,8 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
                 type="button"
                 className={`pk-part${lit(p.id) ? ' lit' : ''}${locked ? ' locked' : ''}`}
                 style={{ gridColumn: `${p.c + 1} / span ${fp.w}`, gridRow: `${p.r + 1} / span ${fp.h}`, background: look.color }}
-                title={locked ? `${look.name} · always packed` : `${look.name} · tap to unpack`}
-                aria-label={locked ? `${look.name} (always packed)` : `Unpack ${look.name}`}
+                title={locked ? PACK_WORDS.alwaysPacked(look.name) : PACK_WORDS.tapToUnpack(look.name)}
+                aria-label={locked ? PACK_WORDS.alwaysPackedLabel(look.name) : PACK_WORDS.unpack(look.name)}
                 onClick={() => !locked && remove(p.id)}
                 onMouseEnter={() => hoverPart(p.id)}
                 onMouseLeave={() => setHl(undefined)}
@@ -183,8 +184,8 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
   );
 
   const scale = (
-    <div className={`pk-scale ${weight.status}`} role="meter" aria-label="Weight" aria-valuemin={0} aria-valuemax={1} aria-valuenow={Math.min(1.5, weight.ratio)}>
-      <span className="pk-scale-k">WEIGHT</span>
+    <div className={`pk-scale ${weight.status}`} role="meter" aria-label={PACK_WORDS.weightLabel} aria-valuemin={0} aria-valuemax={1} aria-valuenow={Math.min(1.5, weight.ratio)}>
+      <span className="pk-scale-k">{PACK_WORDS.weight}</span>
       <div className="pk-scale-tube sd-well">
         <div className="pk-scale-fill" style={{ height: `${Math.min(100, weight.ratio * 100)}%` }} />
         <div className="pk-scale-line" />
@@ -208,7 +209,7 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
             key={id}
             type="button"
             className={`pk-tray-card${fits ? '' : ' nofit'}${lit(id) ? ' lit' : ''}`}
-            aria-label={`Pack ${look.name}${fits ? '' : ' (no room)'}`}
+            aria-label={PACK_WORDS.pack(look.name, fits)}
             onClick={() => add(id)}
             onMouseEnter={() => hoverPart(id)}
             onMouseLeave={() => setHl(undefined)}
@@ -222,7 +223,7 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
             </span>
             <span className="pk-tray-body">
               <span className="pk-tray-name">{look.name}</span>
-              <span className={`pk-tray-state${fits ? '' : ' no'}`}>{phone ? (fits ? `${f.num(fp.squares)} SQ` : 'NO ROOM') : fits ? `FITS · ${f.num(fp.squares)} SQUARES` : 'WON’T FIT'}</span>
+              <span className={`pk-tray-state${fits ? '' : ' no'}`}>{phone ? (fits ? PACK_WORDS.fitsShort(f.num(fp.squares)) : PACK_WORDS.noRoomShort) : fits ? PACK_WORDS.fits(f.num(fp.squares)) : PACK_WORDS.wontFit}</span>
               {engineer && !phone && <span className="pk-tray-eng">{`${f.num(fp.w)}×${f.num(fp.h)}`}</span>}
             </span>
             <span className="pk-tray-badges">
@@ -235,12 +236,12 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
           </button>
         );
       })}
-      {tray.length === 0 && <div className="pk-empty">SHELF EMPTY. EVERYTHING IS PACKED.</div>}
+      {tray.length === 0 && <div className="pk-empty">{PACK_WORDS.shelfEmpty}</div>}
     </div>
   );
 
   const deckList = (
-    <div className="pk-deck-list" role="list" aria-label="Danger deck">
+    <div className="pk-deck-list" role="list" aria-label={PACK_WORDS.deck}>
       {deck.map((c) => {
         const look = dangerLook(c.id, HAZARDS[c.id]?.title ?? c.id);
         const st = STAMP[c.stamp];
@@ -304,7 +305,7 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
   ];
   const todo = checks.find((c) => !c.done)?.id;
   const checklist = (
-    <ol className="pk-checks" aria-label="Launch checklist">
+    <ol className="pk-checks" aria-label={PACK_WORDS.checklist}>
       {checks.map((c) => (
         <li key={c.id} className={`${c.done ? 'done' : ''}${todo === c.id ? ' todo' : ''}`} aria-checked={c.done} role="checkbox" aria-disabled="true">
           <span className="pk-check-box">{c.done && <SDIcon icon="check" size={12} color="var(--sd-crt-hi)" />}</span>
@@ -329,14 +330,14 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
 
   const launch = (
     <div className="pk-launch">
-      <button type="button" className={`pk-arm${armed ? ' on' : ''}`} role="switch" aria-checked={armed} aria-label="Arm" onClick={() => setArmed((a) => !a)}>
+      <button type="button" className={`pk-arm${armed ? ' on' : ''}`} role="switch" aria-checked={armed} aria-label={PACK_WORDS.armLabel} onClick={() => setArmed((a) => !a)}>
         <span className="pk-arm-slot">
           <span className="pk-arm-knob" />
         </span>
-        <span className="pk-arm-word">ARM</span>
+        <span className="pk-arm-word">{PACK_WORDS.arm}</span>
       </button>
       <button type="button" className={`pk-go${ready ? ' ready' : ''}`} disabled={!ready} onClick={() => onLaunch(design)}>
-        LAUNCH
+        {PACK_WORDS.launch}
       </button>
     </div>
   );
@@ -355,13 +356,13 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
   const lesson = lessonCard && (
     <div className="pk-lesson sd-paper">
       <span className="sd-history-k">
-        LESSON · {lessonCard.title.toUpperCase()}
-        <SourceInfo s={lessonCard.lesson} title="the lesson" />
+        {PACK_WORDS.lesson(lessonCard.title)}
+        <SourceInfo s={lessonCard.lesson} title={PACK_WORDS.lessonTitle} />
       </span>
       <span className="sd-history-v">{lessonCard.lesson.value}</span>
       {onLesson && (
         <button type="button" className="sd-cta red" onClick={onLesson}>
-          ★ LESSON LEARNED
+          {PACK_WORDS.lessonLearned}
         </button>
       )}
     </div>
@@ -375,7 +376,7 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
             <BackButton onBack={onBack} />
           ) : (
             <button type="button" className="fly-status-brand" onClick={onHome}>
-              PACK
+              {PACK_WORDS.step}
             </button>
           )}
           {infoKey}
@@ -386,7 +387,7 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
           </span>
         </div>
         <div className="pk-deck-phone">
-          <span className="sd-label">DANGER DECK · {dest.name.toUpperCase()}</span>
+          <span className="sd-label">{PACK_WORDS.deckOf(dest.name)}</span>
           {deckList}
         </div>
         <div className="pk-nose-row">
@@ -410,12 +411,10 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
         <div className="pk-top-left">
           {onBack && <BackButton onBack={onBack} />}
           <div className="sd-brand">
-          <button type="button" className="sd-brand-name" onClick={onHome} aria-label="Signal Delay: home">
+          <button type="button" className="sd-brand-name" onClick={onHome} aria-label={BRAND_WORDS.home}>
             {GAME_NAME}
           </button>
-          <span className="sd-brand-sub">
-            {missionName.toUpperCase()} · TO {dest.name.toUpperCase()}
-          </span>
+          <span className="sd-brand-sub">{BRAND_WORDS.sub(missionName, dest.name)}</span>
           </div>
         </div>
         <MissionSteps at={0} />
@@ -429,14 +428,14 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
         </div>
       </header>
       <div className="pk-main">
-        <section className="pk-panel pk-tray" aria-label="Parts shelf">
+        <section className="pk-panel pk-tray" aria-label={PACK_WORDS.shelfLabel}>
           <div className="pk-panel-head">
-            <span className="pk-panel-title">PARTS SHELF</span>
-            <span className="sd-label dim">TAP TO PACK</span>
+            <span className="pk-panel-title">{PACK_WORDS.shelf}</span>
+            <span className="sd-label dim">{PACK_WORDS.tapToPack}</span>
           </div>
           {shelfCards}
         </section>
-        <section className="pk-fairing" aria-label="Nose and weight">
+        <section className="pk-fairing" aria-label={PACK_WORDS.fairing}>
           <div className="pk-dots" />
           <div className="pk-nose-row">
             {nose}
@@ -448,10 +447,10 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
           </div>
           {lesson}
         </section>
-        <section className="pk-panel pk-deck" aria-label={`Danger deck: ${dest.name}`}>
+        <section className="pk-panel pk-deck" aria-label={PACK_WORDS.deckLabel(dest.name)}>
           <div className="pk-deck-head">
-            <span className="pk-panel-title">DANGER DECK · {dest.name.toUpperCase()}</span>
-            <span className="pk-deck-sub">Face up. You know what’s coming.</span>
+            <span className="pk-panel-title">{PACK_WORDS.deckOf(dest.name)}</span>
+            <span className="pk-deck-sub">{PACK_WORDS.deckSub}</span>
           </div>
           {deckList}
         </section>
