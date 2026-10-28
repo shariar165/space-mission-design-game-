@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is **Signal Delay** (formerly Mission Drafting Table), a NASA space-mission game: a pure TypeScript simulation engine (`src/engine`) and a React + Vite UI (`src/ui`). The science rules live in `docs/SCIENCE_SPEC.md`, which is the source of truth for every equation, constant and rule (and, under "UI rules", for what the screens may show). Read the relevant section before changing a module.
 
+**Current state:** `docs/HANDOFF.md` records what is merged, the open items (delete the dead `OpsSummary`, a "Judge in 3 minutes" README section, the Atlas V LSP placeholder curves), known limitations and the working rules. Read it first in a new session and keep it current when an open item closes.
+
 ## Toolchain: everything lives in `.venv`
 
 Node 22.16.0 is installed **inside the Python venv** by `nodeenv`. The user wants every extra requirement installed through the venv, never globally (no `npm -g`, no system Node): npm packages go into the project `node_modules` using the venv's npm, Python tools via `.venv\Scripts\python -m pip`, pinned in `requirements.txt`. Put `.venv\Scripts` first on PATH before running npm/npx:
