@@ -1,7 +1,7 @@
 // ⓘ: opens the Sourced<T> record behind a number: its value, unit, source, link and whether it is a
 // game estimate (spec rule 2: never present an estimate as NASA data). In Bangla a cited text is shown translated
 // (cited.ts); ⓘ keeps the record as it is: the English original, its source and its link (spec UI rule 48).
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import type { Sourced } from '../../engine/types';
 import { hasBangla } from '../cited';
 import { sourcedValue } from '../format';
@@ -12,7 +12,17 @@ export function SourceInfo({ s, title }: { s: Sourced<unknown>; title?: string }
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ top: number; left: number; up: boolean }>({ top: 0, left: 0, up: false });
   const ref = useRef<HTMLSpanElement>(null);
+  const pop = useRef<HTMLSpanElement>(null);
   const id = useId();
+  // Once open, keep the whole popover on screen: a long cited text can be taller than the room below the button.
+  useLayoutEffect(() => {
+    const el = pop.current;
+    if (!open || !el) return;
+    const h = el.getBoundingClientRect().height;
+    const now = pos.up ? pos.top - h : pos.top;
+    const top = Math.max(8, Math.min(now, window.innerHeight - h - 8));
+    if (top !== now) setPos({ ...pos, top, up: false });
+  }, [open, pos]);
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => {
@@ -54,6 +64,7 @@ export function SourceInfo({ s, title }: { s: Sourced<unknown>; title?: string }
       {open && (
         <span
           className="popover"
+          ref={pop}
           id={id}
           role="dialog"
           style={{ top: pos.top, left: pos.left, transform: pos.up ? 'translateY(-100%)' : undefined }}

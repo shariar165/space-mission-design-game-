@@ -88,7 +88,7 @@ test('Bangla: the first mission’s briefing, Pack, Launch Day, countdown, coach
   const p = info.project.name;
   await banglaPlayer(page, ['cold-open', 'name'], 'VOYA');
   await page.getByRole('button', { name: /^খেলো: মিশন/ }).click();
-  await expect(page.getByRole('dialog', { name: 'Mission briefing' })).toBeVisible();
+  await expect(page.getByRole('dialog', { name: 'মিশনের ব্রিফিং' })).toBeVisible();
   await page.waitForTimeout(500);
   await shot(page, 'briefing', p);
   await page.getByRole('button', { name: 'বুঝেছি ▸' }).click();
@@ -178,4 +178,31 @@ test('Bangla: the Notebook and Postcards', async ({ page }, info) => {
   await page.getByRole('button', { name: /^পোস্টকার্ড:/ }).click();
   await page.waitForTimeout(800);
   await shot(page, 'postcards', p);
+});
+
+test('Bangla: the mission map, Rescue History and a cited text with its ⓘ', async ({ page }, info) => {
+  test.setTimeout(120_000);
+  const p = info.project.name;
+  await banglaPlayer(page, ['cold-open', 'name'], 'VOYA');
+  await page.getByRole('button', { name: 'মিশন বাছো ▸' }).first().click();
+  await expect(page.getByRole('heading', { name: 'এবার কোথায় উড়বে?' })).toBeVisible();
+  await page.waitForTimeout(500);
+  await shot(page, 'map', p);
+  await page.goto('/?seed=2013');
+  await page.getByRole('button', { name: /^উদ্ধার-ইতিহাস:/ }).click();
+  await expect(page.getByRole('heading', { name: 'হারিয়ে যাওয়া একটা মিশন বাঁচাও' })).toBeVisible();
+  await shot(page, 'rescue-list', p);
+  await page.getByRole('button', { name: /Mars Climate Orbiter/ }).click();
+  await page.getByRole('button', { name: /থ্রাস্টার জ্বলার ফাইল/ }).click();
+  await page.waitForTimeout(400);
+  await shot(page, 'rescue-case', p);
+  // ⓘ on the failure report's finding: the English original, its source and link
+  await page.getByRole('button', { name: 'উৎস: থ্রাস্টার জ্বলার ফাইল' }).click();
+  await expect(page.getByText('মূল লেখা (ইংরেজি)')).toBeVisible();
+  await shot(page, 'rescue-source', p);
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: 'এটাই বাগ!' }).click();
+  await page.waitForTimeout(600);
+  await page.locator('.solved').scrollIntoViewIfNeeded();
+  await shot(page, 'rescue-solved', p);
 });

@@ -33,7 +33,7 @@ import { NameRobot } from './screens/NameRobot';
 import { Notebook } from './screens/Notebook';
 import { Pack } from './screens/Pack';
 import { RescueCaseView, RescueSelect } from './screens/Rescue';
-import { BRIEFING, DAILY_BRIEFING, FREE_BRIEFING, LESSON_WORDS, LIVE_WEATHER, NAV } from './sdWords';
+import { BRIEF_WORDS, BRIEFING, DAILY_BRIEFING, FREE_BRIEFING, LESSON_WORDS, LEVEL_WORDS, LIVE_WEATHER, NAV } from './sdWords';
 import { loadSpaceWeather, type SpaceWeather } from './donki';
 import { useLang } from './lang';
 import { defaultMissionName, starterDesign, today } from './starters';
@@ -351,10 +351,10 @@ export function App() {
   /** The mission briefing: what to do on this level (or a free build, or today's Daily). */
   const briefFor = (forDaily: boolean) =>
     forDaily
-      ? { title: 'Daily mission', briefing: { ...DAILY_BRIEFING, tip: `${DAILY_BRIEFING.tip} ${dailyWeather?.status === 'live' ? LIVE_WEATHER.briefLive : LIVE_WEATHER.briefOffline}` } }
+      ? { title: BRIEF_WORDS.daily, briefing: { ...DAILY_BRIEFING, tip: `${DAILY_BRIEFING.tip} ${dailyWeather?.status === 'live' ? LIVE_WEATHER.briefLive : LIVE_WEATHER.briefOffline}` } }
       : level
-        ? { title: level.title, briefing: BRIEFING[level.id] ?? FREE_BRIEFING, concept: level.concept }
-        : { title: 'Free build', briefing: FREE_BRIEFING };
+        ? { title: level.title, briefing: BRIEFING[level.id] ?? FREE_BRIEFING, concept: LEVEL_WORDS.teaches[level.id] ?? '' }
+        : { title: BRIEF_WORDS.free, briefing: FREE_BRIEFING };
   const packBrief = { ...briefFor(false), open: level !== undefined && !seen.includes(`brief:${level.id}`) };
   /** The launch countdown plays on the first flight of each level (and of the Daily, and of a free build). */
   const launchKey = `launch:${dailyRun ? 'daily' : (level?.id ?? 'free')}`;

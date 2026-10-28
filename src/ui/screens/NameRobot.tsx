@@ -11,7 +11,7 @@ import { useTeletype } from '../components/sd/Teletype';
 import { useLoop } from '../sound';
 import * as f from '../format';
 import { useIsPhone } from '../sdGeometry';
-import { cleanRobotName, NAME_WORDS, ROBOT_NAME_MAX, robotNameOr } from '../sdWords';
+import { cleanRobotName, crtDate, NAME_WORDS, ROBOT_NAME_MAX, robotNameOr } from '../sdWords';
 
 interface Props {
   /** The saved name ('' when none yet). */
@@ -55,9 +55,9 @@ export function NameRobot({ name: saved, mode, onMode, mars, onName, onDone, onB
 
   const sky = (
     <div className="nm-sky sd-well">
-      <span className="nm-sky-k">{phone ? `${NAME_WORDS.sky} · ${f.crtDate(mars.date)}` : NAME_WORDS.sky}</span>
+      <span className="nm-sky-k">{phone ? `${NAME_WORDS.sky} · ${crtDate(mars.date)}` : NAME_WORDS.sky}</span>
       <span className="nm-sky-v sd-crt-text">
-        {phone ? NAME_WORDS.skyPhone(f.wholeMinutes(mars.lightTime_s)) : NAME_WORDS.skyLine(f.crtDate(mars.date), f.wholeMinutes(mars.lightTime_s))}
+        {phone ? NAME_WORDS.skyPhone(f.wholeMinutes(mars.lightTime_s)) : NAME_WORDS.skyLine(crtDate(mars.date), f.wholeMinutes(mars.lightTime_s))}
       </span>
       {eng && <span className="nm-sky-eng">{NAME_WORDS.skyEng(f.au(mars.distance_m), f.millionKm(mars.distance_m), f.lightTime(mars.lightTime_s)).toUpperCase()}</span>}
     </div>

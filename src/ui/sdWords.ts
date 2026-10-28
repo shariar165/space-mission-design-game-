@@ -279,6 +279,10 @@ export const WEIGHT_WORDS: Record<'ok' | 'warning' | 'over', string> = tr('WEIGH
 
 /** "NOV 1" from an ISO date. */
 export const shortDate = tr('shortDate', (iso: string) => new Date(`${iso.slice(0, 10)}T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }).toUpperCase());
+/** A date with its year, in words: "Dec 11, 1998" (format.ts isoDate). */
+export const fullDate = tr('fullDate', (iso: string) => f.isoDate(iso));
+/** A date as the CRT prints it: "21 OCT 2026" (format.ts crtDate). */
+export const crtDate = tr('crtDate', (iso: string) => f.crtDate(iso));
 /** "NOV–DEC 2013" for the calendar head. */
 function monthSpanEn(fromIso: string, toIso: string): string {
   const m = (iso: string) => new Date(`${iso.slice(0, 10)}T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' }).toUpperCase();
@@ -716,7 +720,49 @@ export const HOME_WORDS = tr('HOME_WORDS', {
 export const MODE_WORDS = tr('MODE_WORDS', { cadet: 'CADET', engineer: 'ENGINEER', short: 'ENG' });
 
 /** The mission briefing's frame (its words per level are BRIEFING). */
+/** What each level teaches and its line on the mission map. Level titles (levels.ts) stay English in both languages;
+ *  in Bangla `sub` puts what the level teaches under the title. */
+export const LEVEL_WORDS = tr('LEVEL_WORDS', {
+  teaches: {
+    'moon-1': 'Power',
+    'moon-2': 'Fuel & weight',
+    'moon-3': 'Science & radio',
+    mars: 'Light delay',
+    venus: 'Budget',
+    bennu: 'Rendezvous & return',
+    jupiter: 'Rocket limits',
+  } as Record<string, string>,
+  blurb: {
+    'moon-1': 'Pick solar wings that keep your craft charged.',
+    'moon-2': 'Every kilogram of fuel must be lifted too.',
+    'moon-3': 'Build the whole craft yourself.',
+    mars: 'Too far to steer live: give your craft orders.',
+    venus: 'Big radar, small wallet. Watch the coin jar.',
+    bennu: 'Meet an asteroid and bring a sample home.',
+    jupiter: 'Can any rocket reach Jupiter straight from Earth?',
+  } as Record<string, string>,
+  /** Under a level title: nothing in English (the title is already in the reader's language). */
+  sub: (_id: string): string => '',
+});
+
+/** The mission map (screens/LevelMap.tsx). */
+export const LEVEL_MAP_WORDS = tr('LEVEL_MAP_WORDS', {
+  kicker: 'Mission map',
+  title: 'Where will you fly next?',
+  helper: 'Each mission teaches one new idea. Earn a star to open the next one.',
+  total: 'Stars earned',
+  dest: (name: string) => name.replace(/ \(.*\)$/, ''),
+  node: (title: string, dest: string, teaches: string, open: boolean) => `${title}: ${dest}, learn ${teaches}${open ? '' : ' (locked)'}`,
+  learn: (teaches: string) => `Learn: ${teaches}`,
+  stars: (n: string, max: string) => `${n} of ${max} stars`,
+  rescue: 'Rescue History',
+  rescueSub: 'Find the bug in a real lost mission, before it launches.',
+});
+
 export const BRIEF_WORDS = tr('BRIEF_WORDS', {
+  label: 'Mission briefing',
+  daily: 'Daily mission',
+  free: 'Free build',
   kicker: (dest: string) => `MISSION BRIEFING · ${dest.toUpperCase()}`,
   learn: (concept: string) => `YOU WILL LEARN: ${concept.toUpperCase()}`,
   job: 'YOUR JOB',
@@ -1182,6 +1228,53 @@ export const MOMENT_WORDS = tr('MOMENT_WORDS', {
   storm: 'SOLAR STORM HIT!',
   stormSub: (name: string) => `PARTICLES FROM THE SUN ARE HITTING ${name}.`,
   launchFailed: 'LAUNCH FAILED',
+});
+
+// ---------------------------------------------------------------------------
+// Rescue History (screens/Rescue.tsx). Its clues and the failure report's findings are cited texts (cited.bn.ts).
+
+export const RESCUE_WORDS = tr('RESCUE_WORDS', {
+  kicker: '🛟 Rescue History',
+  kickerYear: (year: string) => `🛟 Rescue History · ${year}`,
+  title: 'Save a mission that was lost',
+  helper: 'Real spacecraft were lost to small mistakes. Read the file, find the bug, and fix it before launch.',
+  lostAtMars: 'Lost on arrival at Mars',
+  stars: (n: string) => `${n} stars`,
+  /** What each case still to come is, in the order of Rescue.tsx COMING (names stay English). */
+  coming: ['capsule, 2004', 'lander, 1999'],
+  comingSoon: 'Coming soon',
+  back: '◂ Back',
+  caseHelper: 'It was lost on arrival at Mars. Find the bug before it launches.',
+  whatHappened: 'What happened',
+  file: 'Mission file',
+  fact: {
+    launch: 'Launch',
+    rocket: 'Rocket',
+    launchMass: 'Launch mass',
+    fuel: 'Fuel',
+    power: 'Power at Mars',
+    engine: 'Main engine',
+    arrival: 'Arrival',
+    delay: 'Signal delay at Mars',
+    lowest: 'Planned lowest point',
+  },
+  clues: 'Clues',
+  which: 'Which one is the bug?',
+  fromReport: 'From the failure report',
+  accuse: 'This is the bug!',
+  saved: '🎉 Bug found. Mission saved!',
+  starsOf: (n: string, max: string) => `${n} of ${max} stars`,
+  /** "Every push was [4.45×] bigger than the navigators thought ⓘ. Over the trip, the craft drifted [169 km] lower than planned." */
+  factor: { before: 'Every push was ', mid: ' bigger than the navigators thought ', drift: '. Over the trip, the craft drifted ', after: ' lower than planned.' },
+  factorTitle: 'Pound-force to newtons',
+  chart: (plan: string, safe: string, actual: string) => `Planned ${plan}, survivable ${safe}, actual ${actual}`,
+  plan: (km: string) => `Plan · ${km}`,
+  safe: (km: string) => `Lowest safe · ${km}`,
+  happened: (km: string) => `What happened · ${km}`,
+  /** "Lowest point: plan ⓘ · safe limit ⓘ · estimate after the loss ⓘ" */
+  note: { plan: 'Lowest point: plan', safe: ' · safe limit', estimate: ' · estimate after the loss' },
+  noteTitle: { plan: 'Planned lowest point', safe: 'Lowest safe point', estimate: 'Estimated lowest point' },
+  backToList: 'Back to Rescue History',
 });
 
 // ---------------------------------------------------------------------------

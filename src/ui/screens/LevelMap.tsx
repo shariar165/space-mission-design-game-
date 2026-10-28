@@ -4,6 +4,7 @@ import { DESTINATIONS } from '../../engine/data';
 import { Star } from '../components/icons';
 import * as f from '../format';
 import { isUnlocked, LEVELS, maxStars, type Level, type Progress } from '../levels';
+import { LEVEL_MAP_WORDS, LEVEL_WORDS } from '../sdWords';
 
 interface Props {
   progress: Progress;
@@ -19,11 +20,11 @@ export function LevelMap({ progress, onPlay, onRescue }: Props) {
     <div className="cadet levelmap">
       <header className="lm-head">
         <div>
-          <div className="ckicker">Mission map</div>
-          <h1 className="ctitle">Where will you fly next?</h1>
-          <p className="chelper">Each mission teaches one new idea. Earn a star to open the next one.</p>
+          <div className="ckicker">{LEVEL_MAP_WORDS.kicker}</div>
+          <h1 className="ctitle">{LEVEL_MAP_WORDS.title}</h1>
+          <p className="chelper">{LEVEL_MAP_WORDS.helper}</p>
         </div>
-        <div className="lm-total" aria-label="Stars earned">
+        <div className="lm-total" aria-label={LEVEL_MAP_WORDS.total}>
           <Star filled size={28} />
           <span className="mono">
             {f.num(earned)}
@@ -36,25 +37,27 @@ export function LevelMap({ progress, onPlay, onRescue }: Props) {
         {LEVELS.map((l, i) => {
           const open = isUnlocked(i, progress);
           const stars = progress[l.id] ?? 0;
+          const dest = LEVEL_MAP_WORDS.dest(DESTINATIONS[l.destination].name);
+          const teaches = LEVEL_WORDS.teaches[l.id] ?? '';
           return (
             <li key={l.id} className={`node ${l.destination}${open ? '' : ' locked'}${i === current ? ' next' : ''}`}>
-              <button type="button" className="node-btn" disabled={!open} onClick={() => onPlay(l)} aria-label={`${l.title}: ${DESTINATIONS[l.destination].name}, learn ${l.concept}${open ? '' : ' (locked)'}`}>
+              <button type="button" className="node-btn" disabled={!open} onClick={() => onPlay(l)} aria-label={LEVEL_MAP_WORDS.node(l.title, dest, teaches, open)}>
                 <span className={`planet p-${l.destination}`} aria-hidden="true">
                   {!open && <span className="lock">🔒</span>}
                   {i === current && <span className="you-are-here">▶</span>}
                 </span>
                 <span className="node-text">
-                  <span className="node-dest">{DESTINATIONS[l.destination].name.replace(/ \(.*\)$/, '')}</span>
+                  <span className="node-dest">{dest}</span>
                   <span className="node-title">{l.title}</span>
-                  <span className="node-concept">Learn: {l.concept}</span>
-                  <span className="node-stars" aria-label={`${f.num(stars)} of ${f.num(maxStars(l))} stars`}>
+                  <span className="node-concept">{LEVEL_MAP_WORDS.learn(teaches)}</span>
+                  <span className="node-stars" aria-label={LEVEL_MAP_WORDS.stars(f.num(stars), f.num(maxStars(l)))}>
                     {Array.from({ length: maxStars(l) }, (_, k) => (
                       <Star key={k} filled={k < stars} size={18} />
                     ))}
                   </span>
                 </span>
               </button>
-              <p className="node-blurb">{l.blurb}</p>
+              <p className="node-blurb">{LEVEL_WORDS.blurb[l.id]}</p>
             </li>
           );
         })}
@@ -66,8 +69,8 @@ export function LevelMap({ progress, onPlay, onRescue }: Props) {
             🛟
           </span>
           <span>
-            <span className="node-title">Rescue History</span>
-            <span className="node-concept">Find the bug in a real lost mission, before it launches.</span>
+            <span className="node-title">{LEVEL_MAP_WORDS.rescue}</span>
+            <span className="node-concept">{LEVEL_MAP_WORDS.rescueSub}</span>
           </span>
           <span aria-hidden="true">→</span>
         </button>

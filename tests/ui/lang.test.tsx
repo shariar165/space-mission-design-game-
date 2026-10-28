@@ -6,6 +6,9 @@ import { describe, expect, it, vi } from 'vitest';
 import { presetDesign } from '../../src/engine/missions';
 import { App } from '../../src/ui/App';
 import { POSTCARDS } from '../../src/engine/postcards';
+import { rescueCase } from '../../src/engine/rescue';
+import * as f from '../../src/ui/format';
+import { RescueCaseView } from '../../src/ui/screens/Rescue';
 import { CITED_BN } from '../../src/ui/cited.bn';
 import { PostcardView } from '../../src/ui/components/sd/PostcardView';
 import { lang, setLang, useLang } from '../../src/ui/lang';
@@ -82,5 +85,39 @@ describe('cited texts in Bangla (spec UI rule 48)', () => {
     fireEvent.click(screen.getByRole('button', { name: `Source of ${card.title}` }));
     expect(screen.queryByText('ORIGINAL (ENGLISH)')).toBeNull();
     expect(screen.getAllByText(card.caption.value).length).toBe(2);
+  });
+});
+
+describe('Rescue History and the levels in Bangla (spec UI rule 48)', () => {
+  it('Rescue History: the screen, the clues and the failure report read in Bangla; the facts keep their numbers', () => {
+    const c = rescueCase('mco');
+    const units = c.clues.find((x) => x.isBug)!;
+    setLang('bn');
+    const onSolved = vi.fn();
+    render(<RescueCaseView id="mco" onSolved={onSolved} onBack={() => {}} />);
+    const file = screen.getByRole('region', { name: 'মিশনের ফাইল' });
+    expect(file.textContent).toContain(c.facts.launchVehicle.value);
+    expect(file.textContent).toContain(f.kg(c.facts.launchMass_kg.value));
+    // the mission name stays English
+    expect(screen.getByRole('heading', { name: 'Mars Climate Orbiter' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: new RegExp(CITED_BN[units.title]!) }));
+    expect(screen.getByText(CITED_BN[units.evidence.value]!)).toBeTruthy();
+    // ⓘ on the finding: the report's English, as written
+    fireEvent.click(screen.getByRole('button', { name: `উৎস: ${CITED_BN[units.title]}` }));
+    expect(screen.getByText(units.evidence.value).getAttribute('lang')).toBe('en');
+    fireEvent.click(screen.getByRole('button', { name: 'এটাই বাগ!' }));
+    expect(onSolved).toHaveBeenCalledWith(3);
+    expect(screen.getByText(CITED_BN[units.verdict]!)).toBeTruthy();
+    expect(screen.getByText('🎉 বাগ পাওয়া গেছে। মিশন বাঁচল!')).toBeTruthy();
+  });
+
+  it('a level title stays English; in Bangla a subtitle says what the level teaches', () => {
+    render(<App />);
+    const play = () => document.querySelector('.hm-play')!;
+    expect(play().textContent).toContain('First Light');
+    expect(document.querySelector('.hm-play-teach')).toBeNull();
+    act(() => fireEvent.click(toggle()));
+    expect(play().textContent).toContain('First Light');
+    expect(document.querySelector('.hm-play-teach')!.textContent).toBe('যা শিখবে: শক্তি');
   });
 });

@@ -20,7 +20,7 @@ import { useLoop } from '../sound';
 import { along, ring, useCycle, useIsPhone } from '../sdGeometry';
 import { isUnlocked, LEVELS, type Level, type Progress } from '../levels';
 import * as f from '../format';
-import { COLD_OPEN, HOME_WORDS, HOW_TO_PLAY, LIVE_WEATHER, POSTCARD_WORDS } from '../sdWords';
+import { COLD_OPEN, HOME_WORDS, HOW_TO_PLAY, LEVEL_WORDS, LIVE_WEATHER, POSTCARD_WORDS } from '../sdWords';
 
 /** The demo order loops every 6 s: 5 s of flight, then a second of RECEIVED (design). */
 export const HOME_LOOP_MS = 6000;
@@ -117,6 +117,7 @@ export function Home({ progress, mode, onMode, daily, rescue, notebook, postcard
       <span className="hm-play-text">
         <span className="hm-play-word">{HOME_WORDS.play}</span>
         <span className="hm-play-sub">{HOME_WORDS.mission(f.num(next.index + 1), next.level.title)}</span>
+        {LEVEL_WORDS.sub(next.level.id) && <span className="hm-play-teach">{LEVEL_WORDS.sub(next.level.id)}</span>}
       </span>
       <span className="hm-play-arrow">▸</span>
     </button>
