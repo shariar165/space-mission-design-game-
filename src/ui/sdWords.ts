@@ -281,6 +281,8 @@ export const WEIGHT_WORDS: Record<'ok' | 'warning' | 'over', string> = tr('WEIGH
 export const shortDate = tr('shortDate', (iso: string) => new Date(`${iso.slice(0, 10)}T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }).toUpperCase());
 /** A date with its year, in words: "Dec 11, 1998" (format.ts isoDate). */
 export const fullDate = tr('fullDate', (iso: string) => f.isoDate(iso));
+/** A count of days in a readout: "365 days" (format.ts days). */
+export const dayCount = tr('dayCount', (n: number) => f.days(n));
 /** A date as the CRT prints it: "21 OCT 2026" (format.ts crtDate). */
 export const crtDate = tr('crtDate', (iso: string) => f.crtDate(iso));
 /** "NOV–DEC 2013" for the calendar head. */

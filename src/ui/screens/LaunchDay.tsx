@@ -16,7 +16,7 @@ import { SDIcon } from '../components/sd/SDIcon';
 import * as f from '../format';
 import { useLaunchPlan } from '../launchPlan';
 import { useIsPhone } from '../sdGeometry';
-import { BRAND_WORDS, DAY_WORDS, GAME_NAME, LAUNCH_CHECKS, LAUNCH_DAY_WORDS, PACK_BLOCKER, PACK_WORDS, shortDate } from '../sdWords';
+import { BRAND_WORDS, DAY_WORDS, dayCount, GAME_NAME, LAUNCH_CHECKS, LAUNCH_DAY_WORDS, PACK_BLOCKER, PACK_WORDS, shortDate } from '../sdWords';
 
 interface Props {
   base: Design;
@@ -66,7 +66,7 @@ export function LaunchDay({ base, packed, pick, onPick, mode, onMode, missionNam
       {day.flightDays !== undefined && (
         <div>
           <dt>{LAUNCH_DAY_WORDS.flight}</dt>
-          <dd>{f.days(day.flightDays).toUpperCase()}</dd>
+          <dd>{dayCount(day.flightDays).toUpperCase()}</dd>
         </div>
       )}
       <div>

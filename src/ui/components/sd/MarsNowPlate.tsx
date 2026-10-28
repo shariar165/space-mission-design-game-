@@ -2,7 +2,7 @@
 // number is engine output (marsNow); this only formats it.
 import type { MarsNow } from '../../../engine/marsNow';
 import * as f from '../../format';
-import { fullDate, MARS_NOW } from '../../sdWords';
+import { dayCount, fullDate, MARS_NOW } from '../../sdWords';
 
 export function MarsNowPlate({ mars, className = '' }: { mars: MarsNow; className?: string }) {
   const c = mars.conjunction;
@@ -21,7 +21,7 @@ export function MarsNowPlate({ mars, className = '' }: { mars: MarsNow; classNam
         </span>
       ) : (
         <span className="hm-now-row">
-          {MARS_NOW.next} <b>{fullDate(c.closestDate)}</b> {MARS_NOW.in} <b>{f.days(c.inDays)}</b>
+          {MARS_NOW.next} <b>{fullDate(c.closestDate)}</b> {MARS_NOW.in} <b>{dayCount(c.inDays)}</b>
         </span>
       )}
     </section>

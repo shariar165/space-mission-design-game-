@@ -47,6 +47,9 @@ test('solar storm comes from the Sun', async ({ page }, info) => {
     }
     const cont = page.getByRole('button', { name: 'CONTINUE ▸' });
     if (await cont.isVisible()) await cont.click();
+    // Arrival opens the Moon orbit panel (spec UI rule 45): close it and fly on.
+    const orbit = page.getByRole('button', { name: /^DONE/ });
+    if (await orbit.isVisible()) await orbit.click({ timeout: 5000 }).catch(() => undefined);
     const next = page.getByRole('button', { name: 'Next event' });
     if ((await next.isVisible()) && (await next.isEnabled())) await next.click();
     await page.waitForTimeout(300);

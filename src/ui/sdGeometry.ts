@@ -15,6 +15,9 @@ export const MAP_REACH = 250;
 export const MAP_VIEW_DESKTOP = `0 0 ${MAP_W} ${MAP_H}`;
 export const MAP_VIEW_PHONE = `${MAP_CX - 250} ${MAP_CY - 250} 500 500`;
 
+/** Where the order's countdown box sits on the map: in the half the robot is not in, so the player still sees it. */
+export const transitSide = (craftY: number): 'top' | 'bottom' => (craftY > MAP_CY ? 'top' : 'bottom');
+
 export function projector(extent_m: number) {
   const s = MAP_REACH / extent_m;
   const at = (p: XY): [number, number] => [MAP_CX + p[0] * s, MAP_CY - p[1] * s];
@@ -133,6 +136,43 @@ export const SWIPE_TILT = 1 / 18;
 export const RIBBON_FLIP = 0.72;
 /** On the phone, ribbon items stop short of the right edge (design: 92%). */
 export const RIBBON_PHONE_MAX = 0.92;
+/** The room one ribbon label needs, as a share of the window (a label with its "in n days" on the desk; a short word
+ *  on the phone, whose window is narrower). Measured on the shots at 1440 and 390, Bangla included. */
+export const RIBBON_GAP = { desk: 0.2, phone: 0.3 };
+/** A slot never sits closer to the ribbon's left edge than its icon's overhang (.fly-ev translateX: 14 px, phone 12 px). */
+export const RIBBON_INSET_PX = { desk: 14, phone: 12 };
+
+export interface RibbonSlot<T> {
+  lane: 0 | 1;
+  left: number;
+  /** The first event gets the label; the others in the slot show their icon beside it. */
+  items: T[];
+}
+
+/**
+ * Coming-up ribbon layout: two lanes of labels. Events take the lanes in turn (as the design alternates them); one
+ * too close to the last label in its lane takes the other lane, and one with no room in either joins the slot
+ * before it, as an extra icon. So labels never overlap when several events fall in the same week.
+ */
+export function ribbonSlots<T extends { left: number }>(items: readonly T[], gap: number, maxLeft = 1): RibbonSlot<T>[] {
+  const slots: RibbonSlot<T>[] = [];
+  const last: [RibbonSlot<T> | undefined, RibbonSlot<T> | undefined] = [undefined, undefined];
+  for (const it of items) {
+    const left = Math.min(it.left, maxLeft);
+    const free = (l: 0 | 1) => last[l] === undefined || left - last[l]!.left >= gap;
+    const turn: 0 | 1 = slots.length % 2 ? 1 : 0;
+    const other: 0 | 1 = turn ? 0 : 1;
+    const lane = free(turn) ? turn : free(other) ? other : undefined;
+    if (lane === undefined) {
+      slots[slots.length - 1]!.items.push(it);
+      continue;
+    }
+    const slot: RibbonSlot<T> = { lane, left, items: [it] };
+    slots.push(slot);
+    last[lane] = slot;
+  }
+  return slots;
+}
 
 /** Phone layout below this width (design: 390 px frames; the app switches at 760 px). */
 export const PHONE_MAX_PX = 760;

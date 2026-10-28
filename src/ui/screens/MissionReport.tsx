@@ -27,7 +27,7 @@ import { SDIcon } from '../components/sd/SDIcon';
 import { useReducedMotion } from '../opsGeometry';
 import { useOpsRisk } from '../riskRunner';
 import { useIsPhone } from '../sdGeometry';
-import { BADGE_WORDS, BRAND_WORDS, fullDate, CATEGORY_NAME, CREW_WORDS, dangerLook, finalLines, FLY_WORDS, GAME_NAME, hurtWords, optionShort, PANEL_SOUND, panelWords, POSTCARD_WORDS, RANK_WORDS, REPORT_STAMP, REPORT_WORDS, ROBOT_WORDS, robotNameOr, robotSays, savedWords, STAR_WORDS } from '../sdWords';
+import { BADGE_WORDS, BRAND_WORDS, dayCount, fullDate, CATEGORY_NAME, CREW_WORDS, dangerLook, finalLines, FLY_WORDS, GAME_NAME, hurtWords, optionShort, PANEL_SOUND, panelWords, POSTCARD_WORDS, RANK_WORDS, REPORT_STAMP, REPORT_WORDS, ROBOT_WORDS, robotNameOr, robotSays, savedWords, STAR_WORDS } from '../sdWords';
 import * as f from '../format';
 import { voiceContext } from '../voiceContext';
 import { said } from '../cited';
@@ -196,7 +196,7 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
     ? [
         { k: REPORT_WORDS.launch, you: fullDate(compare.launch.you).toUpperCase(), them: fullDate(compare.launch.them.value).toUpperCase(), s: compare.launch.them as unknown as Parameters<typeof SourceInfo>[0]['s'], gap: false },
         ...(compare.scienceDays.them
-          ? [{ k: REPORT_WORDS.plannedScience, you: f.days(compare.scienceDays.you).toUpperCase(), them: f.days(compare.scienceDays.them!.value).toUpperCase(), s: compare.scienceDays.them!, gap: false }]
+          ? [{ k: REPORT_WORDS.plannedScience, you: dayCount(compare.scienceDays.you).toUpperCase(), them: dayCount(compare.scienceDays.them!.value).toUpperCase(), s: compare.scienceDays.them!, gap: false }]
           : []),
         ...compare.rows
           .filter((r) => engineer || r.metric === 'wetMass' || r.metric === 'powerAtArrival')
