@@ -34,7 +34,7 @@ import { Segments } from '../components/sd/Segments';
 import { Teletype } from '../components/sd/Teletype';
 import { useReducedMotion } from '../opsGeometry';
 import { BLOCKER, COMMAND_KIND, eventLine, FAILURE_EFFECT, OPTION_BLURB } from '../opsWords';
-import { GLOBE_FLYOVER_MS, RIBBON_FLIP, RIBBON_PHONE_MAX, RING_MS, useCycle, useIsPhone } from '../sdGeometry';
+import { GLOBE_FLYOVER_MS, projector, RIBBON_FLIP, RIBBON_GAP, RIBBON_INSET_PX, RIBBON_PHONE_MAX, ribbonSlots, RING_MS, transitSide, useCycle, useIsPhone } from '../sdGeometry';
 import {
   arrivesWords,
   CHIP_ICON,
@@ -561,15 +561,26 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
       ))}
       <div className="fly-now" />
       <span className="fly-now-txt">{FLY_WORDS.now}</span>
-      {coming.items.map((it, i) => {
-        const flip = it.left > RIBBON_FLIP;
-        const left = phone ? Math.min(it.left, RIBBON_PHONE_MAX) : it.left;
+      {ribbonSlots(coming.items, phone ? RIBBON_GAP.phone : RIBBON_GAP.desk, phone ? RIBBON_PHONE_MAX : 1).map((slot, k) => {
+        const it = slot.items[0]!;
+        const flip = slot.left > RIBBON_FLIP;
         const w = COMING[it.kind];
+        const more = slot.items.slice(1).filter((x, k, all) => x.kind !== it.kind && all.findIndex((y) => y.kind === x.kind) === k);
         return (
-          <div key={`${it.kind}-${it.day}-${i}`} className={`fly-ev${flip ? ' flip' : ''}${i % 2 ? ' low' : ''}${it.important ? ' important' : ''}`} style={{ left: `${left * 100}%` }}>
+          <div
+            key={`${it.kind}-${it.day}-${k}`}
+            className={`fly-ev${flip ? ' flip' : ''}${slot.lane ? ' low' : ''}${slot.items.some((x) => x.important) ? ' important' : ''}`}
+            style={{ left: `max(${phone ? RIBBON_INSET_PX.phone : RIBBON_INSET_PX.desk}px, ${slot.left * 100}%)` }}
+            title={slot.items.map((x) => COMING[x.kind].label(dest.name)).join(' · ')}
+          >
             <span className="fly-ev-icon">
               <SDIcon icon={w.icon} size={phone ? 15 : 17} />
             </span>
+            {more.map((x) => (
+              <span key={x.kind} className="fly-ev-icon more">
+                <SDIcon icon={COMING[x.kind].icon} size={phone ? 15 : 17} />
+              </span>
+            ))}
             <span className="fly-ev-text">
               <span className="fly-ev-label">{phone ? w.short(dest.name) : w.label(dest.name)}</span>
               {!phone && <span className="fly-ev-when">{engineer ? FLY_WORDS.whenEng(f.num(it.day), f.num(it.inDays)) : FLY_WORDS.inDays(it.inDays)}</span>}
@@ -580,8 +591,10 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
     </div>
   );
 
+  // The countdown boxes keep clear of the robot: top or bottom of the map, away from it.
+  const side = map && view ? transitSide(projector(map.extent_m).at(view.map.frame.craft)[1]) : phone ? 'bottom' : 'top';
   const transitBox = flying && (
-    <div className="fly-transit" role="status" aria-live="polite">
+    <div className={`fly-transit at-${side}`} role="status" aria-live="polite">
       {!phone && <span className="fly-transit-k">{FLY_WORDS.onItsWay(shortLabel(flying.hazardId!, flying.optionId!))}</span>}
       <span className="fly-transit-q">{flying.departsIn_s > 0 ? FLY_WORDS.teamWriting : phone ? FLY_WORDS.reachesShort : FLY_WORDS.reaches}</span>
       <span className="fly-countdown ops-countdown">{f.mmss(flying.departsIn_s > 0 ? flying.departsIn_s : flying.timeLeft_s)}</span>
@@ -593,7 +606,7 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
   const mine = ops.transit ? feed?.entries.find((e) => e.from === 'earth' && e.order!.kind === 'respond' && e.order!.hazardId === ops.transit!.hazardId)?.order : undefined;
   const returning = !flying && mine?.status === 'reply-inbound' ? mine : undefined;
   const returnBox = returning && (
-    <div className="fly-transit back" role="status" aria-live="polite">
+    <div className={`fly-transit back at-${side}`} role="status" aria-live="polite">
       {!phone && <span className="fly-transit-k">{TX_WORDS.heard(name.toUpperCase())}</span>}
       <span className="fly-transit-q">{TX_WORDS.replyReaches}</span>
       <span className="fly-countdown">{f.mmss(returning.replyIn_s ?? 0)}</span>

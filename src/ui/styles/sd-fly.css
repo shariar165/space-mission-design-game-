@@ -57,7 +57,7 @@
 .fly-eng-readout .small { color: var(--sd-crt-dim); font-size: 16px; }
 
 /* Signal in flight */
-.fly-transit { position: absolute; left: 50%; top: 70px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 16px 30px; background: rgba(5, 12, 7, 0.82); border: 1px solid var(--sd-crt-line); border-radius: 6px; z-index: 2; white-space: nowrap; }
+.fly-transit { position: absolute; left: 50%; top: 64px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px 28px; background: rgba(5, 12, 7, 0.82); border: 1px solid var(--sd-crt-line); border-radius: 6px; z-index: 2; white-space: nowrap; }
 .fly-transit-k { font: 400 22px/1 var(--sd-crt-font); color: var(--sd-crt-mid); letter-spacing: 0.08em; }
 .fly-transit-q { font: 400 22px/1 var(--sd-crt-font); color: var(--sd-crt-hi); }
 .fly-countdown { font: 400 96px/0.9 var(--sd-crt-font); color: var(--sd-amber); text-shadow: 0 0 18px rgba(255, 181, 71, 0.6); }
@@ -139,6 +139,8 @@
 .fly-ev.important { color: var(--sd-amber); }
 .fly-ev.flip { flex-direction: row-reverse; text-align: right; transform: translateX(calc(-100% + 14px)); }
 .fly-ev-icon { width: 28px; height: 28px; border-radius: 4px; border: 1.5px solid currentColor; display: grid; place-items: center; background: var(--sd-crt-chip); flex: none; }
+.fly-ev-icon.more { margin-left: -4px; }
+.fly-ev.flip .fly-ev-icon.more { margin: 0 -4px 0 0; }
 .fly-ev-text { display: flex; flex-direction: column; gap: 2px; white-space: nowrap; }
 .fly-ev-label { font: 400 20px/1 var(--sd-crt-font); }
 .fly-ev-when { font: 400 16px/1 var(--sd-crt-font); color: var(--sd-crt-dim); }
@@ -171,7 +173,9 @@
 .fly.phone .crt-sun-label { font-size: 24px; }
 .fly.phone .fly-log { left: 14px; right: 14px; top: 12px; font-size: 22px; line-height: 1.1; }
 .fly-eng-phone { position: absolute; left: 14px; bottom: 10px; font: 400 17px/1.1 var(--sd-crt-font); color: var(--sd-amber); z-index: 1; }
+.fly-transit.at-bottom { top: auto; bottom: 24px; }
 .fly.phone .fly-transit { top: auto; bottom: 16px; gap: 4px; padding: 12px 22px; background: rgba(5, 12, 7, 0.85); }
+.fly.phone .fly-transit.at-top { top: 64px; bottom: auto; }
 .fly.phone .fly-transit-q { font-size: 18px; }
 .fly.phone .fly-countdown { font-size: 64px; text-shadow: 0 0 14px rgba(255, 181, 71, 0.6); }
 .fly.phone .fly-actions { left: 10px; right: 10px; bottom: 8px; justify-content: center; flex-wrap: wrap; gap: 4px; }
@@ -287,6 +291,8 @@
 .fly.phone { grid-template-rows: 34px 70px minmax(0, 1fr) 196px; }
 .fly-status .sd-back { flex: 0 0 auto; width: auto; }
 .fly.phone .fly-speed { width: 44px; font-size: 12px; letter-spacing: 0; }
+/* "1,000×" is the widest key word: its key grows to fit it on the phone (the day box gives up the room). */
+.fly.phone .fly-speed:last-child { width: auto; min-width: 44px; padding: 0 6px; flex: none; }
 .fly.phone .fly-progress { gap: 4px; }
 .fly.phone .fly-progress-bar { height: 6px; }
 .fly-status { gap: 8px; padding: 0 4px; }
