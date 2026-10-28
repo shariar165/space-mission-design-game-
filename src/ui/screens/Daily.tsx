@@ -9,7 +9,7 @@ import { LangToggle } from '../components/sd/LangToggle';
 import { SoundToggle } from '../components/sd/SoundToggle';
 import { SDIcon } from '../components/sd/SDIcon';
 import { useIsPhone } from '../sdGeometry';
-import { DAILY_SCIENCE, DANGER_LOOK, dangerLook, GAME_NAME, LIVE_WEATHER } from '../sdWords';
+import { DAILY_SCIENCE, DAILY_WORDS, DANGER_LOOK, dangerLook, GAME_NAME, LIVE_WEATHER, shortDate } from '../sdWords';
 import { HAZARDS } from '../../engine/data';
 import * as f from '../format';
 
@@ -26,7 +26,6 @@ const ICON_EMOJI: Record<string, string> = {
   'insertion-anomaly': '🔥',
   'radiation-damage': '☢️',
 };
-const RESULT_WORD: Record<DailyResult, string> = { held: 'held', cost: 'cost you', hurt: 'hurt' };
 
 const starLine = (stars: number) => '★'.repeat(stars) + '☆'.repeat(Math.max(0, 3 - stars));
 
@@ -35,10 +34,10 @@ const weatherWord = (g: DailyGrid) => (g.weather === 'live' ? LIVE_WEATHER.live 
 
 export function shareText(n: number, g: DailyGrid): string {
   const rows = g.rows.map((r) => `${ICON_EMOJI[r.type] ?? '⚠️'} ${EMOJI[r.result]}${r.realDate ? ` · ${LIVE_WEATHER.realOn.toLowerCase()} ${f.isoDate(r.realDate)}` : ''}`);
-  const end = g.alive ? `🤖 alive · day ${f.num(g.endDay)}` : `💥 lost · day ${f.num(g.endDay)}`;
+  const end = g.alive ? DAILY_WORDS.shareAlive(f.num(g.endDay)) : DAILY_WORDS.shareLost(f.num(g.endDay));
   const weather = g.weather === 'live' ? [LIVE_WEATHER.shareLive] : g.weather === 'offline' ? [LIVE_WEATHER.shareOffline] : [];
   const science = g.science !== undefined ? [DAILY_SCIENCE.share(f.pct(g.science, 0))] : [];
-  return [`${GAME_NAME} · DAILY #${f.num(n)}  ${starLine(g.stars)}`, ...science, ...weather, ...(rows.length ? rows : ['🟦 a quiet flight']), end].join('\n');
+  return [`${GAME_NAME} · ${DAILY_WORDS.no(f.num(n))}  ${starLine(g.stars)}`, ...science, ...weather, ...(rows.length ? rows : [DAILY_WORDS.shareQuiet]), end].join('\n');
 }
 
 /** Draws the share card on a canvas (layout only) and returns a PNG data URL. */
@@ -59,7 +58,7 @@ function cardImage(n: number, date: string, title: string, g: DailyGrid, streak:
   x.fillText(GAME_NAME, 36, 46);
   x.font = '700 22px "Share Tech Mono", monospace';
   x.textAlign = 'right';
-  x.fillText(`DAILY #${f.num(n)}`, W - 36, 42);
+  x.fillText(DAILY_WORDS.no(f.num(n)), W - 36, 42);
   x.textAlign = 'left';
   x.fillStyle = '#7a715c';
   x.font = '700 20px "Share Tech Mono", monospace';
@@ -89,7 +88,7 @@ function cardImage(n: number, date: string, title: string, g: DailyGrid, streak:
     x.fillStyle = '#8a8270';
     x.font = '28px VT323, monospace';
     x.textAlign = 'right';
-    x.fillText(`DAY ${f.num(r.day)}`, W - 60, y + 32);
+    x.fillText(`${DAILY_WORDS.day}${f.num(r.day)}`, W - 60, y + 32);
     x.textAlign = 'left';
     x.fillStyle = '#efe6cf';
     x.font = '24px sans-serif';
@@ -98,10 +97,10 @@ function cardImage(n: number, date: string, title: string, g: DailyGrid, streak:
   x.fillStyle = '#1b1a16';
   x.font = '32px VT323, monospace';
   const footY = H - 46;
-  x.fillText(g.alive ? `ROBOT ALIVE · DAY ${f.num(g.endDay)}` : `ROBOT LOST · DAY ${f.num(g.endDay)}`, 36, footY);
+  x.fillText(`${g.alive ? DAILY_WORDS.alive : DAILY_WORDS.lost}${DAILY_WORDS.endDay(f.num(g.endDay))}`, 36, footY);
   x.fillStyle = '#7a715c';
   x.textAlign = 'right';
-  x.fillText(`STREAK ${f.num(streak)}`, W - 36, footY);
+  x.fillText(DAILY_WORDS.streak(f.num(streak)), W - 36, footY);
   return c.toDataURL('image/png');
 }
 
@@ -128,7 +127,7 @@ export function Daily({ number, date, grid, played, mode, onMode, onHome, onBack
   }, []);
   const left = nextDailyIn_s(now);
   const streak = dailyStreak(played, date);
-  const title = grid.theme ? `${(DANGER_LOOK[grid.theme]?.title ?? HAZARDS[grid.theme]?.title ?? '').toUpperCase()} DAY` : 'QUIET CRUISE';
+  const title = grid.theme ? DAILY_WORDS.theme(DANGER_LOOK[grid.theme]?.title ?? HAZARDS[grid.theme]?.title ?? '') : DAILY_WORDS.quiet;
   const text = shareText(number, grid);
   const dateLabel = new Date(`${date}T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }).toUpperCase();
 
@@ -151,33 +150,33 @@ export function Daily({ number, date, grid, played, mode, onMode, onHome, onBack
   };
 
   const card = (
-    <div className="dl-card" aria-label={`Daily ${f.num(number)} result`}>
+    <div className="dl-card" aria-label={DAILY_WORDS.result(f.num(number))}>
       <div className="dl-head">
         <span className="dl-brand">{GAME_NAME}</span>
-        <span className="dl-no">DAILY #{f.num(number)}</span>
+        <span className="dl-no">{DAILY_WORDS.no(f.num(number))}</span>
       </div>
       <div className="dl-body">
         <div className="dl-title-row">
           <div className="dl-title-col">
-            <span className="dl-date">{dateLabel} · MARS</span>
+            <span className="dl-date">{DAILY_WORDS.date(shortDate(date))}</span>
             {weatherWord(grid) && <span className={`dl-weather ${grid.weather}`}>{weatherWord(grid)}</span>}
             <span className="dl-title">{title}</span>
             {grid.science !== undefined && <span className="dl-science">{DAILY_SCIENCE.card(f.pct(grid.science, 0))}</span>}
           </div>
-          <div className="dl-stars" aria-label={`${f.num(grid.stars)} of 3 stars`}>
+          <div className="dl-stars" aria-label={DAILY_WORDS.stars(f.num(grid.stars))}>
             {[0, 1, 2].map((i) => (
               <SDIcon key={i} icon="star" size={phone ? 24 : 30} color={i < grid.stars ? 'var(--sd-gold)' : 'var(--sd-ink-3)'} fill={i < grid.stars} sw={1.5} />
             ))}
           </div>
         </div>
-        <div className="dl-grid" role="list" aria-label="How each danger went">
-          {grid.rows.length === 0 && <span className="dl-quiet">NO DANGER CARDS TODAY. A QUIET FLIGHT.</span>}
+        <div className="dl-grid" role="list" aria-label={DAILY_WORDS.how}>
+          {grid.rows.length === 0 && <span className="dl-quiet">{DAILY_WORDS.none}</span>}
           {grid.rows.map((r, i) => (
             <div
               key={i}
               className="dl-row"
               role="listitem"
-              aria-label={`${dangerLook(r.type, HAZARDS[r.type]?.title ?? r.type).title}: ${RESULT_WORD[r.result]}${r.realDate ? `, real event of ${f.isoDate(r.realDate)}` : ''}`}
+              aria-label={`${dangerLook(r.type, HAZARDS[r.type]?.title ?? r.type).title}: ${DAILY_WORDS.result_[r.result]}${r.realDate ? DAILY_WORDS.realOf(f.isoDate(r.realDate)) : ''}`}
             >
               <span className="dl-icon">
                 <SDIcon icon={dangerLook(r.type, HAZARDS[r.type]?.title ?? r.type).icon} size={phone ? 17 : 20} color="var(--sd-paper)" />
@@ -190,7 +189,7 @@ export function Daily({ number, date, grid, played, mode, onMode, onHome, onBack
                 </span>
               )}
               <span className="dl-day">
-                {phone ? 'D' : 'DAY '}
+                {phone ? DAILY_WORDS.dayShort : DAILY_WORDS.day}
                 {f.num(r.day)}
               </span>
             </div>
@@ -198,9 +197,10 @@ export function Daily({ number, date, grid, played, mode, onMode, onHome, onBack
         </div>
         <div className="dl-foot">
           <span>
-            {grid.alive ? 'ROBOT ALIVE' : 'ROBOT LOST'} · DAY {f.num(grid.endDay)}
+            {grid.alive ? DAILY_WORDS.alive : DAILY_WORDS.lost}
+            {DAILY_WORDS.endDay(f.num(grid.endDay))}
           </span>
-          <span className="dim">STREAK {f.num(streak)}</span>
+          <span className="dim">{DAILY_WORDS.streak(f.num(streak))}</span>
         </div>
       </div>
     </div>
@@ -218,36 +218,36 @@ export function Daily({ number, date, grid, played, mode, onMode, onHome, onBack
         </span>
       </div>
       <div className="dl-stage">
-        {phone && <span className="dl-made">{grid.alive ? 'YOU MADE IT.' : 'THE ROBOT IS GONE.'}</span>}
+        {phone && <span className="dl-made">{grid.alive ? DAILY_WORDS.madeIt : DAILY_WORDS.gone}</span>}
         {card}
         <div className="dl-side">
           {!phone && (
             <span className="dl-made">
-              {grid.alive ? 'YOU MADE IT.' : 'THE ROBOT IS GONE.'}
+              {grid.alive ? DAILY_WORDS.madeIt : DAILY_WORDS.gone}
               <br />
-              SHOW YOUR CREW.
+              {DAILY_WORDS.show}
             </span>
           )}
           {!phone && (
             <div className="dl-text sd-well">
-              <span className="dl-text-k">COPIES AS TEXT</span>
+              <span className="dl-text-k">{DAILY_WORDS.copies}</span>
               <pre className="dl-text-v">{text}</pre>
             </div>
           )}
           <div className="dl-actions">
             <button type="button" className="sd-cta" onClick={copy}>
-              {copied ? 'COPIED ✓' : phone ? 'SHARE RESULT' : 'COPY RESULT'}
+              {copied ? DAILY_WORDS.copied : phone ? DAILY_WORDS.share : DAILY_WORDS.copy}
             </button>
             <button type="button" className="dl-btn" onClick={save}>
-              SAVE IMAGE
+              {DAILY_WORDS.save}
             </button>
             {onReport && (
               <button type="button" className="dl-btn" onClick={onReport}>
-                MISSION REPORT
+                {DAILY_WORDS.report}
               </button>
             )}
           </div>
-          <span className="dl-next">NEXT DAILY IN {f.mmss(left)}</span>
+          <span className="dl-next">{DAILY_WORDS.next(f.mmss(left))}</span>
         </div>
       </div>
     </div>

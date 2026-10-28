@@ -1,6 +1,7 @@
 // Comic panel art for the Mission Report (design: Mission Report, the four panels). Drawings only; captions and
 // every number come from the engine through the report screen.
 import type { PanelKind } from '../../../engine/ops/report';
+import { COMIC_WORDS } from '../../sdWords';
 
 function Craft({ t, flame }: { t: string; flame?: boolean }) {
   return (
@@ -53,7 +54,7 @@ export function ComicArt({ kind, sound, destColor }: { kind: PanelKind; sound?: 
           </g>
           {kind === 'launch-failed' && (
             <text x="200" y="90" className="rp-sound" transform="rotate(-8 200 90)">
-              KA-BOOM
+              {COMIC_WORDS.boom}
             </text>
           )}
         </>
@@ -67,7 +68,7 @@ export function ComicArt({ kind, sound, destColor }: { kind: PanelKind; sound?: 
           <Craft t="translate(262 150) scale(2.4)" />
           <path d="M240 98 l10 10 -8 4 12 12 M286 196 l-10 -8 8 -4 -12 -12" stroke="var(--sd-alarm)" strokeWidth="4" fill="none" strokeLinejoin="round" />
           <text x="226" y="250" className="rp-sound" transform="rotate(-8 236 250)">
-            {sound ?? 'ZZZT!'}
+            {sound ?? COMIC_WORDS.zap}
           </text>
         </>
       )}
@@ -79,7 +80,7 @@ export function ComicArt({ kind, sound, destColor }: { kind: PanelKind; sound?: 
           <circle cx="290" cy="240" r="14" fill="rgba(0,0,0,.25)" />
           <Craft t="translate(96 92) scale(2.1) rotate(-18)" flame={kind === 'arrival'} />
           <text x="20" y="268" className="rp-sound" transform="rotate(-6 20 268)">
-            {kind === 'arrival' ? 'FWOOOSH' : 'BEEP BEEP'}
+            {kind === 'arrival' ? COMIC_WORDS.whoosh : COMIC_WORDS.beep}
           </text>
         </>
       )}

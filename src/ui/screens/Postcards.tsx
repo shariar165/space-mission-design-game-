@@ -8,7 +8,7 @@ import { LangToggle } from '../components/sd/LangToggle';
 import { SoundToggle } from '../components/sd/SoundToggle';
 import { PostcardView, postcardSrc } from '../components/sd/PostcardView';
 import { useIsPhone } from '../sdGeometry';
-import { GAME_NAME, POSTCARD_WORDS } from '../sdWords';
+import { BRAND_WORDS, GAME_NAME, POSTCARD_WORDS } from '../sdWords';
 import * as f from '../format';
 
 interface Props {
@@ -26,7 +26,7 @@ export function Postcards({ earned, onHome, onBack }: Props) {
       <header className="pc-head">
         {onBack && <BackButton onBack={onBack} />}
         <div className="sd-brand">
-          <button type="button" className="sd-brand-name" onClick={onHome} aria-label="Signal Delay: home">
+          <button type="button" className="sd-brand-name" onClick={onHome} aria-label={BRAND_WORDS.home}>
             {GAME_NAME}
           </button>
           <span className="sd-brand-sub">{POSTCARD_WORDS.title}</span>

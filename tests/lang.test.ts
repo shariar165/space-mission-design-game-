@@ -11,12 +11,8 @@ import { BN, BN_OPS, place, placeIn, placeOf } from '../src/ui/sdWords.bn';
 /** Exports that are not words, or that read their words from translated tables (sdWords.bn.ts `NotTranslated`). */
 const NOT_TRANSLATED = ['GAME_NAME', 'EFFECT_ICON', 'CHIP_ICON', 'SCIENCE_PARTS', 'ROBOT_NAMES', 'ROBOT_NAME_MAX', 'cleanRobotName', 'robotNameOr', 'nextRobotName', 'fill', 'optionShort', 'dangerLook', 'targetName'];
 
-/** Not translated yet: the next pull requests of the Bangla series take these (Fly, science, then Report and Notebook). */
-const PENDING = [
-  'panelWords', 'PANEL_SOUND', 'STAR_WORDS', 'CATEGORY_NAME', 'savedWords', 'hurtWords', 'REPORT_STAMP', 'FINAL_WORDS', 'finalLines',
-  'CATEGORY_LOOK', 'LESSON_WORDS', 'unlockHint',
-  'ALBUM', 'DAILY_SCIENCE',
-];
+/** Every word export has its Bangla now (sdWords.bn.ts BN is the full Bangla type). */
+const PENDING: string[] = [];
 
 const BENGALI = /[ঀ-৿]/;
 const BENGALI_DIGIT = /[০-৯]/;
@@ -51,7 +47,7 @@ function compare(path: string, en: unknown, bn: unknown, bad: string[], leaves: 
 afterEach(() => setLang('en'));
 
 describe('Bangla words (spec UI rule 48)', () => {
-  it('every word export has its Bangla, except those still pending in this series', () => {
+  it('every word export has its Bangla', () => {
     // read the English while English is on (the exports answer in the current language)
     expect(lang()).toBe('en');
     const missing = exported.filter((k) => bangla[k] === undefined);

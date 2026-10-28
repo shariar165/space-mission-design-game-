@@ -3,7 +3,7 @@
 // out of it to test-results/shots/bn-spills.txt (to read beside the shots). Run: npm run shots -- bangla
 import { appendFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
-import { launchFlight, toMarsOrbit } from './helpers';
+import { flyToEnd, launchFlight, toMarsOrbit } from './helpers';
 
 const OUT = 'test-results/shots/';
 
@@ -144,3 +144,40 @@ test('Bangla: switched mid-flight at Mars, the science targets and the power pla
   await shot(page, 'powerplan', p);
 });
 
+
+test('Bangla: the Mission Report (switched at the end of a flight), the Notebook and Postcards', async ({ page }, info) => {
+  test.setTimeout(300_000);
+  const p = info.project.name;
+  const mobile = p === 'mobile';
+  await launchFlight(page, mobile);
+  await flyToEnd(page, mobile);
+  await page.waitForTimeout(2500);
+  await page.getByRole('button', { name: /^Language:/ }).first().click();
+  await page.waitForTimeout(1500);
+  await shot(page, 'report-final', p);
+  const feed = page.getByRole('button', { name: /কাগজ টানো/ }).first();
+  for (let i = 0; i < 2 && (await feed.isVisible()); i++) {
+    await feed.click();
+    await page.waitForTimeout(2500);
+  }
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.waitForTimeout(6000);
+  await shot(page, 'report', p);
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await page.waitForTimeout(800);
+  await shot(page, 'report-end', p);
+  // Home's Notebook and Postcards, in Bangla
+  await page.goto('/?seed=2013');
+  await page.getByRole('switch', { name: 'Engineer mode' }).or(page.getByRole('button', { name: 'Engineer mode (short)' })).first().waitFor({ timeout: 30_000 }).catch(() => undefined);
+  await page.evaluate(() => {
+    localStorage.setItem('mdt.mode', 'cadet');
+  });
+  await page.goto('/?seed=2013');
+  await page.getByRole('button', { name: /^নোটবুক:/ }).click();
+  await page.waitForTimeout(800);
+  await shot(page, 'notebook', p);
+  await page.getByRole('button', { name: '◂ ফিরে যাও' }).first().click();
+  await page.getByRole('button', { name: /^পোস্টকার্ড:/ }).click();
+  await page.waitForTimeout(800);
+  await shot(page, 'postcards', p);
+});

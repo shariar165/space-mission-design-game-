@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import type { BadgeDef, RankDef } from '../../../engine/ranks';
 import { SourceInfo } from '../SourceInfo';
-import { BADGE_WORDS, CREW_WORDS, RANK_WORDS } from '../../sdWords';
+import { BADGE_WORDS, CREW_WORDS, FLY_WORDS, RANK_WORDS } from '../../sdWords';
 import { SDIcon, type SDIconName } from './SDIcon';
 
 export interface Crew {
@@ -59,7 +59,7 @@ export function CrewPanel({ crew, onClose }: { crew: Crew; onClose: () => void }
         <p className="crew-job">
           <span className="crew-k">
             {CREW_WORDS.realJob}
-            {crew.rank.job.isGameEstimate && <span className="sd-verify">TO VERIFY</span>}
+            {crew.rank.job.isGameEstimate && <span className="sd-verify">{FLY_WORDS.toVerify}</span>}
             <SourceInfo s={crew.rank.job} title={rankName(crew.rank)} />
           </span>
           {crew.rank.job.value}

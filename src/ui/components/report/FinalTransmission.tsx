@@ -5,7 +5,7 @@ import { useEffect, type ReactNode } from 'react';
 import type { FinalTransmission as Final } from '../../../engine/ops/report';
 import { VOICE_RULES } from '../../../engine/ops/index';
 import * as f from '../../format';
-import { fill, FINAL_WORDS, FLY_WORDS } from '../../sdWords';
+import { fill, FINAL_WORDS, FLY_WORDS, REPORT_WORDS } from '../../sdWords';
 import { SourceInfo } from '../SourceInfo';
 import { useTeletype } from '../sd/Teletype';
 
@@ -63,7 +63,7 @@ export function FinalTransmission({ ft, lines, name, phone, back, onPrinted, onF
           <div className="ft-lost" role="status">
             <span className="ft-rule" />
             <span className="ft-lost-word">{FINAL_WORDS.lost}</span>
-            <SourceInfo s={VOICE_RULES.lastWordsHistory} title="Opportunity’s last message" />
+            <SourceInfo s={VOICE_RULES.lastWordsHistory} title={REPORT_WORDS.lastWords} />
             <span className="ft-rule" />
           </div>
         )}

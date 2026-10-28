@@ -213,7 +213,348 @@ const BN_TARGET_NAME: Record<string, string> = {
 };
 const fillBn = (template: string, slots: Record<string, string>) => template.replace(/\{(\w+)\}/g, (all, k: string) => slots[k] ?? all);
 
-export const BN: Partial<Bangla> = {
+/** A hazard's name inside a Bangla sentence: the danger deck's word (DANGER_LOOK's Bangla), else the engine's title. */
+const BN_DANGER_TITLE: Record<string, string> = {
+  eclipse: 'গ্রহণের মৌসুম',
+  conjunction: 'সূর্য মাঝখানে',
+  'solar-storm': 'বিকিরণ-ঝড়',
+  'cme-shock': 'CME-এর ধাক্কা',
+  'mars-dust-storm': 'ধুলোঝড়',
+  debris: 'ধূমকেতুর ধুলো',
+  'reaction-wheel': 'চাকা বিকল',
+  'memory-corruption': 'মেমরির গোলমাল',
+  'insertion-anomaly': 'পৌঁছানোর বার্নে গোলমাল',
+};
+const dangerBn = (type: string, title: string) => BN_DANGER_TITLE[type] ?? hazardBn(type, title.toUpperCase());
+const BN_CHIP: Record<string, string> = { craft: 'রোবট হারিয়েছে', instrument: 'যন্ত্র হারিয়েছে', 'stored-data': 'ছবি মুছে গেছে', 'safe-mode': 'সেফ মোড' };
+const BN_CATEGORY_WORD: Record<string, string> = {
+  science: 'বাড়ি পাঠানো বিজ্ঞান',
+  success: 'মিশনের পর্বগুলো',
+  budget: 'বাজেট',
+  deltaV: 'জ্বালানির মার্জিন',
+  power: 'বিদ্যুতের মার্জিন',
+  mass: 'ওজনের মার্জিন',
+  crisis: 'সংকট সামলানো',
+};
+const BN_HAZARD_PHRASE: Record<string, string> = {
+  'solar-storm': 'একটা সৌরঝড়',
+  'cme-shock': 'একটা CME-এর ধাক্কা',
+  'mars-dust-storm': 'একটা ধুলোঝড়',
+  debris: 'ধূমকেতুর ধুলো',
+  'reaction-wheel': 'একটা চাকা বিকল',
+  'memory-corruption': 'একটা মেমরির গোলমাল',
+  'insertion-anomaly': 'পৌঁছানোর বার্নের গোলমাল',
+  'radiation-damage': 'বিকিরণের ক্ষতি',
+};
+const BN_FINAL = {
+  opening: {
+    complete: 'দিন {day}। {science} দিন ধরে আমি {destOf} দিকে তাকিয়ে ছিলাম।',
+    lost: 'দিন {day}। আমি {name}। তুমি কি শুনছ?',
+    extended: 'দিন {day}। মূল মিশন শেষ। বাড়তিটাও।',
+  },
+  hurt: 'দিন {when}-এর {hazard} আমাকে আঘাত করেছিল। {effect}',
+  effect: {
+    craft: 'আমি প্রায় টিকতেই পারিনি।',
+    instrument: 'একটা যন্ত্র আর কখনো জাগেনি।',
+    'stored-data': 'যে ডেটা আমার কাছে ছিল, তা হারিয়ে গেছে।',
+    'safe-mode': 'কয়েক দিন আমি সেফ মোডে লুকিয়ে ছিলাম।',
+  },
+  saved: {
+    part: '{part} আমার হয়ে {hazard} সামলেছে।',
+    autopilot: 'কোনো আদেশ সময়মতো পৌঁছাতে পারেনি। অটোপাইলট চিপ আমাকে {hazard} পার করিয়েছে।',
+    choice: 'দিন {when}-এ তুমি বেছেছিলে {option}। ওটাই আমাকে বাঁচিয়েছে।',
+  },
+  arrival: 'তুমি আমাকে {dv} বার্নে পাঠিয়েছিলে। {dest} প্রথম চেষ্টাতেই আমাকে ধরে ফেলেছে।',
+  conjunction: '{days} দিন সূর্য আমাদের মাঝখানে ছিল। আমি নিজেই উড়েছি।',
+  quiet: 'কিছুই ভাঙেনি। একবারও না।',
+  fuel: 'জ্বালানি বাকি {fuel}। ব্যাটারি টিকে আছে।',
+  extension: 'বাড়তি মিশন শেষ: পরিকল্পনার চেয়ে আরও {years}।',
+  signOff: 'মূল মিশন শেষ। {name} বিদায় নিচ্ছে।',
+  cause: {
+    hazard: '{hazard} সামলাতে পারলাম না। সিস্টেম বিকল হচ্ছে।',
+    fuel: 'আমার ট্যাংক খালি। পথ ধরে রাখতে পারছি না।',
+    power: '{days} দিন বিদ্যুৎ নেই। ব্যাটারি প্রায় শেষ।',
+    unknown: 'কিছু একটা গোলমাল। সিস্টেম বিকল হচ্ছে।',
+  },
+  cutOff: 'আমার অ্যান্টেনা ঘোরাচ্ছি সেদিকে, যেখানে পৃথিবী থাকার কথা, যেখান',
+};
+const BN_PART_UPPER = (id: string) => BN_PART_NAME[id] ?? id;
+
+export const BN: Bangla = {
+  // -------------------------------------------------------------------------
+  // Mission Report, final transmission, album, Notebook and Daily
+
+  panelWords: (pnl, ctx) => {
+    const day = `দিন ${f.num(pnl.day)}`;
+    switch (pnl.kind) {
+      case 'launch':
+        return { head: `${day} · উড়ে গেল`, text: `${ctx.rocket} রকেটে প্যাড ছাড়ল। এখন রোবট নিজেই নিজের ভরসা।` };
+      case 'launch-failed':
+        return { head: `${day} · উৎক্ষেপণ ব্যর্থ`, text: 'উৎক্ষেপণের দিন রকেট ব্যর্থ হলো। রকেট নিখুঁত নয়।' };
+      case 'not-launched':
+        return { head: `${day} · উৎক্ষেপণ হয়নি`, text: 'যান কখনো মাটি ছাড়েনি।' };
+      case 'hazard': {
+        const t = dangerBn(pnl.hazardType!, ctx.title(pnl.hazardType!));
+        const label = ctx.label(pnl.hazardType!, pnl.optionId!);
+        const how = pnl.bad ? `গোলমাল হলো: ${BN_CHIP[pnl.effect ?? 'safe-mode']}।` : 'কাজ হলো।';
+        const who = pnl.by === 'standing-order' ? `রোবট তার আদেশ মানল: ${label}।` : pnl.by === 'fault-protection' ? `সময়মতো আদেশ আসেনি। রোবট বেছে নিল: ${label}।` : `তুমি বেছে নিলে: ${label}।`;
+        return { head: `${day} · ${t}`, text: `${who} ${how}` };
+      }
+      case 'arrival':
+        return { head: `${day} · ${placeIn(ctx.dest)} পৌঁছানো`, text: `লম্বা একটা গতি কমানোর বার্ন। ${place(ctx.dest)} তোমাকে ধরে ফেলল।` };
+      case 'conjunction':
+        return { head: `${day} · সূর্য মাঝখানে`, text: `${days(pnl.blackoutDays ?? 0)} কোনো রেডিও নেই। ${ctx.autopilot ? 'অটোপাইলট একাই উড়িয়েছে।' : 'রোবট অপেক্ষা করে পার করেছে।'}` };
+      case 'lost':
+        return { head: `${day} · যোগাযোগ বিচ্ছিন্ন`, text: 'রোবট চুপ হয়ে গেল। কেউ আর কখনো তার কথা শোনেনি।' };
+      case 'complete':
+        return { head: `${day} · মিশন শেষ`, text: `বিজ্ঞানের কাজ শেষ: ${f.gbit(ctx.sent_Gbit)} বাড়ি পাঠানো হয়েছে।` };
+    }
+  },
+  PANEL_SOUND: { 'solar-storm': 'ঝিঝিৎ!', 'cme-shock': 'ধপাস!', 'mars-dust-storm': 'সাঁই সাঁই', debris: 'ঠং!', 'reaction-wheel': 'ঘড়ঘড়', 'memory-corruption': 'বিপ?', 'insertion-anomaly': 'ভুস' },
+  STAR_WORDS: () => ['প্রথম বিজ্ঞান বাড়িতে', 'অর্ধেক বিজ্ঞান', 'বেশির ভাগ বিজ্ঞান'],
+  CATEGORY_NAME: { science: 'বিজ্ঞান', success: 'সাফল্য', budget: 'বাজেট', deltaV: 'Δv মার্জিন', power: 'বিদ্যুতের মার্জিন', mass: 'ভরের মার্জিন', crisis: 'সংকট সামলানো' },
+  savedWords: (v, ctx) => {
+    switch (v.code) {
+      case 'part':
+        return { strong: BN_PART_UPPER(v.part), rest: `। এটা ${dangerBn(v.hazardType, ctx.title(v.hazardType))}-কে অনেক কম বিপজ্জনক করে দিয়েছে।` };
+      case 'autopilot':
+        return { strong: 'অটোপাইলট চিপ', rest: `। এটা নিজেই ${dangerBn(v.hazardType, ctx.title(v.hazardType))}-এর জবাব দিয়েছে।` };
+      case 'choice':
+        return { strong: `“${ctx.label(v.hazardType, v.optionId)}” বেছে নেওয়া`, rest: `, যখন ${dangerBn(v.hazardType, ctx.title(v.hazardType))} এল।` };
+      case 'quiet':
+        return { strong: 'ভালো পরিকল্পনা', rest: '। এবার কিছুই গোলমাল হয়নি।' };
+    }
+  },
+  hurtWords: (v, ctx) => {
+    switch (v.code) {
+      case 'bad-outcome':
+        return { strong: `“${ctx.label(v.hazardType, v.optionId)}”`, rest: `, ${dangerBn(v.hazardType, ctx.title(v.hazardType))}-এর সময়: ${BN_CHIP[v.effect]}।` };
+      case 'category':
+        return { strong: BN_CATEGORY_WORD[v.category] ?? v.category, rest: ` 100-এর মধ্যে মাত্র ${f.num(v.score)} পেয়েছে।` };
+      case 'nothing':
+        return { strong: 'বড় কিছু না', rest: '। সব স্কোরই মোটামুটি বা তার চেয়ে ভালো।' };
+    }
+  },
+  REPORT_STAMP: { complete: { word: ['মিশন', 'শেষ'] }, extended: { word: ['মিশন', 'বাড়ল'] }, lost: { word: ['রোবট', 'হারাল'] }, 'not-launched': { word: ['উৎক্ষেপণ', 'হয়নি'] } },
+  FINAL_WORDS: {
+    kicker: (day) => `টেলিটাইপ 03 · পাওয়া গেছে দিন ${day}`,
+    incomplete: 'অসম্পূর্ণ',
+    sent: (delay) => `ছাপার ${delay} আগে পাঠানো`,
+    title: (name) => `শেষ বার্তা — ${name}`,
+    ...BN_FINAL,
+    lost: '— সিগন্যাল হারিয়েছে —',
+    still: 'এখনো আছি।',
+    foot: {
+      complete: 'কাগজ নড়ার সময়েই শেষ কথাগুলো {delay} পুরোনো হয়ে গিয়েছিল।',
+      lost: 'ডিপ স্পেস নেটওয়ার্ক শুনতেই থাকল। আর কিছু আসেনি।',
+      extended: 'আসলে বিদায় নয়: মিশন শেষ, রোবট নয়।',
+    },
+    feed: 'কাগজ টানো · মিশনের রিপোর্ট ▾',
+    label: 'শেষ বার্তা',
+  },
+  finalLines: (ft, ctx) => {
+    const W = BN_FINAL;
+    return ft.lines.map((l) => {
+      const v = l.values;
+      const slots: Record<string, string> = {
+        dest: place(ctx.dest),
+        destOf: placeOf(ctx.dest),
+        name: ctx.name.toUpperCase(),
+        hazard: v.hazardType ? dangerBn(v.hazardType, ctx.title(v.hazardType)) : '',
+        ...(v.day !== undefined ? { day: f.dayPad(v.day), when: f.num(v.day) } : {}),
+        ...(v.scienceDays !== undefined ? { science: f.num(v.scienceDays) } : {}),
+        ...(v.dv_ms !== undefined ? { dv: f.speed(v.dv_ms).toUpperCase() } : {}),
+        ...(v.days !== undefined ? { days: f.num(v.days) } : {}),
+        ...(v.propellantLeft_kg !== undefined ? { fuel: f.kg(v.propellantLeft_kg).toUpperCase() } : {}),
+        ...(v.years !== undefined ? { years: years(v.years) } : {}),
+      };
+      switch (l.kind) {
+        case 'opening':
+          return fillBn(W.opening[ft.ending], slots);
+        case 'hurt':
+          return fillBn(W.hurt, { ...slots, effect: v.effect ? W.effect[v.effect] : '' }).trim();
+        case 'saved': {
+          const sv = v.saved!;
+          if (sv.code === 'part') return fillBn(W.saved.part, { ...slots, part: BN_PART_UPPER(sv.part), hazard: dangerBn(sv.hazardType, ctx.title(sv.hazardType)) });
+          if (sv.code === 'autopilot') return fillBn(W.saved.autopilot, { ...slots, hazard: dangerBn(sv.hazardType, ctx.title(sv.hazardType)) });
+          if (sv.code === 'choice') return fillBn(W.saved.choice, { ...slots, option: ctx.label(sv.hazardType, sv.optionId) });
+          return W.quiet;
+        }
+        case 'arrival':
+          return fillBn(W.arrival, slots);
+        case 'conjunction':
+          return fillBn(W.conjunction, slots);
+        case 'quiet':
+          return W.quiet;
+        case 'fuel':
+          return fillBn(W.fuel, slots);
+        case 'extension':
+          return fillBn(W.extension, slots);
+        case 'sign-off':
+          return fillBn(W.signOff, slots);
+        case 'cause':
+          return fillBn(W.cause[v.cause ?? 'unknown'], slots);
+        case 'cut-off':
+          return W.cutOff;
+      }
+    });
+  },
+  CATEGORY_LOOK: { signal: { name: 'সিগন্যাল' }, power: { name: 'বিদ্যুৎ' }, weather: { name: 'মহাকাশ-আবহাওয়া' }, nav: { name: 'পথ চেনা' }, people: { name: 'মানুষ' } },
+  LESSON_WORDS: {
+    'safe-beats-curious': { title: 'কৌতূহলের চেয়ে নিরাপত্তা আগে', body: 'সৌরঝড় এগিয়ে এলে আসল দলগুলো যন্ত্র বন্ধ করে দেয়। কয়েক দিনের বিজ্ঞান হাতছাড়া হওয়া একটা যন্ত্র চিরতরে হারানোর চেয়ে ভালো।' },
+    'air-swells': { title: 'বাতাস ফুলে ওঠে', body: 'গ্রহজোড়া ধুলোঝড় মঙ্গলের বাতাস গরম করে ফুলিয়ে তোলে। নিচু কক্ষপথ হঠাৎ ঘন বাতাসের ভেতর দিয়ে টেনে যায়।' },
+    'radiation-adds-up': { title: 'বিকিরণ জমতে থাকে', body: 'ইলেকট্রনিকস সারা জীবনে কেবল নির্দিষ্ট পরিমাণ বিকিরণ সইতে পারে। বড় গ্রহের বলয়ের কাছে প্রতিটি দিন তার কিছুটা খরচ করে।' },
+    'sun-gets-in-the-way': { title: 'সূর্য মাঝখানে চলে আসে', body: 'কখনো কখনো সূর্য পৃথিবী আর তোমার রোবটের মাঝখানে বসে। তার গোলমাল রেডিও এলোমেলো করে দেয়, তাই সরে না যাওয়া পর্যন্ত কেউ আদেশ পাঠায় না।' },
+    'bits-flip': { title: 'বিট উল্টে যায়', body: 'একটা দ্রুতগামী কণা কম্পিউটারের মেমরির একটা বিট উল্টে দিতে পারে। রোবটের কাছে পরীক্ষা, প্যাচ বা কম্পিউটার বদলানোর উপায় থাকে।' },
+    'full-memory': { title: 'মেমরি ভরে যায়', body: 'যে রোবট অনেক বেশি ফাইল জমায়, তার জায়গা ফুরিয়ে সে বিভ্রান্ত হতে পারে। প্রকৌশলীরা লক্ষ লক্ষ কিলোমিটার দূর থেকে একটাকে সারিয়েছিলেন।' },
+    'batteries-hate-the-dark': { title: 'ব্যাটারি অন্ধকার পছন্দ করে না', body: 'গ্রহের ছায়ায় সোলার প্যানেল কিছুই বানায় না। তখন ব্যাটারিই রোবটকে চালায়, আর কখনো পুরো খালি না করলে সেগুলো বেশি দিন টেকে।' },
+    'wheels-wear-out': { title: 'চাকা ক্ষয়ে যায়', body: 'ঘূর্ণি-চাকা জ্বালানি ছাড়াই রোবটকে তাক করে, কিন্তু সেগুলো ক্ষয়ে যায়। একটা বিকল হলে বাড়তি চাকা আর থ্রাস্টার কাজ চালিয়ে নেয়।' },
+    'safe-mode-is-a-friend': { title: 'সেফ মোড বন্ধু', body: 'রোবট বিভ্রান্ত হলে বাড়তি সব বন্ধ করে, সূর্যের দিকে মুখ করে, আর পৃথিবীর সাহায্যের অপেক্ষা করে।' },
+    'braking-is-scary': { title: 'গতি কমানো ভয়ের', body: 'পৌঁছানো মানে দ্বিতীয় সুযোগ ছাড়া একটা লম্বা ইঞ্জিন-বার্ন। ভুল হলে কী করবে, দলগুলো আগেই পরিকল্পনা করে রাখে।' },
+    'duck-the-dust': { title: 'ধুলো এড়াও', body: 'ধূমকেতুর ধুলো বুলেটের চেয়েও জোরে আঘাত করে। আগে থেকে দেখতে পেলে রোবট গ্রহের আড়ালে লুকাতে পারে, বা প্যানেল কিনারা করে ঘোরাতে পারে।' },
+    'borrow-speed': { title: 'গ্রহের কাছ থেকে গতি ধার করো', body: 'কোনো রকেট যথেষ্ট শক্তিশালী না হলে একটা গ্রহের পাশ দিয়ে উড়ে যাও আর তার একটু গতি নিয়ে নাও: একে বলে মহাকর্ষীয় সহায়তা।' },
+    'check-your-units': { title: 'একক মিলিয়ে নাও', body: 'দুটো দল, দুই রকম সংখ্যা, একটা হারানো মহাকাশযান। সবসময় জোরে বলে একক মিলিয়ে নাও।' },
+    'trust-but-test': { title: 'বিশ্বাস করো, তবে পরীক্ষা করো', body: 'সেন্সর ভুল বলতে পারে: একটা ঝাঁকুনিকেও অবতরণ মনে হতে পারে। হার্ডওয়্যার যা যা টের পেতে পারে, সবকিছুর সঙ্গে সফটওয়্যার পরীক্ষা করো।' },
+    'install-it-right': { title: 'ঠিক দিক ওপরে রেখে বসাও', body: 'উল্টো করে বসানো একটা যন্ত্রাংশ প্রতিটি পরীক্ষা পেরিয়েও আসল দিনে ব্যর্থ হতে পারে। শুধু যন্ত্রাংশ নয়, পুরো যান পরীক্ষা করো।' },
+  },
+  unlockHint: (u, ctx) => {
+    switch (u.kind) {
+      case 'face-hazard':
+        return `${BN_HAZARD_PHRASE[u.id] ?? ctx.hazard(u.id)}-এর মুখোমুখি হও`;
+      case 'finish-level':
+        return `${ctx.level(u.id)}-এ একটা তারা জেতো`;
+      case 'solve-rescue':
+        return `উদ্ধার-ইতিহাসে ${ctx.rescue(u.id)}-কে বাঁচাও`;
+      case 'conjunction':
+        return 'একটা সৌর সংযোগ পেরিয়ে উড়ে যাও';
+      case 'eclipse':
+        return 'একটা গ্রহণের মৌসুম পেরিয়ে উড়ে যাও';
+    }
+  },
+  ALBUM: {
+    label: 'মিশনের অ্যালবাম',
+    kicker: (name) => `টেলিটাইপ 03 · মিশনের অ্যালবাম — ${name}`,
+    meta: { complete: (day) => `দিন 001–${day}`, lost: (day) => `শেষ যোগাযোগ · দিন ${day}`, extended: (day) => `দিন 001–${day} · এখনো চলছে` },
+    returned: (n, total) => `${n} / ${total} লক্ষ্য ফিরেছে`,
+    lostOn: (name, day) => `${name} হারিয়ে গিয়েছিল দিন ${day}-এ —`,
+    madeIt: (n) => `${n} ছবি বাড়ি পৌঁছেছে।`,
+    noneMadeIt: 'কোনো ছবি বাড়ি পৌঁছায়নি।',
+    ofScience: (pct) => `মিশনের বিজ্ঞানের ${pct}`,
+    soFar: (pct) => `এ পর্যন্ত ${pct} · এখনো উড়ছে`,
+    subComplete: (name, day) => `${name} · মূল মিশন শেষ · দিন ${day}`,
+    subExtended: (name, day) => `${name} · মিশন বাড়ানো হয়েছে · দিন ${day}`,
+    bar: 'মিশনের বিজ্ঞান · প্রতিটি লক্ষ্যের একটা ঘর, যা শেখায় সেই মাপে',
+    barPct: (pct) => `${pct} ফিরেছে`,
+    plus: (pct) => `+${pct} বিজ্ঞান`,
+    missed: (pct) => `${pct} হাতছাড়া`,
+    partialSci: 'ছবির অংশ · বিজ্ঞান নেই',
+    notReturned: 'ফেরেনি',
+    signalLost: '— সিগন্যাল হারিয়েছে —',
+    partialCap: (pct) => `${pct} পাঠানোর পর সিগন্যাল হারিয়েছে`,
+    credit: (credit, mission) => `ছবির সূত্র: ${credit} · ${mission}`,
+    why: {
+      'never-ordered': () => 'কখনো দেখা হয়নি',
+      'order-lost': () => 'আদেশটা কখনো পৌঁছায়নি',
+      'refused-fuel': () => 'বাদ · যথেষ্ট জ্বালানি নেই',
+      'refused-unreachable': () => 'বাদ · এই কক্ষপথ থেকে দেখা যায় না',
+      refused: () => 'বাদ · রোবট না বলেছে',
+      'never-taken': () => 'শেষ হওয়ার সময়েও দেখছিল',
+      'never-sent': (day) => `দিন ${day}-এ তোলা · কখনো পাঠানো হয়নি`,
+      'still-possible': () => 'এখনো সম্ভব · বাড়তি মিশন',
+    },
+    foot: {
+      complete: 'প্রতিটি খালি ফ্রেম এমন এক লক্ষ্য, যা এখনো ওখানে। এই মিশনে নয়।',
+      lost: 'যে ছবিগুলো আগেই বাড়ি এসেছে, সেগুলো গোনা হয়। বাকিগুলো তার মেমরিতে রয়ে গেছে, মঙ্গলের ওপরে কোথাও।',
+      extended: 'খালি ফ্রেম, আর সেগুলো ভরানোর মতো জ্বালানি বাকি থাকা একটা রোবট।',
+      all: 'প্রতিটি লক্ষ্য বাড়িতে। ওখানে দেখার আর কিছু বাকি নেই।',
+      none: 'কোনো ছবি বাড়ি পৌঁছায়নি। পরেরবার আগেভাগে লক্ষ্যের আদেশ দাও, আর DSN পাসের অপেক্ষা করো।',
+    },
+    feed: 'কাগজ টানো · শেষ বার্তা ▾',
+  },
+  DAILY_SCIENCE: { card: (pct) => `বিজ্ঞান বাড়িতে ${pct}`, share: (pct) => `🔭 বিজ্ঞানের ${pct} বাড়িতে` },
+  REPORT_WORDS: {
+    title: 'মিশনের রিপোর্ট',
+    titleLines: ['মিশনের', 'রিপোর্ট'],
+    kicker: (mission, dest, lastDay) => `টেলিটাইপ · ${mission.toUpperCase()} · ${place(dest)} · দিন 000–${lastDay}`,
+    kickerPhone: (mission, day) => `${mission.toUpperCase()} · দিন ${day}`,
+    stars: (n) => `${n} / 3 তারা`,
+    saved: 'কী তোমাকে বাঁচাল',
+    hurt: 'কী তোমার ক্ষতি করল',
+    youVs: 'তুমি বনাম আসলটা',
+    youVsLabel: 'তুমি বনাম আসল মিশন',
+    you: 'তুমি',
+    launch: 'উৎক্ষেপণ',
+    plannedScience: 'পরিকল্পিত বিজ্ঞান',
+    metric: { wetMass: 'উৎক্ষেপণের ভর', dryMass: 'শুকনো ভর', propellant: 'জ্বালানি', powerAtArrival: 'পৌঁছানোর সময় বিদ্যুৎ', deltaVCapability: 'Δv সামর্থ্য' },
+    noCompare: 'তুলনা করার মতো আসল মিশন এখনো নেই',
+    newCard: 'নতুন কার্ড',
+    notebookCard: (n, total) => `প্রকৌশলীর নোটবুক · ${n} / ${total}`,
+    realLesson: 'আসল শিক্ষা',
+    fromFlight: 'এই ফ্লাইট থেকে',
+    toVerify: 'যাচাই বাকি',
+    lessonTitle: 'শিক্ষাটি',
+    notebook: 'নোটবুক',
+    openNotebook: 'নোটবুক খোলো',
+    next: (title) => `এরপর: ${title.toUpperCase()}`,
+    flyAgain: 'আবার ওড়াও',
+    lastWords: 'Opportunity-র শেষ বার্তা',
+    nextStar: (hint) => `পরের তারা · ${hint}`,
+  },
+  COMIC_WORDS: { boom: 'ধুড়ুম!', zap: 'ঝিঝিৎ!', whoosh: 'সাঁই সাঁই', beep: 'বিপ বিপ' },
+  NOTEBOOK_WORDS: {
+    title: 'প্রকৌশলীর নোটবুক',
+    titleShort: 'নোটবুক',
+    collected: (n, total) => `${n} / ${total} জোগাড় হয়েছে`,
+    categories: 'বিভাগ',
+    lessons: 'শিক্ষা',
+    lesson: 'শিক্ষা',
+    lessonOf: (n, title) => `শিক্ষা ${n}: ${title}`,
+    lessonLocked: (n, hint) => `শিক্ষা ${n}: তালাবন্ধ। ${hint}`,
+    kicker: (n, category) => `শিক্ষা ${n} · ${category}`,
+    close: 'শিক্ষা বন্ধ করো',
+    history: 'আসল ইতিহাস',
+    toVerify: 'যাচাই বাকি',
+    source: 'সূত্র',
+    earned: (how) => `পেয়েছ · ${how}`,
+    missionDay: (day) => `মিশনের দিন ${day}`,
+    rescue: (name) => `উদ্ধার-ইতিহাস · ${name.toUpperCase()}`,
+    aFlight: 'একটা ফ্লাইট',
+    locked: 'তালাবন্ধ',
+    toEarn: (hint) => `এই শিক্ষা পেতে: ${hint}।`,
+    fresh: 'নতুন',
+  },
+  DAILY_WORDS: {
+    no: (n) => `দৈনিক #${n}`,
+    result: (n) => `দৈনিক ${n}-এর ফল`,
+    date: (date) => `${date} · মঙ্গল`,
+    theme: (danger) => `${danger}-এর দিন`,
+    quiet: 'শান্ত যাত্রা',
+    stars: (n) => `${n} / 3 তারা`,
+    how: 'প্রতিটি বিপদ কেমন গেল',
+    none: 'আজ কোনো বিপদের কার্ড নেই। শান্ত ফ্লাইট।',
+    result_: { held: 'সামলানো', cost: 'খরচ হলো', hurt: 'ক্ষতি হলো' },
+    realOf: (date) => `, আসল ঘটনা ${date}`,
+    day: 'দিন ',
+    dayShort: 'দি',
+    alive: 'রোবট বেঁচে আছে',
+    lost: 'রোবট হারিয়েছে',
+    endDay: (day) => ` · দিন ${day}`,
+    streak: (n) => `টানা ${n} দিন`,
+    madeIt: 'তুমি পেরেছ।',
+    gone: 'রোবট হারিয়ে গেছে।',
+    show: 'তোমার দলকে দেখাও।',
+    copies: 'লেখা হিসেবে কপি হয়',
+    copied: 'কপি হয়েছে ✓',
+    share: 'ফল শেয়ার করো',
+    copy: 'ফল কপি করো',
+    save: 'ছবি সেভ করো',
+    report: 'মিশনের রিপোর্ট',
+    next: (t) => `পরের দৈনিক ${t} পরে`,
+    shareAlive: (day) => `🤖 বেঁচে আছে · দিন ${day}`,
+    shareLost: (day) => `💥 হারিয়েছে · দিন ${day}`,
+    shareQuiet: '🟦 শান্ত ফ্লাইট',
+  },
+
   // -------------------------------------------------------------------------
   // Science targets, the Moon scene, the downlink and the globe
 
@@ -931,6 +1272,7 @@ export const BN: Partial<Bangla> = {
   POSTCARD_WORDS: {
     menu: 'পোস্টকার্ড',
     menuSub: 'তোমার রোবটদের বাড়ি পাঠানো আসল NASA ছবি।',
+    view: (title) => `পোস্টকার্ড: ${title}`,
     title: 'মহাকাশ থেকে পোস্টকার্ড',
     sub: 'NASA মিশনের আসল ছবি। রোবটের বিজ্ঞান-তথ্য পৃথিবীতে পৌঁছালে সে একটি করে বাড়ি পাঠায়।',
     toast: (dest) => `📮 ${place(dest)} থেকে পোস্টকার্ড!`,
