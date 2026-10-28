@@ -1088,6 +1088,7 @@ export const BN: Bangla = {
   },
   WEIGHT_WORDS: { ok: 'যথেষ্ট হালকা', warning: 'প্রায় বেশি ভারী', over: 'এই রকেটের জন্য খুব ভারী' },
   shortDate: (iso) => new Date(`${iso.slice(0, 10)}T00:00:00Z`).toLocaleDateString(BN_DATES, { month: 'short', day: 'numeric', timeZone: 'UTC' }),
+  dayCount: (n) => `${f.num(n)} দিন`,
   fullDate: (iso) => new Date(`${iso.slice(0, 10)}T00:00:00Z`).toLocaleDateString(BN_DATES, { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' }),
   crtDate: (iso) => new Date(`${iso.slice(0, 10)}T00:00:00Z`).toLocaleDateString(BN_DATES, { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' }),
   monthSpan: (fromIso, toIso) => {
