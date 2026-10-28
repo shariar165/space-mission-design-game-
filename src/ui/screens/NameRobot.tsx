@@ -5,6 +5,7 @@ import { useRef, useState } from 'react';
 import type { MarsNow } from '../../engine/marsNow';
 import { BackButton } from '../components/sd/BackButton';
 import { ModeLever, type Mode } from '../components/sd/ModeLever';
+import { SoundToggle } from '../components/sd/SoundToggle';
 import { useTeletype } from '../components/sd/Teletype';
 import * as f from '../format';
 import { useIsPhone } from '../sdGeometry';
@@ -68,7 +69,10 @@ export function NameRobot({ name: saved, mode, onMode, mars, onName, onDone, onB
             <span className="nm-word">SIGNAL DELAY</span>
             {!phone && <span className="nm-kicker">{NAME_WORDS.kicker}</span>}
           </span>
-          <ModeLever mode={mode} onMode={onMode} />
+          <span className="sd-top-keys">
+            <SoundToggle />
+            <ModeLever mode={mode} onMode={onMode} />
+          </span>
         </header>
 
         <main className="nm-crt sd-crt" aria-label="Name your robot">
