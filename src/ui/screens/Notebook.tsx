@@ -13,7 +13,7 @@ import { SoundToggle } from '../components/sd/SoundToggle';
 import { SDIcon, type SDIconName } from '../components/sd/SDIcon';
 import { useIsPhone } from '../sdGeometry';
 import { levelById } from '../levels';
-import { CATEGORY_LOOK, dangerLook, LESSON_WORDS, unlockHint } from '../sdWords';
+import { CATEGORY_LOOK, dangerLook, LESSON_WORDS, NOTEBOOK_WORDS, unlockHint } from '../sdWords';
 import * as f from '../format';
 
 const CATS: (LessonCategory | 'all')[] = ['all', 'signal', 'power', 'weather', 'nav', 'people'];
@@ -50,23 +50,21 @@ export function Notebook({ facts, fresh, mode, onMode, onHome, onBack }: Props) 
 
   const earned =
     card.day !== undefined
-      ? `MISSION DAY ${f.num(card.day)}`
+      ? NOTEBOOK_WORDS.missionDay(f.num(card.day))
       : card.unlock.kind === 'finish-level'
         ? ctx.level(card.unlock.id).toUpperCase()
         : card.unlock.kind === 'solve-rescue'
-          ? `RESCUE HISTORY · ${ctx.rescue(card.unlock.id).toUpperCase()}`
-          : 'A FLIGHT';
+          ? NOTEBOOK_WORDS.rescue(ctx.rescue(card.unlock.id))
+          : NOTEBOOK_WORDS.aFlight;
 
   const detail = (
     <>
       <div className="nb-band" style={{ background: look.color }} />
       <div className="nb-detail-body">
         <div className="nb-detail-top">
-          <span className="nb-detail-k">
-            LESSON {pad2(card.num)} · {look.name}
-          </span>
+          <span className="nb-detail-k">{NOTEBOOK_WORDS.kicker(pad2(card.num), look.name)}</span>
           {phone ? (
-            <button type="button" className="nb-close" aria-label="Close lesson" onClick={() => setSheet(false)}>
+            <button type="button" className="nb-close" aria-label={NOTEBOOK_WORDS.close} onClick={() => setSheet(false)}>
               <SDIcon icon="cross" size={16} color="var(--sd-paper-ink)" />
             </button>
           ) : (
@@ -81,24 +79,24 @@ export function Notebook({ facts, fresh, mode, onMode, onHome, onBack }: Props) 
             <p className="nb-detail-text">{words.body}</p>
             <div className="sd-history">
               <span className="sd-history-k">
-                REAL HISTORY
-                {text.isGameEstimate && <span className="sd-verify">TO VERIFY</span>}
+                {NOTEBOOK_WORDS.history}
+                {text.isGameEstimate && <span className="sd-verify">{NOTEBOOK_WORDS.toVerify}</span>}
                 <SourceInfo s={text} title={words.title.toLowerCase()} />
               </span>
               <span className="sd-history-v">{text.value}</span>
             </div>
             {engineer && (
               <div className="nb-numbers">
-                <span className="nb-numbers-k">THE SOURCE</span>
+                <span className="nb-numbers-k">{NOTEBOOK_WORDS.source}</span>
                 <span className="nb-numbers-v">{text.source}</span>
               </div>
             )}
-            <span className="nb-earned">EARNED · {earned}</span>
+            <span className="nb-earned">{NOTEBOOK_WORDS.earned(earned)}</span>
           </>
         ) : (
           <>
-            <h2 className="nb-detail-title locked">LOCKED</h2>
-            <p className="nb-detail-text">{unlockHint(card.unlock, ctx)} to earn this lesson.</p>
+            <h2 className="nb-detail-title locked">{NOTEBOOK_WORDS.locked}</h2>
+            <p className="nb-detail-text">{NOTEBOOK_WORDS.toEarn(unlockHint(card.unlock, ctx))}</p>
           </>
         )}
       </div>
@@ -111,13 +109,11 @@ export function Notebook({ facts, fresh, mode, onMode, onHome, onBack }: Props) 
         <div className="nb-head">
           <div className="nb-head-l">
             <BackButton onBack={onBack ?? onHome} />
-            <h1 className="nb-title">{phone ? 'NOTEBOOK' : 'ENGINEER’S NOTEBOOK'}</h1>
-            <span className="nb-count">
-              {f.num(got)} OF {f.num(NOTEBOOK.length)} COLLECTED
-            </span>
+            <h1 className="nb-title">{phone ? NOTEBOOK_WORDS.titleShort : NOTEBOOK_WORDS.title}</h1>
+            <span className="nb-count">{NOTEBOOK_WORDS.collected(f.num(got), f.num(NOTEBOOK.length))}</span>
           </div>
           <div className="nb-head-r">
-            <div className="nb-cats" role="group" aria-label="Categories">
+            <div className="nb-cats" role="group" aria-label={NOTEBOOK_WORDS.categories}>
               {CATS.map((c) => (
                 <button key={c} type="button" className="nb-cat" aria-pressed={filter === c} onClick={() => setFilter(c)}>
                   <span className="nb-cat-dot" style={{ background: c === 'all' ? 'var(--sd-paper)' : CATEGORY_LOOK[c].color }} />
@@ -133,7 +129,7 @@ export function Notebook({ facts, fresh, mode, onMode, onHome, onBack }: Props) 
           </div>
         </div>
         <div className="nb-main">
-          <div className="nb-grid" role="group" aria-label="Lessons">
+          <div className="nb-grid" role="group" aria-label={NOTEBOOK_WORDS.lessons}>
             {cards.map((c, i) => {
               const dim = filter !== 'all' && c.category !== filter;
               const w = LESSON_WORDS[c.id];
@@ -142,7 +138,7 @@ export function Notebook({ facts, fresh, mode, onMode, onHome, onBack }: Props) 
                   key={c.id}
                   type="button"
                   className={`nb-card${c.open ? '' : ' locked'}${i === sel ? ' on' : ''}${dim ? ' dim' : ''}`}
-                  aria-label={c.open ? `Lesson ${f.num(c.num)}: ${w?.title ?? c.id}` : `Lesson ${f.num(c.num)}: locked. ${unlockHint(c.unlock, ctx)}`}
+                  aria-label={c.open ? NOTEBOOK_WORDS.lessonOf(f.num(c.num), w?.title ?? c.id) : NOTEBOOK_WORDS.lessonLocked(f.num(c.num), unlockHint(c.unlock, ctx))}
                   onClick={() => {
                     setSel(i);
                     if (phone) setSheet(true);
@@ -155,20 +151,20 @@ export function Notebook({ facts, fresh, mode, onMode, onHome, onBack }: Props) 
                       <SDIcon icon={(c.open ? c.icon : 'lock') as SDIconName} size={phone ? 20 : 26} color={c.open ? 'var(--sd-paper-ink)' : 'var(--sd-ink-6)'} />
                     </span>
                     <span className="nb-card-title">{c.open ? (w?.title ?? c.id) : unlockHint(c.unlock, ctx).toUpperCase()}</span>
-                    {!phone && <span className="nb-card-sub">{c.open ? CATEGORY_LOOK[c.category].name : 'LOCKED'}</span>}
+                    {!phone && <span className="nb-card-sub">{c.open ? CATEGORY_LOOK[c.category].name : NOTEBOOK_WORDS.locked}</span>}
                   </span>
-                  {fresh.includes(c.id) && <span className="nb-new">NEW</span>}
+                  {fresh.includes(c.id) && <span className="nb-new">{NOTEBOOK_WORDS.fresh}</span>}
                 </button>
               );
             })}
           </div>
-          {!phone && <section className="nb-detail" aria-label="Lesson">{detail}</section>}
+          {!phone && <section className="nb-detail" aria-label={NOTEBOOK_WORDS.lesson}>{detail}</section>}
         </div>
       </div>
       {phone && sheet && (
         <>
           <div className="nb-scrim" onClick={() => setSheet(false)} />
-          <section className="nb-detail sheet" aria-label="Lesson" role="dialog">
+          <section className="nb-detail sheet" aria-label={NOTEBOOK_WORDS.lesson} role="dialog">
             {detail}
           </section>
         </>

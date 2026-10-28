@@ -6,8 +6,6 @@ import * as f from '../../format';
 import { CoinIcon, DishIcon } from './opsIcons';
 import { DRAWER_WORDS } from '../../opsWords';
 
-const W = DRAWER_WORDS.call;
-
 interface Props {
   state: OpsState;
   day?: number;
@@ -21,6 +19,7 @@ export function BookCall({ state, day: initial, engineer, onBook, onClose }: Pro
   const o = useMemo(() => dsnOptions(state, day), [state, day]);
   const [dish, setDish] = useState<34 | 70>(70);
   const pick = o.options.find((x) => x.dish === dish)!;
+  const W = DRAWER_WORDS.call;
   return (
     <section className="ops-panel ops-call" aria-label={W.title}>
       <div className="ops-panel-head">

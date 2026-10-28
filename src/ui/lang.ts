@@ -81,11 +81,12 @@ function bangla(en: object, bn: unknown): unknown {
     p = new Proxy(en, {
       get(target, key, receiver) {
         const e: unknown = Reflect.get(target, key, receiver);
-        if (lang() !== 'bn' || typeof key !== 'string' || NOT_WORDS.has(key) || bn === null || typeof bn !== 'object') return e;
-        const b: unknown = (bn as Record<string, unknown>)[key];
-        if (b === undefined) return e;
-        if (e !== null && typeof e === 'object' && b !== null && typeof b === 'object') return bangla(e, b);
-        return b;
+        if (typeof key !== 'string' || NOT_WORDS.has(key)) return e;
+        const b: unknown = bn !== null && typeof bn === 'object' ? (bn as Record<string, unknown>)[key] : undefined;
+        // A nested table is always handed out as a proxy, in English too: a screen that keeps it (a module constant)
+        // still follows a later switch.
+        if (e !== null && typeof e === 'object') return bangla(e, b !== null && typeof b === 'object' ? b : null);
+        return lang() === 'bn' && b !== undefined ? b : e;
       },
     });
     byBn.set(bn, p);

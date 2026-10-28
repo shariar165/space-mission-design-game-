@@ -27,7 +27,7 @@ import { SDIcon } from '../components/sd/SDIcon';
 import { useReducedMotion } from '../opsGeometry';
 import { useOpsRisk } from '../riskRunner';
 import { useIsPhone } from '../sdGeometry';
-import { BADGE_WORDS, CATEGORY_NAME, CREW_WORDS, dangerLook, finalLines, FLY_WORDS, GAME_NAME, hurtWords, optionShort, PANEL_SOUND, panelWords, POSTCARD_WORDS, RANK_WORDS, REPORT_STAMP, ROBOT_WORDS, robotNameOr, robotSays, savedWords, STAR_WORDS } from '../sdWords';
+import { BADGE_WORDS, BRAND_WORDS, CATEGORY_NAME, CREW_WORDS, dangerLook, finalLines, FLY_WORDS, GAME_NAME, hurtWords, optionShort, PANEL_SOUND, panelWords, POSTCARD_WORDS, RANK_WORDS, REPORT_STAMP, REPORT_WORDS, ROBOT_WORDS, robotNameOr, robotSays, savedWords, STAR_WORDS } from '../sdWords';
 import * as f from '../format';
 import { voiceContext } from '../voiceContext';
 
@@ -36,13 +36,7 @@ export const PANEL_STEP_MS = 2400;
 const CAPTION_CPS = 38;
 const TICK_MS = 40;
 
-const METRIC: Record<CompareMetric, string> = {
-  wetMass: 'LAUNCH MASS',
-  dryMass: 'DRY MASS',
-  propellant: 'PROPELLANT',
-  powerAtArrival: 'POWER AT ARRIVAL',
-  deltaVCapability: 'Δv CAPABILITY',
-};
+const metricName = (m: CompareMetric) => (REPORT_WORDS.metric as Record<CompareMetric, string>)[m];
 const metricValue = (m: CompareMetric, v: number) => (m === 'powerAtArrival' ? f.watts(v) : m === 'deltaVCapability' ? f.speed(v) : f.kg(v));
 const DEST_COLOR: Record<Design['destination'], string> = { moon: '#cfcabb', venus: '#e8c27a', mars: 'var(--sd-mars)', bennu: '#8f8676', jupiter: '#d9a066' };
 
@@ -149,7 +143,7 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
   });
 
   const starsEl = (
-    <div className="rp-stars" aria-label={`${f.num(d.stars)} of 3 stars`}>
+    <div className="rp-stars" aria-label={REPORT_WORDS.stars(f.num(d.stars))}>
       {starWords.map((s, i) => (
         <div key={s} className="rp-star">
           <SDIcon icon="star" size={phone ? 34 : 44} color={i < d.stars ? 'var(--sd-gold)' : 'var(--sd-ink-3)'} fill={i < d.stars} sw={1.6} />
@@ -175,7 +169,7 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
           <SDIcon icon={verdict.saved.code === 'part' || verdict.saved.code === 'autopilot' ? 'shield' : 'check'} size={24} color="var(--sd-paper)" />
         </span>
         <div>
-          <span className="rp-verdict-k ok">WHAT SAVED YOU</span>
+          <span className="rp-verdict-k ok">{REPORT_WORDS.saved}</span>
           <span className="rp-verdict-v">
             <b>{saved.strong}</b>
             {saved.rest}
@@ -187,7 +181,7 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
           <SDIcon icon="storm" size={24} color="var(--sd-paper)" />
         </span>
         <div>
-          <span className="rp-verdict-k bad">WHAT HURT YOU</span>
+          <span className="rp-verdict-k bad">{REPORT_WORDS.hurt}</span>
           <span className="rp-verdict-v">
             <b>{hurt.strong}</b>
             {hurt.rest}
@@ -199,26 +193,26 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
 
   const rows = compare
     ? [
-        { k: 'LAUNCH', you: f.isoDate(compare.launch.you).toUpperCase(), them: f.isoDate(compare.launch.them.value).toUpperCase(), s: compare.launch.them as unknown as Parameters<typeof SourceInfo>[0]['s'], gap: false },
+        { k: REPORT_WORDS.launch, you: f.isoDate(compare.launch.you).toUpperCase(), them: f.isoDate(compare.launch.them.value).toUpperCase(), s: compare.launch.them as unknown as Parameters<typeof SourceInfo>[0]['s'], gap: false },
         ...(compare.scienceDays.them
-          ? [{ k: 'PLANNED SCIENCE', you: f.days(compare.scienceDays.you).toUpperCase(), them: f.days(compare.scienceDays.them!.value).toUpperCase(), s: compare.scienceDays.them!, gap: false }]
+          ? [{ k: REPORT_WORDS.plannedScience, you: f.days(compare.scienceDays.you).toUpperCase(), them: f.days(compare.scienceDays.them!.value).toUpperCase(), s: compare.scienceDays.them!, gap: false }]
           : []),
         ...compare.rows
           .filter((r) => engineer || r.metric === 'wetMass' || r.metric === 'powerAtArrival')
-          .map((r) => ({ k: METRIC[r.metric], you: metricValue(r.metric, r.you), them: metricValue(r.metric, r.them), s: r.themSource, gap: r.metric === compare.biggestGap })),
+          .map((r) => ({ k: metricName(r.metric), you: metricValue(r.metric, r.you), them: metricValue(r.metric, r.them), s: r.themSource, gap: r.metric === compare.biggestGap })),
       ]
     : [];
 
   const compareEl = compare && (
     <div className="rp-compare">
       <div className="rp-compare-head">
-        <span className="rp-compare-title">YOU vs THE REAL ONE</span>
+        <span className="rp-compare-title">{REPORT_WORDS.youVs}</span>
         <span className="rp-compare-label">{compare.label.toUpperCase()}</span>
       </div>
-      <div className="rp-compare-grid" role="table" aria-label="You vs the real mission">
+      <div className="rp-compare-grid" role="table" aria-label={REPORT_WORDS.youVsLabel}>
         <span role="columnheader" />
         <span role="columnheader" className="you">
-          YOU
+          {REPORT_WORDS.you}
         </span>
         <span role="columnheader" className="them">
           {compare.missionId === 'maven' ? 'MAVEN' : 'OSIRIS-REX'}
@@ -238,7 +232,7 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
           </div>
         ))}
       </div>
-      {engineer && <span className="rp-compare-src">BIGGEST GAP · {METRIC[compare.biggestGap]} · HISTORY · {compare.history}</span>}
+      {engineer && <span className="rp-compare-src">BIGGEST GAP · {metricName(compare.biggestGap)} · HISTORY · {compare.history}</span>}
     </div>
   );
 
@@ -246,21 +240,19 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
     <div className="rp-card-col">
       {newCard && (
         <div className="rp-card">
-          <span className="rp-card-tag">NEW CARD</span>
-          <span className="rp-card-k">
-            ENGINEER’S NOTEBOOK · {String(newCard.num).padStart(2, '0')} / {String(newCard.total).padStart(2, '0')}
-          </span>
+          <span className="rp-card-tag">{REPORT_WORDS.newCard}</span>
+          <span className="rp-card-k">{REPORT_WORDS.notebookCard(String(newCard.num).padStart(2, '0'), String(newCard.total).padStart(2, '0'))}</span>
           <span className="rp-card-title">{newCard.title}</span>
           <span className="rp-card-v">{newCard.body}</span>
         </div>
       )}
       {!newCard && lesson && (
         <div className="rp-card">
-          <span className="rp-card-tag">REAL LESSON</span>
+          <span className="rp-card-tag">{REPORT_WORDS.realLesson}</span>
           <span className="rp-card-k">
-            FROM THIS FLIGHT
-            {lesson.isGameEstimate && <span className="sd-verify">TO VERIFY</span>}
-            <SourceInfo s={lesson} title="the lesson" />
+            {REPORT_WORDS.fromFlight}
+            {lesson.isGameEstimate && <span className="sd-verify">{REPORT_WORDS.toVerify}</span>}
+            <SourceInfo s={lesson} title={REPORT_WORDS.lessonTitle} />
           </span>
           <span className="rp-card-title">{lessonHazard ? dangerLook(lessonHazard, HAZARDS[lessonHazard]?.title ?? '').title : ''}</span>
           <span className="rp-card-v">{lesson.value}</span>
@@ -269,11 +261,11 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
       <div className="rp-actions">
         {newCard ? (
           <button type="button" className="rp-btn outline" onClick={newCard.onOpen}>
-            {phone ? 'NOTEBOOK' : 'OPEN NOTEBOOK'}
+            {phone ? REPORT_WORDS.notebook : REPORT_WORDS.openNotebook}
           </button>
         ) : next ? (
           <button type="button" className="rp-btn outline" onClick={next.onPlay}>
-            NEXT: {next.title.toUpperCase()}
+            {REPORT_WORDS.next(next.title)}
           </button>
         ) : (
           <button type="button" className="rp-btn outline" onClick={onHome}>
@@ -281,12 +273,12 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
           </button>
         )}
         <button type="button" className="rp-btn red" onClick={onFlyAgain}>
-          FLY AGAIN
+          {REPORT_WORDS.flyAgain}
         </button>
       </div>
       {next && newCard && (
         <button type="button" className="rp-link" onClick={next.onPlay}>
-          NEXT: {next.title.toUpperCase()}
+          {REPORT_WORDS.next(next.title)}
         </button>
       )}
       <button type="button" className="rp-link" onClick={onHome}>
@@ -314,7 +306,7 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
     <div className={`rp-radio${last.kind === 'last-words' || last.kind === 'launch-failed' ? ' bad' : ''}`} role="note" aria-label={ROBOT_WORDS.lastMessage(name)}>
       <span className="rp-radio-k">
         📡 {ROBOT_WORDS.lastMessage(name)}
-        {last.kind === 'last-words' && <SourceInfo s={VOICE_RULES.lastWordsHistory} title="Opportunity’s last message" />}
+        {last.kind === 'last-words' && <SourceInfo s={VOICE_RULES.lastWordsHistory} title={REPORT_WORDS.lastWords} />}
       </span>
       <span className="rp-radio-v">“{robotSays(last, voiceContext(dest.name, robotName))}”</span>
       <span className="rp-radio-t">{ROBOT_WORDS.took(dest.name.toUpperCase(), FLY_WORDS.duration(last.delay_s))}</span>
@@ -389,7 +381,7 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
             </div>
           ))}
         </div>
-        <span className="rp-hint">NEXT STAR · {d.hint}</span>
+        <span className="rp-hint">{REPORT_WORDS.nextStar(d.hint)}</span>
       </div>
       <div className="rp-eng-col">
         <span className="rp-eng-title">MISSION RISK · OPS MONTE CARLO</span>
@@ -418,13 +410,11 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
           {finalEl}
           <div className="rp-phone-head" ref={reportTop}>
             <div>
-              <span className="rp-kicker">
-                {missionName.toUpperCase()} · DAY {f.num(panels.at(-1)!.day)}
-              </span>
+              <span className="rp-kicker">{REPORT_WORDS.kickerPhone(missionName, f.num(panels.at(-1)!.day))}</span>
               <h1 className="rp-title">
-                MISSION
+                {REPORT_WORDS.titleLines[0]}
                 <br />
-                REPORT
+                {REPORT_WORDS.titleLines[1]}
               </h1>
             </div>
             {stampEl}
@@ -459,10 +449,8 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
           <div className="rp-head-l">
             {/* One Back: the album's when there is one (a lost robot has an album but no final transmission). */}
             {onBack && !ft && !album && <BackButton onBack={onBack} className="rp-back" />}
-            <span className="rp-kicker">
-              TELETYPE · {missionName.toUpperCase()} · {dest.name.toUpperCase()} · DAY 000–{f.dayPad(panels.at(-1)!.day)}
-            </span>
-            <h1 className="rp-title">MISSION REPORT</h1>
+            <span className="rp-kicker">{REPORT_WORDS.kicker(missionName, dest.name, f.dayPad(panels.at(-1)!.day))}</span>
+            <h1 className="rp-title">{REPORT_WORDS.title}</h1>
           </div>
           {starsEl}
           {stampEl}
@@ -473,12 +461,12 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
         {cardsEl}
         <div className="rp-lower">
           {verdictEl}
-          {compareEl ?? <div className="rp-compare empty">NO REAL MISSION TO COMPARE WITH YET</div>}
+          {compareEl ?? <div className="rp-compare empty">{REPORT_WORDS.noCompare}</div>}
           {lessonEl}
         </div>
         {engineerEl}
         <div className="rp-nav">
-          <button type="button" className="rp-brand" onClick={onHome} aria-label="Signal Delay: home">
+          <button type="button" className="rp-brand" onClick={onHome} aria-label={BRAND_WORDS.home}>
             {GAME_NAME}
           </button>
           <MissionSteps at={2} first={engineer ? 'BUILD' : 'PACK'} />

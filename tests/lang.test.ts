@@ -11,12 +11,8 @@ import { BN, BN_OPS, place, placeIn, placeOf } from '../src/ui/sdWords.bn';
 /** Exports that are not words, or that read their words from translated tables (sdWords.bn.ts `NotTranslated`). */
 const NOT_TRANSLATED = ['GAME_NAME', 'EFFECT_ICON', 'CHIP_ICON', 'SCIENCE_PARTS', 'ROBOT_NAMES', 'ROBOT_NAME_MAX', 'cleanRobotName', 'robotNameOr', 'nextRobotName', 'fill', 'optionShort', 'dangerLook', 'targetName'];
 
-/** Not translated yet: the next pull requests of the Bangla series take these (Fly, science, then Report and Notebook). */
-const PENDING = [
-  'panelWords', 'PANEL_SOUND', 'STAR_WORDS', 'CATEGORY_NAME', 'savedWords', 'hurtWords', 'REPORT_STAMP', 'FINAL_WORDS', 'finalLines',
-  'CATEGORY_LOOK', 'LESSON_WORDS', 'unlockHint',
-  'ALBUM', 'DAILY_SCIENCE',
-];
+/** Every word export has its Bangla now (sdWords.bn.ts BN is the full Bangla type). */
+const PENDING: string[] = [];
 
 const BENGALI = /[ঀ-৿]/;
 const BENGALI_DIGIT = /[০-৯]/;
@@ -51,7 +47,7 @@ function compare(path: string, en: unknown, bn: unknown, bad: string[], leaves: 
 afterEach(() => setLang('en'));
 
 describe('Bangla words (spec UI rule 48)', () => {
-  it('every word export has its Bangla, except those still pending in this series', () => {
+  it('every word export has its Bangla', () => {
     // read the English while English is on (the exports answer in the current language)
     expect(lang()).toBe('en');
     const missing = exported.filter((k) => bangla[k] === undefined);
@@ -117,6 +113,8 @@ describe('Bangla words (spec UI rule 48)', () => {
     // NASA mission names stay in English; planet names are said in Bangla
     expect(W.COLD_OPEN.burn('SEPTEMBER 23, 1999', 'Mars Climate Orbiter')).toContain('MARS CLIMATE ORBITER');
     expect(W.POSTCARD_WORDS.toast('Mars')).toBe('📮 মঙ্গল থেকে পোস্টকার্ড!');
+    // dates in Bangla month names, Latin digits
+    expect(W.COLD_OPEN.date('1999-09-23')).toBe('23 সেপ্টেম্বর, 1999');
     expect(place('Bennu (asteroid)')).toBe('গ্রহাণু Bennu');
     // with the case endings Bangla puts on a place: to Mars, Mars's orbit
     expect(placeIn('Mars')).toBe('মঙ্গলে');
@@ -125,6 +123,17 @@ describe('Bangla words (spec UI rule 48)', () => {
     expect(W.STAR_GOALS('Moon')[0]).toBe('চাঁদে পৌঁছাও আর প্রথম বিজ্ঞান-তথ্য বাড়ি পাঠাও।');
     setLang('en');
     expect(W.COLD_OPEN.receive).toBe('▶ RECEIVE TRANSMISSION');
+  });
+
+  it('a table kept before a switch follows the switch (screens keep some as module constants)', () => {
+    const metric = W.REPORT_WORDS.metric;
+    const call = OPS.DRAWER_WORDS.call;
+    expect(metric.wetMass).toBe('LAUNCH MASS');
+    setLang('bn');
+    expect(metric.wetMass).toBe('উৎক্ষেপণের ভর');
+    expect(call.title).toBe('বাড়িতে কল বুক করো');
+    setLang('en');
+    expect(call.title).toBe('Book a call home');
   });
 
   it('the choice is saved in the browser as sd.lang', () => {

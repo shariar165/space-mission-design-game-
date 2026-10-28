@@ -735,6 +735,8 @@ export const LAUNCH_CHECKS = tr('LAUNCH_CHECKS', {
 
 export const NAV = tr('NAV', {
   back: '◂ BACK',
+  backLabel: 'Back',
+  home: 'HOME',
   info: 'MISSION INFO',
   help: 'HOW TO FLY',
   start: 'GOT IT ▸',
@@ -1140,6 +1142,8 @@ export const LANG_WORDS = tr('LANG_WORDS', { label: 'Language', en: 'EN', bn: '�
  */
 export const COLD_OPEN = tr('COLD_OPEN', {
   label: 'Mars Climate Orbiter, 1999: the signal that never came back',
+  /** The headline date: "SEPTEMBER 23, 1999". */
+  date: (iso: string) => f.longDate(iso),
   burn: (date: string, craft: string) => `${date} · ${craft.toUpperCase()} · ORBIT INSERTION BURN`,
   expected: 'SIGNAL EXPECTED WHEN IT COMES OUT FROM BEHIND MARS',
   /** The one-tap gate before it: the tap lets the sound start (browser autoplay rules). */
@@ -1175,6 +1179,7 @@ export const MOMENT_WORDS = tr('MOMENT_WORDS', {
 export const POSTCARD_WORDS = tr('POSTCARD_WORDS', {
   menu: 'POSTCARDS',
   menuSub: 'Real NASA pictures your robots sent home.',
+  view: (title: string) => `Postcard: ${title}`,
   title: 'POSTCARDS FROM SPACE',
   sub: 'Real pictures from NASA missions. Your robot sends one home as its science reaches Earth.',
   toast: (dest: string) => `📮 POSTCARD FROM ${dest}!`,
@@ -1418,4 +1423,96 @@ export const ALBUM = tr('ALBUM', {
 export const DAILY_SCIENCE = tr('DAILY_SCIENCE', {
   card: (pct: string) => `SCIENCE HOME ${pct}`,
   share: (pct: string) => `🔭 ${pct} of the science home`,
+});
+
+// ---------------------------------------------------------------------------
+// The Mission Report's frame, the comic's sound effects, the Notebook and the Daily screen
+
+export const REPORT_WORDS = tr('REPORT_WORDS', {
+  title: 'MISSION REPORT',
+  titleLines: ['MISSION', 'REPORT'],
+  kicker: (mission: string, dest: string, lastDay: string) => `TELETYPE · ${mission.toUpperCase()} · ${dest.toUpperCase()} · DAY 000–${lastDay}`,
+  kickerPhone: (mission: string, day: string) => `${mission.toUpperCase()} · DAY ${day}`,
+  stars: (n: string) => `${n} of 3 stars`,
+  saved: 'WHAT SAVED YOU',
+  hurt: 'WHAT HURT YOU',
+  youVs: 'YOU vs THE REAL ONE',
+  youVsLabel: 'You vs the real mission',
+  you: 'YOU',
+  launch: 'LAUNCH',
+  plannedScience: 'PLANNED SCIENCE',
+  metric: { wetMass: 'LAUNCH MASS', dryMass: 'DRY MASS', propellant: 'PROPELLANT', powerAtArrival: 'POWER AT ARRIVAL', deltaVCapability: 'Δv CAPABILITY' },
+  noCompare: 'NO REAL MISSION TO COMPARE WITH YET',
+  newCard: 'NEW CARD',
+  notebookCard: (n: string, total: string) => `ENGINEER’S NOTEBOOK · ${n} / ${total}`,
+  realLesson: 'REAL LESSON',
+  fromFlight: 'FROM THIS FLIGHT',
+  toVerify: 'TO VERIFY',
+  lessonTitle: 'the lesson',
+  notebook: 'NOTEBOOK',
+  openNotebook: 'OPEN NOTEBOOK',
+  next: (title: string) => `NEXT: ${title.toUpperCase()}`,
+  flyAgain: 'FLY AGAIN',
+  lastWords: 'Opportunity’s last message',
+  nextStar: (hint: string) => `NEXT STAR · ${hint}`,
+});
+
+/** The comic's sound effects that are not a hazard's (PANEL_SOUND). */
+export const COMIC_WORDS = tr('COMIC_WORDS', { boom: 'KA-BOOM', zap: 'ZZZT!', whoosh: 'FWOOOSH', beep: 'BEEP BEEP' });
+
+/** The Engineer's Notebook screen. */
+export const NOTEBOOK_WORDS = tr('NOTEBOOK_WORDS', {
+  title: 'ENGINEER’S NOTEBOOK',
+  titleShort: 'NOTEBOOK',
+  collected: (n: string, total: string) => `${n} OF ${total} COLLECTED`,
+  categories: 'Categories',
+  lessons: 'Lessons',
+  lesson: 'Lesson',
+  lessonOf: (n: string, title: string) => `Lesson ${n}: ${title}`,
+  lessonLocked: (n: string, hint: string) => `Lesson ${n}: locked. ${hint}`,
+  kicker: (n: string, category: string) => `LESSON ${n} · ${category}`,
+  close: 'Close lesson',
+  history: 'REAL HISTORY',
+  toVerify: 'TO VERIFY',
+  source: 'THE SOURCE',
+  earned: (how: string) => `EARNED · ${how}`,
+  missionDay: (day: string) => `MISSION DAY ${day}`,
+  rescue: (name: string) => `RESCUE HISTORY · ${name.toUpperCase()}`,
+  aFlight: 'A FLIGHT',
+  locked: 'LOCKED',
+  toEarn: (hint: string) => `${hint} to earn this lesson.`,
+  fresh: 'NEW',
+});
+
+/** The Daily's result screen, its share card and its share text. */
+export const DAILY_WORDS = tr('DAILY_WORDS', {
+  no: (n: string) => `DAILY #${n}`,
+  result: (n: string) => `Daily ${n} result`,
+  date: (date: string) => `${date} · MARS`,
+  theme: (danger: string) => `${danger.toUpperCase()} DAY`,
+  quiet: 'QUIET CRUISE',
+  stars: (n: string) => `${n} of 3 stars`,
+  how: 'How each danger went',
+  none: 'NO DANGER CARDS TODAY. A QUIET FLIGHT.',
+  result_: { held: 'held', cost: 'cost you', hurt: 'hurt' } as Record<'held' | 'cost' | 'hurt', string>,
+  realOf: (date: string) => `, real event of ${date}`,
+  day: 'DAY ',
+  dayShort: 'D',
+  alive: 'ROBOT ALIVE',
+  lost: 'ROBOT LOST',
+  endDay: (day: string) => ` · DAY ${day}`,
+  streak: (n: string) => `STREAK ${n}`,
+  madeIt: 'YOU MADE IT.',
+  gone: 'THE ROBOT IS GONE.',
+  show: 'SHOW YOUR CREW.',
+  copies: 'COPIES AS TEXT',
+  copied: 'COPIED ✓',
+  share: 'SHARE RESULT',
+  copy: 'COPY RESULT',
+  save: 'SAVE IMAGE',
+  report: 'MISSION REPORT',
+  next: (t: string) => `NEXT DAILY IN ${t}`,
+  shareAlive: (day: string) => `🤖 alive · day ${day}`,
+  shareLost: (day: string) => `💥 lost · day ${day}`,
+  shareQuiet: '🟦 a quiet flight',
 });

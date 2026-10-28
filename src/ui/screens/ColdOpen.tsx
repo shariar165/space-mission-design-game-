@@ -10,7 +10,6 @@ import { coldOpenFacts } from '../../engine/rescue';
 import { LangToggle } from '../components/sd/LangToggle';
 import { SoundToggle } from '../components/sd/SoundToggle';
 import { useTeletype } from '../components/sd/Teletype';
-import * as f from '../format';
 import { useReducedMotion } from '../opsGeometry';
 import { COLD_OPEN } from '../sdWords';
 import { sound, useLoop } from '../sound';
@@ -83,7 +82,7 @@ export function ColdOpen({ onDone }: Props) {
   };
 
   const words: Record<Exclude<Beat, 'wait'>, string> = {
-    burn: COLD_OPEN.burn(f.longDate(facts.arrival.value), facts.craft),
+    burn: COLD_OPEN.burn(COLD_OPEN.date(facts.arrival.value), facts.craft),
     expected: COLD_OPEN.expected,
     lost: COLD_OPEN.lost,
     units: COLD_OPEN.units,
