@@ -45,6 +45,8 @@ export const OPTION_SHORT: Record<string, string> = tr('OPTION_SHORT', {
   'insertion-anomaly.trim-burn': 'TRIM BURN',
   'insertion-anomaly.accept-orbit': 'KEEP THIS ORBIT',
   'insertion-anomaly.hold': 'HOLD STILL',
+  'drag-heating.pop-up': 'RAISE THE PERIAPSIS NOW',
+  'drag-heating.stay-low': 'STAY LOW AND FINISH THE PICTURE',
 });
 
 export const optionShort = (type: string, id: string, label: string) => OPTION_SHORT[`${type}.${id}`] ?? label.toUpperCase();
@@ -757,7 +759,105 @@ export const LEAVE_CONFIRM = tr('LEAVE_CONFIRM', {
   stay: 'KEEP FLYING',
 });
 
-export const FLY_WORDS = tr('FLY_WORDS', { goal: 'GOAL: KEEP THE ROBOT ALIVE UNTIL THE MISSION ENDS' });
+export const FLY_WORDS = tr('FLY_WORDS', {
+  goal: 'GOAL: KEEP THE ROBOT ALIVE UNTIL THE MISSION ENDS',
+  /** A time on a card or a strip: "30 HOURS" (format.ts durationWords). */
+  duration: (s: number) => f.durationWords(s),
+  years: (n: number) => `${f.num(n)} ${n === 1 ? 'YEAR' : 'YEARS'}`,
+  day: (n: string) => `DAY ${n}`,
+  dayLabel: (n: string) => `Day ${n}`,
+  dayK: 'DAY',
+  inDays: (n: number) => `IN ${f.num(n)} ${n === 1 ? 'DAY' : 'DAYS'}`,
+  /** A danger card: the engine's hazard title and question (English data, said in Bangla when switched). */
+  hazard: (type: string, title: string) => title.toUpperCase(),
+  prompt: (type: string, prompt: string) => prompt,
+  dangerCard: 'DANGER CARD',
+  arrives: 'DANGER ARRIVES',
+  arrivesHow: (severity: string) => `DANGER ARRIVES · ${severity}`,
+  takes: 'YOUR ORDER TAKES',
+  takesShort: 'ORDER TAKES',
+  history: 'REAL HISTORY',
+  toVerify: 'TO VERIFY',
+  risk: (n: string) => `⚠ +${n} risk`,
+  ifFails: (effect: string) => `If it fails, ${effect}`,
+  sunUntil: (day: string) => `SUN IN THE WAY: NO ORDERS UNTIL DAY ${day}`,
+  sunNow: 'SUN IN THE WAY: NO ORDERS NOW',
+  standingOrder: 'STANDING ORDER',
+  robotDefault: 'THE ROBOT’S DEFAULT',
+  letRobot: 'LET THE ROBOT DECIDE',
+  letRobotRuns: 'LET THE ROBOT DECIDE · TIME RUNS ON',
+  swipe: ['◂ SWIPE LEFT / ← KEY', '→ KEY / SWIPE RIGHT ▸', '▾ ↓ KEY'],
+  swipePhone: ['◂ SWIPE LEFT', 'SWIPE RIGHT ▸', 'TAP'],
+  /** The eclipse planning card. */
+  planAhead: 'PLAN AHEAD',
+  eclipse: 'ECLIPSE SEASON',
+  eclipseLine: (dest: string, dark: string) => `${dest} will block the Sun for up to ${dark} every orbit. No sun, no power.`,
+  darkStarts: 'DARK SEASON STARTS',
+  theRule: 'THE RULE',
+  dodRule: (pct: string) => `Batteries are only drained to ${pct} in the dark, so they last for thousands of orbits.`,
+  inTheDark: (on: string, total: string) => `${on}/${total} IN THE DARK`,
+  cold: 'COLD',
+  coldTitle: 'Cold parts wear out faster',
+  useBattery: 'USE BATTERY',
+  savePower: 'SAVE POWER',
+  keepWarm: 'Keep everything warm.',
+  shiver: 'Turn the heaters down. Shiver.',
+  /** The CRT log line. */
+  dangerAhead: (title: string) => `DANGER AHEAD: ${title}.`,
+  planAheadLine: (title: string) => `PLAN AHEAD: ${title}.`,
+  orderSent: (label: string) => `ORDER SENT: ${label}.`,
+  orderReceived: 'ORDER RECEIVED BY THE ROBOT.',
+  signalReceived: 'SIGNAL RECEIVED.',
+  orderArrived: (label: string) => `ORDER ARRIVED: ${label}.`,
+  waitingToSee: 'WAITING TO SEE WHAT HAPPENS.',
+  /** The order crossing space, and the wait for what happens. */
+  onItsWay: (label: string) => `ORDER “${label}” IS ON ITS WAY`,
+  teamWriting: 'THE TEAM IS WRITING THE ORDER',
+  reaches: 'SIGNAL REACHES ROBOT IN',
+  reachesShort: 'ORDER REACHES ROBOT IN',
+  thenCrosses: 'THEN IT CROSSES SPACE AT LIGHT SPEED',
+  justWait: 'NOTHING YOU CAN DO NOW BUT WAIT',
+  carriedOut: (label: string) => `ORDER “${label}” CARRIED OUT`,
+  strikesIn: (title: string) => `${title} STRIKES IN`,
+  danger: 'DANGER',
+  holdOn: 'THE ROBOT IS READY. HOLD ON.',
+  incoming: 'Incoming message',
+  incomingFrom: (mission: string) => `INCOMING · FROM ${mission.toUpperCase()}`,
+  continue: 'CONTINUE ▸',
+  /** The action bar and the clock. */
+  resources: 'Robot resources',
+  tile: (name: string, on: string, total: string) => `${name}: ${on} of ${total}`,
+  speeds: 'Time speed',
+  pause: 'Pause',
+  speed: (x: string) => `${x} speed`,
+  powerPlan: 'POWER PLAN',
+  callHome: 'CALL HOME',
+  orders: 'ORDERS',
+  ordersLabel: 'Command queue',
+  equations: 'EQUATIONS',
+  nextEvent: 'NEXT EVENT ▸',
+  nextEventLabel: 'Next event',
+  progress: 'Mission progress',
+  /** The end of the flight. */
+  over: 'Mission over',
+  lost: 'CONTACT LOST',
+  notLaunched: 'NOT LAUNCHED',
+  complete: 'PRIME MISSION COMPLETE',
+  silent: 'THE ROBOT WENT SILENT.',
+  printing: 'THE TELETYPE IS PRINTING YOUR REPORT.',
+  seeReport: 'SEE MISSION REPORT ▸',
+  /** The map and the ribbon of what is coming. */
+  map: 'Mission map',
+  yourPath: 'YOUR PATH',
+  realPath: 'REAL NASA PATH',
+  ghost: (label: string) => `${label}: real path, turned to start beside you`,
+  now: 'NOW',
+  tickEng: (day: string) => `DAY ${day}`,
+  whenEng: (day: string, t: string) => `DAY ${day} · T−${t} d`,
+  comingUp: 'COMING UP',
+  comingUpSub: 'COMING UP · YOU CAN SEE THESE ONES COMING',
+  nextMonths: (n: string) => `NEXT ${n} MONTHS`,
+});
 
 /** The footer line under the progress bar. */
 export const endsInWords = tr('endsInWords', (daysLeft: number) => (daysLeft <= 0 ? 'MISSION OVER' : `MISSION ENDS IN ${f.num(daysLeft)} ${daysLeft === 1 ? 'DAY' : 'DAYS'}`));
@@ -767,6 +867,8 @@ export const playNudge = tr('playNudge', (speedLabel: string) => `▶ PRESS ${sp
 
 /** Labels on the CRT map. */
 export const MAP_WORDS = tr('MAP_WORDS', {
+  earth: 'EARTH',
+  planet: (name: string) => name.toUpperCase(),
   sun: 'SUN',
   storm: 'SOLAR STORM',
   order: 'YOUR ORDER',

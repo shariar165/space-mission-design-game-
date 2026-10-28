@@ -7,7 +7,7 @@ import type { DownlinkView } from '../../../engine/ops/index';
 import { targetById } from '../../../engine/targets';
 import * as f from '../../format';
 import { PRINT_DOTS, PRINT_MS } from '../../sdGeometry';
-import { DOWNLINK, TARGET_WORDS, targetName } from '../../sdWords';
+import { DOWNLINK, FLY_WORDS, TARGET_WORDS, targetName } from '../../sdWords';
 import { useLoop } from '../../sound';
 import { SDIcon } from '../sd/SDIcon';
 
@@ -122,7 +122,7 @@ export function Downlink({ view, robotName, phone, still, onClose, onSkip }: Pro
   const printRow = index >= 0 ? view.rows[index] : undefined;
   const opened = printing !== undefined && progress >= 1;
   const pass = view.pass;
-  const passLine = !pass ? DOWNLINK.noPass : pass.open ? DOWNLINK.passOpen(f.durationWords(pass.closesIn_s).toUpperCase()) : DOWNLINK.nextPass(f.durationWords(pass.openIn_s).toUpperCase());
+  const passLine = !pass ? DOWNLINK.noPass : pass.open ? DOWNLINK.passOpen(FLY_WORDS.duration(pass.closesIn_s).toUpperCase()) : DOWNLINK.nextPass(FLY_WORDS.duration(pass.openIn_s).toUpperCase());
   const all = n > 0 && view.waiting === 0;
   const busy = printing !== undefined && !opened;
   // The printer rattles while a picture prints line by line.
@@ -134,7 +134,7 @@ export function Downlink({ view, robotName, phone, still, onClose, onSkip }: Pro
       : all
         ? { k: DOWNLINK.allDone, s: DOWNLINK.allDoneSub, go: onClose }
         : onSkip && pass
-          ? { k: DOWNLINK.skip, s: DOWNLINK.skipSub(f.durationWords(pass.open ? 0 : pass.openIn_s)), go: onSkip }
+          ? { k: DOWNLINK.skip, s: DOWNLINK.skipSub(FLY_WORDS.duration(pass.open ? 0 : pass.openIn_s)), go: onSkip }
           : { k: DOWNLINK.receiving, s: DOWNLINK.receivingSub, go: undefined };
   const dish = pass ? `${f.num(pass.dish)} M` : '';
   const target = printing ? targetById(printing) : undefined;
@@ -144,7 +144,7 @@ export function Downlink({ view, robotName, phone, still, onClose, onSkip }: Pro
       <div className="dn-body">
         <div className="dn-head">
           <div className="dn-head-l">
-            <span className="dn-kicker">{phone ? DOWNLINK.kickerPhone(dish) : DOWNLINK.kicker(dish, printing ? DOWNLINK.sentBefore(f.durationWords(view.oneWay_s).toUpperCase()) : DOWNLINK.noSignal)}</span>
+            <span className="dn-kicker">{phone ? DOWNLINK.kickerPhone(dish) : DOWNLINK.kicker(dish, printing ? DOWNLINK.sentBefore(FLY_WORDS.duration(view.oneWay_s).toUpperCase()) : DOWNLINK.noSignal)}</span>
             <span className="dn-title">{DOWNLINK.title}</span>
           </div>
           <button type="button" className="dn-close" onClick={onClose}>

@@ -5,6 +5,7 @@ import type { Sourced } from '../../../engine/types';
 import { SourceInfo } from '../SourceInfo';
 import { SDIcon, type SDIconName } from '../sd/SDIcon';
 import { SWIPE_CHOOSE_PX, SWIPE_HINT_PX, SWIPE_TILT } from '../../sdGeometry';
+import { FLY_WORDS } from '../../sdWords';
 
 export interface ChipView {
   icon: SDIconName;
@@ -42,8 +43,6 @@ export interface CardView {
   footer?: { label: string; onClick: () => void };
 }
 
-const SIDE_HINT = ['◂ SWIPE LEFT / ← KEY', '→ KEY / SWIPE RIGHT ▸', '▾ ↓ KEY'];
-const SIDE_HINT_PHONE = ['◂ SWIPE LEFT', 'SWIPE RIGHT ▸', 'TAP'];
 
 function Chips({ chips }: { chips: ChipView[] }) {
   return (
@@ -68,7 +67,7 @@ function Choice({ c, side, engineer, phone, hot, onPick }: { c: ChoiceView; side
       aria-keyshortcuts={side === 0 ? 'ArrowLeft' : side === 1 ? 'ArrowRight' : 'ArrowDown'}
       onClick={onPick}
     >
-      <span className="dc-hint">{(phone ? SIDE_HINT_PHONE : SIDE_HINT)[side]}</span>
+      <span className="dc-hint">{(phone ? FLY_WORDS.swipePhone : FLY_WORDS.swipe)[side]}</span>
       <span className="dc-label">{c.label}</span>
       {!phone && <span className="dc-sub">{c.sub}</span>}
       {c.tag && <span className="dc-tag">{c.tag}</span>}

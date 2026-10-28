@@ -43,6 +43,7 @@ import {
   EFFECT_ICON,
   endsInWords,
   FINISH_CONFIRM,
+  BRAND_WORDS,
   FLY_WORDS,
   GAME_NAME,
   LEAVE_CONFIRM,
@@ -109,7 +110,7 @@ export const REPLY_SHOW_MS = 4000;
 type Overlay = 'coach' | 'info' | 'finish' | 'leave';
 
 const SPEED_LABEL = (s: OpsSpeed) => (s === 0 ? 'II' : `${f.num(s)}×`);
-const SPEED_NAME = (s: OpsSpeed) => (s === 0 ? 'Pause' : `${f.num(s)}× speed`);
+const SPEED_NAME = (s: OpsSpeed) => (s === 0 ? FLY_WORDS.pause : FLY_WORDS.speed(SPEED_LABEL(s)));
 const TILE_ORDER: TileKey[] = ['power', 'fuel', 'data', 'systems'];
 
 function chipViews(chips: FlyChip[]): ChipView[] {
@@ -339,24 +340,24 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
     card && a
       ? {
           icon: a.type === 'solar-storm' || a.type === 'cme-shock' ? 'storm' : a.type === 'mars-dust-storm' ? 'dust' : a.type === 'debris' ? 'debris' : a.type === 'insertion-anomaly' ? 'orbit' : 'sys',
-          kicker: card.realSource ? LIVE_WEATHER.realKicker : 'DANGER CARD',
-          title: a.title.toUpperCase(),
-          line: a.real?.flare ? `${a.prompt} ${LIVE_WEATHER.fromFlare(a.real.flare)}` : a.prompt,
-          day: `DAY ${f.num(Math.floor(state!.t))}`,
+          kicker: card.realSource ? LIVE_WEATHER.realKicker : FLY_WORDS.dangerCard,
+          title: FLY_WORDS.hazard(a.type, a.title),
+          line: a.real?.flare ? `${FLY_WORDS.prompt(a.type, a.prompt)} ${LIVE_WEATHER.fromFlare(a.real.flare)}` : FLY_WORDS.prompt(a.type, a.prompt),
+          day: FLY_WORDS.day(f.num(Math.floor(state!.t))),
           hits: {
             k: a.real?.arrival
-              ? `DANGER ARRIVES · ${a.real.arrival.isMinorImpact ? LIVE_WEATHER.severity.minor : a.real.arrival.isGlancingBlow ? LIVE_WEATHER.severity.glancing : LIVE_WEATHER.severity.direct}`
-              : 'DANGER ARRIVES',
+              ? FLY_WORDS.arrivesHow(a.real.arrival.isMinorImpact ? LIVE_WEATHER.severity.minor : a.real.arrival.isGlancingBlow ? LIVE_WEATHER.severity.glancing : LIVE_WEATHER.severity.direct)
+              : FLY_WORDS.arrives,
             v: arrivesWords(card.onsetIn_s),
             ...(card.predictionSource ? { s: card.predictionSource } : {}),
           },
-          takes: { k: phone ? 'ORDER TAKES' : 'YOUR ORDER TAKES', v: f.durationWords(a.oneWay_s) },
+          takes: { k: phone ? FLY_WORDS.takesShort : FLY_WORDS.takes, v: FLY_WORDS.duration(a.oneWay_s) },
           history: card.realSource
             ? { k: LIVE_WEATHER.realEvent, s: card.realSource }
-            : { k: 'REAL HISTORY', s: a.realHistory, ...(a.realHistory.isGameEstimate ? { badge: 'TO VERIFY' } : {}) },
+            : { k: FLY_WORDS.history, s: a.realHistory, ...(a.realHistory.isGameEstimate ? { badge: FLY_WORDS.toVerify } : {}) },
           choices: card.options.map((o): ChoiceView => {
             const chips = chipViews(o.chips);
-            if (o.riskIncrease > 0) chips.push({ icon: EFFECT_ICON[o.failureEffect], text: `⚠ +${f.num(o.riskIncrease)} risk`, tone: 'risk', title: `If it fails, ${FAILURE_EFFECT[o.failureEffect]}` });
+            if (o.riskIncrease > 0) chips.push({ icon: EFFECT_ICON[o.failureEffect], text: FLY_WORDS.risk(f.num(o.riskIncrease)), tone: 'risk', title: FLY_WORDS.ifFails(FAILURE_EFFECT[o.failureEffect]) });
             const blocked = a.blockedByConjunction || !o.affordable;
             return {
               id: o.id,
@@ -366,14 +367,14 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
               eng: `P(fail) ${f.pct(o.failureChance.value, o.failureChance.value < 0.01 ? 2 : 1)} → ${o.failureEffect}${o.cost.deltaV_ms ? ` · Δv ${f.speed(o.cost.deltaV_ms.value)}` : ''}${o.cost.scienceDays ? ` · ${f.days(o.cost.scienceDays.value)} science` : ''}${o.cost.budget_M ? ` · ${f.money(o.cost.budget_M.value, 1)}` : ''}`,
               disabled: blocked,
               ...(a.blockedByConjunction
-                ? { blocker: `SUN IN THE WAY: NO ORDERS UNTIL DAY ${f.num(a.retryAfterDay ?? 0)}` }
+                ? { blocker: FLY_WORDS.sunUntil(f.num(a.retryAfterDay ?? 0)) }
                 : !o.affordable && o.blockedBy[0]
                   ? { blocker: BLOCKER[o.blockedBy[0]].toUpperCase() }
                   : {}),
-              ...(o.isFallback ? { tag: a.fallback.by === 'standing-order' ? 'STANDING ORDER' : 'THE ROBOT’S DEFAULT' } : {}),
+              ...(o.isFallback ? { tag: a.fallback.by === 'standing-order' ? FLY_WORDS.standingOrder : FLY_WORDS.robotDefault } : {}),
             };
           }),
-          footer: { label: a.blockedByConjunction ? 'LET THE ROBOT DECIDE · TIME RUNS ON' : 'LET THE ROBOT DECIDE', onClick: ops.deferAlert },
+          footer: { label: a.blockedByConjunction ? FLY_WORDS.letRobotRuns : FLY_WORDS.letRobot, onClick: ops.deferAlert },
         }
       : undefined;
 
@@ -383,25 +384,25 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
     eclipse && eclipseOpen && view
       ? {
           icon: 'eclipse',
-          kicker: 'PLAN AHEAD',
-          title: 'ECLIPSE SEASON',
-          line: `${dest.name} will block the Sun for up to ${f.minutes(eclipse.season.longestEclipse_s)} every orbit. No sun, no power.`,
-          day: `DAY ${f.num(Math.floor(state!.t))}`,
-          hits: { k: 'DARK SEASON STARTS', v: `IN ${f.num(eclipse.inDays)} ${eclipse.inDays === 1 ? 'DAY' : 'DAYS'}` },
-          takes: { k: phone ? 'ORDER TAKES' : 'YOUR ORDER TAKES', v: f.durationWords(view.clock.oneWay_s) },
-          history: { k: 'THE RULE', s: { ...dod, value: `Batteries are only drained to ${f.pct(dod.value, 0)} in the dark, so they last for thousands of orbits.` } as Sourced<string> },
+          kicker: FLY_WORDS.planAhead,
+          title: FLY_WORDS.eclipse,
+          line: FLY_WORDS.eclipseLine(dest.name, f.minutes(eclipse.season.longestEclipse_s)),
+          day: FLY_WORDS.day(f.num(Math.floor(state!.t))),
+          hits: { k: FLY_WORDS.darkStarts, v: FLY_WORDS.inDays(eclipse.inDays) },
+          takes: { k: phone ? FLY_WORDS.takesShort : FLY_WORDS.takes, v: FLY_WORDS.duration(view.clock.oneWay_s) },
+          history: { k: FLY_WORDS.theRule, s: { ...dod, value: FLY_WORDS.dodRule(f.pct(dod.value, 0)) } as Sourced<string> },
           choices: eclipse.options.map((o): ChoiceView => {
-            const chips: ChipView[] = [{ icon: 'power', text: `${f.num(o.eclipseSegments)}/${f.num(FLY_RULES.gaugeSegments.value)} IN THE DARK`, tone: o.eclipseSegments <= 1 ? 'cost' : 'info' }];
-            if (o.preview.cold) chips.push({ icon: 'heater', text: 'COLD', tone: 'risk', title: 'Cold parts wear out faster' });
+            const chips: ChipView[] = [{ icon: 'power', text: FLY_WORDS.inTheDark(f.num(o.eclipseSegments), f.num(FLY_RULES.gaugeSegments.value)), tone: o.eclipseSegments <= 1 ? 'cost' : 'info' }];
+            if (o.preview.cold) chips.push({ icon: 'heater', text: FLY_WORDS.cold, tone: 'risk', title: FLY_WORDS.coldTitle });
             const e = o.preview.eclipse;
             return {
               id: o.id,
-              label: o.id === 'keep-warm' ? 'USE BATTERY' : 'SAVE POWER',
-              sub: o.id === 'keep-warm' ? 'Keep everything warm.' : 'Turn the heaters down. Shiver.',
+              label: o.id === 'keep-warm' ? FLY_WORDS.useBattery : FLY_WORDS.savePower,
+              sub: o.id === 'keep-warm' ? FLY_WORDS.keepWarm : FLY_WORDS.shiver,
               chips,
               ...(e ? { eng: `DoD ${f.pct(e.depthOfDischarge)} of ${f.pct(e.limit, 0)} · heaters ${f.pct(o.plan.heaters, 0)}` } : {}),
               disabled: o.id === 'save-power' && view.blackout.active,
-              ...(o.id === 'save-power' && view.blackout.active ? { blocker: 'SUN IN THE WAY: NO ORDERS NOW' } : {}),
+              ...(o.id === 'save-power' && view.blackout.active ? { blocker: FLY_WORDS.sunNow } : {}),
             };
           }),
         }
@@ -474,23 +475,25 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
   const flying = ops.transit && view.commands.find((c) => c.status === 'in-flight' && c.hazardId === ops.transit!.hazardId);
   const outcome = ops.result && view.lastOutcome?.hazardId === ops.result.hazardId ? view.lastOutcome : undefined;
   const resultLabel = ops.result ? shortLabel(ops.result.hazardId, ops.result.optionId) : '';
-  const resultText = outcome ? resultLines(outcome, resultLabel).map((l) => `> ${l}`).join('\n') : ops.result ? `> ORDER ARRIVED: ${resultLabel}.\n> WAITING TO SEE WHAT HAPPENS.` : '';
+  const resultText = outcome ? resultLines(outcome, resultLabel).map((l) => `> ${l}`).join('\n') : ops.result ? `> ${FLY_WORDS.orderArrived(resultLabel)}\n> ${FLY_WORDS.waitingToSee}` : '';
   const resultChips: ChipView[] = [...(chosen && ops.result ? chipViews(chosen.chips) : [])];
   if (outcome?.bad) resultChips.push({ icon: EFFECT_ICON[outcome.failureEffect], text: RESULT_EFFECT_CHIP[outcome.failureEffect], tone: 'risk' });
   const deltaOf = (k: TileKey) => (ops.result && chosen ? chosen.chips.find((c) => c.gauge === k)?.delta : undefined);
 
   const logText = openCard
-    ? `${hazardCard ? 'DANGER AHEAD' : 'PLAN AHEAD'}: ${openCard.title}.`
+    ? hazardCard
+      ? FLY_WORDS.dangerAhead(openCard.title)
+      : FLY_WORDS.planAheadLine(openCard.title)
     : flying
-      ? `ORDER SENT: ${shortLabel(flying.hazardId!, flying.optionId!)}.`
+      ? FLY_WORDS.orderSent(shortLabel(flying.hazardId!, flying.optionId!))
       : ops.transit && feed.entries.some((e) => e.from === 'earth' && e.order!.hazardId === ops.transit!.hazardId && e.order!.status === 'reply-inbound')
         ? `${TX_WORDS.heard(name.toUpperCase())}.`
         : ops.transit
-        ? 'ORDER RECEIVED BY THE ROBOT.'
+        ? FLY_WORDS.orderReceived
         : ops.result
-        ? 'SIGNAL RECEIVED.'
+        ? FLY_WORDS.signalReceived
         : storm
-          ? stormLine(storm.phase, name, f.durationWords(storm.hitsIn_s).toUpperCase())
+          ? stormLine(storm.phase, name, FLY_WORDS.duration(storm.hitsIn_s).toUpperCase())
           : (() => {
             const e = view.feed[0];
             const line = e && e.t > state.t - 3 ? eventLine(e, { destName: dest.name, optionLabel: shortLabel }) : undefined;
@@ -514,12 +517,12 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
   const tileColor = (k: TileKey) => (tiles[k].low ? 'var(--sd-alarm)' : 'var(--sd-crt-hi)');
 
   const resources = (
-    <div className="fly-tiles" role="list" aria-label="Robot resources">
+    <div className="fly-tiles" role="list" aria-label={FLY_WORDS.resources}>
       {TILE_ORDER.map((k) => {
         const t = tiles[k];
         const d = k === 'fuel' || k === 'data' ? deltaOf(k) : undefined;
         return (
-          <div key={k} className={`fly-tile${t.low ? ' low' : ''}`} role="listitem" aria-label={`${TILE[k].name}: ${f.num(t.segments)} of ${f.num(segTotal)}`} title={TILE[k].help}>
+          <div key={k} className={`fly-tile${t.low ? ' low' : ''}`} role="listitem" aria-label={FLY_WORDS.tile(TILE[k].name, f.num(t.segments), f.num(segTotal))} title={TILE[k].help}>
             <div className="fly-tile-well">
               <SDIcon icon={TILE[k].icon} size={phone ? 22 : 26} color={tileColor(k)} />
             </div>
@@ -538,7 +541,7 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
   );
 
   const speeds = (
-    <div className={`fly-speeds${nudge ? ' nudge' : ''}`} role="group" aria-label="Time speed">
+    <div className={`fly-speeds${nudge ? ' nudge' : ''}`} role="group" aria-label={FLY_WORDS.speeds}>
       {OPS_SPEEDS.map((sp) => (
         <button key={sp} type="button" className="sd-key fly-speed" aria-pressed={ops.speed === sp} aria-label={SPEED_NAME(sp)} disabled={lockedUi && sp !== 0} onClick={() => setSpeed(sp)}>
           {SPEED_LABEL(sp)}
@@ -553,11 +556,11 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
       {coming.ticks.map((t) => (
         <div key={t.inDays} className="fly-tick" style={{ left: `${t.left * 100}%` }}>
           <span className="fly-tick-mark" />
-          <span className="fly-tick-txt">{phone ? monthsShort(t.months) : engineer ? `DAY ${f.num(view.clock.day + t.inDays)}` : monthsWords(t.months)}</span>
+          <span className="fly-tick-txt">{phone ? monthsShort(t.months) : engineer ? FLY_WORDS.tickEng(f.num(view.clock.day + t.inDays)) : monthsWords(t.months)}</span>
         </div>
       ))}
       <div className="fly-now" />
-      <span className="fly-now-txt">NOW</span>
+      <span className="fly-now-txt">{FLY_WORDS.now}</span>
       {coming.items.map((it, i) => {
         const flip = it.left > RIBBON_FLIP;
         const left = phone ? Math.min(it.left, RIBBON_PHONE_MAX) : it.left;
@@ -569,7 +572,7 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
             </span>
             <span className="fly-ev-text">
               <span className="fly-ev-label">{phone ? w.short(dest.name) : w.label(dest.name)}</span>
-              {!phone && <span className="fly-ev-when">{engineer ? `DAY ${f.num(it.day)} · T−${f.num(it.inDays)} d` : `IN ${f.num(it.inDays)} ${it.inDays === 1 ? 'DAY' : 'DAYS'}`}</span>}
+              {!phone && <span className="fly-ev-when">{engineer ? FLY_WORDS.whenEng(f.num(it.day), f.num(it.inDays)) : FLY_WORDS.inDays(it.inDays)}</span>}
             </span>
           </div>
         );
@@ -579,10 +582,10 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
 
   const transitBox = flying && (
     <div className="fly-transit" role="status" aria-live="polite">
-      {!phone && <span className="fly-transit-k">ORDER “{shortLabel(flying.hazardId!, flying.optionId!)}” IS ON ITS WAY</span>}
-      <span className="fly-transit-q">{flying.departsIn_s > 0 ? 'THE TEAM IS WRITING THE ORDER' : phone ? 'ORDER REACHES ROBOT IN' : 'SIGNAL REACHES ROBOT IN'}</span>
+      {!phone && <span className="fly-transit-k">{FLY_WORDS.onItsWay(shortLabel(flying.hazardId!, flying.optionId!))}</span>}
+      <span className="fly-transit-q">{flying.departsIn_s > 0 ? FLY_WORDS.teamWriting : phone ? FLY_WORDS.reachesShort : FLY_WORDS.reaches}</span>
       <span className="fly-countdown ops-countdown">{f.mmss(flying.departsIn_s > 0 ? flying.departsIn_s : flying.timeLeft_s)}</span>
-      {!phone && <span className="fly-transit-foot">{flying.departsIn_s > 0 ? 'THEN IT CROSSES SPACE AT LIGHT SPEED' : 'NOTHING YOU CAN DO NOW BUT WAIT'}</span>}
+      {!phone && <span className="fly-transit-foot">{flying.departsIn_s > 0 ? FLY_WORDS.thenCrosses : FLY_WORDS.justWait}</span>}
     </div>
   );
 
@@ -599,28 +602,28 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
   );
 
   const replyBox = reply && !openCard && !sciShown && (
-    <div className="fly-reply" role="status" aria-label={TX_WORDS.replyFrom(name.toUpperCase(), f.durationWords(reply.message!.delay_s))}>
-      <span className="fly-reply-k">{TX_WORDS.replyFrom(name.toUpperCase(), f.durationWords(reply.message!.delay_s))}</span>
+    <div className="fly-reply" role="status" aria-label={TX_WORDS.replyFrom(name.toUpperCase(), FLY_WORDS.duration(reply.message!.delay_s))}>
+      <span className="fly-reply-k">{TX_WORDS.replyFrom(name.toUpperCase(), FLY_WORDS.duration(reply.message!.delay_s))}</span>
       <Teletype className="fly-reply-v" text={txLine(reply, voice).text} />
-      {!phone && <span className="fly-reply-foot">{engineer ? TX_WORDS.roundTripEng(f.mmss(reply.roundTrip_s!), name.toUpperCase()) : TX_WORDS.roundTrip(f.durationWords(reply.roundTrip_s!))}</span>}
+      {!phone && <span className="fly-reply-foot">{engineer ? TX_WORDS.roundTripEng(f.mmss(reply.roundTrip_s!), name.toUpperCase()) : TX_WORDS.roundTrip(FLY_WORDS.duration(reply.roundTrip_s!))}</span>}
     </div>
   );
 
   const waitFor = !flying && !returning && !reply && ops.transit ? outcomeIn_s(state, ops.transit.hazardId) : undefined;
   const waitBox = waitFor !== undefined && ops.transit && (
     <div className="fly-transit" role="status" aria-live="polite">
-      {!phone && <span className="fly-transit-k">ORDER “{shortLabel(ops.transit.hazardId, ops.transit.optionId)}” CARRIED OUT</span>}
-      <span className="fly-transit-q">{HAZARDS[typeOf(ops.transit.hazardId)]?.title.toUpperCase() ?? 'DANGER'} STRIKES IN</span>
+      {!phone && <span className="fly-transit-k">{FLY_WORDS.carriedOut(shortLabel(ops.transit.hazardId, ops.transit.optionId))}</span>}
+      <span className="fly-transit-q">{FLY_WORDS.strikesIn(HAZARDS[typeOf(ops.transit.hazardId)] ? FLY_WORDS.hazard(typeOf(ops.transit.hazardId), HAZARDS[typeOf(ops.transit.hazardId)]!.title) : FLY_WORDS.danger)}</span>
       <span className="fly-countdown">{f.mmss(waitFor)}</span>
-      {!phone && <span className="fly-transit-foot">THE ROBOT IS READY. HOLD ON.</span>}
+      {!phone && <span className="fly-transit-foot">{FLY_WORDS.holdOn}</span>}
     </div>
   );
 
   const resultBox = ops.result && !reply && (
-    <div className="fly-result" role="dialog" aria-label="Incoming message">
+    <div className="fly-result" role="dialog" aria-label={FLY_WORDS.incoming}>
       <div className="fly-result-head">
-        <span>INCOMING · FROM {missionName.toUpperCase()}</span>
-        <span>DAY {f.num(Math.floor(state.t))}</span>
+        <span>{FLY_WORDS.incomingFrom(missionName)}</span>
+        <span>{FLY_WORDS.day(f.num(Math.floor(state.t)))}</span>
       </div>
       <Teletype className="fly-result-text sd-crt-text" text={resultText} />
       <div className="fly-result-foot">
@@ -633,7 +636,7 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
           ))}
         </span>
         <button type="button" className="sd-cta" onClick={ops.dismissResult}>
-          CONTINUE ▸
+          {FLY_WORDS.continue}
         </button>
       </div>
     </div>
@@ -643,19 +646,19 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
     <div className="fly-actions">
       <button type="button" className="fly-action" aria-pressed={panel === 'power'} onClick={() => setPanel((p) => (p === 'power' ? undefined : 'power'))}>
         <SDIcon icon="power" size={16} />
-        POWER PLAN
+        {FLY_WORDS.powerPlan}
       </button>
       <button type="button" className="fly-action" aria-pressed={panel === 'call'} onClick={() => setPanel((p) => (p === 'call' ? undefined : 'call'))}>
         <SDIcon icon="dish" size={16} />
-        CALL HOME
+        {FLY_WORDS.callHome}
       </button>
-      <button type="button" className="fly-action" aria-pressed={panel === 'queue'} aria-label="Command queue" onClick={() => setPanel((p) => (p === 'queue' ? undefined : 'queue'))}>
+      <button type="button" className="fly-action" aria-pressed={panel === 'queue'} aria-label={FLY_WORDS.ordersLabel} onClick={() => setPanel((p) => (p === 'queue' ? undefined : 'queue'))}>
         <SDIcon icon="share" size={16} />
-        ORDERS
+        {FLY_WORDS.orders}
       </button>
       {engineer && (
         <button type="button" className="fly-action" aria-pressed={panel === 'eqs'} onClick={() => setPanel((p) => (p === 'eqs' ? undefined : 'eqs'))}>
-          EQUATIONS
+          {FLY_WORDS.equations}
         </button>
       )}
       {panelOk && (
@@ -670,8 +673,8 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
           {DOWNLINK.button}
         </button>
       )}
-      <button type="button" className="fly-action" onClick={ops.nextEvent} disabled={lockedUi} aria-label="Next event">
-        NEXT EVENT ▸
+      <button type="button" className="fly-action" onClick={ops.nextEvent} disabled={lockedUi} aria-label={FLY_WORDS.nextEventLabel}>
+        {FLY_WORDS.nextEvent}
       </button>
       <button type="button" className="fly-action finish" onClick={() => setOverlay('finish')}>
         {NAV.finish}
@@ -735,11 +738,11 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
         </div>
       )}
       {debrief && (
-        <div className="fly-end" role="dialog" aria-label="Mission over">
-          <span className="fly-end-k">{state.status === 'lost' ? 'CONTACT LOST' : state.status === 'not-launched' ? 'NOT LAUNCHED' : 'PRIME MISSION COMPLETE'}</span>
-          <span className="fly-end-v">{state.status === 'lost' ? 'THE ROBOT WENT SILENT.' : 'THE TELETYPE IS PRINTING YOUR REPORT.'}</span>
+        <div className="fly-end" role="dialog" aria-label={FLY_WORDS.over}>
+          <span className="fly-end-k">{state.status === 'lost' ? FLY_WORDS.lost : state.status === 'not-launched' ? FLY_WORDS.notLaunched : FLY_WORDS.complete}</span>
+          <span className="fly-end-v">{state.status === 'lost' ? FLY_WORDS.silent : FLY_WORDS.printing}</span>
           <button type="button" className="sd-cta" onClick={() => onDone(state)}>
-            SEE MISSION REPORT ▸
+            {FLY_WORDS.seeReport}
           </button>
         </div>
       )}
@@ -799,7 +802,7 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
   );
 
   const crt = (
-    <main className={`sd-crt fly-crt${view.blackout.active ? ' blackout' : ''}${shake && !still ? ' shake' : ''}`} aria-label="Mission map">
+    <main className={`sd-crt fly-crt${view.blackout.active ? ' blackout' : ''}${shake && !still ? ' shake' : ''}`} aria-label={FLY_WORDS.map}>
       <CrtMap
         map={map}
         frame={view.map.frame}
@@ -821,13 +824,13 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
         <div className="fly-legend">
           <span>
             <span className="lg-path" />
-            YOUR PATH
+            {FLY_WORDS.yourPath}
           </span>
           {g && (
-            <span title={`${ghost!.label}: real path, turned to start beside you`}>
+            <span title={FLY_WORDS.ghost(ghost!.label)}>
               <span className="lg-ghost" />
-              REAL NASA PATH
-              <span className="sr-only">{`${ghost!.label}: real path, turned to start beside you`}</span>
+              {FLY_WORDS.realPath}
+              <span className="sr-only">{FLY_WORDS.ghost(ghost!.label)}</span>
             </span>
           )}
         </div>
@@ -866,7 +869,7 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
   );
 
   const progressBar = (
-    <div className="fly-progress" role="progressbar" aria-label="Mission progress" aria-valuemin={0} aria-valuemax={1} aria-valuenow={progress.fraction}>
+    <div className="fly-progress" role="progressbar" aria-label={FLY_WORDS.progress} aria-valuemin={0} aria-valuemax={1} aria-valuenow={progress.fraction}>
       <div className="fly-progress-bar sd-well">
         <div className="fly-progress-fill" style={{ width: `${progress.fraction * 100}%` }} />
       </div>
@@ -947,12 +950,10 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
 
   const brand = (
     <div className="sd-brand">
-      <button type="button" className="sd-brand-name" onClick={onHome} aria-label="Signal Delay: home">
+      <button type="button" className="sd-brand-name" onClick={onHome} aria-label={BRAND_WORDS.home}>
         {GAME_NAME}
       </button>
-      <span className="sd-brand-sub">
-        {missionName.toUpperCase()} · TO {dest.name.toUpperCase()}
-      </span>
+      <span className="sd-brand-sub">{BRAND_WORDS.sub(missionName, dest.name)}</span>
     </div>
   );
 
@@ -975,15 +976,15 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
         {crt}
         <div className="fly-bottom">
           <div className="fly-clock-row">
-            <div className="fly-day sd-well" aria-label={`Day ${f.num(view.clock.day)}`}>
-              <span className="fly-day-k">DAY</span>
+            <div className="fly-day sd-well" aria-label={FLY_WORDS.dayLabel(f.num(view.clock.day))}>
+              <span className="fly-day-k">{FLY_WORDS.dayK}</span>
               <span className="fly-day-num ops-day-num">{f.dayPad(view.clock.day)}</span>
             </div>
             {speeds}
           </div>
           {progressBar}
           <div className="fly-ribbon phone">
-            <span className="fly-ribbon-title">COMING UP</span>
+            <span className="fly-ribbon-title">{FLY_WORDS.comingUp}</span>
             {ribbon}
           </div>
         </div>
@@ -1014,8 +1015,8 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
       </div>
       <footer className="fly-bottom">
         <div className="fly-clock">
-          <div className="fly-day sd-well" aria-label={`Day ${f.num(view.clock.day)}`}>
-            <span className="fly-day-k">DAY</span>
+          <div className="fly-day sd-well" aria-label={FLY_WORDS.dayLabel(f.num(view.clock.day))}>
+            <span className="fly-day-k">{FLY_WORDS.dayK}</span>
             <span className="fly-day-num ops-day-num">{f.dayPad(view.clock.day)}</span>
             <span className="fly-arrival">{arrival}</span>
           </div>
@@ -1024,8 +1025,8 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
         </div>
         <div className="fly-ribbon">
           <div className="fly-ribbon-head">
-            <span>COMING UP · YOU CAN SEE THESE ONES COMING</span>
-            <span className="dim">NEXT {f.num(coming.months)} MONTHS</span>
+            <span>{FLY_WORDS.comingUpSub}</span>
+            <span className="dim">{FLY_WORDS.nextMonths(f.num(coming.months))}</span>
           </div>
           {ribbon}
         </div>

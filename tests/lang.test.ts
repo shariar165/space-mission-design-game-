@@ -4,25 +4,26 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import * as f from '../src/ui/format';
 import { lang, setLang } from '../src/ui/lang';
+import * as OPS from '../src/ui/opsWords';
 import * as W from '../src/ui/sdWords';
-import { BN, place, placeIn, placeOf } from '../src/ui/sdWords.bn';
+import { BN, BN_OPS, place, placeIn, placeOf } from '../src/ui/sdWords.bn';
 
 /** Exports that are not words, or that read their words from translated tables (sdWords.bn.ts `NotTranslated`). */
 const NOT_TRANSLATED = ['GAME_NAME', 'EFFECT_ICON', 'CHIP_ICON', 'SCIENCE_PARTS', 'ROBOT_NAMES', 'ROBOT_NAME_MAX', 'cleanRobotName', 'robotNameOr', 'nextRobotName', 'fill', 'optionShort', 'dangerLook', 'targetName'];
 
 /** Not translated yet: the next pull requests of the Bangla series take these (Fly, science, then Report and Notebook). */
 const PENDING = [
-  'TILE', 'OPTION_SHORT', 'arrivesWords', 'COMING', 'monthsWords', 'monthsShort', 'quietLine', 'milestoneLine', 'resultLines', 'RESULT_EFFECT_CHIP',
   'panelWords', 'PANEL_SOUND', 'STAR_WORDS', 'CATEGORY_NAME', 'savedWords', 'hurtWords', 'REPORT_STAMP', 'FINAL_WORDS', 'finalLines',
-  'CATEGORY_LOOK', 'LESSON_WORDS', 'unlockHint', 'LIVE_WEATHER',
-  'FLY_WORDS', 'endsInWords', 'playNudge', 'MAP_WORDS', 'stormLine', 'VOICE', 'TARGET_WORDS', 'VOICE_ALT', 'STATUS_VOICE', 'robotSays', 'TX_WORDS',
+  'CATEGORY_LOOK', 'LESSON_WORDS', 'unlockHint',
   'SCIENCE', 'MOON_WORDS', 'DOWNLINK', 'bodyWord', 'GLOBE_WORDS', 'ALBUM', 'DAILY_SCIENCE',
 ];
 
 const BENGALI = /[ঀ-৿]/;
 const BENGALI_DIGIT = /[০-৯]/;
 /** Strings that are the same in both languages: names (robots, NASA, the language's own), keys and sound effects. */
-const SAME_IN_BOTH = new Set(['EN', 'VOYA', 'TALLY', 'KESTREL', 'ARM', 'CME']);
+/** Science target names stay in English (the user's rule), like NASA mission names. */
+const ENGLISH_BY_RULE = /^TARGET_WORDS\.[^.]+\.name$/;
+const SAME_IN_BOTH = new Set(['', 'EN', 'VOYA', 'TALLY', 'KESTREL', 'ARM', 'CME']);
 
 const words = W as unknown as Record<string, unknown>;
 const bangla = BN as Record<string, unknown>;
@@ -41,7 +42,7 @@ function compare(path: string, en: unknown, bn: unknown, bad: string[], leaves: 
   } else if (en !== null && typeof en === 'object') {
     if (bn === null || typeof bn !== 'object') return void bad.push(`${path}: no Bangla table`);
     for (const k of Object.keys(en)) {
-      if (k === 'icon' || k === 'color') continue;
+      if (k === 'icon' || k === 'color' || k === 'tone') continue;
       compare(`${path}.${k}`, (en as Record<string, unknown>)[k], (bn as Record<string, unknown>)[k], bad, leaves);
     }
   }
@@ -66,8 +67,38 @@ describe('Bangla words (spec UI rule 48)', () => {
     expect(bad).toEqual([]);
     expect(leaves.length).toBeGreaterThan(100);
     // every Bangla string is written in Bangla (bar names that are the same in both) and keeps Latin digits
-    expect(leaves.filter((l) => !BENGALI.test(l.bn) && !SAME_IN_BOTH.has(l.bn)).map((l) => l.path)).toEqual([]);
+    expect(leaves.filter((l) => !BENGALI.test(l.bn) && !SAME_IN_BOTH.has(l.bn) && !ENGLISH_BY_RULE.test(l.path)).map((l) => l.path)).toEqual([]);
     expect(leaves.filter((l) => BENGALI_DIGIT.test(l.bn)).map((l) => l.path)).toEqual([]);
+  });
+
+  it('opsWords (the console drawers and the event feed): every export has its Bangla, with the same shape', () => {
+    const ops = OPS as unknown as Record<string, unknown>;
+    const bn = BN_OPS as unknown as Record<string, unknown>;
+    expect(Object.keys(ops).filter((k) => bn[k] === undefined)).toEqual([]);
+    const bad: string[] = [];
+    const leaves: { path: string; bn: string }[] = [];
+    for (const k of Object.keys(ops)) compare(k, ops[k], bn[k], bad, leaves);
+    expect(bad).toEqual([]);
+    expect(leaves.filter((l) => !BENGALI.test(l.bn) && !SAME_IN_BOTH.has(l.bn)).map((l) => l.path)).toEqual([]);
+    setLang('bn');
+    expect(OPS.BLOCKER.deltaV).toBe('বাড়তি জ্বালানি নেই');
+    expect(OPS.CHIP.nominal.tone).toBe('ok');
+    setLang('en');
+  });
+
+  it('time words: the same rounded number in both languages, the unit in Bangla', () => {
+    expect(W.FLY_WORDS.duration(30 * 3600)).toBe('30 HOURS');
+    expect(W.arrivesWords(30 * 3600)).toBe('IN 30 HOURS');
+    setLang('bn');
+    // 30 h ≥ 2 h and < 2 days: hours, 30 of them (format.ts durationParts)
+    expect(W.FLY_WORDS.duration(30 * 3600)).toBe('30 ঘণ্টা');
+    expect(W.arrivesWords(30 * 3600)).toBe('30 ঘণ্টা পরে');
+    expect(W.FLY_WORDS.duration(656)).toBe(`${f.num(11)} মিনিট`);
+    // a danger card: the engine's English title and question, said in Bangla
+    expect(W.FLY_WORDS.hazard('solar-storm', 'Solar radiation storm')).toBe('সৌর বিকিরণ-ঝড়');
+    expect(W.FLY_WORDS.prompt('unknown', 'As given.')).toBe('As given.');
+    setLang('en');
+    expect(W.FLY_WORDS.hazard('solar-storm', 'Solar radiation storm')).toBe('SOLAR RADIATION STORM');
   });
 
   it('the switch changes what the exports say; numbers and units are formatted the same', () => {

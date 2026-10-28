@@ -8,7 +8,7 @@ import type { MoonOrbitView, ScienceTargetsView, TargetCard } from '../../../eng
 import type { TargetBody } from '../../../engine/targets';
 import * as f from '../../format';
 import { GLOBE_LABEL, labelPlace } from '../../sdGeometry';
-import { MOON_WORDS, SCIENCE, targetName } from '../../sdWords';
+import { FLY_WORDS, MOON_WORDS, SCIENCE, targetName } from '../../sdWords';
 
 export interface GlobeProps {
   /** Which globe (spec: UI rule 44): its map, view and words. */
@@ -170,7 +170,7 @@ export function moonLabels(m: MoonOrbitView, focused: boolean, trimTag: boolean)
     earth,
     ...(m.now.farSide ? { far: { k: MOON_WORDS.far, s: MOON_WORDS.farSub(f.wholeMinutes(m.link.losPerOrbit_s), period) } } : {}),
     ...(m.now.shadow ? { shadow: { k: MOON_WORDS.shadow, s: MOON_WORDS.shadowSub(f.wholeMinutes(m.link.eclipsePerOrbit_s), period), tone: 'medium' } } : {}),
-    ...(trimTag && sk ? { trim: { k: MOON_WORDS.trim, s: MOON_WORDS.trimNext(f.durationWords(sk.nextBurn_s), f.speedFine(sk.pairDeltaV_ms).toUpperCase()) } } : {}),
+    ...(trimTag && sk ? { trim: { k: MOON_WORDS.trim, s: MOON_WORDS.trimNext(FLY_WORDS.duration(sk.nextBurn_s), f.speedFine(sk.pairDeltaV_ms).toUpperCase()) } } : {}),
   };
 }
 

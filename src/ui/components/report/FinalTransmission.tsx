@@ -5,7 +5,7 @@ import { useEffect, type ReactNode } from 'react';
 import type { FinalTransmission as Final } from '../../../engine/ops/report';
 import { VOICE_RULES } from '../../../engine/ops/index';
 import * as f from '../../format';
-import { FINAL_WORDS, fill } from '../../sdWords';
+import { fill, FINAL_WORDS, FLY_WORDS } from '../../sdWords';
 import { SourceInfo } from '../SourceInfo';
 import { useTeletype } from '../sd/Teletype';
 
@@ -32,7 +32,7 @@ export function FinalTransmission({ ft, lines, name, phone, back, onPrinted, onF
     if (done) onPrinted();
   }, [done]); // eslint-disable-line react-hooks/exhaustive-deps
   const printed = shown.split('\n');
-  const delay = f.durationWords(ft.delay_s);
+  const delay = FLY_WORDS.duration(ft.delay_s);
   const kicker = `${FINAL_WORDS.kicker(f.dayPad(ft.receivedAt))}${ft.ending === 'lost' ? ` · ${FINAL_WORDS.incomplete}` : ''}`;
 
   return (

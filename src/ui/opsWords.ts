@@ -6,17 +6,18 @@ import type { ResponseBlocker } from '../engine/ops/responses';
 import type { ExtensionOption, OpsEvent } from '../engine/ops/types';
 import type { MeterStatus } from '../engine/types';
 import * as f from './format';
+import { tr } from './lang';
 
-export const OPS_PHASE: Record<OpsPhase, string> = {
+export const OPS_PHASE: Record<OpsPhase, string> = tr('OPS_PHASE', {
   launch: 'Launch',
   cruise: 'Cruise',
   arrival: 'Arrival',
   science: 'Science orbit',
   return: 'Trip home',
   extended: 'Extended mission',
-};
+}, 'ops');
 
-export const CHIP: Record<ConsoleChip, { label: string; tone: MeterStatus }> = {
+export const CHIP: Record<ConsoleChip, { label: string; tone: MeterStatus }> = tr('CHIP', {
   nominal: { label: 'ALL SYSTEMS GO', tone: 'ok' },
   hazard: { label: 'HAZARD · DECISION', tone: 'over' },
   'safe-mode': { label: 'SAFE MODE', tone: 'warning' },
@@ -26,20 +27,20 @@ export const CHIP: Record<ConsoleChip, { label: string; tone: MeterStatus }> = {
   lost: { label: 'CRAFT LOST', tone: 'over' },
   complete: { label: 'MISSION COMPLETE', tone: 'ok' },
   'not-launched': { label: 'NOT LAUNCHED', tone: 'over' },
-};
+}, 'ops');
 
-export const STATUS_LABEL: Record<MeterStatus, string> = { ok: 'OK', warning: 'WARNING', over: 'OVER LIMIT' };
+export const STATUS_LABEL: Record<MeterStatus, string> = tr('STATUS_LABEL', { ok: 'OK', warning: 'WARNING', over: 'OVER LIMIT' }, 'ops');
 
 export type GaugeKey = keyof ConsoleGauges;
-export const GAUGE_NAME: Record<GaugeKey, { cadet: string; engineer: string }> = {
+export const GAUGE_NAME: Record<GaugeKey, { cadet: string; engineer: string }> = tr('GAUGE_NAME', {
   power: { cadet: 'Battery', engineer: 'Power today' },
   fuel: { cadet: 'Fuel tank', engineer: 'Δv left' },
   recorder: { cadet: 'Photos waiting', engineer: 'Recorder' },
   budget: { cadet: 'Ops budget', engineer: 'Budget reserve' },
-};
+}, 'ops');
 
 /** The Cadet sentence under each gauge. */
-export function gaugeLine(k: GaugeKey, g: ConsoleGauges, destName: string): string {
+function gaugeLineEn(k: GaugeKey, g: ConsoleGauges, destName: string): string {
   switch (k) {
     case 'power': {
       const p = g.power;
@@ -69,33 +70,34 @@ export function gaugeLine(k: GaugeKey, g: ConsoleGauges, destName: string): stri
     }
   }
 }
+export const gaugeLine = tr('gaugeLine', gaugeLineEn, 'ops');
 
-export const SIGNAL_LINE: Record<SignalState, string> = {
+export const SIGNAL_LINE: Record<SignalState, string> = tr('SIGNAL_LINE', {
   downlink: 'Photos and news travelling home',
   uplink: 'Your command is on its way',
   blocked: 'The Sun blocks the radio',
   none: 'Radio silent',
-};
+}, 'ops');
 
-export const BLOCKER: Record<ResponseBlocker, string> = {
+export const BLOCKER: Record<ResponseBlocker, string> = tr('BLOCKER', {
   deltaV: 'Not enough fuel to spare',
   budget: 'Not enough money left in the reserve',
   scienceDays: 'Not enough science days left',
   power: 'Not enough spare power today',
   'one-time': 'Already used once this mission',
-};
+}, 'ops');
 
-export const FAILURE_EFFECT: Record<FailureEffect, string> = {
+export const FAILURE_EFFECT: Record<FailureEffect, string> = tr('FAILURE_EFFECT', {
   craft: 'the craft could be lost',
   instrument: 'an instrument could break',
   'stored-data': 'the photos on board could be wiped',
   'safe-mode': 'the craft could drop into safe mode',
-};
+}, 'ops');
 
-export const RISK_WORD = ['', 'VERY LOW', 'LOW', 'MEDIUM', 'HIGH', 'VERY HIGH'] as const;
+export const RISK_WORD = tr('RISK_WORD', ['', 'VERY LOW', 'LOW', 'MEDIUM', 'HIGH', 'VERY HIGH'] as const, 'ops');
 
 /** A friendlier Cadet line for a response, where the data label is technical. */
-export const OPTION_BLURB: Record<string, string> = {
+export const OPTION_BLURB: Record<string, string> = tr('OPTION_BLURB', {
   'solar-storm.shelter': 'Switch the instruments off and wait it out.',
   'solar-storm.keep-observing': 'Measure the storm up close. An instrument might be damaged.',
   'cme-shock.safe-mode': 'Shut down to the basics until the shock has passed.',
@@ -115,25 +117,27 @@ export const OPTION_BLURB: Record<string, string> = {
   'insertion-anomaly.trim-burn': 'Fire the thrusters to finish the capture.',
   'insertion-anomaly.accept-orbit': 'Keep the longer orbit and change the science plan.',
   'insertion-anomaly.hold': 'Let the craft look after itself.',
-};
+  'drag-heating.pop-up': 'Raise the periapsis now',
+  'drag-heating.stay-low': 'Stay low and finish the picture',
+}, 'ops');
 
-export const EXTENSION_BLOCKER: Record<ExtensionOption['blockedBy'][number], string> = {
+export const EXTENSION_BLOCKER: Record<ExtensionOption['blockedBy'][number], string> = tr('EXTENSION_BLOCKER', {
   deltaV: 'Not enough fuel for the orbit trims',
   power: 'Not enough power at the end',
   radiation: 'The electronics would take too much radiation',
   attitude: 'The craft can no longer point properly',
   'science-review': 'NASA review: not enough science sent home yet',
-};
+}, 'ops');
 
-export const COMMAND_KIND: Record<'power-plan' | 'respond' | 'standing-orders' | 'observe', string> = {
+export const COMMAND_KIND: Record<'power-plan' | 'respond' | 'standing-orders' | 'observe', string> = tr('COMMAND_KIND', {
   observe: 'Take a picture',
   'power-plan': 'New power plan',
   respond: 'Hazard response',
   'standing-orders': 'New standing orders',
-};
+}, 'ops');
 
 /** One line for the event feed. */
-export function eventLine(e: OpsEvent, ctx: { destName: string; optionLabel: (hazardId: string, optionId: string) => string }): string | undefined {
+function eventLineEn(e: OpsEvent, ctx: { destName: string; optionLabel: (hazardId: string, optionId: string) => string }): string | undefined {
   const v = e.values;
   switch (e.code) {
     case 'launch':
@@ -199,3 +203,4 @@ export function eventLine(e: OpsEvent, ctx: { destName: string; optionLabel: (ha
       return undefined;
   }
 }
+export const eventLine = tr('eventLine', eventLineEn, 'ops');

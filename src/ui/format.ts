@@ -181,14 +181,20 @@ export function mmss(s: number): string {
 /** A day number padded to three digits for the CRT clock ("007"). */
 export const dayPad = (d: number) => String(Math.max(0, Math.floor(d))).padStart(3, '0');
 
+/** A duration as one rounded number and its unit, for durationWords and its Bangla (sdWords.bn.ts). */
+export function durationParts(s: number): { n: number; unit: 'day' | 'hour' | 'minute' | 'second' } {
+  const t = Math.max(0, s);
+  if (t >= 2 * 86_400) return { n: Math.round(t / 86_400), unit: 'day' };
+  if (t >= 2 * 3600) return { n: Math.round(t / 3600), unit: 'hour' };
+  if (t >= 90) return { n: Math.round(t / 60), unit: 'minute' };
+  return { n: Math.round(t), unit: 'second' };
+}
+
 /** A duration in one big word for a danger card: "30 HOURS", "12 MINUTES", "3 DAYS", "40 SECONDS". */
 export function durationWords(s: number): string {
-  const t = Math.max(0, s);
-  if (t >= 2 * 86_400) return `${num(Math.round(t / 86_400))} DAYS`;
-  if (t >= 2 * 3600) return `${num(Math.round(t / 3600))} HOURS`;
-  if (t >= 3600) return `${num(Math.round(t / 60))} MINUTES`;
-  if (t >= 90) return `${num(Math.round(t / 60))} MINUTES`;
-  return Math.round(t) === 1 ? `${num(1)} SECOND` : `${num(Math.round(t))} SECONDS`;
+  const { n, unit } = durationParts(s);
+  const word = { day: 'DAYS', hour: 'HOURS', minute: 'MINUTES', second: n === 1 ? 'SECOND' : 'SECONDS' }[unit];
+  return `${num(n)} ${word}`;
 }
 
 /** A segment change on a chip, with a true minus sign: "−1", "+2". */

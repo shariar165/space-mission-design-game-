@@ -38,7 +38,7 @@ function Earth({ x, y, big }: { x: number; y: number; big: boolean }) {
       <circle r="14" fill="var(--sd-earth)" />
       <path d="M-9 -4 q4 -7 10 -4 q2 5 -4 7 q-4 1 -6 -3z M2 5 q5 -1 7 3 q-3 4 -8 2z" fill="var(--sd-land)" />
       <text y="34" textAnchor="middle" className="crt-label">
-        EARTH
+        {MAP_WORDS.earth}
       </text>
     </g>
   );
@@ -59,7 +59,7 @@ function Planet({ x, y, name, destination, big }: { x: number; y: number; name: 
         </>
       )}
       <text y="32" textAnchor="middle" className="crt-label">
-        {name.toUpperCase()}
+        {MAP_WORDS.planet(name)}
       </text>
     </g>
   );

@@ -8,7 +8,7 @@ import type { ReactNode } from 'react';
 import type { ScienceTargetsView, TargetCard } from '../../../engine/ops/index';
 import { targetById, type TargetBody } from '../../../engine/targets';
 import * as f from '../../format';
-import { MOON_WORDS, SCIENCE, targetName } from '../../sdWords';
+import { FLY_WORDS, MOON_WORDS, SCIENCE, targetName } from '../../sdWords';
 import { SDIcon } from '../sd/SDIcon';
 import { TargetSheet } from './TargetSheet';
 
@@ -113,7 +113,7 @@ export function ScienceTargets(props: Props) {
 function TargetPanel({ view, selected, onSelect, onObserve, onDone, robotName, destName, body, engineer, phone, globe, busy = false, orders = [], scanning }: Props) {
   const sel = view.cards.find((c) => c.id === selected) ?? view.cards[0]!;
   const ok = sel.blocker === undefined;
-  const takes = f.durationWords(view.orderTakes_s);
+  const takes = FLY_WORDS.duration(view.orderTakes_s);
   const name = robotName.toUpperCase();
   const [sub, subShort] = ok ? [SCIENCE.orderTakes(targetName(sel.id), takes, name), SCIENCE.orderTakesShort(takes)] : SCIENCE.blocked[sel.blocker!];
   const finish = view.ordered ? (phone ? SCIENCE.doneShort : SCIENCE.done) : phone ? SCIENCE.skipShort : SCIENCE.skip;
@@ -123,8 +123,8 @@ function TargetPanel({ view, selected, onSelect, onObserve, onDone, robotName, d
     ? SCIENCE.scanning(name, targetName(scanning))
     : next
       ? phone
-        ? SCIENCE.orderOutShort(f.durationWords(next.timeLeft_s))
-        : SCIENCE.orderOut(targetName(next.targetId), name, f.durationWords(next.timeLeft_s))
+        ? SCIENCE.orderOutShort(FLY_WORDS.duration(next.timeLeft_s))
+        : SCIENCE.orderOut(targetName(next.targetId), name, FLY_WORDS.duration(next.timeLeft_s))
       : undefined;
   const keys = (
     <div className="sci-keys">
