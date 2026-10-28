@@ -108,7 +108,7 @@ describe('Bangla words (spec UI rule 48)', () => {
     expect(lang()).toBe('bn');
     expect(W.COLD_OPEN.receive).toBe('▶ বার্তা গ্রহণ করো');
     // the same digits as English: Latin, through format.ts
-    expect(W.CREW_WORDS.stars(3, 21)).toBe('21টির মধ্যে 3টি তারা');
+    expect(W.CREW_WORDS.stars(3, 21)).toBe('3 / 21 তারা');
     expect(W.MOMENT_WORDS.count(10)).toBe(`T−${f.num(10)}`);
     // a table keeps its icons; a list keeps its length
     expect(W.COACH[0]!.title).toBe('সময় চলতে দাও');

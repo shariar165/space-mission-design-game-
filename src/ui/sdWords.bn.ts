@@ -352,7 +352,7 @@ export const BN: Partial<Bangla> = {
     incomingFrom: (mission) => `আসছে · ${mission.toUpperCase()} থেকে`,
     continue: 'চালিয়ে যাও ▸',
     resources: 'রোবটের রসদ',
-    tile: (name, on, total) => `${name}: ${total}টির ${on}টি`,
+    tile: (name, on, total) => `${name}: ${on} / ${total}`,
     speeds: 'সময়ের গতি',
     pause: 'থামাও',
     speed: (x) => `${x} গতি`,
@@ -564,7 +564,7 @@ export const BN: Partial<Bangla> = {
     noseState: (state) => `নাক: ${state}`,
     full: 'ভরা · আর কিছু আঁটবে না',
     fullShort: 'ভরা',
-    left: (n) => `আর ${n}টি ঘর খালি`,
+    left: (n) => `আর ${n} ঘর খালি`,
     alwaysPacked: (name) => `${name} · সবসময় থাকে`,
     alwaysPackedLabel: (name) => `${name} (সবসময় থাকে)`,
     tapToUnpack: (name) => `${name} · সরাতে ছোঁও`,
@@ -850,7 +850,7 @@ export const BN: Partial<Bangla> = {
     rank: 'তোমার পদ',
     toNext: (n, next) => `${next} হতে আর ${f.num(n)}★`,
     top: 'সর্বোচ্চ পদ',
-    stars: (n, max) => `${f.num(max)}টির মধ্যে ${f.num(n)}টি তারা`,
+    stars: (n, max) => `${f.num(n)} / ${f.num(max)} তারা`,
     badges: 'ব্যাজ',
     open: 'তোমার ক্রু ফাইল খোলো',
     close: 'বন্ধ করো',
@@ -916,7 +916,7 @@ export const BN_OPS: BanglaOps = {
         if (r.status === 'over') return 'মেমরি ভরা: নতুন ছবি হারিয়ে যাচ্ছে।';
         if (r.daysToFull !== undefined && r.status === 'warning') return `প্রায় ${days(r.daysToFull)} পরে মেমরি ভরে যাবে। ছবি বাড়ি পাঠাও, নয়তো বিজ্ঞানের কাজ কমাও।`;
         if (r.photosWaiting < 1) return 'সব বাড়ি পৌঁছেছে।';
-        return `প্রায় ${f.photos(r.photosWaiting)}টি ছবি বাড়ি যাওয়ার অপেক্ষায়।`;
+        return `প্রায় ${f.photos(r.photosWaiting)} ছবি বাড়ি যাওয়ার অপেক্ষায়।`;
       }
       case 'budget': {
         const b = g.budget;
