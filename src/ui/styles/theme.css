@@ -86,10 +86,13 @@
   --sd-part-science: #6fa8e8;
 
   /* Type */
-  --sd-display: 'Orbitron', 'Arial Narrow', sans-serif;
-  --sd-body: 'Exo 2', system-ui, sans-serif;
-  --sd-mono: 'Share Tech Mono', ui-monospace, monospace;
-  --sd-crt-font: 'VT323', ui-monospace, monospace;
+  /* Hind Siliguri carries the Bangla letters (spec UI rule 48): the browser falls back to it glyph by glyph, so
+     digits and Latin keep the game fonts in both languages. */
+  --sd-bangla: 'Hind Siliguri', 'Noto Sans Bengali';
+  --sd-display: 'Orbitron', var(--sd-bangla), 'Arial Narrow', sans-serif;
+  --sd-body: 'Exo 2', var(--sd-bangla), system-ui, sans-serif;
+  --sd-mono: 'Share Tech Mono', var(--sd-bangla), ui-monospace, monospace;
+  --sd-crt-font: 'VT323', var(--sd-bangla), ui-monospace, monospace;
 
   /* Radii */
   --sd-r-1: 2px;
@@ -129,6 +132,8 @@
 
 /* ---- Base ---- */
 html, body, #root { margin: 0; min-height: 100%; }
+/* Bangla (spec UI rule 48): its letters join, so the wide tracking of the uppercase labels would pull words apart. */
+:root[lang='bn'] body * { letter-spacing: normal !important; }
 body { background: var(--sd-room); color: var(--sd-ink-2); font-family: var(--sd-body); -webkit-font-smoothing: antialiased; }
 .sd { font-family: var(--sd-body); color: var(--sd-ink-2); }
 :where(.sd) button { font: inherit; color: inherit; }

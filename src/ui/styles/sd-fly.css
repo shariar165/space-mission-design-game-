@@ -269,6 +269,12 @@
 .fly-help { display: flex; gap: 6px; align-items: center; }
 .fly-help .sd-ghost-btn { padding: 8px 10px; font-size: 11px; }
 .fly-help-q { width: 34px; color: var(--sd-amber); }
+/* EN / বাংলা joins the help keys: the top row tightens a little so the four tiles still fit at 1440. */
+.fly-help .sd-lang { padding: 8px 8px; gap: 3px; }
+.fly-top { gap: 12px; }
+.fly-top .fly-tiles { gap: 10px; }
+.fly-top .fly-tile { gap: 8px; padding: 8px 10px 8px 8px; }
+.fly-top .fly-tile-well { width: 42px; height: 42px; }
 .fly-goal { position: absolute; top: 24px; right: 26px; z-index: 1; max-width: 40%; text-align: right; font: 400 18px/1.1 var(--sd-crt-font); letter-spacing: 0.04em; color: var(--sd-crt-dim); pointer-events: none; }
 .fly-action.finish { border-color: var(--sd-amber-edge); color: var(--sd-amber); }
 .fly-progress { display: flex; flex-direction: column; gap: 6px; }

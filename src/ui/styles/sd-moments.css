@@ -47,6 +47,14 @@
 .sd-ghost-btn.sd-sound[aria-pressed='false'] { opacity: 0.7; }
 /* The mute key beside the mode lever, in every screen's top bar. */
 .sd-top-keys { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+/* EN / বাংলা (spec UI rule 48): the language in use is lit. */
+.sd-lang { display: inline-flex; align-items: center; gap: 5px; padding: 8px 10px; line-height: 1; }
+.sd-ghost-btn.sd-lang { background: transparent; border-color: var(--sd-line-2); }
+.sd-lang span { color: var(--sd-ink-5); }
+.sd-lang span.on { color: var(--sd-amber); }
+.sd-lang [lang='bn'] { font-family: var(--sd-bangla), sans-serif; font-weight: 600; font-size: 13px; letter-spacing: 0; }
+.sd-lang .sd-lang-bar { color: var(--sd-line-2); }
+.co .sd-lang { background: transparent; border-color: var(--sd-line); }
 .sd-top-keys .sd-sound, .pc-sound, .top-right .sd-sound { padding: 8px 10px; }
 
 /* ---- Crew file: rank plate (Home), panel, and the report's promotion ---- */

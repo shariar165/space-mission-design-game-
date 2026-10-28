@@ -9,6 +9,7 @@ import type { Category } from '../engine/scoring';
 import type { LessonCategory, LessonUnlock } from '../engine/notebook';
 import type { SDIconName } from './components/sd/SDIcon';
 import * as f from './format';
+import { tr } from './lang';
 
 export const GAME_NAME = 'SIGNAL DELAY';
 
@@ -16,15 +17,15 @@ export const GAME_NAME = 'SIGNAL DELAY';
 // Fly & Survive
 
 export type TileKey = 'power' | 'fuel' | 'data' | 'systems';
-export const TILE: Record<TileKey, { name: string; icon: SDIconName; help: string }> = {
+export const TILE: Record<TileKey, { name: string; icon: SDIconName; help: string }> = tr('TILE', {
   power: { name: 'POWER', icon: 'power', help: 'Power to spare today' },
   fuel: { name: 'FUEL', icon: 'fuel', help: 'Fuel left in the tank' },
   data: { name: 'DATA', icon: 'data', help: 'Science sent home, against the goal' },
   systems: { name: 'SYSTEMS', icon: 'sys', help: 'How healthy the robot is' },
-};
+});
 
 /** Short card labels in the design's voice; the engine's own label is the fallback. */
-export const OPTION_SHORT: Record<string, string> = {
+export const OPTION_SHORT: Record<string, string> = tr('OPTION_SHORT', {
   'solar-storm.shelter': 'SHIELD UP',
   'solar-storm.keep-observing': 'KEEP WORKING',
   'cme-shock.safe-mode': 'SAFE MODE',
@@ -44,7 +45,7 @@ export const OPTION_SHORT: Record<string, string> = {
   'insertion-anomaly.trim-burn': 'TRIM BURN',
   'insertion-anomaly.accept-orbit': 'KEEP THIS ORBIT',
   'insertion-anomaly.hold': 'HOLD STILL',
-};
+});
 
 export const optionShort = (type: string, id: string, label: string) => OPTION_SHORT[`${type}.${id}`] ?? label.toUpperCase();
 
@@ -52,21 +53,21 @@ export const EFFECT_ICON: Record<FailureEffect, SDIconName> = { craft: 'sys', in
 export const CHIP_ICON: Record<FlyChip['gauge'], SDIconName> = { fuel: 'fuel', data: 'data', coins: 'star' };
 
 /** "IN 30 HOURS", or "NOW" once the danger has struck. */
-export const arrivesWords = (s: number) => (s < 60 ? 'NOW' : `IN ${f.durationWords(s)}`);
+export const arrivesWords = tr('arrivesWords', (s: number) => (s < 60 ? 'NOW' : `IN ${f.durationWords(s)}`));
 
-export const COMING: Record<ComingUpKind, { label: (dest: string) => string; short: (dest: string) => string; icon: SDIconName }> = {
+export const COMING: Record<ComingUpKind, { label: (dest: string) => string; short: (dest: string) => string; icon: SDIconName }> = tr('COMING', {
   eclipse: { label: () => 'ECLIPSE SEASON', short: () => 'DARK', icon: 'eclipse' },
   conjunction: { label: () => 'SUN BLOCKS RADIO', short: () => 'SUN', icon: 'conj' },
   'course-fix': { label: () => 'COURSE FIX', short: () => 'FIX', icon: 'burn' },
   arrival: { label: (d) => `ARRIVE AT ${d.toUpperCase()}`, short: (d) => d.toUpperCase(), icon: 'orbit' },
   'dust-season': { label: () => 'DUST STORM SEASON', short: () => 'DUST', icon: 'dust' },
-};
+});
 
-export const monthsWords = (m: number) => `${f.num(m)} ${m === 1 ? 'MONTH' : 'MONTHS'}`;
-export const monthsShort = (m: number) => `${f.num(m)}MO`;
+export const monthsWords = tr('monthsWords', (m: number) => `${f.num(m)} ${m === 1 ? 'MONTH' : 'MONTHS'}`);
+export const monthsShort = tr('monthsShort', (m: number) => `${f.num(m)}MO`);
 
 /** The CRT log line when nothing else is happening. */
-export function quietLine(phase: OpsPhase, dest: string): string {
+function quietLineEn(phase: OpsPhase, dest: string): string {
   const d = dest.toUpperCase();
   switch (phase) {
     case 'launch':
@@ -83,13 +84,14 @@ export function quietLine(phase: OpsPhase, dest: string): string {
       return 'EXTENDED MISSION. STILL FLYING.';
   }
 }
+export const quietLine = tr('quietLine', quietLineEn);
 
-export const milestoneLine = (kind: 'arrival' | 'prime-end' | 'extension-end' | undefined, inDays: number | undefined, dest: string): string => {
+export const milestoneLine = tr('milestoneLine', (kind: 'arrival' | 'prime-end' | 'extension-end' | undefined, inDays: number | undefined, dest: string): string => {
   if (kind === 'arrival' && inDays !== undefined) return `${dest.toUpperCase()} IN ${f.num(inDays)} ${inDays === 1 ? 'DAY' : 'DAYS'}`;
   if (kind === 'prime-end' && inDays !== undefined) return `SCIENCE ENDS IN ${f.num(inDays)} DAYS`;
   if (kind === 'extension-end' && inDays !== undefined) return `EXTENSION ENDS IN ${f.num(inDays)} DAYS`;
   return `AT ${dest.toUpperCase()}`;
-};
+});
 
 const EFFECT_LINE: Record<FailureEffect, string> = {
   craft: 'CONTACT LOST. THE ROBOT IS GONE.',
@@ -99,7 +101,7 @@ const EFFECT_LINE: Record<FailureEffect, string> = {
 };
 
 /** The INCOMING teletype after an order lands: what happened, in short lines. */
-export function resultLines(o: ConsoleOutcome, shortLabel: string): string[] {
+function resultLinesEn(o: ConsoleOutcome, shortLabel: string): string[] {
   const lines: string[] = [];
   if (o.by === 'standing-order') lines.push(`NO ORDER IN TIME. THE ROBOT FOLLOWED ITS STANDING ORDER: ${shortLabel}.`);
   else if (o.by === 'fault-protection') lines.push(`NO ORDER IN TIME. THE ROBOT CHOSE: ${shortLabel}.`);
@@ -111,19 +113,20 @@ export function resultLines(o: ConsoleOutcome, shortLabel: string): string[] {
   if (o.deltaV_ms > 0) lines.push(`ENGINE FIRED: ${f.speed(o.deltaV_ms).toUpperCase()}.`);
   return lines;
 }
+export const resultLines = tr('resultLines', resultLinesEn);
 
-export const RESULT_EFFECT_CHIP: Record<FailureEffect, string> = {
+export const RESULT_EFFECT_CHIP: Record<FailureEffect, string> = tr('RESULT_EFFECT_CHIP', {
   craft: 'ROBOT LOST',
   instrument: 'INSTRUMENT LOST',
   'stored-data': 'PHOTOS WIPED',
   'safe-mode': 'SAFE MODE',
-};
+});
 
 // ---------------------------------------------------------------------------
 // Pack
 
 
-export const PART_LOOK: Record<PartId, { name: string; short: string; icon: SDIconName; color: string }> = {
+export const PART_LOOK: Record<PartId, { name: string; short: string; icon: SDIconName; color: string }> = tr('PART_LOOK', {
   computer: { name: 'Flight computer', short: 'BRAIN', icon: 'computer', color: 'var(--sd-part-brain)' },
   engine: { name: 'Main engine', short: 'ENGINE', icon: 'burn', color: 'var(--sd-part-drive)' },
   camera: { name: 'Camera', short: 'CAMERA', icon: 'camera', color: 'var(--sd-part-science)' },
@@ -140,12 +143,12 @@ export const PART_LOOK: Record<PartId, { name: string; short: string; icon: SDIc
   bumper: { name: 'Debris bumper', short: 'BUMPER', icon: 'shield', color: 'var(--sd-part-guard)' },
   spare: { name: 'Spare computer', short: 'SPARE', icon: 'computer', color: 'var(--sd-part-brain)' },
   autopilot: { name: 'Autopilot chip', short: 'AUTO', icon: 'computer', color: 'var(--sd-part-brain)' },
-};
+});
 
 /** Science parts earn data (the green star badge). */
 export const SCIENCE_PARTS: PartId[] = ['camera', 'spectrometer', 'magnetometer', 'radar', 'sniffer', 'dish'];
 
-export const DANGER_LOOK: Record<string, { title: string; short: string; line: string; icon: SDIconName }> = {
+export const DANGER_LOOK: Record<string, { title: string; short: string; line: string; icon: SDIconName }> = tr('DANGER_LOOK', {
   eclipse: { title: 'ECLIPSE SEASON', short: 'ECLIPSE', line: 'The planet hides the Sun. Power runs low.', icon: 'eclipse' },
   conjunction: { title: 'SUN IN THE WAY', short: 'SUN', line: 'No calls home for about two weeks.', icon: 'conj' },
   'solar-storm': { title: 'RADIATION STORM', short: 'STORM', line: 'The Sun spits fast particles that fry electronics.', icon: 'storm' },
@@ -155,22 +158,23 @@ export const DANGER_LOOK: Record<string, { title: string; short: string; line: s
   'reaction-wheel': { title: 'WHEEL FAILURE', short: 'WHEEL', line: 'A spinning wheel that points the robot wears out.', icon: 'sys' },
   'memory-corruption': { title: 'MEMORY GLITCH', short: 'MEMORY', line: 'Radiation flips bits in the computer.', icon: 'computer' },
   'insertion-anomaly': { title: 'ARRIVAL BURN GOES WRONG', short: 'ARRIVAL', line: 'The braking burn does not go to plan.', icon: 'orbit' },
-};
+});
 
 export const dangerLook = (id: string, title: string) => DANGER_LOOK[id] ?? { title: title.toUpperCase(), short: title.toUpperCase(), line: '', icon: 'sys' as SDIconName };
 
-export function deckWhen(c: DeckCard): string {
+function deckWhenEn(c: DeckCard): string {
   if (c.kind === 'eclipse' || c.kind === 'conjunction') return 'CERTAIN · YOU CAN SEE IT COMING';
   return c.detectedBy === 'earth' ? 'SURPRISE · WITH A WARNING' : 'SURPRISE · NO WARNING';
 }
+export const deckWhen = tr('deckWhen', deckWhenEn);
 
-export const STAMP: Record<DeckCard['stamp'], { word: string; short: string; color: string }> = {
+export const STAMP: Record<DeckCard['stamp'], { word: string; short: string; color: string }> = tr('STAMP', {
   covered: { word: 'COVERED', short: 'OK', color: 'var(--sd-ok)' },
   some: { word: 'SOME COVER', short: 'SOME', color: 'var(--sd-soso)' },
   none: { word: 'NOT COVERED', short: 'NONE', color: 'var(--sd-bad)' },
-};
+});
 
-export const PACK_BLOCKER: Record<PackBlockerCode, string> = {
+export const PACK_BLOCKER: Record<PackBlockerCode, string> = tr('PACK_BLOCKER', {
   'too-heavy': 'TOO HEAVY FOR THIS ROCKET',
   'no-power': 'NOT ENOUGH POWER',
   'no-fuel': 'NOT ENOUGH FUEL TO GET THERE',
@@ -178,24 +182,25 @@ export const PACK_BLOCKER: Record<PackBlockerCode, string> = {
   'flight-too-long': 'THAT FLIGHT IS TOO LONG FOR THE GAME',
   'no-science': 'PACK AT LEAST ONE INSTRUMENT',
   other: 'NOT READY TO LAUNCH',
-};
+});
 
-export const NO_ROOM = 'NO ROOM IN THE NOSE';
+export const PACK_WORDS = tr('PACK_WORDS', { noRoom: 'NO ROOM IN THE NOSE' });
 
 /** "No fuel" with the part that clears it (engine packBlockers `fix`), so the player learns why. */
-export function fuelFixWords(fix: FuelFix): string {
+function fuelFixWordsEn(fix: FuelFix): string {
   const pack = `PACK THE ${PART_LOOK[fix.part].name.toUpperCase()}`;
   return fix.why === 'station-keeping' ? `${pack} — THE ${f.km(fix.orbitAlt_m).toUpperCase()} ORBIT NEEDS TRIM BURNS EVERY MONTH` : pack;
 }
+export const fuelFixWords = tr('fuelFixWords', fuelFixWordsEn);
 
-export const DAY_WORDS: Record<'good' | 'soso' | 'bad', { msg: (dest: string) => string; short: string }> = {
+export const DAY_WORDS: Record<'good' | 'soso' | 'bad', { msg: (dest: string) => string; short: string }> = tr('DAY_WORDS', {
   good: { msg: (d) => `GOOD DAY · ${d.toUpperCase()} IS IN REACH`, short: 'GOOD' },
   soso: { msg: () => 'SO-SO · LITTLE TO SPARE', short: 'SO-SO' },
   bad: { msg: (d) => `BAD DAY · ${d.toUpperCase()} IS OUT OF REACH`, short: 'BAD' },
-};
+});
 
 /** The Launch Day step, and the one-line launch day on Pack (spec UI rules 24 and 26). */
-export const LAUNCH_DAY_WORDS = {
+export const LAUNCH_DAY_WORDS = tr('LAUNCH_DAY_WORDS', {
   title: 'LAUNCH DAY',
   sub: 'Six weeks of launch days. Green: an easy trip. Amber: little to spare. Red: out of reach.',
   line: 'LAUNCH DAY',
@@ -209,22 +214,23 @@ export const LAUNCH_DAY_WORDS = {
   working: 'WORKING OUT THE LAUNCH DAYS…',
   c3: 'C3 · v∞ ARRIVAL',
   margins: 'MARGINS · MASS · Δv',
-};
+});
 
-export const WEIGHT_WORDS: Record<'ok' | 'warning' | 'over', string> = {
+export const WEIGHT_WORDS: Record<'ok' | 'warning' | 'over', string> = tr('WEIGHT_WORDS', {
   ok: 'LIGHT ENOUGH',
   warning: 'NEARLY TOO HEAVY',
   over: 'TOO HEAVY FOR THIS ROCKET',
-};
+});
 
 /** "NOV 1" from an ISO date. */
-export const shortDate = (iso: string) => new Date(`${iso.slice(0, 10)}T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }).toUpperCase();
+export const shortDate = tr('shortDate', (iso: string) => new Date(`${iso.slice(0, 10)}T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }).toUpperCase());
 /** "NOV–DEC 2013" for the calendar head. */
-export function monthSpan(fromIso: string, toIso: string): string {
+function monthSpanEn(fromIso: string, toIso: string): string {
   const m = (iso: string) => new Date(`${iso.slice(0, 10)}T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' }).toUpperCase();
   const y = toIso.slice(0, 4);
   return m(fromIso) === m(toIso) ? `${m(fromIso)} ${y}` : `${m(fromIso)}–${m(toIso)} ${y}`;
 }
+export const monthSpan = tr('monthSpan', monthSpanEn);
 
 // ---------------------------------------------------------------------------
 // Mission Report
@@ -238,7 +244,7 @@ export interface PanelWords {
 }
 
 /** Caption for a comic panel. `label` gives a choice's short label, `title` a hazard's engine title. */
-export function panelWords(
+function panelWordsEn(
   p: ReportPanel,
   ctx: { dest: string; rocket: string; label: (type: string, id: string) => string; title: (type: string) => string; autopilot: boolean; sent_Gbit: number },
 ): PanelWords {
@@ -271,8 +277,9 @@ export function panelWords(
       return { head: `${day} · MISSION COMPLETE`, text: `Science done: ${f.gbit(ctx.sent_Gbit)} sent home.` };
   }
 }
+export const panelWords = tr('panelWords', panelWordsEn);
 
-export const PANEL_SOUND: Partial<Record<string, string>> = {
+export const PANEL_SOUND: Partial<Record<string, string>> = tr('PANEL_SOUND', {
   'solar-storm': 'ZZZT!',
   'cme-shock': 'WHUMP!',
   'mars-dust-storm': 'WHOOOSH',
@@ -280,10 +287,10 @@ export const PANEL_SOUND: Partial<Record<string, string>> = {
   'reaction-wheel': 'GRRRK',
   'memory-corruption': 'BEEP?',
   'insertion-anomaly': 'FWUMP',
-};
+});
 
 /** The three stars (v0.8: they follow the science returned; the rules are the engine's STAR_RULES). */
-export const STAR_WORDS = (_dest: string) => ['FIRST SCIENCE HOME', 'HALF THE SCIENCE', 'MOST OF THE SCIENCE'] as const;
+export const STAR_WORDS = tr('STAR_WORDS', (_dest: string) => ['FIRST SCIENCE HOME', 'HALF THE SCIENCE', 'MOST OF THE SCIENCE'] as const);
 
 const CATEGORY_WORD: Record<Category, string> = {
   science: 'science sent home',
@@ -294,7 +301,7 @@ const CATEGORY_WORD: Record<Category, string> = {
   mass: 'the weight margin',
   crisis: 'crisis handling',
 };
-export const CATEGORY_NAME: Record<Category, string> = {
+export const CATEGORY_NAME: Record<Category, string> = tr('CATEGORY_NAME', {
   science: 'SCIENCE',
   success: 'SUCCESS',
   budget: 'BUDGET',
@@ -302,9 +309,9 @@ export const CATEGORY_NAME: Record<Category, string> = {
   power: 'POWER MARGIN',
   mass: 'MASS MARGIN',
   crisis: 'CRISIS HANDLING',
-};
+});
 
-export function savedWords(v: Saved, ctx: { label: (type: string, id: string) => string; title: (type: string) => string }): { strong: string; rest: string } {
+function savedWordsEn(v: Saved, ctx: { label: (type: string, id: string) => string; title: (type: string) => string }): { strong: string; rest: string } {
   switch (v.code) {
     case 'part':
       return { strong: `The ${PART_LOOK[v.part].name.toLowerCase()}`, rest: `. It made the ${hazardTitle(v.hazardType, ctx.title(v.hazardType)).toLowerCase()} far less dangerous.` };
@@ -316,8 +323,9 @@ export function savedWords(v: Saved, ctx: { label: (type: string, id: string) =>
       return { strong: 'Good planning', rest: '. Nothing went wrong this time.' };
   }
 }
+export const savedWords = tr('savedWords', savedWordsEn);
 
-export function hurtWords(v: Hurt, ctx: { label: (type: string, id: string) => string; title: (type: string) => string }): { strong: string; rest: string } {
+function hurtWordsEn(v: Hurt, ctx: { label: (type: string, id: string) => string; title: (type: string) => string }): { strong: string; rest: string } {
   switch (v.code) {
     case 'bad-outcome':
       return {
@@ -330,20 +338,21 @@ export function hurtWords(v: Hurt, ctx: { label: (type: string, id: string) => s
       return { strong: 'Nothing big', rest: '. Every score was fair or better.' };
   }
 }
+export const hurtWords = tr('hurtWords', hurtWordsEn);
 
-export const REPORT_STAMP: Record<'complete' | 'extended' | 'lost' | 'not-launched', { word: string[]; color: string }> = {
+export const REPORT_STAMP: Record<'complete' | 'extended' | 'lost' | 'not-launched', { word: string[]; color: string }> = tr('REPORT_STAMP', {
   complete: { word: ['MISSION', 'COMPLETE'], color: 'var(--sd-ok)' },
   extended: { word: ['MISSION', 'EXTENDED'], color: 'var(--sd-soso)' },
   lost: { word: ['ROBOT', 'LOST'], color: 'var(--sd-red)' },
   'not-launched': { word: ['NOT', 'LAUNCHED'], color: 'var(--sd-red)' },
-};
+});
 
 /**
  * FINAL TRANSMISSION (Mission Report, design TELETYPE 03): the robot's last message, line by line (engine
  * finalTransmission). Templates with named slots, like the robot's voice: {day} {dest} {name} {science} {hazard}
  * {when} {option} {part} {dv} {days} {fuel} {years} {delay}.
  */
-export const FINAL_WORDS = {
+export const FINAL_WORDS = tr('FINAL_WORDS', {
   kicker: (day: string) => `TELETYPE 03 · RECEIVED DAY ${day}`,
   incomplete: 'INCOMPLETE',
   sent: (delay: string) => `SENT ${delay} BEFORE IT PRINTED`,
@@ -388,10 +397,10 @@ export const FINAL_WORDS = {
   },
   feed: 'FEED THE PAPER · MISSION REPORT ▾',
   label: 'Final transmission',
-};
+});
 
 /** Every line of a final transmission, in words. */
-export function finalLines(
+function finalLinesEn(
   ft: FinalTransmission,
   ctx: { dest: string; name: string; title: (type: string) => string; label: (type: string, id: string) => string },
 ): string[] {
@@ -442,21 +451,22 @@ export function finalLines(
     }
   });
 }
+export const finalLines = tr('finalLines', finalLinesEn);
 
 // ---------------------------------------------------------------------------
 // Notebook
 
 
-export const CATEGORY_LOOK: Record<LessonCategory, { name: string; color: string }> = {
+export const CATEGORY_LOOK: Record<LessonCategory, { name: string; color: string }> = tr('CATEGORY_LOOK', {
   signal: { name: 'SIGNAL', color: 'var(--sd-part-science)' },
   power: { name: 'POWER', color: 'var(--sd-part-power)' },
   weather: { name: 'SPACE WEATHER', color: 'var(--sd-part-guard)' },
   nav: { name: 'NAVIGATION', color: 'var(--sd-part-drive)' },
   people: { name: 'PEOPLE', color: 'var(--sd-part-brain)' },
-};
+});
 
 /** Lesson titles and plain-English bodies (game copy; the real history is the Sourced text the lesson points at). */
-export const LESSON_WORDS: Record<string, { title: string; body: string }> = {
+export const LESSON_WORDS: Record<string, { title: string; body: string }> = tr('LESSON_WORDS', {
   'safe-beats-curious': { title: 'SAFE BEATS CURIOUS', body: 'When a solar storm is coming, real teams switch instruments off. Missing a few days of science beats losing an instrument forever.' },
   'air-swells': { title: 'THE AIR SWELLS', body: 'A planet-wide dust storm heats Mars’s air and puffs it up. A low orbit suddenly drags through thicker air.' },
   'radiation-adds-up': { title: 'RADIATION ADDS UP', body: 'Electronics can only take so much radiation in a lifetime. Every day near a big planet’s belts spends some of it.' },
@@ -472,7 +482,7 @@ export const LESSON_WORDS: Record<string, { title: string; body: string }> = {
   'check-your-units': { title: 'CHECK YOUR UNITS', body: 'Two teams, two kinds of numbers, one lost spacecraft. Always agree on units out loud.' },
   'trust-but-test': { title: 'TRUST, BUT TEST', body: 'A sensor can lie: a shake can look like a landing. Test the software against everything the hardware might feel.' },
   'install-it-right': { title: 'INSTALL IT THE RIGHT WAY UP', body: 'A part fitted backwards can pass every check and still fail on the day. Test the whole craft, not just the parts.' },
-};
+});
 
 /** How a hazard reads after "Face …" in an unlock hint. */
 const HAZARD_PHRASE: Record<string, string> = {
@@ -486,7 +496,7 @@ const HAZARD_PHRASE: Record<string, string> = {
   'radiation-damage': 'radiation damage',
 };
 
-export function unlockHint(u: LessonUnlock, ctx: { level: (id: string) => string; rescue: (id: string) => string; hazard: (id: string) => string }): string {
+function unlockHintEn(u: LessonUnlock, ctx: { level: (id: string) => string; rescue: (id: string) => string; hazard: (id: string) => string }): string {
   switch (u.kind) {
     case 'face-hazard':
       return `Face ${HAZARD_PHRASE[u.id] ?? ctx.hazard(u.id).toLowerCase()}`;
@@ -500,6 +510,7 @@ export function unlockHint(u: LessonUnlock, ctx: { level: (id: string) => string
       return 'Fly through an eclipse season';
   }
 }
+export const unlockHint = tr('unlockHint', unlockHintEn);
 
 // ---------------------------------------------------------------------------
 // Briefings, coach panels, launch checklist and navigation (plain words for every player)
@@ -511,7 +522,7 @@ export interface Briefing {
   tip: string;
 }
 
-export const BRIEFING: Record<string, Briefing> = {
+export const BRIEFING: Record<string, Briefing> = tr('BRIEFING', {
   'moon-1': {
     job: 'Send a small robot to the Moon and keep it charged while it takes pictures.',
     tip: 'Pack solar wings and a battery. The robot needs power in the Moon’s shadow too.',
@@ -540,20 +551,20 @@ export const BRIEFING: Record<string, Briefing> = {
     job: 'Find out if any rocket can send a robot straight from Earth to Jupiter.',
     tip: 'If nothing fits on the weight meter, that is the lesson: real missions swing past other planets first.',
   },
-};
+});
 
-export const FREE_BRIEFING: Briefing = {
+export const FREE_BRIEFING: Briefing = tr('FREE_BRIEFING', {
   job: 'Build any robot you like, launch it and keep it alive until the mission ends.',
   tip: 'Pack parts that cover the dangers on the right. Each one shows which danger it helps with.',
-};
+});
 
-export const DAILY_BRIEFING: Briefing = {
+export const DAILY_BRIEFING: Briefing = tr('DAILY_BRIEFING', {
   job: 'Today’s mission is the same for every player. Keep the robot alive and compare your result.',
   tip: 'You only get one try a day, so read each danger card before you choose.',
-};
+});
 
 /** The Daily's space weather (spec UI rule 37): real DONKI storms, or the seeded stand-in when the file can't be read. */
-export const LIVE_WEATHER = {
+export const LIVE_WEATHER = tr('LIVE_WEATHER', {
   live: 'LIVE SUN · NASA DONKI',
   /** The danger card's "arrives in" ⓘ title for a real CME. */
   prediction: 'NASA WSA-ENLIL MODEL PREDICTION',
@@ -571,25 +582,25 @@ export const LIVE_WEATHER = {
   realOn: 'REAL',
   shareLive: '☀️ real Sun · NASA DONKI',
   shareOffline: '☁️ offline · simulated weather',
-};
+});
 
 /** The four steps of every mission. */
-export const MISSION_STEPS_WORDS: { word: string; line: string }[] = [
+export const MISSION_STEPS_WORDS: { word: string; line: string }[] = tr('MISSION_STEPS_WORDS', [
   { word: 'PACK', line: 'Choose the parts that fit in the rocket nose.' },
   { word: 'LAUNCH', line: 'Pick a green launch day, flip ARM, press LAUNCH.' },
   { word: 'FLY', line: 'Let time run. Answer danger cards when they appear.' },
   { word: 'REPORT', line: 'See how you did and earn stars.' },
-];
+]);
 
 /** How the three stars are earned, in plain words (the rules are the engine's STAR_RULES). */
-export const STAR_GOALS = (dest: string): string[] => [
+export const STAR_GOALS = tr('STAR_GOALS', (dest: string): string[] => [
   `Reach ${dest} and send the first science home.`,
   'Bring half of the mission science home.',
   'Bring most of the mission science home.',
-];
+]);
 
 /** A real mission that flew there, for the briefing. */
-export const REAL_MISSION_LINE = (label: string) => `Real NASA mission that flew there: ${label}.`;
+export const REAL_MISSION_LINE = tr('REAL_MISSION_LINE', (label: string) => `Real NASA mission that flew there: ${label}.`);
 
 export interface CoachPanel {
   icon: SDIconName;
@@ -598,24 +609,58 @@ export interface CoachPanel {
 }
 
 /** How to fly: the coach panels on the first flight, the ? button and HOW TO PLAY. */
-export const COACH: CoachPanel[] = [
+export const COACH: CoachPanel[] = tr('COACH', [
   { icon: 'play', title: 'LET TIME RUN', body: 'Press 10×, 100× or 1000× at the bottom to fly. Press II to pause. Time keeps going after each card.' },
   { icon: 'storm', title: 'DANGER CARDS', body: 'When trouble is coming, time stops and a card appears. Pick an answer. Each one shows what it costs.' },
   { icon: 'dish', title: 'ORDERS TRAVEL SLOWLY', body: 'Your order crosses space at the speed of light. It can take minutes to reach the robot, so act early.' },
   { icon: 'power', title: 'WATCH THE FOUR BARS', body: 'Power, fuel, data and systems are at the top. Keep them out of the red.' },
   { icon: 'postcard', title: 'YOUR ROBOT WRITES HOME', body: 'Its messages cross space at the speed of light too. When its science reaches Earth, you get real NASA postcards.' },
   { icon: 'star', title: 'REACH THE END', body: 'When the mission ends you get your report and stars. In a hurry? FINISH MISSION lets the robot fly the rest.' },
-];
+]);
 
-export const HOW_TO_PLAY = { label: 'HOW TO PLAY', sub: 'New here? Learn the game in one minute.' };
+export const HOW_TO_PLAY = tr('HOW_TO_PLAY', { label: 'HOW TO PLAY', sub: 'New here? Learn the game in one minute.' });
 
 /** MARS RIGHT NOW on Home (engine marsNow: today's JPL ephemeris, no internet needed). */
 /** Home's second row (spec UI rule 28): the smaller keys after PLAY and the DAILY. */
-export const HOME_WORDS = {
+export const HOME_WORDS = tr('HOME_WORDS', {
   more: 'More',
-};
+  kicker: 'MISSION CONTROL · DEEP SPACE',
+  pitch: 'YOU DON’T FLY THE ROCKET. YOU KEEP A ROBOT ALIVE MILLIONS OF KM AWAY, AND EVERY ORDER ARRIVES MINUTES LATE.',
+  play: 'PLAY',
+  playLabel: (n: string, title: string) => `Play: mission ${n}, ${title}`,
+  mission: (n: string, title: string) => `Mission ${n} · ${title}`,
+  choose: 'CHOOSE A MISSION ▸',
+  /** The demo order on the CRT. */
+  order: 'ORDER: TURN ON CAMERA',
+  untilHeard: 'UNTIL THE ROBOT HEARS YOU',
+  received: 'RECEIVED ✓',
+  earth: 'EARTH',
+  daily: 'DAILY MISSION',
+  dailySub: (n: string, weather: string) => `Daily #${n}. ${weather}`,
+  dailyQuiet: 'Same mission for everyone today.',
+  dailyDone: 'DONE ✓',
+  dailyNew: 'NEW TODAY',
+  rescue: 'RESCUE HISTORY',
+  rescueSub: 'Real robots that nearly died. Try to save them.',
+  notebook: 'NOTEBOOK',
+  notebookSub: 'Real lessons you have earned.',
+  count: (got: string, total: string) => `${got} OF ${total}`,
+});
 
-export const MARS_NOW = {
+/** The CADET / ENGINEER lever. */
+export const MODE_WORDS = tr('MODE_WORDS', { cadet: 'CADET', engineer: 'ENGINEER', short: 'ENG' });
+
+/** The mission briefing's frame (its words per level are BRIEFING). */
+export const BRIEF_WORDS = tr('BRIEF_WORDS', {
+  kicker: (dest: string) => `MISSION BRIEFING · ${dest.toUpperCase()}`,
+  learn: (concept: string) => `YOU WILL LEARN: ${concept.toUpperCase()}`,
+  job: 'YOUR JOB',
+  tip: 'TIP:',
+  stars: 'HOW TO EARN STARS',
+  steps: 'THE STEPS',
+});
+
+export const MARS_NOW = tr('MARS_NOW', {
   title: 'MARS RIGHT NOW',
   away: 'away',
   takes: 'A message takes',
@@ -624,17 +669,17 @@ export const MARS_NOW = {
   in: 'in',
   now: 'SOLAR CONJUNCTION NOW: the Sun is between Earth and Mars. Missions pause their orders.',
   until: 'until',
-};
+});
 
 /** The Pack launch checklist, in order. */
-export const LAUNCH_CHECKS = {
+export const LAUNCH_CHECKS = tr('LAUNCH_CHECKS', {
   packed: 'PACK PARTS THAT FIT',
   day: 'PICK A GREEN LAUNCH DAY',
   arm: 'FLIP THE ARM SWITCH',
   go: 'PRESS LAUNCH',
-} as const;
+} as const);
 
-export const NAV = {
+export const NAV = tr('NAV', {
   back: '◂ BACK',
   info: 'MISSION INFO',
   help: 'HOW TO FLY',
@@ -642,43 +687,44 @@ export const NAV = {
   next: 'NEXT ▸',
   prev: '◂ PREV',
   finish: 'FINISH MISSION ▸▸',
-};
+  skip: 'SKIP',
+});
 
-export const FINISH_CONFIRM = {
+export const FINISH_CONFIRM = tr('FINISH_CONFIRM', {
   title: 'FINISH THE MISSION?',
   body: 'The robot flies the rest on its own. It answers any danger with its built-in plan, then you see your report.',
   yes: 'FINISH MISSION ▸▸',
   no: 'KEEP FLYING',
-};
+});
 
-export const LEAVE_CONFIRM = {
+export const LEAVE_CONFIRM = tr('LEAVE_CONFIRM', {
   title: 'LEAVE THIS FLIGHT?',
   body: 'This flight ends and you go back to the last screen. You can launch again from there.',
   leave: '◂ LEAVE FLIGHT',
   finish: 'FINISH AND SEE REPORT ▸▸',
   stay: 'KEEP FLYING',
-};
+});
 
-export const FLY_GOAL = 'GOAL: KEEP THE ROBOT ALIVE UNTIL THE MISSION ENDS';
+export const FLY_WORDS = tr('FLY_WORDS', { goal: 'GOAL: KEEP THE ROBOT ALIVE UNTIL THE MISSION ENDS' });
 
 /** The footer line under the progress bar. */
-export const endsInWords = (daysLeft: number) => (daysLeft <= 0 ? 'MISSION OVER' : `MISSION ENDS IN ${f.num(daysLeft)} ${daysLeft === 1 ? 'DAY' : 'DAYS'}`);
+export const endsInWords = tr('endsInWords', (daysLeft: number) => (daysLeft <= 0 ? 'MISSION OVER' : `MISSION ENDS IN ${f.num(daysLeft)} ${daysLeft === 1 ? 'DAY' : 'DAYS'}`));
 
 /** The nudge when the clock is paused and nothing else is on screen. */
-export const playNudge = (speedLabel: string) => `▶ PRESS ${speedLabel} TO LET TIME RUN`;
+export const playNudge = tr('playNudge', (speedLabel: string) => `▶ PRESS ${speedLabel} TO LET TIME RUN`);
 
 /** Labels on the CRT map. */
-export const MAP_WORDS = {
+export const MAP_WORDS = tr('MAP_WORDS', {
   sun: 'SUN',
   storm: 'SOLAR STORM',
   order: 'YOUR ORDER',
   reply: 'ITS REPLY',
   you: 'YOU',
-};
+});
 
 /** The log line while a solar storm crosses space toward the robot, and while it hits. */
-export const stormLine = (phase: 'coming' | 'hitting', name: string, hitsIn: string) =>
-  phase === 'coming' ? `THE SUN ERUPTED. A SOLAR STORM HITS ${name} IN ${hitsIn}.` : `SOLAR STORM ON ${name}. PARTICLES EVERYWHERE.`;
+export const stormLine = tr('stormLine', (phase: 'coming' | 'hitting', name: string, hitsIn: string) =>
+  phase === 'coming' ? `THE SUN ERUPTED. A SOLAR STORM HITS ${name} IN ${hitsIn}.` : `SOLAR STORM ON ${name}. PARTICLES EVERYWHERE.`);
 
 // ---------------------------------------------------------------------------
 // The robot's voice. It reports in the first person; every line reached Earth one light time after it was sent.
@@ -706,15 +752,15 @@ export const robotNameOr = (name: string | undefined) => (name && name.trim() ? 
 /** The next suggestion after the current name. */
 export const nextRobotName = (name: string) => ROBOT_NAMES[(ROBOT_NAMES.indexOf(name) + 1) % ROBOT_NAMES.length]!;
 
-export const ROBOT_WORDS = {
+export const ROBOT_WORDS = tr('ROBOT_WORDS', {
   nameLabel: 'YOUR ROBOT’S NAME',
   suggest: 'Suggest a name',
   took: (dest: string, delay: string) => `FROM ${dest} · TOOK ${delay} TO REACH YOU`,
   lastMessage: (name: string) => `LAST MESSAGE FROM ${name}`,
-};
+});
 
 /** NAME YOUR ROBOT (design screen 00), before the first mission. */
-export const NAME_WORDS = {
+export const NAME_WORDS = tr('NAME_WORDS', {
   kicker: 'PAD 39A · PRE-LAUNCH',
   intro1: '> A NEW ROBOT IS WAITING ON THE PAD.',
   intro2: '> GIVE IT A NAME.',
@@ -734,7 +780,7 @@ export const NAME_WORDS = {
   skyLine: (date: string, minutes: string) => `TODAY · ${date} · MARS IS ${minutes} LIGHT-MINUTES AWAY`,
   skyPhone: (minutes: string) => `MARS IS ${minutes} LIGHT-MINUTES AWAY`,
   skyEng: (au: string, mkm: string, t: string) => `${au} · ${mkm} · t = d / c = ${t}`,
-};
+});
 
 /**
  * Fill a word template: each {slot} becomes its value. The robot's lines are templates, not sentences glued from
@@ -747,7 +793,7 @@ export const fill = (template: string, slots: Record<string, string>) => templat
  * {days} {dist} {fuel} {data} {dv} {burned} {dark} {lost} {period} {waited} {pct} {years}. Each kind has one or more variants; the
  * message's seq picks one, so a repeated kind does not repeat itself word for word.
  */
-export const VOICE: Record<Exclude<VoiceKind, 'hit' | 'status'>, string[]> = {
+export const VOICE: Record<Exclude<VoiceKind, 'hit' | 'status'>, string[]> = tr('VOICE', {
   launch: ['LIFTOFF. SYSTEMS ON. NEXT STOP: {dest}.'],
   'launch-failed': ['THE ROCKET FAILED. I NEVER LEFT THE PAD.'],
   halfway: ['HALFWAY TO {dest}. EARTH IS A BLUE DOT BEHIND ME.'],
@@ -780,10 +826,10 @@ export const VOICE: Record<Exclude<VoiceKind, 'hit' | 'status'>, string[]> = {
   'far-side': ['BEHIND THE MOON {lost} OF EVERY {period}. NO SIGNAL THERE. I FLY MYSELF.'],
   'link-back': ['LINK BACK. YOUR ORDER WAITED {waited} BEHIND THE MOON.'],
   'trim-burn': ['TRIM BURN: {dv}. THE MOON’S LUMPY GRAVITY PULLS ME DOWN. HOLDING MY ORBIT.'],
-};
+});
 
 /** The science targets in the robot's words (spec: UI rule 39): the name it uses and what it says when the picture goes home. */
-export const TARGET_WORDS: Record<string, { name: string; comment: string }> = {
+export const TARGET_WORDS: Record<string, { name: string; comment: string }> = tr('TARGET_WORDS', {
   'olympus-mons': { name: 'OLYMPUS MONS', comment: 'IT WAS WIDER THAN MY WHOLE VIEW.' },
   'valles-marineris': { name: 'VALLES MARINERIS', comment: 'A CRACK ACROSS THE WHOLE PLANET. I FOLLOWED IT ALL PASS.' },
   'north-polar-cap': { name: 'NORTH POLAR CAP', comment: 'WHITE SPIRALS. THE ICE IS WRITING SOMETHING DOWN.' },
@@ -794,12 +840,12 @@ export const TARGET_WORDS: Record<string, { name: string; comment: string }> = {
   tycho: { name: 'TYCHO', comment: 'SUNRISE ON THE CENTRAL PEAK. ITS SHADOW REACHED ACROSS THE FLOOR.' },
   shackleton: { name: 'SHACKLETON', comment: 'THE RIM IS LIT. THE FLOOR HAS NEVER SEEN THE SUN.' },
   tsiolkovskiy: { name: 'TSIOLKOVSKIY', comment: 'DARK LAVA ON THE FAR SIDE. NO ONE ON EARTH HAS EVER SEEN THIS WITH THEIR OWN EYES.' },
-};
+});
 
 export const targetName = (id: string) => TARGET_WORDS[id]?.name ?? id.toUpperCase();
 
 /** Lines with a different shape for some values: a burn on arrival, plans and standing orders, a full goal. */
-export const VOICE_ALT = {
+export const VOICE_ALT = tr('VOICE_ALT', {
   arrivedBurn: 'ENGINE FIRED: {dv} OFF MY SPEED, {burned} OF FUEL. {dest} CAUGHT ME.',
   plan: 'ORDER RECEIVED. NEW POWER PLAN LOADED.',
   standing: 'ORDER RECEIVED. NEW STANDING ORDERS STORED.',
@@ -812,14 +858,14 @@ export const VOICE_ALT = {
   refusedUnreachable: 'I CANNOT SEE {target} CLEARLY FROM THIS ORBIT.',
   refusedAlready: '{target} IS ALREADY ON MY LIST.',
   refusedNotInOrbit: 'NOT IN ORBIT YET. ASK ME AGAIN AT {dest}.',
-};
+});
 
 /** Routine status (VOICE_RULES.statusEvery_days): on the way, at the destination, and on the way home. */
-export const STATUS_VOICE: Record<'cruise' | 'orbit' | 'home', string[]> = {
+export const STATUS_VOICE: Record<'cruise' | 'orbit' | 'home', string[]> = tr('STATUS_VOICE', {
   cruise: ['CRUISE NOMINAL. {days} DAYS TO {dest}. {fuel} OF FUEL LEFT.', 'ALL QUIET. {dist} FROM EARTH. HOLDING COURSE.', 'STAR TRACKER LOCKED. {days} DAYS TO {dest}.'],
   orbit: ['ORBIT NOMINAL. {data} SENT HOME SO FAR.', 'ALL QUIET. MAPPING. {fuel} OF FUEL LEFT.', 'HEATERS CYCLING. {dist} FROM EARTH. HOLDING.'],
   home: ['HEADING HOME. ALL QUIET. {dist} FROM EARTH.'],
-};
+});
 
 const HIT_VOICE: Record<string, string[]> = {
   'solar-storm': ['STORM HERE. PARTICLES HITTING MY PANELS.', 'ANOTHER SOLAR STORM. I CAN FEEL IT IN MY CIRCUITS.'],
@@ -842,7 +888,7 @@ export interface VoiceContext {
 const years = (n: number) => `${f.num(n)} ${n === 1 ? 'YEAR' : 'YEARS'}`;
 
 /** What the robot says, in its own words (uppercase telemetry). Every number is the message's, only formatted. */
-export function robotSays(m: RobotMessage, ctx: VoiceContext): string {
+function robotSaysEn(m: RobotMessage, ctx: VoiceContext): string {
   const v = m.values;
   const pick = (lines: string[]) => lines[m.seq % lines.length]!;
   const type = v.hazardType ?? '';
@@ -885,9 +931,10 @@ export function robotSays(m: RobotMessage, ctx: VoiceContext): string {
   else t = pick(VOICE[m.kind]);
   return fill(t, slots);
 }
+export const robotSays = tr('robotSays', robotSaysEn);
 
 /** The TRANSMISSIONS teletype (Fly & Survive), the robot's reply to an order, and the reply's trip home. */
-export const TX_WORDS = {
+export const TX_WORDS = tr('TX_WORDS', {
   kicker: (name: string) => `TELETYPE 02 · ${name} ⇄ EARTH`,
   title: 'TRANSMISSIONS',
   keyRobot: (name: string) => `BLACK · ${name}`,
@@ -922,19 +969,22 @@ export const TX_WORDS = {
   heard: (name: string) => `${name} HEARD YOU. REPLY ON ITS WAY`,
   replyReaches: 'REPLY REACHES EARTH IN',
   alreadyActed: 'IT HAS ALREADY ACTED. YOU JUST CAN’T SEE IT YET',
-};
+});
 
 // ---------------------------------------------------------------------------
 // Big moments and sound
 
-export const SOUND_WORDS = { on: 'Sound on', off: 'Sound off' };
+export const SOUND_WORDS = tr('SOUND_WORDS', { on: 'Sound on', off: 'Sound off' });
+
+/** The language switch in every top bar (lang.ts); each language is named in its own words. */
+export const LANG_WORDS = tr('LANG_WORDS', { label: 'Language', en: 'EN', bn: 'বাংলা' });
 
 /**
  * The cold open (spec UI rule 47): Mars Climate Orbiter, Sept. 23, 1999, on the first launch. Every fact comes from
  * the MCO rescue case (engine coldOpenFacts): the date, the craft, the insertion burn, the signal due from behind
  * Mars, the loss and the units.
  */
-export const COLD_OPEN = {
+export const COLD_OPEN = tr('COLD_OPEN', {
   label: 'Mars Climate Orbiter, 1999: the signal that never came back',
   burn: (date: string, craft: string) => `${date} · ${craft.toUpperCase()} · ORBIT INSERTION BURN`,
   expected: 'SIGNAL EXPECTED WHEN IT COMES OUT FROM BEHIND MARS',
@@ -950,9 +1000,9 @@ export const COLD_OPEN = {
   menu: 'INTRO',
   menuSub: 'Replay the opening: the robot that went silent.',
   menuTag: 'REPLAY',
-};
+});
 
-export const MOMENT_WORDS = {
+export const MOMENT_WORDS = tr('MOMENT_WORDS', {
   countdownK: 'LAUNCH IN',
   count: (n: number) => `T−${f.num(n)}`,
   liftoff: 'LIFTOFF!',
@@ -963,12 +1013,12 @@ export const MOMENT_WORDS = {
   storm: 'SOLAR STORM HIT!',
   stormSub: (name: string) => `PARTICLES FROM THE SUN ARE HITTING ${name}.`,
   launchFailed: 'LAUNCH FAILED',
-};
+});
 
 // ---------------------------------------------------------------------------
 // Postcards from space
 
-export const POSTCARD_WORDS = {
+export const POSTCARD_WORDS = tr('POSTCARD_WORDS', {
   menu: 'POSTCARDS',
   menuSub: 'Real NASA pictures your robots sent home.',
   title: 'POSTCARDS FROM SPACE',
@@ -984,20 +1034,20 @@ export const POSTCARD_WORDS = {
   /** How a locked card is earned, from its unlock share (0 = first data, 1 = the whole goal). */
   hint: (dest: string, share: number) =>
     share <= 0 ? `Fly to ${dest} and send home your first science.` : share >= 1 ? `Send home all the science from ${dest}.` : `Send home half the science from ${dest}.`,
-};
+});
 
 // ---------------------------------------------------------------------------
 // Ranks and badges (engine ranks.ts)
 
-export const RANK_WORDS: Record<string, string> = {
+export const RANK_WORDS: Record<string, string> = tr('RANK_WORDS', {
   cadet: 'CADET',
   'flight-controller': 'FLIGHT CONTROLLER',
   capcom: 'CAPCOM',
   'flight-director': 'FLIGHT DIRECTOR',
   'mission-legend': 'MISSION LEGEND',
-};
+});
 
-export const CREW_WORDS = {
+export const CREW_WORDS = tr('CREW_WORDS', {
   title: 'CREW FILE',
   rank: 'YOUR RANK',
   toNext: (n: number, next: string) => `${f.num(n)}★ TO ${next}`,
@@ -1011,9 +1061,9 @@ export const CREW_WORDS = {
   newBadge: 'NEW BADGE',
   earned: 'EARNED',
   locked: 'NOT YET',
-};
+});
 
-export const BADGE_WORDS: Record<string, { name: string; how: string }> = {
+export const BADGE_WORDS: Record<string, { name: string; how: string }> = tr('BADGE_WORDS', {
   'first-flight': { name: 'FIRST FLIGHT', how: 'Earn a star on any mission.' },
   'storm-survivor': { name: 'STORM SURVIVOR', how: 'Fly through a solar storm without losing an instrument.' },
   'through-the-sun': { name: 'THROUGH THE SUN', how: 'Keep flying while the Sun blocks your radio (a solar conjunction).' },
@@ -1024,10 +1074,10 @@ export const BADGE_WORDS: Record<string, { name: string; how: string }> = {
   'daily-streak': { name: 'DAILY STREAK', how: 'Play the Daily mission three days in a row.' },
   rescuer: { name: 'RESCUER', how: 'Save a robot in Rescue History.' },
   'big-thinker': { name: 'BIG THINKER', how: 'Find out why no rocket flies straight to Jupiter.' },
-};
+});
 
 /** Science Targets in the CRT after arrival (spec: UI rule 39; design screen 01, SCIENCE TARGETS). */
-export const SCIENCE = {
+export const SCIENCE = tr('SCIENCE', {
   title: (dest: string) => `${dest} ORBIT · SCIENCE TARGETS`,
   titlePhone: (dest: string) => `${dest} ORBIT · PICK TARGETS`,
   hint: 'EVERY PICTURE COSTS FUEL, BATTERY OR RISK. YOU CAN’T SEE IT ALL.',
@@ -1081,10 +1131,10 @@ export const SCIENCE = {
   sheet: 'Science targets',
   sheetMore: 'MORE ▴',
   sheetLess: 'LESS ▾',
-};
+});
 
 /** The Moon scene on the globe (spec: UI rules 45–46; design 3d/Moon Globe.html). Numbers come from moonOrbitView. */
-export const MOON_WORDS = {
+export const MOON_WORDS = tr('MOON_WORDS', {
   earth: (dist: string, oneWay: string) => `EARTH · ${dist} · ${oneWay}`,
   earthSub: 'ALWAYS SEES THE NEAR SIDE',
   linkUp: (oneWay: string) => `LINK · LOCKED · ${oneWay}`,
@@ -1105,10 +1155,10 @@ export const MOON_WORDS = {
   reopen: 'MOON ORBIT',
   done: 'DONE · KEEP FLYING',
   doneShort: 'DONE',
-};
+});
 
 /** The DOWNLINK drawer (spec: UI rule 40; design screen 01, DOWNLINK). */
-export const DOWNLINK = {
+export const DOWNLINK = tr('DOWNLINK', {
   button: 'DOWNLINK',
   waitingOn: (n: string, one: boolean, name: string) => `${n} ${one ? 'IMAGE' : 'IMAGES'} WAITING ON ${name}`,
   allHome: (n: string) => `ALL ${n} IMAGES HOME`,
@@ -1152,20 +1202,20 @@ export const DOWNLINK = {
   opened: 'OPENED IN FULL COLOUR',
   voice: (name: string, line: string) => `${name}: “${line}”`,
   credit: (credit: string, mission: string, id: string) => `IMAGE CREDIT: ${credit} · ${mission} · ${id}`,
-};
+});
 
 /** A globe's body in words. */
-export const bodyWord = (b: TargetBody) => ({ mars: 'Mars', moon: 'Moon' })[b];
+export const bodyWord = tr('bodyWord', (b: TargetBody) => ({ mars: 'Mars', moon: 'Moon' })[b]);
 
 /** The globe's 2D/3D toggle (spec: UI rules 41, 44). */
-export const GLOBE_WORDS = {
+export const GLOBE_WORDS = tr('GLOBE_WORDS', {
   toggleLabel: (body: string) => `Switch the ${body} globe between 3D and flat`,
   to2d: '2D',
   to3d: '3D',
-};
+});
 
 /** The Mission Album (spec: UI rule 43; design screen 03, TELETYPE 03 · MISSION ALBUM). */
-export const ALBUM = {
+export const ALBUM = tr('ALBUM', {
   label: 'Mission album',
   kicker: (name: string) => `TELETYPE 03 · MISSION ALBUM — ${name}`,
   meta: {
@@ -1208,10 +1258,10 @@ export const ALBUM = {
     none: 'No picture made it home. Next time, order a target early and wait for a DSN pass.',
   },
   feed: 'FEED THE PAPER · FINAL TRANSMISSION ▾',
-};
+});
 
 /** The Daily's science line (v0.8: science returned is the main score). */
-export const DAILY_SCIENCE = {
+export const DAILY_SCIENCE = tr('DAILY_SCIENCE', {
   card: (pct: string) => `SCIENCE HOME ${pct}`,
   share: (pct: string) => `🔭 ${pct} of the science home`,
-};
+});

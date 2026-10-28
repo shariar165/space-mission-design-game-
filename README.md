@@ -92,6 +92,7 @@ Each mission earns up to three stars, all for the **science you bring home** (th
 
 ### More ways to play
 
+- **বাংলা.** EN / বাংলা in every top bar switches the game's words to Bangla (numbers and units stay the same; NASA mission and target names stay in English). Being translated screen by screen.
 - **Cold open.** A first launch opens on a single key, ▶ RECEIVE TRANSMISSION (it lets the sound start), then the night Mars Climate Orbiter went silent (Sept. 23, 1999), in about 15 seconds told only from the game's cited facts, then you name your robot. SKIP anytime; INTRO on Home replays it.
 - **Sound.** Synthesised in the browser (no audio files): teletype clack, CRT hum, radio static while a signal is in transit, beeps when an order or reply arrives, the danger alert and the printer's rattle. It starts after your first click or key, is quiet by default, and the 🔊 key in every top bar mutes it.
 - **Daily mission.** The same Mars flight for every player each day, with a spoiler-free share card (like a word-puzzle grid).

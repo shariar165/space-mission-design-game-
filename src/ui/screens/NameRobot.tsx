@@ -5,6 +5,7 @@ import { useRef, useState } from 'react';
 import type { MarsNow } from '../../engine/marsNow';
 import { BackButton } from '../components/sd/BackButton';
 import { ModeLever, type Mode } from '../components/sd/ModeLever';
+import { LangToggle } from '../components/sd/LangToggle';
 import { SoundToggle } from '../components/sd/SoundToggle';
 import { useTeletype } from '../components/sd/Teletype';
 import { useLoop } from '../sound';
@@ -72,6 +73,7 @@ export function NameRobot({ name: saved, mode, onMode, mars, onName, onDone, onB
             {!phone && <span className="nm-kicker">{NAME_WORDS.kicker}</span>}
           </span>
           <span className="sd-top-keys">
+            <LangToggle />
             <SoundToggle />
             <ModeLever mode={mode} onMode={onMode} />
           </span>

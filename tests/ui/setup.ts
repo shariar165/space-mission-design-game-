@@ -1,6 +1,7 @@
 // Shared set-up for the component tests (jsdom). Not a test file itself.
 import { cleanup } from '@testing-library/react';
 import { afterEach, beforeEach, vi } from 'vitest';
+import { setLang } from '../../src/ui/lang';
 import { inlineRunner, setRiskRunner } from '../../src/ui/riskRunner';
 
 // jsdom has no Web Worker: the Risk meter's Monte Carlo runs inline, with fewer runs (each one is still a full
@@ -26,6 +27,8 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  // every test starts in English (the language lives in the page as well as in storage)
+  setLang('en');
   vi.useRealTimers();
   vi.unstubAllGlobals();
 });

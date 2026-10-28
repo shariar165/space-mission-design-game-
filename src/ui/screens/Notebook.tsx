@@ -8,6 +8,7 @@ import { rescueCase, type RescueCaseId } from '../../engine/rescue';
 import { SourceInfo } from '../components/SourceInfo';
 import { BackButton } from '../components/sd/BackButton';
 import { ModeLever, type Mode } from '../components/sd/ModeLever';
+import { LangToggle } from '../components/sd/LangToggle';
 import { SoundToggle } from '../components/sd/SoundToggle';
 import { SDIcon, type SDIconName } from '../components/sd/SDIcon';
 import { useIsPhone } from '../sdGeometry';
@@ -125,6 +126,7 @@ export function Notebook({ facts, fresh, mode, onMode, onHome, onBack }: Props) 
               ))}
             </div>
             <span className="sd-top-keys">
+              <LangToggle />
               <SoundToggle />
               <ModeLever mode={mode} onMode={onMode} />
             </span>
