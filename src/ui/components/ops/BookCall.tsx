@@ -4,6 +4,9 @@ import { useMemo, useState } from 'react';
 import { dsnOptions, type OpsState } from '../../../engine/ops/index';
 import * as f from '../../format';
 import { CoinIcon, DishIcon } from './opsIcons';
+import { DRAWER_WORDS } from '../../opsWords';
+
+const W = DRAWER_WORDS.call;
 
 interface Props {
   state: OpsState;
@@ -19,54 +22,52 @@ export function BookCall({ state, day: initial, engineer, onBook, onClose }: Pro
   const [dish, setDish] = useState<34 | 70>(70);
   const pick = o.options.find((x) => x.dish === dish)!;
   return (
-    <section className="ops-panel ops-call" aria-label="Book a call home">
+    <section className="ops-panel ops-call" aria-label={W.title}>
       <div className="ops-panel-head">
-        <span className="h2">Book a call home</span>
-        <span className="ops-label">
-          DAY {f.num(o.day)} · {f.num(pick.hours)} H PASS
-        </span>
-        <button type="button" className="ops-close" aria-label="Close booking" onClick={onClose}>
+        <span className="h2">{W.title}</span>
+        <span className="ops-label">{W.pass(f.num(o.day), f.num(pick.hours))}</span>
+        <button type="button" className="ops-close" aria-label={W.close} onClick={onClose}>
           ×
         </button>
       </div>
       <div className="ops-call-day">
-        <button type="button" className="btn-sm" aria-label="Earlier day" onClick={() => setDay(o.day - 1)}>
+        <button type="button" className="btn-sm" aria-label={W.earlier} onClick={() => setDay(o.day - 1)}>
           −
         </button>
-        <span className="mono">Day {f.num(o.day)}</span>
-        <button type="button" className="btn-sm" aria-label="Later day" onClick={() => setDay(o.day + 1)}>
+        <span className="mono">{W.day(f.num(o.day))}</span>
+        <button type="button" className="btn-sm" aria-label={W.later} onClick={() => setDay(o.day + 1)}>
           +
         </button>
-        <span className="faint">first free day: {f.num(o.earliestDay)}</span>
+        <span className="faint">{W.firstFree(f.num(o.earliestDay))}</span>
       </div>
-      <div className="ops-call-opts" role="radiogroup" aria-label="Dish">
+      <div className="ops-call-opts" role="radiogroup" aria-label={W.dish}>
         {o.options.map((x) => (
           <button key={x.dish} type="button" role="radio" aria-checked={dish === x.dish} className={`ops-call-opt${dish === x.dish ? ' chosen' : ''}`} onClick={() => setDish(x.dish)}>
             <span className="ops-call-name">
               <DishIcon size={16} />
-              {x.dish === 70 ? 'Big dish' : 'Small dish'} · {f.num(x.dish)} m
+              {x.dish === 70 ? W.big : W.small} · {f.num(x.dish)} m
             </span>
             <span className="ops-call-cost mono">
               <CoinIcon />
-              {x.extraCost_M <= 0 ? (x.isStandard ? 'included' : 'free') : engineer ? f.money(x.extraCost_M, 3) : `${f.num(x.extraCoins)} coins`}
+              {x.extraCost_M <= 0 ? (x.isStandard ? W.included : W.free) : engineer ? f.money(x.extraCost_M, 3) : W.coins(f.num(x.extraCoins))}
             </span>
-            <span className="muted">{engineer ? `${f.rate(x.rate_bps)} · ${f.bits(x.data_bits)}` : `about ${f.photos(x.photos)} photos home`}</span>
-            {x.booked && <span className="ops-label ok">BOOKED</span>}
+            <span className="muted">{engineer ? `${f.rate(x.rate_bps)} · ${f.bits(x.data_bits)}` : W.photosHome(f.photos(x.photos))}</span>
+            {x.booked && <span className="ops-label ok">{W.booked}</span>}
           </button>
         ))}
       </div>
       {o.refused && (
         <p className="bad">
           {o.refused.reason === 'lead-time'
-            ? `Too soon: book from day ${f.num(o.refused.retryAfterDay ?? 0)}.`
+            ? W.tooSoon(f.num(o.refused.retryAfterDay ?? 0))
             : o.refused.reason === 'conjunction'
-              ? `No radio that day (solar conjunction). Try day ${f.num(o.refused.retryAfterDay ?? 0)}.`
-              : 'That day is after the mission ends.'}
+              ? W.conjunction(f.num(o.refused.retryAfterDay ?? 0))
+              : W.afterEnd}
         </p>
       )}
       <div className="ops-panel-foot">
         <button type="button" className="cta wide" disabled={o.refused !== undefined || pick.booked} onClick={() => onBook(o.day, pick.dish, pick.hours)}>
-          {pick.booked ? 'Already booked' : `Book the ${dish === 70 ? 'big' : 'small'} dish`}
+          {pick.booked ? W.already : W.book(dish === 70)}
         </button>
       </div>
     </section>

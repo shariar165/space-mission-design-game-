@@ -15,7 +15,7 @@ const NOT_TRANSLATED = ['GAME_NAME', 'EFFECT_ICON', 'CHIP_ICON', 'SCIENCE_PARTS'
 const PENDING = [
   'panelWords', 'PANEL_SOUND', 'STAR_WORDS', 'CATEGORY_NAME', 'savedWords', 'hurtWords', 'REPORT_STAMP', 'FINAL_WORDS', 'finalLines',
   'CATEGORY_LOOK', 'LESSON_WORDS', 'unlockHint',
-  'SCIENCE', 'MOON_WORDS', 'DOWNLINK', 'bodyWord', 'GLOBE_WORDS', 'ALBUM', 'DAILY_SCIENCE',
+  'ALBUM', 'DAILY_SCIENCE',
 ];
 
 const BENGALI = /[ঀ-৿]/;
@@ -23,7 +23,7 @@ const BENGALI_DIGIT = /[০-৯]/;
 /** Strings that are the same in both languages: names (robots, NASA, the language's own), keys and sound effects. */
 /** Science target names stay in English (the user's rule), like NASA mission names. */
 const ENGLISH_BY_RULE = /^TARGET_WORDS\.[^.]+\.name$/;
-const SAME_IN_BOTH = new Set(['', 'EN', 'VOYA', 'TALLY', 'KESTREL', 'ARM', 'CME']);
+const SAME_IN_BOTH = new Set(['', 'EN', 'VOYA', 'TALLY', 'KESTREL', 'ARM', 'CME', '2D', '3D', '↓']);
 
 const words = W as unknown as Record<string, unknown>;
 const bangla = BN as Record<string, unknown>;

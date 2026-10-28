@@ -5,7 +5,7 @@ import { defaultPowerPlan, powerPlanPreview, type OpsState, type PowerPlan } fro
 import type { MeterStatus } from '../../../engine/types';
 import * as f from '../../format';
 import { cssPct } from '../../opsGeometry';
-import { STATUS_LABEL } from '../../opsWords';
+import { DRAWER_WORDS, STATUS_LABEL } from '../../opsWords';
 import { StatusIcon } from '../icons';
 import { SourceInfo } from '../SourceInfo';
 import { SendIcon } from './opsIcons';
@@ -72,30 +72,31 @@ export function PowerDial({ state, engineer, destName, blocked, onSend, onClose 
   };
 
   const status = worst(p.today.status, p.eclipse?.status ?? 'ok', p.cold || !draft.radio ? 'warning' : 'ok');
+  const W = DRAWER_WORDS.power;
   const msg =
     p.today.status === 'over'
-      ? 'Too much! The craft would have to switch things off today.'
+      ? W.over
       : p.eclipse?.status === 'over'
-        ? `Too much! The batteries would run flat in ${destName}’s shadow.`
+        ? W.flat(destName)
         : p.eclipse?.status === 'warning'
-          ? 'More science, but the batteries run low in eclipse.'
+          ? W.low
           : p.cold
-            ? 'Heaters are low: the fuel lines may get too cold, and cold parts fail more often.'
+            ? W.cold
             : !draft.radio
-              ? 'Radio is off: no photos go home until you switch it back on.'
+              ? W.radioIsOff
               : p.eclipse
-                ? 'A balanced plan. The batteries stay healthy through every eclipse.'
-                : 'A balanced plan.';
+                ? W.healthy
+                : W.balanced;
   const [h1x, h1y] = pt(s1 * 360, (R + r) / 2);
   const [h2x, h2y] = pt(h1 * 360, (R + r) / 2);
   const changed = JSON.stringify(draft) !== JSON.stringify(state.plan);
 
   return (
-    <section className="ops-panel ops-dial" aria-label="Power plan">
+    <section className="ops-panel ops-dial" aria-label={W.title}>
       <div className="ops-panel-head">
-        <span className="h2">Power plan</span>
-        <span className="ops-label">{engineer ? `AVAILABLE ${f.watts(p.today.available_W)} · NEED ${f.watts(p.today.required_W)}` : 'TODAY’S SHARE'}</span>
-        <button type="button" className="ops-close" aria-label="Close power plan" onClick={onClose}>
+        <span className="h2">{W.title}</span>
+        <span className="ops-label">{engineer ? `AVAILABLE ${f.watts(p.today.available_W)} · NEED ${f.watts(p.today.required_W)}` : W.share}</span>
+        <button type="button" className="ops-close" aria-label={W.close} onClick={onClose}>
           ×
         </button>
       </div>
@@ -105,7 +106,7 @@ export function PowerDial({ state, engineer, destName, blocked, onSend, onClose 
           viewBox="0 0 300 300"
           className="ops-dial-svg"
           role="img"
-          aria-label="Power split: drag the white handles"
+          aria-label={W.split}
           onPointerMove={(e) => drag && fromPointer(e, drag)}
           onPointerUp={() => setDrag(undefined)}
           onPointerLeave={() => setDrag(undefined)}
@@ -117,7 +118,7 @@ export function PowerDial({ state, engineer, destName, blocked, onSend, onClose 
           <path d={arc(h1, rd)} fill="var(--sd-crt-hi)" />
           <circle cx={C} cy={C} r="64" fill="var(--sd-crt)" />
           <text x={C} y="140" textAnchor="middle" fill="var(--sd-crt-mid)" fontSize="13">
-            {engineer ? 'P_sci' : 'Science'}
+            {engineer ? 'P_sci' : W.science}
           </text>
           <text x={C} y="168" textAnchor="middle" fill="var(--sd-crt-hi)" fontFamily="VT323, monospace" fontSize="30">
             {engineer ? f.watts(sp.science_W) : f.pct(duty, 0)}
@@ -129,30 +130,30 @@ export function PowerDial({ state, engineer, destName, blocked, onSend, onClose 
           <label className="ops-slice">
             <span className="ops-slice-head">
               <span className="sw sci" />
-              <span className="h3">Science</span>
+              <span className="h3">{W.science}</span>
               <span className="mono">{engineer ? f.watts(sp.science_W) : f.pct(duty, 0)}</span>
             </span>
-            <input type="range" min={0} max={100} value={Math.round(duty * 100)} aria-label="Science share" onChange={(e) => setScience(Number(e.target.value) / 100)} />
-            <span className="muted">{engineer ? `${f.bits(p.science_bitsPerDay)}/day · instruments` : `About ${f.photos(p.sciencePhotosPerDay)} photos a day`}</span>
+            <input type="range" min={0} max={100} value={Math.round(duty * 100)} aria-label={W.scienceShare} onChange={(e) => setScience(Number(e.target.value) / 100)} />
+            <span className="muted">{engineer ? `${f.bits(p.science_bitsPerDay)}/day · instruments` : W.photosDay(f.photos(p.sciencePhotosPerDay))}</span>
           </label>
           <label className="ops-slice">
             <span className="ops-slice-head">
               <span className="sw heat" />
-              <span className="h3">Heaters</span>
+              <span className="h3">{W.heaters}</span>
               <span className="mono">{engineer ? f.watts(sp.heaters_W) : f.pct(draft.heaters, 0)}</span>
             </span>
-            <input type="range" min={0} max={100} value={Math.round(draft.heaters * 100)} aria-label="Heater share" onChange={(e) => setHeaters(Number(e.target.value) / 100)} />
-            <span className={p.cold ? 'warn' : 'muted'}>{p.cold ? 'Fuel lines getting chilly' : 'Keeps fuel and parts warm'}</span>
+            <input type="range" min={0} max={100} value={Math.round(draft.heaters * 100)} aria-label={W.heaterShare} onChange={(e) => setHeaters(Number(e.target.value) / 100)} />
+            <span className={p.cold ? 'warn' : 'muted'}>{p.cold ? W.chilly : W.warm}</span>
           </label>
           <div className="ops-slice">
             <span className="ops-slice-head">
               <span className="sw radio" />
-              <span className="h3">Radio</span>
-              <button type="button" className="ops-switch" role="switch" aria-checked={draft.radio} aria-label="Radio" onClick={() => setDraft((x) => ({ ...x, radio: !x.radio }))}>
+              <span className="h3">{W.radio}</span>
+              <button type="button" className="ops-switch" role="switch" aria-checked={draft.radio} aria-label={W.radio} onClick={() => setDraft((x) => ({ ...x, radio: !x.radio }))}>
                 <span />
               </button>
             </span>
-            <span className="muted">{engineer ? `${f.watts(sp.radioMax_W)} DC · ${f.bits(p.downlink_bitsPerDay)}/day today` : draft.radio ? 'Sends photos home' : 'Off: nothing goes home'}</span>
+            <span className="muted">{engineer ? `${f.watts(sp.radioMax_W)} DC · ${f.bits(p.downlink_bitsPerDay)}/day today` : draft.radio ? W.sends : W.radioOff}</span>
           </div>
         </div>
       </div>
@@ -164,7 +165,7 @@ export function PowerDial({ state, engineer, destName, blocked, onSend, onClose 
         <div className="b">{msg}</div>
         {p.eclipse && (
           <div className="ops-lowest">
-            <span className="muted">Battery at its lowest</span>
+            <span className="muted">{W.lowest}</span>
             <span className="ops-bar thin">
               <span className="ops-bar-fill" style={{ width: cssPct(p.eclipse.lowestCharge) }} />
               <span className="ops-bar-mark" style={{ left: cssPct(p.eclipse.lowestAllowedCharge) }} />
@@ -191,11 +192,11 @@ export function PowerDial({ state, engineer, destName, blocked, onSend, onClose 
       </div>
       <div className="ops-panel-foot">
         <button type="button" className="btn ghost" onClick={() => setDraft(defaultPowerPlan(state.env))}>
-          Reset to usual plan
+          {W.reset}
         </button>
         <button type="button" className="cta" disabled={!changed || blocked} onClick={() => onSend(draft)}>
           <SendIcon />
-          {blocked ? 'No contact' : 'Send plan'}
+          {blocked ? W.noContact : W.send}
         </button>
       </div>
     </section>

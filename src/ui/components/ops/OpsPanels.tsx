@@ -8,12 +8,13 @@ import type { ExtensionOption } from '../../../engine/ops/types';
 const STAR_COUNT = 3;
 import * as f from '../../format';
 import { cssPct } from '../../opsGeometry';
-import { EXTENSION_BLOCKER, OPS_PHASE } from '../../opsWords';
+import { DRAWER_WORDS, EXTENSION_BLOCKER, OPS_PHASE } from '../../opsWords';
 import type { Notice } from '../../useOpsSession';
 import { Star } from '../icons';
 import { BlockIcon, ExtendIcon, RadioIcon, RetireIcon, SkipIcon, SunIcon } from './opsIcons';
 
 const instrumentName = (id: string) => PARTS.instruments[id]?.name ?? id;
+const W = DRAWER_WORDS;
 
 // ---------------------------------------------------------------------------
 
@@ -38,13 +39,11 @@ export function CommandQueue({
   const done = commands.filter((c) => c.status !== 'in-flight').slice(-4).reverse();
   const up = blackout.upcoming?.soon ? blackout.upcoming : undefined;
   return (
-    <section className="ops-panel ops-queue" aria-label="Command queue">
+    <section className="ops-panel ops-queue" aria-label={W.queue.title}>
       <div className="ops-panel-head">
-        <span className="h2">Command queue</span>
-        <span className="ops-label">
-          {f.num(inFlight.length)} ON ITS WAY · {f.num(done.length)} RECENT
-        </span>
-        <button type="button" className="ops-close" aria-label="Close command queue" onClick={onClose}>
+        <span className="h2">{W.queue.title}</span>
+        <span className="ops-label">{W.queue.counts(f.num(inFlight.length), f.num(done.length))}</span>
+        <button type="button" className="ops-close" aria-label={W.queue.close} onClick={onClose}>
           ×
         </button>
       </div>
@@ -53,12 +52,12 @@ export function CommandQueue({
           <SunIcon size={18} />
           <div>
             {blackout.active ? (
-              <div className="b">Solar conjunction: no commands until day {f.num(blackout.retryAfterDay ?? 0)}.</div>
+              <div className="b">{W.queue.sunNow(f.num(blackout.retryAfterDay ?? 0))}</div>
             ) : (
               up && (
                 <>
-                  <div className="b">Solar conjunction in {f.days(up.inDays)}: send your commands before day {f.num(up.window.startDay)}.</div>
-                  <div className="muted">Then the Sun blocks the radio for {f.days(up.length_days)}. Your craft runs on what you have sent.</div>
+                  <div className="b">{W.queue.sunSoon(up.inDays, f.num(up.window.startDay))}</div>
+                  <div className="muted">{W.queue.sunThen(up.length_days)}</div>
                 </>
               )
             )}
@@ -71,16 +70,16 @@ export function CommandQueue({
         </div>
       )}
       <div className="ops-queue-list">
-        {inFlight.length === 0 && done.length === 0 && <p className="muted">Nothing sent yet. Change the power plan or answer a hazard to send a command.</p>}
+        {inFlight.length === 0 && done.length === 0 && <p className="muted">{W.queue.empty}</p>}
         {inFlight.map((c) => (
           <div key={c.id} className="ops-cmd flying">
             <div className="ops-cmd-top">
-              <span className="ops-label acc">ON ITS WAY</span>
-              <span className="ops-label">SENT DAY {f.num(Math.floor(c.sentAt))}</span>
+              <span className="ops-label acc">{W.queue.onItsWay}</span>
+              <span className="ops-label">{W.queue.sentDay(f.num(Math.floor(c.sentAt)))}</span>
             </div>
             <div className="h3">{optionLabel(c)}</div>
             <div className="ops-cmd-eta">
-              <span className="muted">Arrives at the craft in</span>
+              <span className="muted">{W.queue.arrivesIn}</span>
               <span className="mono acc">{f.clock(c.timeLeft_s)}</span>
             </div>
             <div className="ops-track small">
@@ -96,8 +95,8 @@ export function CommandQueue({
         {done.map((c) => (
           <div key={c.id} className={`ops-cmd ${c.status}`}>
             <div className="ops-cmd-top">
-              <span className={`ops-label ${c.status === 'executed' ? 'ok' : 'warn'}`}>{c.status === 'executed' ? 'CARRIED OUT' : 'TOO LATE'}</span>
-              <span className="ops-label">DAY {f.num(Math.floor(c.arrivesAt))}</span>
+              <span className={`ops-label ${c.status === 'executed' ? 'ok' : 'warn'}`}>{c.status === 'executed' ? W.queue.carriedOut : W.queue.tooLate}</span>
+              <span className="ops-label">{W.queue.day(f.num(Math.floor(c.arrivesAt)))}</span>
             </div>
             <div className="h3">{optionLabel(c)}</div>
           </div>
@@ -105,10 +104,10 @@ export function CommandQueue({
       </div>
       <div className="ops-panel-foot">
         <button type="button" className="btn ghost" onClick={onPlan}>
-          + Power plan
+          {W.queue.plan}
         </button>
         <button type="button" className="cta" onClick={onCall}>
-          Book a call home
+          {W.queue.call}
         </button>
       </div>
     </section>
@@ -122,18 +121,18 @@ export function BlackoutPanel({ view, engineer, onSkip }: { view: OpsConsoleView
   if (!b.active || b.total === undefined || b.dayOf === undefined) return null;
   const now = b.dayOf;
   return (
-    <section className="ops-panel ops-blackout" aria-label="Radio blackout" aria-live="polite">
+    <section className="ops-panel ops-blackout" aria-label={W.blackout.label} aria-live="polite">
       <div className="ops-panel-title bad">
         <span className="ops-icon-box bad">
           <RadioIcon size={24} off />
         </span>
-        <span className="ops-label bad">
-          RADIO BLACKOUT · DAY {f.num(b.dayOf)} OF {f.num(b.total)}
-        </span>
+        <span className="ops-label bad">{W.blackout.kicker(f.num(b.dayOf), f.num(b.total))}</span>
       </div>
-      <h2 className="ops-alert-title">Sun between Earth and craft: no contact for {f.days(b.total)}</h2>
+      <h2 className="ops-alert-title">{W.blackout.title(b.total)}</h2>
       <p className="muted">
-        Your craft is flying on the plan you sent. Contact returns on <b>day {f.num(b.retryAfterDay ?? 0)}</b>, in {f.days(b.daysLeft ?? 0)}.
+        {W.blackout.before}
+        <b>{W.blackout.day(f.num(b.retryAfterDay ?? 0))}</b>
+        {W.blackout.after(b.daysLeft ?? 0)}
       </p>
       <div className="ops-bo-days" aria-hidden="true">
         {Array.from({ length: b.total }, (_, i) => (
@@ -148,7 +147,7 @@ export function BlackoutPanel({ view, engineer, onSkip }: { view: OpsConsoleView
       )}
       <button type="button" className="btn wide" onClick={() => onSkip(b.retryAfterDay ?? view.clock.day)}>
         <SkipIcon />
-        Skip ahead to day {f.num(b.retryAfterDay ?? 0)}
+        {W.blackout.skip(f.num(b.retryAfterDay ?? 0))}
       </button>
     </section>
   );
@@ -159,24 +158,25 @@ export function BlackoutPanel({ view, engineer, onSkip }: { view: OpsConsoleView
 export function SafeModePanel({ science, engineer }: { science: ConsoleScience; engineer: boolean }) {
   if (!science.paused || science.cause !== 'safe-mode') return null;
   return (
-    <section className="ops-panel ops-safe" aria-label="Safe mode" aria-live="polite">
-      <span className="chip warning">SAFE MODE</span>
-      <h2 className="ops-alert-title">Your craft protected itself.</h2>
-      <p className="muted">It is facing the Sun with its instruments off, calling home with a slow beacon. Science starts again by itself.</p>
+    <section className="ops-panel ops-safe" aria-label={W.safe.label} aria-live="polite">
+      <span className="chip warning">{W.safe.chip}</span>
+      <h2 className="ops-alert-title">{W.safe.title}</h2>
+      <p className="muted">{W.safe.body}</p>
       <div className="ops-chips">
         {science.instrumentsOff.map((id) => (
           <span key={id} className="ops-cost off">
             <span className="ops-dot off" />
-            {instrumentName(id)} off
+            {W.safe.off(instrumentName(id))}
           </span>
         ))}
         <span className="ops-cost on">
           <span className="ops-dot on" />
-          Beacon on
+          {W.safe.beacon}
         </span>
       </div>
       <div className="ops-resume">
-        Science resumes on <b>day {f.num(Math.ceil(science.resumesAt ?? 0))}</b>
+        {W.safe.resumes}
+        <b>{W.safe.day(f.num(Math.ceil(science.resumesAt ?? 0)))}</b>
       </div>
       {engineer && <div className="ops-eng-box mono">fault protection: sun-point, instruments off · resume at day {f.num(science.resumesAt ?? 0, 2)}</div>}
     </section>
@@ -199,13 +199,11 @@ export function ExtensionDecision({
   onChoose: (id: string) => void;
 }) {
   return (
-    <section className="ops-ext" aria-label="Mission extension">
+    <section className="ops-ext" aria-label={W.ext.label}>
       <div className="ops-ext-head">
-        <span className="ops-label acc">MISSION DECISION</span>
-        <h2 className="ops-ext-title">Your prime mission is complete. What now?</h2>
-        <p className="muted">
-          {f.days(scienceDays)} of science at {destName}. Your craft still works.
-        </p>
+        <span className="ops-label acc">{W.ext.kicker}</span>
+        <h2 className="ops-ext-title">{W.ext.title}</h2>
+        <p className="muted">{W.ext.sub(scienceDays, destName)}</p>
       </div>
       <div className="ops-ext-grid">
         {options.map((o) => {
@@ -215,32 +213,30 @@ export function ExtensionDecision({
             <div key={o.id} className={`ops-ext-card${end ? '' : ' extend'}${blocked ? ' blocked' : ''}`}>
               <div className="ops-ext-card-head">
                 <span className={`ops-icon-box ${end ? 'bp' : 'acc'}`}>{end ? <RetireIcon /> : <ExtendIcon />}</span>
-                <span className="ops-ext-name">{end ? 'Retire with honour' : `Extend by ${o.years === 1 ? 'one year' : `${f.num(o.years)} years`}`}</span>
-                {end && !engineer && <span className="ops-ext-rec">RECOMMENDED · GO TO YOUR REPORT</span>}
+                <span className="ops-ext-name">{end ? W.ext.retire : W.ext.extendBy(o.years)}</span>
+                {end && !engineer && <span className="ops-ext-rec">{W.ext.recommended}</span>}
               </div>
               <p className="muted">
-                {end
-                  ? 'Bank everything you have learned. Your score is locked in and nothing more can go wrong.'
-                  : `Keep flying for more science. New money pays for it, but parts are ageing and fuel is limited.${engineer ? '' : ' More flying time before your report.'}`}
+                {end ? W.ext.retireBody : `${W.ext.extendBody}${engineer ? '' : W.ext.extendCadet}`}
               </p>
               {!end && (
                 <div className="ops-ext-rows">
                   <div className="ops-row">
-                    <span className="muted">More science</span>
+                    <span className="muted">{W.ext.moreScience}</span>
                     <span className="mono">{f.gbit(o.expectedData_Gbit)}</span>
                   </div>
                   <div className="ops-row">
-                    <span className="muted">Fuel for trims</span>
+                    <span className="muted">{W.ext.fuel}</span>
                     <span className={`mono ${o.blockedBy.includes('deltaV') ? 'bad' : ''}`}>
-                      {f.speed(o.deltaVNeeded_ms)} of {f.speed(o.deltaVLeft_ms)}
+                      {W.ext.of(f.speed(o.deltaVNeeded_ms), f.speed(o.deltaVLeft_ms))}
                     </span>
                   </div>
                   <div className="ops-row">
-                    <span className="muted">Power at the end</span>
+                    <span className="muted">{W.ext.powerEnd}</span>
                     <span className={`mono ${o.blockedBy.includes('power') ? 'bad' : ''}`}>{f.signedPct(o.powerMarginAtEnd, 0)}</span>
                   </div>
                   <div className="ops-row">
-                    <span className="muted">New money</span>
+                    <span className="muted">{W.ext.newMoney}</span>
                     <span className="mono">{f.money(o.cost_M, 1)}</span>
                   </div>
                 </div>
@@ -258,7 +254,7 @@ export function ExtensionDecision({
                 </div>
               )}
               <button type="button" className={end ? 'btn wide' : 'cta wide'} disabled={blocked} onClick={() => onChoose(o.id)}>
-                {end ? 'Retire the craft' : 'Extend the mission'}
+                {end ? W.ext.retireKey : W.ext.extendKey}
               </button>
             </div>
           );
@@ -338,20 +334,20 @@ export function OpsSummary({ debrief, destName, onExit, onRestart }: { debrief: 
 export function NoticeToast({ notice, onClose }: { notice: Notice; onClose: () => void }) {
   const text =
     notice.kind === 'sent'
-      ? 'Command sent. Watch it cross space in the command queue.'
+      ? W.notice.sent
       : notice.kind === 'booked'
-        ? `Call home booked for day ${f.num(notice.day)} on the ${notice.dish === 70 ? 'big' : 'small'} dish.`
+        ? W.notice.booked(f.num(notice.day), notice.dish === 70)
         : notice.reason === 'conjunction'
-          ? `No contact during the conjunction. Try again on day ${f.num(notice.retryAfterDay ?? 0)}.`
+          ? W.notice.conjunction(f.num(notice.retryAfterDay ?? 0))
           : notice.reason === 'lead-time'
-            ? `Too soon: the dishes are booked a week ahead. The first free day is day ${f.num(notice.retryAfterDay ?? 0)}.`
+            ? W.notice.leadTime(f.num(notice.retryAfterDay ?? 0))
             : notice.reason === 'not-flying'
-              ? 'The craft is not flying.'
-              : 'That was refused.';
+              ? W.notice.notFlying
+              : W.notice.refused;
   return (
     <div className={`ops-toast ${notice.kind === 'refused' ? 'bad' : 'ok'}`} role="status">
       <span>{text}</span>
-      <button type="button" className="ops-close" aria-label="Dismiss" onClick={onClose}>
+      <button type="button" className="ops-close" aria-label={W.notice.dismiss} onClick={onClose}>
         ×
       </button>
     </div>

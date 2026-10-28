@@ -3,6 +3,7 @@
 // out of it to test-results/shots/bn-spills.txt (to read beside the shots). Run: npm run shots -- bangla
 import { appendFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
+import { launchFlight, toMarsOrbit } from './helpers';
 
 const OUT = 'test-results/shots/';
 
@@ -123,3 +124,23 @@ test('Bangla: the first mission’s briefing, Pack, Launch Day, countdown, coach
   await page.waitForTimeout(1500);
   await shot(page, 'order', p);
 });
+
+test('Bangla: switched mid-flight at Mars, the science targets and the power plan', async ({ page }, info) => {
+  test.setTimeout(180_000);
+  const p = info.project.name;
+  const mobile = p === 'mobile';
+  await launchFlight(page, mobile);
+  await toMarsOrbit(page);
+  await page.waitForTimeout(2500);
+  // the switch re-renders the flight in place: same orbit, same panel, the words in Bangla
+  await page.getByRole('button', { name: /^Language:/ }).first().click();
+  await expect(page.getByRole('button', { name: 'দেখো' }).first()).toBeVisible();
+  await page.waitForTimeout(800);
+  await shot(page, 'science', p);
+  await page.locator('.sci-done').click();
+  await page.waitForTimeout(1500);
+  await page.getByRole('button', { name: /বিদ্যুৎ-পরিকল্পনা/ }).first().click();
+  await page.waitForTimeout(600);
+  await shot(page, 'powerplan', p);
+});
+
