@@ -62,6 +62,20 @@ export const placeOf = (name: string) => lookup(name)?.of ?? `${name}-এর`;
 /** Dates in Bangla month names, with the same (Latin) digits as English. */
 const BN_DATES = 'bn-BD-u-nu-latn';
 
+/** What each level teaches, for the subtitle under its English title. */
+const BN_TEACHES: Record<string, string> = {
+  'moon-1': 'শক্তি',
+  'moon-2': 'জ্বালানি আর ওজন',
+  'moon-3': 'বিজ্ঞান আর রেডিও',
+  mars: 'আলোর দেরি',
+  venus: 'বাজেট',
+  bennu: 'গ্রহাণুর সঙ্গে দেখা আর ফেরা',
+  jupiter: 'রকেটের সীমা',
+};
+
+/** A DONKI time as the record writes it (Latin digits, UTC). */
+const donkiTime = (t: string) => t.replace('T', ' ').replace('Z', ' UTC');
+
 /** The parts' names, for lines that name one (fuelFixWords; the table itself is PART_LOOK below). */
 const BN_PART_NAME: Record<string, string> = {
   computer: 'ফ্লাইট কম্পিউটার',
@@ -940,6 +954,12 @@ export const BN: Bangla = {
     briefLive: 'এই ফ্লাইটের সৌরঝড়গুলো এই সপ্তাহে সত্যিই সূর্যে ঘটেছে। NASA-র DONKI ডেটাবেস সেগুলো লিখে রেখেছে; রেকর্ড দেখতে ঝড়ের কার্ডে ⓘ ছোঁও।',
     briefOffline: 'অফলাইন — বানানো আবহাওয়া। আসল মহাকাশ-আবহাওয়ার ফাইল পড়া যায়নি, তাই আজকের ঝড়গুলো বানানো।',
     realKicker: 'বিপদের কার্ড · আসল সূর্য',
+    event: (st) =>
+      `${
+        st.kind === 'sep'
+          ? `সৌরকণার ঝড়, ${donkiTime(st.time)}${st.instruments?.length ? `; দেখেছে ${st.instruments.join(', ')}` : ''}`
+          : `করোনাল ভর নিক্ষেপ (CME)${st.speed_kms !== undefined ? `, গতি ${f.num(st.speed_kms)} km/s` : ''}, ${donkiTime(st.time)}`
+      }${st.flare ? `; এসেছে একটা ${st.flare} সৌর-শিখা থেকে` : ''}`,
     realEvent: 'আসল ঘটনা · NASA DONKI',
     realOn: 'আসল',
     shareLive: '☀️ আসল সূর্য · NASA DONKI',
@@ -1068,6 +1088,8 @@ export const BN: Bangla = {
   },
   WEIGHT_WORDS: { ok: 'যথেষ্ট হালকা', warning: 'প্রায় বেশি ভারী', over: 'এই রকেটের জন্য খুব ভারী' },
   shortDate: (iso) => new Date(`${iso.slice(0, 10)}T00:00:00Z`).toLocaleDateString(BN_DATES, { month: 'short', day: 'numeric', timeZone: 'UTC' }),
+  fullDate: (iso) => new Date(`${iso.slice(0, 10)}T00:00:00Z`).toLocaleDateString(BN_DATES, { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' }),
+  crtDate: (iso) => new Date(`${iso.slice(0, 10)}T00:00:00Z`).toLocaleDateString(BN_DATES, { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' }),
   monthSpan: (fromIso, toIso) => {
     const m = (iso: string) => new Date(`${iso.slice(0, 10)}T00:00:00Z`).toLocaleDateString(BN_DATES, { month: 'short', timeZone: 'UTC' });
     const y = toIso.slice(0, 4);
@@ -1156,7 +1178,35 @@ export const BN: Bangla = {
     count: (got, total) => `${got} / ${total}`,
   },
   MODE_WORDS: { cadet: 'ক্যাডেট', engineer: 'ইঞ্জিনিয়ার', short: 'ইঞ্জি' },
+  LEVEL_WORDS: {
+    teaches: BN_TEACHES,
+    blurb: {
+      'moon-1': 'এমন সৌর ডানা বাছো, যাতে যানে সবসময় চার্জ থাকে।',
+      'moon-2': 'জ্বালানির প্রতিটি কিলোগ্রামও তো ওপরে তুলতে হয়।',
+      'moon-3': 'পুরো যানটা নিজে বানাও।',
+      mars: 'সরাসরি চালানোর জন্য অনেক দূর: যানকে আদেশ দাও।',
+      venus: 'বড় রাডার, ছোট মানিব্যাগ। টাকার বয়ামে চোখ রাখো।',
+      bennu: 'একটা গ্রহাণুর সঙ্গে দেখা করো, আর নমুনা নিয়ে ঘরে ফেরো।',
+      jupiter: 'কোনো রকেট কি পৃথিবী থেকে সোজা বৃহস্পতিতে পৌঁছাতে পারে?',
+    },
+    sub: (id) => `যা শিখবে: ${BN_TEACHES[id] ?? id}`,
+  },
+  LEVEL_MAP_WORDS: {
+    kicker: 'মিশনের মানচিত্র',
+    title: 'এবার কোথায় উড়বে?',
+    helper: 'প্রতিটি মিশন একটা নতুন ধারণা শেখায়। পরেরটা খুলতে একটা তারা জেতো।',
+    total: 'জেতা তারা',
+    dest: (name) => place(name),
+    node: (title, dest, teaches, open) => `${title}: ${dest}, যা শিখবে: ${teaches}${open ? '' : ' (বন্ধ)'}`,
+    learn: (teaches) => `যা শিখবে: ${teaches}`,
+    stars: (n, max) => `${n} / ${max} তারা`,
+    rescue: 'উদ্ধার-ইতিহাস',
+    rescueSub: 'হারিয়ে যাওয়া এক আসল মিশনের বাগ খুঁজে বের করো, উৎক্ষেপণের আগেই।',
+  },
   BRIEF_WORDS: {
+    label: 'মিশনের ব্রিফিং',
+    daily: 'আজকের মিশন',
+    free: 'নিজের মতো বানাও',
     kicker: (dest) => `মিশনের ব্রিফিং · ${place(dest)}`,
     learn: (concept) => `তুমি শিখবে: ${concept.toUpperCase()}`,
     job: 'তোমার কাজ',
@@ -1273,10 +1323,62 @@ export const BN: Bangla = {
   // -------------------------------------------------------------------------
   // Postcards, ranks and badges
 
+  RESCUE_WORDS: {
+    kicker: '🛟 উদ্ধার-ইতিহাস',
+    kickerYear: (year) => `🛟 উদ্ধার-ইতিহাস · ${year}`,
+    title: 'হারিয়ে যাওয়া একটা মিশন বাঁচাও',
+    helper: 'ছোট ছোট ভুলে আসল মহাকাশযান হারিয়ে গেছে। ফাইলটা পড়ো, বাগটা খুঁজে বের করো, আর উৎক্ষেপণের আগেই ঠিক করো।',
+    lostAtMars: 'মঙ্গলে পৌঁছানোর সময় হারিয়ে যায়',
+    stars: (n) => `${n} তারা`,
+    coming: ['ক্যাপসুল, 2004', 'ল্যান্ডার, 1999'],
+    comingSoon: 'শিগগিরই আসছে',
+    back: '◂ ফিরে যাও',
+    caseHelper: 'মঙ্গলে পৌঁছানোর সময় এটি হারিয়ে যায়। উৎক্ষেপণের আগেই বাগটা খুঁজে বের করো।',
+    whatHappened: 'কী ঘটেছিল',
+    file: 'মিশনের ফাইল',
+    fact: {
+      launch: 'উৎক্ষেপণ',
+      rocket: 'রকেট',
+      launchMass: 'উৎক্ষেপণের ভর',
+      fuel: 'জ্বালানি',
+      power: 'মঙ্গলে শক্তি',
+      engine: 'প্রধান ইঞ্জিন',
+      arrival: 'পৌঁছানো',
+      delay: 'মঙ্গলে সংকেতের দেরি',
+      lowest: 'পরিকল্পিত সবচেয়ে নিচু বিন্দু',
+    },
+    clues: 'সূত্র',
+    which: 'কোনটা বাগ?',
+    fromReport: 'ব্যর্থতার রিপোর্ট থেকে',
+    accuse: 'এটাই বাগ!',
+    saved: '🎉 বাগ পাওয়া গেছে। মিশন বাঁচল!',
+    starsOf: (n, max) => `${n} / ${max} তারা`,
+    factor: { before: 'প্রতিটি ধাক্কা ছিল নেভিগেটরদের ধারণার চেয়ে ', mid: ' বড় ', drift: '। পুরো যাত্রায় যানটি পরিকল্পনার চেয়ে ', after: ' নিচে নেমে এসেছিল।' },
+    factorTitle: 'পাউন্ড-ফোর্স থেকে নিউটন',
+    chart: (plan, safe, actual) => `পরিকল্পনা ${plan}, টিকে থাকার সীমা ${safe}, আসলে ${actual}`,
+    plan: (km) => `পরিকল্পনা · ${km}`,
+    safe: (km) => `নিরাপদ সীমা · ${km}`,
+    happened: (km) => `যা ঘটল · ${km}`,
+    note: { plan: 'সবচেয়ে নিচু বিন্দু: পরিকল্পনা', safe: ' · নিরাপদ সীমা', estimate: ' · হারানোর পরের হিসাব' },
+    noteTitle: { plan: 'পরিকল্পিত সবচেয়ে নিচু বিন্দু', safe: 'সবচেয়ে নিচু নিরাপদ বিন্দু', estimate: 'হিসাব করা সবচেয়ে নিচু বিন্দু' },
+    backToList: 'উদ্ধার-ইতিহাসে ফিরে যাও',
+  },
+  SOURCE_WORDS: {
+    label: (title) => (title ? `উৎস: ${title}` : 'উৎস'),
+    kicker: 'উৎস',
+    close: 'বন্ধ করো',
+    original: 'মূল লেখা (ইংরেজি)',
+    estimate: 'গেমের অনুমান · NASA-র তথ্য নয়',
+    computed: 'ইঞ্জিনের হিসাব',
+    published: 'প্রকাশিত উৎস',
+    unit: (u) => `একক: ${u}`,
+    open: 'উৎস খোলো ↗',
+  },
   POSTCARD_WORDS: {
     menu: 'পোস্টকার্ড',
     menuSub: 'তোমার রোবটদের বাড়ি পাঠানো আসল NASA ছবি।',
     view: (title) => `পোস্টকার্ড: ${title}`,
+    tile: (title, dest) => `${title} (${place(dest)})`,
     title: 'মহাকাশ থেকে পোস্টকার্ড',
     sub: 'NASA মিশনের আসল ছবি। রোবটের বিজ্ঞান-তথ্য পৃথিবীতে পৌঁছালে সে একটি করে বাড়ি পাঠায়।',
     toast: (dest) => `📮 ${place(dest)} থেকে পোস্টকার্ড!`,

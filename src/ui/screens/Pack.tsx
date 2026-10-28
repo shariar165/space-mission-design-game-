@@ -53,6 +53,7 @@ import {
   type Briefing,
 } from '../sdWords';
 import * as f from '../format';
+import { said } from '../cited';
 
 interface Props {
   base: Design;
@@ -356,10 +357,10 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
   const lesson = lessonCard && (
     <div className="pk-lesson sd-paper">
       <span className="sd-history-k">
-        {PACK_WORDS.lesson(lessonCard.title)}
+        {PACK_WORDS.lesson(said(lessonCard.title))}
         <SourceInfo s={lessonCard.lesson} title={PACK_WORDS.lessonTitle} />
       </span>
-      <span className="sd-history-v">{lessonCard.lesson.value}</span>
+      <span className="sd-history-v">{said(lessonCard.lesson.value)}</span>
       {onLesson && (
         <button type="button" className="sd-cta red" onClick={onLesson}>
           {PACK_WORDS.lessonLearned}

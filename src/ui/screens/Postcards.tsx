@@ -8,6 +8,7 @@ import { LangToggle } from '../components/sd/LangToggle';
 import { SoundToggle } from '../components/sd/SoundToggle';
 import { PostcardView, postcardSrc } from '../components/sd/PostcardView';
 import { useIsPhone } from '../sdGeometry';
+import { said } from '../cited';
 import { BRAND_WORDS, GAME_NAME, MAP_WORDS, POSTCARD_WORDS } from '../sdWords';
 import * as f from '../format';
 
@@ -44,10 +45,10 @@ export function Postcards({ earned, onHome, onBack }: Props) {
           return (
             <li key={c.id}>
               {c.open ? (
-                <button type="button" className="pc-tile open" onClick={() => setOpen(c)} aria-label={`${c.title} (${dest})`}>
+                <button type="button" className="pc-tile open" onClick={() => setOpen(c)} aria-label={POSTCARD_WORDS.tile(said(c.title), dest)}>
                   <img src={postcardSrc(c)} alt="" loading="lazy" />
                   <span className="pc-tile-dest">{MAP_WORDS.planet(dest)}</span>
-                  <span className="pc-tile-title">{c.title}</span>
+                  <span className="pc-tile-title">{said(c.title)}</span>
                 </button>
               ) : (
                 <div className="pc-tile locked" aria-label={`${POSTCARD_WORDS.locked}: ${POSTCARD_WORDS.hint(dest, c.unlockAt.value)}`}>

@@ -5,6 +5,7 @@ import type { Sourced } from '../../../engine/types';
 import { SourceInfo } from '../SourceInfo';
 import { SDIcon, type SDIconName } from '../sd/SDIcon';
 import { SWIPE_CHOOSE_PX, SWIPE_HINT_PX, SWIPE_TILT } from '../../sdGeometry';
+import { said } from '../../cited';
 import { FLY_WORDS } from '../../sdWords';
 
 export interface ChipView {
@@ -37,7 +38,8 @@ export interface CardView {
   /** s: the ⓘ of the time (a real CME's WSA-ENLIL prediction). */
   hits: { k: string; v: string; s?: Sourced<string> };
   takes: { k: string; v: string };
-  history?: { k: string; s: Sourced<string>; badge?: string };
+  /** text: the words shown, when they are not the record's own (a real storm's, said in the player's language). */
+  history?: { k: string; s: Sourced<string>; text?: string; badge?: string };
   choices: ChoiceView[];
   /** Footer under the card (e.g. "LET THE ROBOT DECIDE"). */
   footer?: { label: string; onClick: () => void };
@@ -116,7 +118,7 @@ function Paper({ card, engineer, phone, drag }: { card: CardView; engineer: bool
               {card.history.badge && <span className="sd-verify">{card.history.badge}</span>}
               <SourceInfo s={card.history.s} title={card.history.k.toLowerCase()} />
             </span>
-            <span className="sd-history-v">{card.history.s.value}</span>
+            <span className="sd-history-v">{card.history.text ?? said(card.history.s.value)}</span>
             {engineer && <span className="sd-source">SOURCE · {card.history.s.source}</span>}
           </div>
         )}

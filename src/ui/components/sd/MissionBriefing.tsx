@@ -31,7 +31,7 @@ export function MissionBriefing({ title, destination, briefing, concept, onClose
   }, [onClose]);
 
   return (
-    <div className="sd-overlay" role="dialog" aria-modal="true" aria-label="Mission briefing">
+    <div className="sd-overlay" role="dialog" aria-modal="true" aria-label={BRIEF_WORDS.label}>
       <div className="sd-brief sd-paper">
         <div className="sd-brief-head">
           <span className="sd-history-k">{BRIEF_WORDS.kicker(dest)}</span>

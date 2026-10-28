@@ -1,14 +1,28 @@
 // ⓘ: opens the Sourced<T> record behind a number: its value, unit, source, link and whether it is a
-// game estimate (spec rule 2: never present an estimate as NASA data).
-import { useEffect, useId, useRef, useState } from 'react';
+// game estimate (spec rule 2: never present an estimate as NASA data). In Bangla a cited text is shown translated
+// (cited.ts); ⓘ keeps the record as it is: the English original, its source and its link (spec UI rule 48).
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import type { Sourced } from '../../engine/types';
+import { hasBangla } from '../cited';
 import { sourcedValue } from '../format';
+import { lang } from '../lang';
+import { SOURCE_WORDS } from '../sdWords';
 
 export function SourceInfo({ s, title }: { s: Sourced<unknown>; title?: string }) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ top: number; left: number; up: boolean }>({ top: 0, left: 0, up: false });
   const ref = useRef<HTMLSpanElement>(null);
+  const pop = useRef<HTMLSpanElement>(null);
   const id = useId();
+  // Once open, keep the whole popover on screen: a long cited text can be taller than the room below the button.
+  useLayoutEffect(() => {
+    const el = pop.current;
+    if (!open || !el) return;
+    const h = el.getBoundingClientRect().height;
+    const now = pos.up ? pos.top - h : pos.top;
+    const top = Math.max(8, Math.min(now, window.innerHeight - h - 8));
+    if (top !== now) setPos({ ...pos, top, up: false });
+  }, [open, pos]);
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => {
@@ -26,6 +40,7 @@ export function SourceInfo({ s, title }: { s: Sourced<unknown>; title?: string }
     };
   }, [open]);
   const computed = s.source.startsWith('Computed by the engine');
+  const original = lang() === 'bn' && hasBangla(s.value);
   return (
     <span className="info-wrap" ref={ref}>
       <button
@@ -33,7 +48,7 @@ export function SourceInfo({ s, title }: { s: Sourced<unknown>; title?: string }
         className={`info-btn${s.isGameEstimate ? ' est' : ''}`}
         aria-expanded={open}
         aria-controls={id}
-        aria-label={`Source${title ? ` of ${title}` : ''}`}
+        aria-label={SOURCE_WORDS.label(title)}
         onClick={(e) => {
           e.stopPropagation();
           // Fixed position from the button, so the popover is never clipped by a scrolling panel.
@@ -49,31 +64,37 @@ export function SourceInfo({ s, title }: { s: Sourced<unknown>; title?: string }
       {open && (
         <span
           className="popover"
+          ref={pop}
           id={id}
           role="dialog"
           style={{ top: pos.top, left: pos.left, transform: pos.up ? 'translateY(-100%)' : undefined }}
           onMouseDown={(e) => e.stopPropagation()}
         >
           <span className="popover-head">
-            <span className="kicker">Source</span>
-            <button type="button" className="popover-close" aria-label="Close" onClick={() => setOpen(false)}>
+            <span className="kicker">{SOURCE_WORDS.kicker}</span>
+            <button type="button" className="popover-close" aria-label={SOURCE_WORDS.close} onClick={() => setOpen(false)}>
               ×
             </button>
           </span>
           {title && <span className="h3">{title}</span>}
-          <span className="popover-value">{sourcedValue(s)}</span>
+          {original && <span className="popover-orig">{SOURCE_WORDS.original}</span>}
+          <span className="popover-value" {...(original ? { lang: 'en' } : {})}>
+            {sourcedValue(s)}
+          </span>
           {s.isGameEstimate ? (
-            <span className="badge est">GAME ESTIMATE · NOT NASA DATA</span>
+            <span className="badge est">{SOURCE_WORDS.estimate}</span>
           ) : computed ? (
-            <span className="badge calc">COMPUTED BY THE ENGINE</span>
+            <span className="badge calc">{SOURCE_WORDS.computed}</span>
           ) : (
-            <span className="badge nasa">PUBLISHED SOURCE</span>
+            <span className="badge nasa">{SOURCE_WORDS.published}</span>
           )}
-          <span className="popover-src">{s.source}</span>
-          {s.unit && <span className="faint mono">unit: {s.unit}</span>}
+          <span className="popover-src" lang="en">
+            {s.source}
+          </span>
+          {s.unit && <span className="faint mono">{SOURCE_WORDS.unit(s.unit)}</span>}
           {s.url && (
             <a href={s.url} target="_blank" rel="noreferrer">
-              Open source ↗
+              {SOURCE_WORDS.open}
             </a>
           )}
         </span>

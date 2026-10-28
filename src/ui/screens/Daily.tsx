@@ -9,7 +9,7 @@ import { LangToggle } from '../components/sd/LangToggle';
 import { SoundToggle } from '../components/sd/SoundToggle';
 import { SDIcon } from '../components/sd/SDIcon';
 import { useIsPhone } from '../sdGeometry';
-import { DAILY_SCIENCE, DAILY_WORDS, DANGER_LOOK, dangerLook, GAME_NAME, LIVE_WEATHER, shortDate } from '../sdWords';
+import { DAILY_SCIENCE, DAILY_WORDS, DANGER_LOOK, dangerLook, fullDate, GAME_NAME, LIVE_WEATHER, shortDate } from '../sdWords';
 import { HAZARDS } from '../../engine/data';
 import * as f from '../format';
 
@@ -33,7 +33,7 @@ const starLine = (stars: number) => '★'.repeat(stars) + '☆'.repeat(Math.max(
 const weatherWord = (g: DailyGrid) => (g.weather === 'live' ? LIVE_WEATHER.live : g.weather === 'offline' ? LIVE_WEATHER.offline : undefined);
 
 export function shareText(n: number, g: DailyGrid): string {
-  const rows = g.rows.map((r) => `${ICON_EMOJI[r.type] ?? '⚠️'} ${EMOJI[r.result]}${r.realDate ? ` · ${LIVE_WEATHER.realOn.toLowerCase()} ${f.isoDate(r.realDate)}` : ''}`);
+  const rows = g.rows.map((r) => `${ICON_EMOJI[r.type] ?? '⚠️'} ${EMOJI[r.result]}${r.realDate ? ` · ${LIVE_WEATHER.realOn.toLowerCase()} ${fullDate(r.realDate)}` : ''}`);
   const end = g.alive ? DAILY_WORDS.shareAlive(f.num(g.endDay)) : DAILY_WORDS.shareLost(f.num(g.endDay));
   const weather = g.weather === 'live' ? [LIVE_WEATHER.shareLive] : g.weather === 'offline' ? [LIVE_WEATHER.shareOffline] : [];
   const science = g.science !== undefined ? [DAILY_SCIENCE.share(f.pct(g.science, 0))] : [];
@@ -176,16 +176,16 @@ export function Daily({ number, date, grid, played, mode, onMode, onHome, onBack
               key={i}
               className="dl-row"
               role="listitem"
-              aria-label={`${dangerLook(r.type, HAZARDS[r.type]?.title ?? r.type).title}: ${DAILY_WORDS.result_[r.result]}${r.realDate ? DAILY_WORDS.realOf(f.isoDate(r.realDate)) : ''}`}
+              aria-label={`${dangerLook(r.type, HAZARDS[r.type]?.title ?? r.type).title}: ${DAILY_WORDS.result_[r.result]}${r.realDate ? DAILY_WORDS.realOf(fullDate(r.realDate)) : ''}`}
             >
               <span className="dl-icon">
                 <SDIcon icon={dangerLook(r.type, HAZARDS[r.type]?.title ?? r.type).icon} size={phone ? 17 : 20} color="var(--sd-paper)" />
               </span>
               <span className="dl-sq" style={{ background: COLOR[r.result] }} />
               {r.realDate && (
-                <span className="dl-real" title={f.isoDate(r.realDate)}>
+                <span className="dl-real" title={fullDate(r.realDate)}>
                   <b>{LIVE_WEATHER.realOn}</b>
-                  {!phone && <span> {f.isoDate(r.realDate)}</span>}
+                  {!phone && <span> {fullDate(r.realDate)}</span>}
                 </span>
               )}
               <span className="dl-day">
