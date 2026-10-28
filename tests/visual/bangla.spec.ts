@@ -82,7 +82,7 @@ test('Bangla: cold open, Home, naming the robot, the briefing and the coach', as
   await shot(page, 'crew', p);
 });
 
-test('Bangla: the first mission’s briefing, countdown and coach', async ({ page }, info) => {
+test('Bangla: the first mission’s briefing, Pack, Launch Day, countdown and coach', async ({ page }, info) => {
   test.setTimeout(120_000);
   const p = info.project.name;
   await banglaPlayer(page, ['cold-open', 'name'], 'VOYA');
@@ -91,8 +91,15 @@ test('Bangla: the first mission’s briefing, countdown and coach', async ({ pag
   await page.waitForTimeout(500);
   await shot(page, 'briefing', p);
   await page.getByRole('button', { name: 'বুঝেছি ▸' }).click();
-  await page.getByRole('switch', { name: 'Arm' }).click();
-  await page.locator('.pk-go, button:has-text("LAUNCH")').first().click();
+  await page.waitForTimeout(800);
+  await shot(page, 'pack', p);
+  // Launch Day, from CHANGE on the launch day line
+  await page.getByRole('button', { name: 'বদলাও ▸' }).click();
+  await expect(page.getByRole('main', { name: 'উৎক্ষেপণের দিন' })).toBeVisible({ timeout: 30_000 });
+  await page.waitForTimeout(500);
+  await shot(page, 'launchday', p);
+  await page.getByRole('switch', { name: 'আর্ম' }).click();
+  await page.getByRole('button', { name: 'উৎক্ষেপণ', exact: true }).click();
   await expect(page.getByRole('dialog', { name: 'উৎক্ষেপণ' })).toBeVisible({ timeout: 60_000 });
   await page.waitForTimeout(1500);
   await shot(page, 'countdown', p);

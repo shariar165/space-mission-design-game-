@@ -2,7 +2,7 @@
 // packed craft can make it that day (engine dayQuality). Used by the Launch Day step.
 import type { CalendarDay, DayQuality } from '../../../engine/pack';
 import * as f from '../../format';
-import { DAY_WORDS, monthSpan, shortDate } from '../../sdWords';
+import { DAY_WORDS, LAUNCH_DAY_WORDS, monthSpan, shortDate } from '../../sdWords';
 
 interface Props {
   days?: CalendarDay[];
@@ -20,14 +20,14 @@ export function LaunchCalendar({ days, quality, dayIdx, onPick, destName, engine
   return (
     <div className="pk-cal">
       <div className="pk-cal-head">
-        <span className="sd-label">{days ? `LAUNCH DAY · ${monthSpan(days[0]!.date, days[days.length - 1]!.date)}` : 'LAUNCH DAY'}</span>
+        <span className="sd-label">{days ? LAUNCH_DAY_WORDS.head(monthSpan(days[0]!.date, days[days.length - 1]!.date)) : LAUNCH_DAY_WORDS.title}</span>
         <span className={`pk-cal-msg ${q?.quality ?? ''}`}>
           {!days || !day || !q
-            ? 'WORKING OUT THE LAUNCH DAYS…'
+            ? LAUNCH_DAY_WORDS.working
             : `${shortDate(day.date)} · ${engineer && day.c3 !== undefined ? `C3 = ${f.c3(day.c3)}` : phone ? DAY_WORDS[q.quality].short : DAY_WORDS[q.quality].msg(destName)}`}
         </span>
       </div>
-      <div className="pk-cal-days" role="radiogroup" aria-label="Launch day">
+      <div className="pk-cal-days" role="radiogroup" aria-label={LAUNCH_DAY_WORDS.daysLabel}>
         {(days ?? []).map((t, i) => (
           <button
             key={t.date}

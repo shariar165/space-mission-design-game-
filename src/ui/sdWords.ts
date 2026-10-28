@@ -184,7 +184,57 @@ export const PACK_BLOCKER: Record<PackBlockerCode, string> = tr('PACK_BLOCKER', 
   other: 'NOT READY TO LAUNCH',
 });
 
-export const PACK_WORDS = tr('PACK_WORDS', { noRoom: 'NO ROOM IN THE NOSE' });
+export const PACK_WORDS = tr('PACK_WORDS', {
+  noRoom: 'NO ROOM IN THE NOSE',
+  step: 'PACK',
+  shelf: 'PARTS SHELF',
+  shelfLabel: 'Parts shelf',
+  tapToPack: 'TAP TO PACK',
+  shelfEmpty: 'SHELF EMPTY. EVERYTHING IS PACKED.',
+  pack: (name: string, fits: boolean) => `Pack ${name}${fits ? '' : ' (no room)'}`,
+  fits: (n: string) => `FITS · ${n} SQUARES`,
+  fitsShort: (n: string) => `${n} SQ`,
+  wontFit: 'WON’T FIT',
+  noRoomShort: 'NO ROOM',
+  earnsData: 'Earns data',
+  covers: (danger: string) => `Covers ${danger.toLowerCase()}`,
+  /** The nose and the weight meter. */
+  fairing: 'Nose and weight',
+  nose: 'ROCKET NOSE',
+  noseLabel: 'Rocket nose',
+  noseState: (state: string) => `Nose: ${state}`,
+  full: 'FULL · NOTHING ELSE FITS',
+  fullShort: 'FULL',
+  left: (n: string) => `${n} SQUARES LEFT`,
+  alwaysPacked: (name: string) => `${name} · always packed`,
+  alwaysPackedLabel: (name: string) => `${name} (always packed)`,
+  tapToUnpack: (name: string) => `${name} · tap to unpack`,
+  unpack: (name: string) => `Unpack ${name}`,
+  weight: 'WEIGHT',
+  weightLabel: 'Weight',
+  /** The danger deck. */
+  deck: 'Danger deck',
+  deckOf: (dest: string) => `DANGER DECK · ${dest.toUpperCase()}`,
+  deckLabel: (dest: string) => `Danger deck: ${dest}`,
+  deckSub: 'Face up. You know what’s coming.',
+  /** The launch panel (Pack and Launch Day). */
+  checklist: 'Launch checklist',
+  arm: 'ARM',
+  armLabel: 'Arm',
+  launch: 'LAUNCH',
+  lesson: (title: string) => `LESSON · ${title.toUpperCase()}`,
+  lessonTitle: 'the lesson',
+  lessonLearned: '★ LESSON LEARNED',
+});
+
+/** The top bar's brand: the game's name goes Home; under it, the mission and where it flies. */
+export const BRAND_WORDS = tr('BRAND_WORDS', {
+  home: 'Signal Delay: home',
+  sub: (mission: string, dest: string) => `${mission.toUpperCase()} · TO ${dest.toUpperCase()}`,
+});
+
+/** PACK — FLY — REPORT (BUILD in Engineer mode). */
+export const STEP_WORDS = tr('STEP_WORDS', { label: 'Mission steps', pack: 'PACK', build: 'BUILD', fly: 'FLY', report: 'REPORT' });
 
 /** "No fuel" with the part that clears it (engine packBlockers `fix`), so the player learns why. */
 function fuelFixWordsEn(fix: FuelFix): string {
@@ -202,6 +252,8 @@ export const DAY_WORDS: Record<'good' | 'soso' | 'bad', { msg: (dest: string) =>
 /** The Launch Day step, and the one-line launch day on Pack (spec UI rules 24 and 26). */
 export const LAUNCH_DAY_WORDS = tr('LAUNCH_DAY_WORDS', {
   title: 'LAUNCH DAY',
+  head: (span: string) => `LAUNCH DAY · ${span}`,
+  daysLabel: 'Launch day',
   sub: 'Six weeks of launch days. Green: an easy trip. Amber: little to spare. Red: out of reach.',
   line: 'LAUNCH DAY',
   auto: 'BEST DAY · PICKED FOR YOU',
