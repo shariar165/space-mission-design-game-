@@ -1,6 +1,8 @@
 // COLD OPEN (spec UI rule 47): the first launch opens on black with a teletype. Mars Climate Orbiter, Sept. 23, 1999:
 // the orbit insertion burn, the signal everyone waited for, NO SIGNAL, the units, and what it means for the player.
-// About 15 s; SKIP is always there; Home's second row replays it. Every fact is the MCO rescue case's (engine
+// It starts behind a one-tap gate (▶ RECEIVE TRANSMISSION on black): the tap lets the sound start, as browsers
+// allow audio only after the player's first interaction. Reduced motion with the sound muted skips the gate.
+// About 15 s after the tap; SKIP is always there; Home's second row replays it. Every fact is the MCO rescue case's (engine
 // coldOpenFacts); words in sdWords (COLD_OPEN). The teletype clacks while it types and static fills the wait
 // (sound.ts, after the player's first click or key). Reduced motion prints each line whole and keeps every pause short.
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -10,7 +12,7 @@ import { useTeletype } from '../components/sd/Teletype';
 import * as f from '../format';
 import { useReducedMotion } from '../opsGeometry';
 import { COLD_OPEN } from '../sdWords';
-import { useLoop } from '../sound';
+import { sound, useLoop } from '../sound';
 
 /** How long each beat stays once it has printed (ms): about 15 s in all with the typing. */
 export const COLD_OPEN_HOLD_MS = { burn: 800, expected: 500, wait: 3000, lost: 1400, units: 1000, moral: 1700 } as const;
@@ -48,6 +50,8 @@ interface Props {
 export function ColdOpen({ onDone }: Props) {
   const still = useReducedMotion();
   const facts = useMemo(coldOpenFacts, []);
+  /** The tap-to-begin gate: shown unless there is nothing for it to start (reduced motion and the sound muted). */
+  const [gate, setGate] = useState(() => !(still && !sound.on()));
   const [beat, setBeat] = useState(0);
   /** The last beat whose line is fully printed. */
   const [printed, setPrinted] = useState(-1);
@@ -58,7 +62,7 @@ export function ColdOpen({ onDone }: Props) {
     onDone();
   };
   const id = BEATS[beat]!;
-  const ready = id === 'wait' || printed >= beat;
+  const ready = !gate && (id === 'wait' || printed >= beat);
   const last = beat === BEATS.length - 1;
   useEffect(() => {
     if (!ready) return;
@@ -71,7 +75,11 @@ export function ColdOpen({ onDone }: Props) {
     return () => window.removeEventListener('keydown', onKey);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   // The long wait for a signal that never comes: radio static.
-  useLoop('static', id === 'wait');
+  useLoop('static', !gate && id === 'wait');
+  const receive = () => {
+    sound.unlock();
+    setGate(false);
+  };
 
   const words: Record<Exclude<Beat, 'wait'>, string> = {
     burn: COLD_OPEN.burn(f.longDate(facts.arrival.value), facts.craft),
@@ -100,27 +108,38 @@ export function ColdOpen({ onDone }: Props) {
           {COLD_OPEN.skip}
         </button>
       </div>
-      <main className={`co-screen${beat >= SECOND ? ' second' : ''}`} aria-label={COLD_OPEN.label} data-beat={id}>
-        {beat < SECOND ? (
-          <>
-            {line('burn')}
-            {line('expected')}
-            {beat >= waitAt && (
-              <div className={`co-wait${beat > waitAt ? ' over' : ''}`}>
-                <span className="co-wait-k">{COLD_OPEN.waiting}</span>
-                <span className="co-trace" aria-hidden="true" />
-              </div>
-            )}
-            {line('lost')}
-          </>
-        ) : (
-          <>
-            {line('units')}
-            {line('moral')}
-            <p className="co-source">{COLD_OPEN.source(facts.citation)}</p>
-          </>
-        )}
-      </main>
+      {gate ? (
+        <main className="co-screen co-gate" aria-label={COLD_OPEN.label} data-beat="gate">
+          <span className="sd-cursor co-gate-cursor" aria-hidden="true">
+            █
+          </span>
+          <button type="button" className="co-receive" autoFocus onClick={receive}>
+            {COLD_OPEN.receive}
+          </button>
+        </main>
+      ) : (
+        <main className={`co-screen${beat >= SECOND ? ' second' : ''}`} aria-label={COLD_OPEN.label} data-beat={id}>
+          {beat < SECOND ? (
+            <>
+              {line('burn')}
+              {line('expected')}
+              {beat >= waitAt && (
+                <div className={`co-wait${beat > waitAt ? ' over' : ''}`}>
+                  <span className="co-wait-k">{COLD_OPEN.waiting}</span>
+                  <span className="co-trace" aria-hidden="true" />
+                </div>
+              )}
+              {line('lost')}
+            </>
+          ) : (
+            <>
+              {line('units')}
+              {line('moral')}
+              <p className="co-source">{COLD_OPEN.source(facts.citation)}</p>
+            </>
+          )}
+        </main>
+      )}
     </div>
   );
 }

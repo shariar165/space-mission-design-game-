@@ -32,6 +32,8 @@ export interface RescueCase {
     powerAtMars_W: Sourced<number>;
     mainEngineThrust_N: Sourced<number>;
     arrivalDate: Sourced<string>;
+    /** The burn took the craft behind Mars, as planned; contact was due when it came out again. */
+    signalBehindMars: Sourced<string>;
     earthDistanceAtArrival_1e6km: Sourced<number>;
     lightTimeAtArrival_s: Sourced<number>;
     plannedPeriapsis_km: Sourced<number>;
@@ -107,6 +109,8 @@ export interface ColdOpenFacts {
   burn: Sourced<number>;
   /** Lost on arrival. */
   lost: Sourced<string>;
+  /** When the signal was due: once the craft came out from behind Mars (no time is claimed). */
+  signal: Sourced<string>;
   /** The root cause: the thruster file was in pound-force seconds, read as newton-seconds (board report). */
   units: Sourced<string>;
   /** The report the root cause comes from, for the credit line. */
@@ -121,6 +125,7 @@ export function coldOpenFacts(): ColdOpenFacts {
     arrival: c.facts.arrivalDate,
     burn: c.facts.mainEngineThrust_N,
     lost: c.lost,
+    signal: c.facts.signalBehindMars,
     units,
     citation: units.source.replace(/\s*\(.*$/, ''),
   };

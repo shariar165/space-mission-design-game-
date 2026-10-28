@@ -765,13 +765,18 @@ describe('Rescue History: Mars Climate Orbiter (rescue.ts)', () => {
     // NO SIGNAL: lost on arrival on that day
     expect(c.lost).toBe(mco.lost);
     expect(c.lost.value).toMatch(/^Lost on arrival at Mars on Sept\. 23, 1999/);
+    // SIGNAL EXPECTED WHEN IT COMES OUT FROM BEHIND MARS: the burn took MCO behind Mars as planned, and contact was
+    // to come back when it reappeared (NSSDCA, Sept. 23, 1999); no waiting time is claimed
+    expect(c.signal).toBe(mco.facts.signalBehindMars);
+    expect(c.signal.value).toMatch(/behind Mars/);
+    expect(c.signal.url).toMatch(/nssdc\.gsfc\.nasa\.gov/);
     // ONE TEAM USED POUNDS. THE OTHER, NEWTONS.: the board's root cause, the bug clue's evidence
     expect(c.units).toBe(inspectClue('mco', 'amd-units').evidence);
     expect(c.units.value).toMatch(/newton-seconds \(N·s\)/);
     expect(c.units.value).toMatch(/pound-force seconds \(lbf·s\)/);
     // the credit line names the report, without its date and section
     expect(c.citation).toBe('MCO Mishap Investigation Board Phase I Report');
-    for (const x of [c.arrival, c.burn, c.lost, c.units]) {
+    for (const x of [c.arrival, c.burn, c.lost, c.signal, c.units]) {
       expect(x.isGameEstimate).toBe(false);
       expect(x.url).toBeTruthy();
     }

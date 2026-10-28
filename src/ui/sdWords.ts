@@ -931,12 +931,15 @@ export const SOUND_WORDS = { on: 'Sound on', off: 'Sound off' };
 
 /**
  * The cold open (spec UI rule 47): Mars Climate Orbiter, Sept. 23, 1999, on the first launch. Every fact comes from
- * the MCO rescue case (engine coldOpenFacts): the date, the craft, the insertion burn, the loss and the units.
+ * the MCO rescue case (engine coldOpenFacts): the date, the craft, the insertion burn, the signal due from behind
+ * Mars, the loss and the units.
  */
 export const COLD_OPEN = {
   label: 'Mars Climate Orbiter, 1999: the signal that never came back',
   burn: (date: string, craft: string) => `${date} · ${craft.toUpperCase()} · ORBIT INSERTION BURN`,
-  expected: 'SIGNAL EXPECTED IN A FEW MINUTES',
+  expected: 'SIGNAL EXPECTED WHEN IT COMES OUT FROM BEHIND MARS',
+  /** The one-tap gate before it: the tap lets the sound start (browser autoplay rules). */
+  receive: '▶ RECEIVE TRANSMISSION',
   waiting: 'WAITING FOR SIGNAL',
   lost: '— NO SIGNAL —',
   units: 'ONE TEAM USED POUNDS. THE OTHER, NEWTONS.',
