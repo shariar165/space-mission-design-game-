@@ -1181,6 +1181,7 @@ export const BN: Bangla = {
   },
   NAV: {
     back: '◂ ফিরে যাও',
+    backLabel: 'ফিরে যাও',
     info: 'মিশনের তথ্য',
     help: 'কীভাবে ওড়াবে',
     start: 'বুঝেছি ▸',

@@ -145,7 +145,7 @@ test('Bangla: switched mid-flight at Mars, the science targets and the power pla
 });
 
 
-test('Bangla: the Mission Report (switched at the end of a flight), the Notebook and Postcards', async ({ page }, info) => {
+test('Bangla: the Mission Report, switched at the end of a flight', async ({ page }, info) => {
   test.setTimeout(300_000);
   const p = info.project.name;
   const mobile = p === 'mobile';
@@ -166,17 +166,15 @@ test('Bangla: the Mission Report (switched at the end of a flight), the Notebook
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
   await page.waitForTimeout(800);
   await shot(page, 'report-end', p);
-  // Home's Notebook and Postcards, in Bangla
-  await page.goto('/?seed=2013');
-  await page.getByRole('switch', { name: 'Engineer mode' }).or(page.getByRole('button', { name: 'Engineer mode (short)' })).first().waitFor({ timeout: 30_000 }).catch(() => undefined);
-  await page.evaluate(() => {
-    localStorage.setItem('mdt.mode', 'cadet');
-  });
-  await page.goto('/?seed=2013');
+});
+
+test('Bangla: the Notebook and Postcards', async ({ page }, info) => {
+  const p = info.project.name;
+  await banglaPlayer(page, ['cold-open', 'name'], 'VOYA');
   await page.getByRole('button', { name: /^নোটবুক:/ }).click();
   await page.waitForTimeout(800);
   await shot(page, 'notebook', p);
-  await page.getByRole('button', { name: '◂ ফিরে যাও' }).first().click();
+  await page.getByRole('button', { name: 'ফিরে যাও', exact: true }).first().click();
   await page.getByRole('button', { name: /^পোস্টকার্ড:/ }).click();
   await page.waitForTimeout(800);
   await shot(page, 'postcards', p);

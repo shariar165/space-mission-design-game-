@@ -3,7 +3,7 @@ import { NAV } from '../../sdWords';
 
 export function BackButton({ onBack, label = NAV.back, className = '' }: { onBack: () => void; label?: string; className?: string }) {
   return (
-    <button type="button" className={`sd-back ${className}`.trim()} onClick={onBack} aria-label="Back">
+    <button type="button" className={`sd-back ${className}`.trim()} onClick={onBack} aria-label={NAV.backLabel}>
       {label}
     </button>
   );

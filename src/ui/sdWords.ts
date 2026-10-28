@@ -735,6 +735,7 @@ export const LAUNCH_CHECKS = tr('LAUNCH_CHECKS', {
 
 export const NAV = tr('NAV', {
   back: '◂ BACK',
+  backLabel: 'Back',
   info: 'MISSION INFO',
   help: 'HOW TO FLY',
   start: 'GOT IT ▸',
