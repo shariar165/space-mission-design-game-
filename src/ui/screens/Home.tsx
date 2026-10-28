@@ -14,6 +14,7 @@ import type { MarsNow } from '../../engine/marsNow';
 import { SDIcon, type SDIconName } from '../components/sd/SDIcon';
 import { Teletype } from '../components/sd/Teletype';
 import { useReducedMotion } from '../opsGeometry';
+import { useLoop } from '../sound';
 import { along, ring, useCycle, useIsPhone } from '../sdGeometry';
 import { isUnlocked, LEVELS, type Level, type Progress } from '../levels';
 import * as f from '../format';
@@ -64,6 +65,7 @@ export function nextToPlay(progress: Progress): { level: Level; index: number } 
 export function Home({ progress, mode, onMode, daily, rescue, notebook, postcards, crew, mars, onPlay, onMissions, onDaily, onRescue, onNotebook, onPostcards }: Props) {
   const phone = useIsPhone();
   const still = useReducedMotion();
+  useLoop('hum');
   const cycle = useCycle(HOME_LOOP_MS, !still);
   const ringPhase = useCycle(700, !still);
   const oneWay = useMemo(() => {
