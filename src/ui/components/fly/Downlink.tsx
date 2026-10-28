@@ -8,7 +8,7 @@ import { targetById } from '../../../engine/targets';
 import * as f from '../../format';
 import { PRINT_DOTS, PRINT_MS } from '../../sdGeometry';
 import { DOWNLINK, TARGET_WORDS, targetName } from '../../sdWords';
-import { play } from '../../sound';
+import { useLoop } from '../../sound';
 import { SDIcon } from '../sd/SDIcon';
 
 export const targetSrc = (id: string) => `${import.meta.env.BASE_URL}${targetById(id)?.image.file ?? ''}`;
@@ -116,7 +116,6 @@ export function Downlink({ view, robotName, phone, still, onClose, onSkip }: Pro
     if (!latest || latest === seen.current) return;
     seen.current = latest;
     setPrinting(latest);
-    play('print');
   }, [latest]);
   const n = view.rows.length;
   const index = printing ? view.rows.findIndex((r) => r.targetId === printing) : -1;
@@ -126,6 +125,8 @@ export function Downlink({ view, robotName, phone, still, onClose, onSkip }: Pro
   const passLine = !pass ? DOWNLINK.noPass : pass.open ? DOWNLINK.passOpen(f.durationWords(pass.closesIn_s).toUpperCase()) : DOWNLINK.nextPass(f.durationWords(pass.openIn_s).toUpperCase());
   const all = n > 0 && view.waiting === 0;
   const busy = printing !== undefined && !opened;
+  // The printer rattles while a picture prints line by line.
+  useLoop('rattle', busy && !still);
   const key = !n
     ? { k: DOWNLINK.nothing, s: DOWNLINK.nothingSub, go: undefined }
     : busy

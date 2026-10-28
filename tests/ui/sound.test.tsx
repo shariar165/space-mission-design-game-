@@ -5,87 +5,8 @@
 import { act, render } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { createSound, installUnlock, MASTER_GAIN, sound, UNLOCK_EVENTS, useLoop, type SoundDeps } from '../../src/ui/sound';
+import { Ctx, Node, type Param, Source } from './fakeAudio';
 import './setup';
-
-class Param {
-  value = 0;
-  log: [string, number, number?][] = [];
-  setValueAtTime(v: number, t: number) {
-    this.value = v;
-    this.log.push(['set', v, t]);
-    return this;
-  }
-  exponentialRampToValueAtTime(v: number, t: number) {
-    this.value = v;
-    this.log.push(['ramp', v, t]);
-    return this;
-  }
-  cancelScheduledValues(t: number) {
-    this.log.push(['cancel', 0, t]);
-    return this;
-  }
-}
-class Node {
-  kind: string;
-  to: Node[] = [];
-  constructor(kind: string) {
-    this.kind = kind;
-  }
-  connect<T extends Node>(n: T): T {
-    this.to.push(n);
-    return n;
-  }
-}
-class Source extends Node {
-  type = '';
-  loop = false;
-  buffer: unknown;
-  frequency = new Param();
-  started?: number;
-  stopped?: number;
-  start(t = 0) {
-    this.started = t;
-  }
-  stop(t = 0) {
-    this.stopped = t;
-  }
-}
-class Ctx {
-  state: 'suspended' | 'running' = 'suspended';
-  currentTime = 1;
-  sampleRate = 4000;
-  destination = new Node('destination');
-  nodes: Node[] = [];
-  resume = vi.fn(async () => {
-    this.state = 'running';
-  });
-  suspend = vi.fn(async () => {
-    this.state = 'suspended';
-  });
-  private add<T extends Node>(n: T): T {
-    this.nodes.push(n);
-    return n;
-  }
-  createGain() {
-    return this.add(Object.assign(new Node('gain'), { gain: new Param() }));
-  }
-  createOscillator() {
-    return this.add(new Source('osc'));
-  }
-  createBufferSource() {
-    return this.add(new Source('buffer'));
-  }
-  createBiquadFilter() {
-    return this.add(Object.assign(new Node('filter'), { type: '', frequency: new Param(), Q: new Param() }));
-  }
-  createBuffer(_ch: number, length: number) {
-    const data = new Float32Array(length);
-    return { length, getChannelData: () => data };
-  }
-  sources() {
-    return this.nodes.filter((n): n is Source => n instanceof Source);
-  }
-}
 
 /** A repeatable stand-in for Math.random (a small LCG), never exactly 0.5, so every click sample is non-zero. */
 function lcg() {

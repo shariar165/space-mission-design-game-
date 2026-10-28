@@ -5,7 +5,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { DESTINATIONS, HAZARDS, PARTS } from '../../engine/data';
 import { flightMap, ghostFor, pathAhead } from '../../engine/flightMap';
-import { comingUp, downlinkView, eclipseCard, flyCard, flyTiles, FLY_RULES, missionProgress, momentsSince, moonOrbitView, nextImageT, outcomeIn_s, scienceTargetsView, stormFront, transmissionFeed, type FeedEntry, type FlyChip, type MomentKind, type OpsState } from '../../engine/ops/index';
+import { comingUp, downlinkView, eclipseCard, flyCard, flyTiles, FLY_RULES, missionProgress, momentsSince, moonOrbitView, nextImageT, outcomeIn_s, scienceTargetsView, stormFront, transmissionFeed, type FeedEntry, type FlyChip, type MomentKind, type OpsState, type OrderLine } from '../../engine/ops/index';
 import type { Design, Sourced } from '../../engine/types';
 import { SPEED_OF_LIGHT } from '../../engine/constants';
 import { BookCall } from '../components/ops/BookCall';
@@ -17,7 +17,7 @@ import { BANNER_MS, LaunchCountdown, MomentBanner } from '../components/fly/Mome
 import { SoundToggle } from '../components/sd/SoundToggle';
 import { PostcardView, postcardSrc } from '../components/sd/PostcardView';
 import { newPostcards, POSTCARDS, postcardsEarned } from '../../engine/postcards';
-import { play } from '../sound';
+import { play, useLoop } from '../sound';
 import { DangerCard, type CardView, type ChipView, type ChoiceView } from '../components/fly/DangerCard';
 import { EquationsPanel } from '../components/fly/EquationsPanel';
 import { Downlink } from '../components/fly/Downlink';
@@ -238,7 +238,9 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
     const first = heardKey.current === undefined && (state?.t ?? 0) > 1;
     heardKey.current = k;
     if (first || over) return;
-    if (lastHeard.message!.kind !== 'status') play('radio');
+    // A reply to an order beeps as it reaches Earth; the robot's other news gets the radio blip.
+    if (lastHeard.roundTrip_s !== undefined) play('beep');
+    else if (lastHeard.message!.kind !== 'status') play('radio');
     if (lastHeard.roundTrip_s !== undefined) setReply(lastHeard);
   }, [lastHeard, over]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
@@ -279,6 +281,25 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
   useEffect(() => {
     ops.setHold(hold);
   }, [hold]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ---- Sound: the CRT hums; radio static while an order or its reply crosses space (engine feed) and the clock
+  // moves; a beep when an order reaches the robot (its reply's beep is above) ----
+  useLoop('hum');
+  const orders = feed?.entries.flatMap((e) => (e.order ? [e.order] : [])) ?? [];
+  const crossing = orders.some((o) => o.status === 'in-flight' || o.status === 'reply-inbound');
+  const moving = ops.transit !== undefined || ops.orderTrips.length > 0 || (ops.speed > 0 && !ops.locked && !held);
+  useLoop('static', crossing && moving && !over);
+  const orderWas = useRef(new Map<string, OrderLine['status']>());
+  useEffect(() => {
+    const was = orderWas.current;
+    let landed = false;
+    for (const o of orders) {
+      const k = `${o.kind}:${o.sentAt}:${o.hazardId ?? o.targetId ?? ''}`;
+      if (was.get(k) === 'in-flight' && o.status !== 'in-flight') landed = true;
+      was.set(k, o.status);
+    }
+    if (landed && !over) play('beep');
+  }, [feed]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const closeOverlay = () => {
     if (overlay === 'coach') onCoachSeen?.();

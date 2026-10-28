@@ -1,7 +1,9 @@
 // Teletype text: characters appear one by one behind a blinking block cursor (design: CRT log line, INCOMING
-// result, Home pitch). Screen readers get the whole line at once; reduced motion shows it whole.
+// result, Home pitch). Screen readers get the whole line at once; reduced motion shows it whole. While characters
+// appear, the teletype clacks (sound.ts loop 'clack').
 import { useEffect, useState } from 'react';
 import { useReducedMotion } from '../../opsGeometry';
+import { useLoop } from '../../sound';
 
 /** One step every 33 ms; each step schedules the next. */
 export const TELETYPE_TICK_MS = 33;
@@ -19,6 +21,7 @@ export function useTeletype(text: string, speed: TypeSpeed = 'normal'): string {
     const id = setTimeout(() => setShown((n) => Math.min(text.length, n + Math.max(1, Math.round((CPS[speed] * TELETYPE_TICK_MS) / 1000)))), TELETYPE_TICK_MS);
     return () => clearTimeout(id);
   }, [still, shown, text, speed]);
+  useLoop('clack', !still && shown < text.length);
   return still ? text : text.slice(0, shown);
 }
 

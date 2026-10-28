@@ -7,6 +7,7 @@ import { BackButton } from '../components/sd/BackButton';
 import { ModeLever, type Mode } from '../components/sd/ModeLever';
 import { SoundToggle } from '../components/sd/SoundToggle';
 import { useTeletype } from '../components/sd/Teletype';
+import { useLoop } from '../sound';
 import * as f from '../format';
 import { useIsPhone } from '../sdGeometry';
 import { cleanRobotName, NAME_WORDS, ROBOT_NAME_MAX, robotNameOr } from '../sdWords';
@@ -28,6 +29,7 @@ const CELLS = Array.from({ length: ROBOT_NAME_MAX }, (_, i) => i);
 
 export function NameRobot({ name: saved, mode, onMode, mars, onName, onDone, onBack }: Props) {
   const phone = useIsPhone();
+  useLoop('hum');
   const eng = mode === 'engineer';
   const [name, setName] = useState(saved);
   const [launched, setLaunched] = useState(false);
