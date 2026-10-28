@@ -42,7 +42,7 @@ export function CoachCard({ onClose, title = NAV.help }: { onClose: () => void; 
         </div>
         <div className="sd-coach-foot">
           <button type="button" className="sd-ghost-btn" onClick={onClose}>
-            SKIP
+            {NAV.skip}
           </button>
           <span className="sd-coach-nav">
             {i > 0 && (

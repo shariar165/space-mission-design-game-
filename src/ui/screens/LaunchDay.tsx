@@ -10,6 +10,7 @@ import { BackButton } from '../components/sd/BackButton';
 import { LaunchCalendar } from '../components/sd/LaunchCalendar';
 import { MissionSteps } from '../components/sd/MissionSteps';
 import { ModeLever, type Mode } from '../components/sd/ModeLever';
+import { LangToggle } from '../components/sd/LangToggle';
 import { SoundToggle } from '../components/sd/SoundToggle';
 import { SDIcon } from '../components/sd/SDIcon';
 import * as f from '../format';
@@ -110,6 +111,7 @@ export function LaunchDay({ base, packed, pick, onPick, mode, onMode, missionNam
         {!phone && <MissionSteps at={0} />}
         <div className="pk-top-right">
           <span className="sd-top-keys">
+            <LangToggle />
             <SoundToggle />
             <ModeLever mode={mode} onMode={onMode} />
           </span>

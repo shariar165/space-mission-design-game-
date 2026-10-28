@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { dailyStreak, nextDailyIn_s, type DailyGrid, type DailyResult } from '../../engine/daily';
 import { BackButton } from '../components/sd/BackButton';
 import { ModeLever, type Mode } from '../components/sd/ModeLever';
+import { LangToggle } from '../components/sd/LangToggle';
 import { SoundToggle } from '../components/sd/SoundToggle';
 import { SDIcon } from '../components/sd/SDIcon';
 import { useIsPhone } from '../sdGeometry';
@@ -211,6 +212,7 @@ export function Daily({ number, date, grid, played, mode, onMode, onHome, onBack
       <div className="dl-top">
         <BackButton onBack={onBack ?? onHome} />
         <span className="sd-top-keys">
+          <LangToggle />
           <SoundToggle />
           <ModeLever mode={mode} onMode={onMode} />
         </span>

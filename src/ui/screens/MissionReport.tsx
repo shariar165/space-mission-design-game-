@@ -21,6 +21,7 @@ import { SourceInfo } from '../components/SourceInfo';
 import { MissionSteps } from '../components/sd/MissionSteps';
 import { BackButton } from '../components/sd/BackButton';
 import { ModeLever, type Mode } from '../components/sd/ModeLever';
+import { LangToggle } from '../components/sd/LangToggle';
 import { SoundToggle } from '../components/sd/SoundToggle';
 import { SDIcon } from '../components/sd/SDIcon';
 import { useReducedMotion } from '../opsGeometry';
@@ -448,6 +449,7 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
             {stampEl}
           </div>
           <span className="sd-top-keys">
+            <LangToggle />
             <SoundToggle />
             <ModeLever mode={mode} onMode={onMode} />
           </span>
@@ -500,6 +502,7 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
           </button>
           <MissionSteps at={2} first={engineer ? 'BUILD' : 'PACK'} />
           <span className="sd-top-keys">
+            <LangToggle />
             <SoundToggle />
             <ModeLever mode={mode} onMode={onMode} />
           </span>

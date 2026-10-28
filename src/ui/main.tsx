@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
+import { applyLang } from './lang';
 import './styles/theme.css';
 import './styles/app.css';
 import './styles/sd-cadet.css';
@@ -17,6 +18,8 @@ import './styles/sd-notebook.css';
 import './styles/sd-moments.css';
 import './styles/sd-science.css';
 import './styles/sd-postcards.css';
+
+applyLang();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

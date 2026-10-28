@@ -60,6 +60,8 @@ export const loadRobotName = (): string => {
 };
 export const saveRobotName = (name: string) => write(ROBOT_KEY, { name });
 
+// The language of the words (`sd.lang`) is saved by lang.ts itself: this module imports sdWords, which needs lang.
+
 /** Sound on or off (on unless the player turned it off). */
 const SOUND_KEY = 'sd.sound';
 export const loadSoundOn = (): boolean => read<{ on?: unknown }>(SOUND_KEY, {}).on !== false;

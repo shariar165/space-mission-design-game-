@@ -5,7 +5,7 @@ import { REAL_MISSION_FOR } from '../../../engine/compare';
 import { DESTINATIONS } from '../../../engine/data';
 import { missionPreset } from '../../../engine/missions';
 import type { DestinationId } from '../../../engine/types';
-import { MISSION_STEPS_WORDS, NAV, REAL_MISSION_LINE, STAR_GOALS, type Briefing } from '../../sdWords';
+import { BRIEF_WORDS, MISSION_STEPS_WORDS, NAV, REAL_MISSION_LINE, STAR_GOALS, type Briefing } from '../../sdWords';
 import * as f from '../../format';
 import { SDIcon } from './SDIcon';
 
@@ -34,21 +34,21 @@ export function MissionBriefing({ title, destination, briefing, concept, onClose
     <div className="sd-overlay" role="dialog" aria-modal="true" aria-label="Mission briefing">
       <div className="sd-brief sd-paper">
         <div className="sd-brief-head">
-          <span className="sd-history-k">MISSION BRIEFING · {dest.toUpperCase()}</span>
+          <span className="sd-history-k">{BRIEF_WORDS.kicker(dest)}</span>
           <h2 className="sd-brief-title">{title.toUpperCase()}</h2>
-          {concept && <span className="sd-brief-concept">YOU WILL LEARN: {concept.toUpperCase()}</span>}
+          {concept && <span className="sd-brief-concept">{BRIEF_WORDS.learn(concept)}</span>}
         </div>
 
         <section className="sd-brief-sec">
-          <h3>YOUR JOB</h3>
+          <h3>{BRIEF_WORDS.job}</h3>
           <p className="sd-brief-job">{briefing.job}</p>
           <p className="sd-brief-tip">
-            <SDIcon icon="star" size={16} color="var(--sd-red-ink)" /> TIP: {briefing.tip}
+            <SDIcon icon="star" size={16} color="var(--sd-red-ink)" /> {BRIEF_WORDS.tip} {briefing.tip}
           </p>
         </section>
 
         <section className="sd-brief-sec">
-          <h3>HOW TO EARN STARS</h3>
+          <h3>{BRIEF_WORDS.stars}</h3>
           <ol className="sd-brief-stars">
             {STAR_GOALS(dest).map((g, i) => (
               <li key={g}>
@@ -64,7 +64,7 @@ export function MissionBriefing({ title, destination, briefing, concept, onClose
         </section>
 
         <section className="sd-brief-sec">
-          <h3>THE STEPS</h3>
+          <h3>{BRIEF_WORDS.steps}</h3>
           <ol className="sd-brief-steps">
             {MISSION_STEPS_WORDS.map((s, i) => (
               <li key={s.word}>

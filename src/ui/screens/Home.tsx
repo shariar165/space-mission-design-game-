@@ -8,6 +8,7 @@ import { evaluateDesign } from '../../engine/index';
 import { presetDesign } from '../../engine/missions';
 import { CoachCard } from '../components/sd/CoachCard';
 import { ModeLever, type Mode } from '../components/sd/ModeLever';
+import { LangToggle } from '../components/sd/LangToggle';
 import { SoundToggle } from '../components/sd/SoundToggle';
 import { CrewPlate, type Crew } from '../components/sd/CrewFile';
 import { MarsNowPlate } from '../components/sd/MarsNowPlate';
@@ -24,8 +25,6 @@ import { COLD_OPEN, HOME_WORDS, HOW_TO_PLAY, LIVE_WEATHER, POSTCARD_WORDS } from
 /** The demo order loops every 6 s: 5 s of flight, then a second of RECEIVED (design). */
 export const HOME_LOOP_MS = 6000;
 const FLIGHT_SHARE = 5 / 6;
-
-const PITCH = 'YOU DON’T FLY THE ROCKET. YOU KEEP A ROBOT ALIVE MILLIONS OF KM AWAY, AND EVERY ORDER ARRIVES MINUTES LATE.';
 
 interface MenuItem {
   label: string;
@@ -83,10 +82,17 @@ export function Home({ progress, mode, onMode, daily, rescue, notebook, postcard
   const [howTo, setHowTo] = useState(false);
 
   const [dailyItem, ...more]: MenuItem[] = [
-    { label: 'DAILY MISSION', sub: `Daily #${f.num(daily.number)}. ${daily.weather === 'live' ? LIVE_WEATHER.homeLive : daily.weather === 'offline' ? LIVE_WEATHER.homeOffline : 'Same mission for everyone today.'}`, icon: 'calendar', tag: daily.played ? 'DONE ✓' : 'NEW TODAY', hot: !daily.played, onClick: onDaily },
-    { label: 'RESCUE HISTORY', sub: 'Real robots that nearly died. Try to save them.', icon: 'rescue', tag: `${f.num(rescue.solved)} OF ${f.num(rescue.total)}`, hot: false, onClick: onRescue },
-    { label: 'NOTEBOOK', sub: 'Real lessons you have earned.', icon: 'book', tag: `${f.num(notebook.got)} OF ${f.num(notebook.total)}`, hot: false, onClick: onNotebook },
-    { label: POSTCARD_WORDS.menu, sub: POSTCARD_WORDS.menuSub, icon: 'postcard', tag: `${f.num(postcards.got)} OF ${f.num(postcards.total)}`, hot: false, onClick: onPostcards },
+    {
+      label: HOME_WORDS.daily,
+      sub: HOME_WORDS.dailySub(f.num(daily.number), daily.weather === 'live' ? LIVE_WEATHER.homeLive : daily.weather === 'offline' ? LIVE_WEATHER.homeOffline : HOME_WORDS.dailyQuiet),
+      icon: 'calendar',
+      tag: daily.played ? HOME_WORDS.dailyDone : HOME_WORDS.dailyNew,
+      hot: !daily.played,
+      onClick: onDaily,
+    },
+    { label: HOME_WORDS.rescue, sub: HOME_WORDS.rescueSub, icon: 'rescue', tag: HOME_WORDS.count(f.num(rescue.solved), f.num(rescue.total)), hot: false, onClick: onRescue },
+    { label: HOME_WORDS.notebook, sub: HOME_WORDS.notebookSub, icon: 'book', tag: HOME_WORDS.count(f.num(notebook.got), f.num(notebook.total)), hot: false, onClick: onNotebook },
+    { label: POSTCARD_WORDS.menu, sub: POSTCARD_WORDS.menuSub, icon: 'postcard', tag: HOME_WORDS.count(f.num(postcards.got), f.num(postcards.total)), hot: false, onClick: onPostcards },
     ...(onIntro ? [{ label: COLD_OPEN.menu, sub: COLD_OPEN.menuSub, icon: 'dish' as const, tag: COLD_OPEN.menuTag, hot: false, onClick: onIntro }] : []),
   ];
   const howToEl = howTo && <CoachCard title={HOW_TO_PLAY.label} onClose={() => setHowTo(false)} />;
@@ -101,18 +107,16 @@ export function Home({ progress, mode, onMode, daily, rescue, notebook, postcard
   const craft: [number, number] = phone ? [370 + 58 * Math.cos(orbit), 90 + 20 * Math.sin(orbit)] : [470 + 80 * Math.cos(orbit), 170 + 26 * Math.sin(orbit)];
   const earth: [number, number] = phone ? [50, 120] : [130, 520];
   const pulse = along(earth, craft, p);
-  const count = p >= 1 ? 'RECEIVED ✓' : f.mmss(left);
+  const count = p >= 1 ? HOME_WORDS.received : f.mmss(left);
 
   const play = (
-    <button type="button" className="hm-play" onClick={() => onPlay(next.level)} aria-label={`Play: mission ${f.num(next.index + 1)}, ${next.level.title}`}>
+    <button type="button" className="hm-play" onClick={() => onPlay(next.level)} aria-label={HOME_WORDS.playLabel(f.num(next.index + 1), next.level.title)}>
       <span className="hm-play-icon">
         <SDIcon icon="play" size={phone ? 22 : 30} color="var(--sd-amber)" fill />
       </span>
       <span className="hm-play-text">
-        <span className="hm-play-word">PLAY</span>
-        <span className="hm-play-sub">
-          Mission {f.num(next.index + 1)} · {next.level.title}
-        </span>
+        <span className="hm-play-word">{HOME_WORDS.play}</span>
+        <span className="hm-play-sub">{HOME_WORDS.mission(f.num(next.index + 1), next.level.title)}</span>
       </span>
       <span className="hm-play-arrow">▸</span>
     </button>
@@ -182,7 +186,7 @@ export function Home({ progress, mode, onMode, daily, rescue, notebook, postcard
           <circle r="34" fill="var(--sd-earth)" />
           <path d="M-22 -10 q10 -16 24 -10 q4 12 -10 16 q-10 2 -14 -6z M4 12 q12 -2 16 8 q-8 10 -18 4z" fill="var(--sd-land)" />
           <text y="62" textAnchor="middle" className="crt-label hm-label">
-            EARTH
+            {HOME_WORDS.earth}
           </text>
         </g>
         <g transform="translate(470 170)">
@@ -203,9 +207,9 @@ export function Home({ progress, mode, onMode, daily, rescue, notebook, postcard
         </g>
       </svg>
       <div className="hm-order" role="status">
-        <span>ORDER: TURN ON CAMERA</span>
+        <span>{HOME_WORDS.order}</span>
         <span className="hm-count">{count}</span>
-        <span>UNTIL THE ROBOT HEARS YOU</span>
+        <span>{HOME_WORDS.untilHeard}</span>
       </div>
       <MarsNowPlate mars={mars} />
     </div>
@@ -215,6 +219,7 @@ export function Home({ progress, mode, onMode, daily, rescue, notebook, postcard
     return (
       <div className={`sd hm phone${mode === 'engineer' ? ' eng' : ''}`}>
         <div className="hm-phone-top">
+          <LangToggle />
           <SoundToggle />
         </div>
         {crew && <CrewPlate crew={crew} className="phone" />}
@@ -223,14 +228,14 @@ export function Home({ progress, mode, onMode, daily, rescue, notebook, postcard
           <br />
           DELAY
         </h1>
-        <Teletype className="hm-pitch sd-crt-text" text={PITCH} />
+        <Teletype className="hm-pitch sd-crt-text" text={HOME_WORDS.pitch} />
         {crt}
         {play}
         {dailyEl}
         {secondary}
         <MarsNowPlate mars={mars} className="phone" />
         <button type="button" className="hm-missions" onClick={onMissions}>
-          CHOOSE A MISSION ▸
+          {HOME_WORDS.choose}
         </button>
         {howToKey}
         {howToEl}
@@ -243,7 +248,7 @@ export function Home({ progress, mode, onMode, daily, rescue, notebook, postcard
         <div className="hm-left">
           <div className="hm-hero">
             <span className="hm-kicker-row">
-              <span className="hm-kicker">MISSION CONTROL · DEEP SPACE</span>
+              <span className="hm-kicker">{HOME_WORDS.kicker}</span>
               {crew && <CrewPlate crew={crew} />}
             </span>
             <h1 className="hm-word">
@@ -251,7 +256,7 @@ export function Home({ progress, mode, onMode, daily, rescue, notebook, postcard
               <br />
               DELAY
             </h1>
-            <Teletype className="hm-pitch sd-crt-text" text={PITCH} />
+            <Teletype className="hm-pitch sd-crt-text" text={HOME_WORDS.pitch} />
           </div>
           <div className="hm-grid">
             {play}
@@ -261,9 +266,10 @@ export function Home({ progress, mode, onMode, daily, rescue, notebook, postcard
           <div className="hm-foot">
             <span className="hm-foot-keys">
               <button type="button" className="hm-missions" onClick={onMissions}>
-                CHOOSE A MISSION ▸
+                {HOME_WORDS.choose}
               </button>
               {howToKey}
+              <LangToggle className="hm-lang" />
               <SoundToggle className="hm-sound" />
             </span>
           </div>

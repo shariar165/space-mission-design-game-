@@ -28,6 +28,7 @@ import { MissionBriefing } from '../components/sd/MissionBriefing';
 import { NameTag } from '../components/sd/NameTag';
 import { MissionSteps } from '../components/sd/MissionSteps';
 import { ModeLever, type Mode } from '../components/sd/ModeLever';
+import { LangToggle } from '../components/sd/LangToggle';
 import { SoundToggle } from '../components/sd/SoundToggle';
 import { SDIcon } from '../components/sd/SDIcon';
 import { useLaunchPlan } from '../launchPlan';
@@ -41,7 +42,7 @@ import {
   LAUNCH_CHECKS,
   LAUNCH_DAY_WORDS,
   NAV,
-  NO_ROOM,
+  PACK_WORDS,
   PACK_BLOCKER,
   PART_LOOK,
   SCIENCE_PARTS,
@@ -135,7 +136,7 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
 
   const spaceText = full ? 'FULL · NOTHING ELSE FITS' : sq.free === 0 ? 'FULL' : `${f.num(sq.free)} SQUARES LEFT`;
   const spaceHot = full || sq.free === 0;
-  const status = noRoom ? NO_ROOM : blockers[0] ? PACK_BLOCKER[blockers[0].code] : undefined;
+  const status = noRoom ? PACK_WORDS.noRoom : blockers[0] ? PACK_BLOCKER[blockers[0].code] : undefined;
   const fix = !noRoom ? blockers.find((b) => b.fix)?.fix : undefined;
 
   const nose = (
@@ -379,6 +380,7 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
           )}
           {infoKey}
           <span className="sd-top-keys">
+            <LangToggle />
             <SoundToggle />
             <ModeLever mode={mode} onMode={onMode} />
           </span>
@@ -420,6 +422,7 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
         <div className="pk-top-right">
           {infoKey}
           <span className="sd-top-keys">
+            <LangToggle />
             <SoundToggle />
             <ModeLever mode={mode} onMode={onMode} />
           </span>

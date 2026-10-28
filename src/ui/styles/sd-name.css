@@ -49,7 +49,7 @@
 /* ---- Phone (frame 0b) ---- */
 .nm.phone .nm-frame { height: auto; min-height: 100vh; padding: 14px 16px 22px; display: flex; flex-direction: column; gap: 12px; }
 .nm.phone .nm-brand { gap: 10px; }
-.nm.phone .nm-word { font-size: 12px; letter-spacing: 0.08em; }
+.nm.phone .nm-word { display: none; } /* the language and sound keys need the room */
 .nm.phone .sd-lever-word, .nm.phone .sd-lever-switch { display: none; }
 .nm.phone .sd-lever-short { display: inline-block; }
 .nm.phone .nm-crt { flex: 1; min-height: 430px; border-radius: 18px; border-width: 8px; box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.9); padding: 22px 16px; }

@@ -7,6 +7,7 @@
 // (sound.ts, after the player's first click or key). Reduced motion prints each line whole and keeps every pause short.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { coldOpenFacts } from '../../engine/rescue';
+import { LangToggle } from '../components/sd/LangToggle';
 import { SoundToggle } from '../components/sd/SoundToggle';
 import { useTeletype } from '../components/sd/Teletype';
 import * as f from '../format';
@@ -103,6 +104,7 @@ export function ColdOpen({ onDone }: Props) {
   return (
     <div className={`sd co${still ? ' still' : ''}`}>
       <div className="co-keys">
+        <LangToggle />
         <SoundToggle />
         <button type="button" className="sd-ghost-btn co-skip" onClick={end}>
           {COLD_OPEN.skip}

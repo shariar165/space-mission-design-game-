@@ -35,6 +35,7 @@ import { Pack } from './screens/Pack';
 import { RescueCaseView, RescueSelect } from './screens/Rescue';
 import { BRIEFING, DAILY_BRIEFING, FREE_BRIEFING, LESSON_WORDS, LIVE_WEATHER } from './sdWords';
 import { loadSpaceWeather, type SpaceWeather } from './donki';
+import { useLang } from './lang';
 import { defaultMissionName, starterDesign, today } from './starters';
 
 const newSeed = () => Math.floor(Math.random() * 2 ** 31);
@@ -75,6 +76,8 @@ function firstLaunch(mode: Mode): boolean {
 }
 
 export function App() {
+  // The words' language (EN / বাংলা): a switch re-renders every screen in place, so a flight keeps flying.
+  useLang();
   const [mode, setMode] = useState<Mode>(storedMode);
   const [design, setDesign] = useState<Design>(() => starterDesign('mars', today()));
   const [cadet, setCadet] = useState<CadetState>(() => cadetStart(design));

@@ -14,6 +14,7 @@ import { PowerDial } from '../components/ops/PowerDial';
 import { CrtMap } from '../components/fly/CrtMap';
 import { Transmissions, txLine } from '../components/fly/Transmissions';
 import { BANNER_MS, LaunchCountdown, MomentBanner } from '../components/fly/Moment';
+import { LangToggle } from '../components/sd/LangToggle';
 import { SoundToggle } from '../components/sd/SoundToggle';
 import { PostcardView, postcardSrc } from '../components/sd/PostcardView';
 import { newPostcards, POSTCARDS, postcardsEarned } from '../../engine/postcards';
@@ -42,7 +43,7 @@ import {
   EFFECT_ICON,
   endsInWords,
   FINISH_CONFIRM,
-  FLY_GOAL,
+  FLY_WORDS,
   GAME_NAME,
   LEAVE_CONFIRM,
   milestoneLine,
@@ -815,7 +816,7 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
         lost={state.status === 'lost'}
       />
       <Teletype className="fly-log sd-crt-text" text={logText} prefix="> " />
-      {!phone && <span className="fly-goal">{FLY_GOAL}</span>}
+      {!phone && <span className="fly-goal">{FLY_WORDS.goal}</span>}
       {!phone && (
         <div className="fly-legend">
           <span>
@@ -931,6 +932,7 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
 
   const helpKeys = (
     <div className="fly-help">
+      <LangToggle className="fly-lang" />
       <SoundToggle className="fly-help-q" />
       {brief && (
         <button type="button" className="sd-ghost-btn fly-help-q" aria-label={NAV.info} title={NAV.info} onClick={() => setOverlay('info')}>
