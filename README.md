@@ -204,6 +204,26 @@ At Mars the science is six targets. What each picture costs comes from the same 
 
 Usage terms follow the [JPL Image Use Policy](https://www.jpl.nasa.gov/jpl-image-use-policy). Olympus Mons is about 2.5 times taller than Everest (21.9 km against 29,032 ft, [PIA26055](https://science.nasa.gov/photojournal/pj-olympus-mons-26/)). The science weights, the camera and the atmosphere fit are labelled game estimates in [`TODO_DATA.md`](TODO_DATA.md). The globe is the game's only 3D element (three.js, loaded on demand; a flat globe takes over without WebGL or when the frame rate drops).
 
+### The Moon: far side, trim burns and four targets
+
+The Moon levels fly the Lunar Reconnaissance Orbiter's mission orbit: 50 km up, circular, over the poles. Flying that low over a body that always shows Earth the same face has three real consequences, all in the engine and on the Moon globe:
+
+- **Behind the Moon.** The near side faces Earth by construction (the IAU rotation angle W = W₀ + Ẇ·d turns the prime meridian, the mean sub-Earth point). For part of every orbit the Moon hides the craft from Earth: up to 48 of every 113 minutes when Earth lies in the orbit plane, none when it is face-on. Orders and pictures wait for the link instead of being refused, and the robot says BEHIND THE MOON and LINK BACK. Light time is 1.28 s from the mean Earth–Moon distance (384,400 km).
+- **Station-keeping.** Mascons pull low orbits down. LRO held 50 ± 20 km with one pair of burns every sidereal month, 5.46 + 5.34 = 10.81 m/s, inside a 150 m/s per year allocation ([Beckman & Lamb, NTRS 20080012683](https://ntrs.nasa.gov/citations/20080012683)). A year of pairs is 144.5 m/s, a validation row. A heavy Moon 3 pack without the extra tank runs out of fuel, and Pack says so: "PACK THE EXTRA FUEL TANK — THE 50 KM ORBIT NEEDS TRIM BURNS EVERY MONTH".
+- **Eclipses.** The same cylinder test with the Sun: up to 48 minutes on battery each orbit.
+
+The globe shows it: Earth over the near side at a shortened distance (NOT TO SCALE · // EARTH DISTANCE SHORTENED), the signal line solid while linked and broken behind the Moon, the ring dashed where the far side hides the craft, the shadow arc and the trim burns, all from the engine. Moon 1 and Moon 2 show the orbit; Moon 3 adds four targets, scored with the Mars rules. The camera is LROC's Narrow Angle Camera (10 µrad, so 0.5 m per pixel from 50 km). Coordinates are from the [IAU Gazetteer of Planetary Nomenclature](https://planetarynames.wr.usgs.gov/) (the Apollo 11 site from LROC/NSSDC). The pictures are cropped by [`scripts/fetch-targets.py`](scripts/fetch-targets.py) from public-domain LROC frames in the PDS archive, each checked on its catalogue page.
+
+| Target | Picture (LROC NAC frame) | Credit | Use |
+| --- | --- | --- | --- |
+| The Apollo 11 site (0.674°N 23.473°E) | [M175124932R](https://data.lroc.im-ldi.com/lroc/view_lroc/LRO-L-LROC-3-CDR-V1.0/M175124932RC), Tranquility Base from 24 km | NASA/GSFC/Arizona State University | Public domain (PDS) |
+| Tycho (43.30°S 11.22°W) | [M162350671L](https://data.lroc.im-ldi.com/lroc/view_lroc/LRO-L-LROC-3-CDR-V1.0/M162350671LC)/R, the central peak at sunrise | NASA/GSFC/Arizona State University | Public domain (PDS) |
+| Shackleton (89.67°S 129.78°E) | [M1346257675L](https://data.lroc.im-ldi.com/lroc/view_lroc/LRO-L-LROC-3-CDR-V1.0/M1346257675LC), oblique across the south pole, squeezed by cos 66.7° to undo the slant | NASA/GSFC/Arizona State University | Public domain (PDS) |
+| Tsiolkovskiy (20.38°S 128.97°E, far side) | [M113107391L](https://data.lroc.im-ldi.com/lroc/view_lroc/LRO-L-LROC-3-CDR-V1.0/M113107391LC), the crater floor | NASA/GSFC/Arizona State University | Public domain (PDS) |
+| The Moon globe | [CGI Moon Kit](https://svs.gsfc.nasa.gov/4720), LROC colour map 2048 × 1024 (the LROC WAC mosaic) | NASA's Scientific Visualization Studio | NASA media guidelines: educational use with credit |
+
+The science weights and the image sizes are labelled game estimates in [`TODO_DATA.md`](TODO_DATA.md). Earth's direction leaves out the libration terms (several degrees), a labelled simplification.
+
 ### Physical constants
 
 Standard gravity, speed of light (SI definitions), the astronomical unit (IAU 2012), and the unit conversion behind the Mars Climate Orbiter case ([NIST SP 811](https://www.nist.gov/pml/special-publication-811)).
@@ -324,6 +344,7 @@ The models are simplified on purpose, using the standard first-order methods of 
 - **Placeholder launch curves** for the Atlas V, as noted above.
 - **The live Daily** uses that day's DONKI snapshot. DONKI sometimes adds or revises records later, and a snapshot deployed mid-day can differ from the morning's. Each browser keeps the first snapshot it reads for the whole day. Players without the file fly the offline Daily, which has different storms. The storm cards are real events replayed on a game timeline; the model does not predict how a CME propagates.
 - **Science targets.** The camera's resolution, the science weights and the drag-heating rate are game estimates. Orbit changes are coplanar (no plane change to reach the moons), the upper atmosphere is a single exponential fitted to two MAVEN densities, and the Cadet Mars campaign is shortened to 100 days so a run lasts about five minutes.
+- **The Moon.** No lunar ephemeris: the Earth–Moon distance is the mean 384,400 km, and Earth's direction leaves out libration. Loss of signal is the cylinder test, and the downlink and image passes are scaled by each day's visible fraction rather than lined up with single orbits. Trim burns are LRO's published pair, not a mascon gravity model, and Earth's shadow (a lunar eclipse) is not modelled.
 - **Scoring** uses `Σ wᵢsᵢ` on a 0–100 scale (the spec's `100 Σ wᵢsᵢ` was read this way); since v0.8 the headline and the stars use the science returned.
 
 The full list is in the *Assumptions* section of [`docs/SCIENCE_SPEC.md`](docs/SCIENCE_SPEC.md) and in [`game_engine.md`](game_engine.md).

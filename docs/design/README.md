@@ -108,3 +108,7 @@ Imported through the claude_design MCP from the same project (https://claude.ai/
 - **Shackleton:** placed at the IAU Gazetteer centre, 89.67°S 129.78°E, not 89.9°S 0°.
 - **The link and the orbit:** where the craft is out of sight and the minutes per orbit come from the engine's geometry. The page instead takes the half of the ring away from Earth. The page's figure (48 of 113 min) is the engine's worst case, with Earth in the orbit plane.
 - **The rest:** as on the Mars globe, the camera moves to the picked target instead of free orbit controls, and the export toolbar is not shipped.
+- **The camera at the overview** follows the real orbit plane, 55° off face-on, so the ring always opens up; a fixed camera saw it edge-on on some days.
+- **The ring's words** (far side, shadow, station-keeping) are a legend keyed to the dashes, beads and diamond, not labels on the ring, which collided on a phone. The station-keeping tag gives the engine's next burns and their Δv.
+
+**Shots:** `npm run shots -- design` shoots the page at `?level=1..3` into `3d/shots/moon-<level>-<desktop|mobile>.png` (it loads three.js from unpkg, so it needs the network); the game's Moon states are `npm run shots -- moon` in `test-results/shots/`.

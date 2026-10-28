@@ -91,3 +91,17 @@ test('design report', async ({ page }, info) => {
   await page.waitForTimeout(12_000); // the comic prints panel by panel
   await shoot(page, id, 'report', info.project.name);
 });
+
+// The Moon Globe mockup (docs/design/3d, spec UI rules 45–46): its three levels at the game's sizes. It loads
+// three.js from unpkg, so it needs the network.
+test.describe('design moon globe', () => {
+  for (const level of [1, 2, 3]) {
+    test(`design moon globe ${level}`, async ({ page }, info) => {
+      await page.goto(`/docs/design/3d/${encodeURIComponent('Moon Globe.html')}?level=${level}`);
+      await page.locator('three-d-stage canvas').first().waitFor({ timeout: 60_000 });
+      await page.evaluate(() => document.fonts.ready);
+      await page.waitForTimeout(3000);
+      await page.screenshot({ path: `docs/design/3d/shots/moon-${level}-${info.project.name}.png` });
+    });
+  }
+});
