@@ -62,6 +62,9 @@ export const placeOf = (name: string) => lookup(name)?.of ?? `${name}-এর`;
 /** Dates in Bangla month names, with the same (Latin) digits as English. */
 const BN_DATES = 'bn-BD-u-nu-latn';
 
+/** A DONKI time as the record writes it (Latin digits, UTC). */
+const donkiTime = (t: string) => t.replace('T', ' ').replace('Z', ' UTC');
+
 /** The parts' names, for lines that name one (fuelFixWords; the table itself is PART_LOOK below). */
 const BN_PART_NAME: Record<string, string> = {
   computer: 'ফ্লাইট কম্পিউটার',
@@ -940,6 +943,12 @@ export const BN: Bangla = {
     briefLive: 'এই ফ্লাইটের সৌরঝড়গুলো এই সপ্তাহে সত্যিই সূর্যে ঘটেছে। NASA-র DONKI ডেটাবেস সেগুলো লিখে রেখেছে; রেকর্ড দেখতে ঝড়ের কার্ডে ⓘ ছোঁও।',
     briefOffline: 'অফলাইন — বানানো আবহাওয়া। আসল মহাকাশ-আবহাওয়ার ফাইল পড়া যায়নি, তাই আজকের ঝড়গুলো বানানো।',
     realKicker: 'বিপদের কার্ড · আসল সূর্য',
+    event: (st) =>
+      `${
+        st.kind === 'sep'
+          ? `সৌরকণার ঝড়, ${donkiTime(st.time)}${st.instruments?.length ? `; দেখেছে ${st.instruments.join(', ')}` : ''}`
+          : `করোনাল ভর নিক্ষেপ (CME)${st.speed_kms !== undefined ? `, গতি ${f.num(st.speed_kms)} km/s` : ''}, ${donkiTime(st.time)}`
+      }${st.flare ? `; এসেছে একটা ${st.flare} সৌর-শিখা থেকে` : ''}`,
     realEvent: 'আসল ঘটনা · NASA DONKI',
     realOn: 'আসল',
     shareLive: '☀️ আসল সূর্য · NASA DONKI',
@@ -1273,10 +1282,22 @@ export const BN: Bangla = {
   // -------------------------------------------------------------------------
   // Postcards, ranks and badges
 
+  SOURCE_WORDS: {
+    label: (title) => (title ? `উৎস: ${title}` : 'উৎস'),
+    kicker: 'উৎস',
+    close: 'বন্ধ করো',
+    original: 'মূল লেখা (ইংরেজি)',
+    estimate: 'গেমের অনুমান · NASA-র তথ্য নয়',
+    computed: 'ইঞ্জিনের হিসাব',
+    published: 'প্রকাশিত উৎস',
+    unit: (u) => `একক: ${u}`,
+    open: 'উৎস খোলো ↗',
+  },
   POSTCARD_WORDS: {
     menu: 'পোস্টকার্ড',
     menuSub: 'তোমার রোবটদের বাড়ি পাঠানো আসল NASA ছবি।',
     view: (title) => `পোস্টকার্ড: ${title}`,
+    tile: (title, dest) => `${title} (${place(dest)})`,
     title: 'মহাকাশ থেকে পোস্টকার্ড',
     sub: 'NASA মিশনের আসল ছবি। রোবটের বিজ্ঞান-তথ্য পৃথিবীতে পৌঁছালে সে একটি করে বাড়ি পাঠায়।',
     toast: (dest) => `📮 ${place(dest)} থেকে পোস্টকার্ড!`,

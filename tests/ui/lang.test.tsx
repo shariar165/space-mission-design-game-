@@ -5,7 +5,10 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { presetDesign } from '../../src/engine/missions';
 import { App } from '../../src/ui/App';
-import { lang, useLang } from '../../src/ui/lang';
+import { POSTCARDS } from '../../src/engine/postcards';
+import { CITED_BN } from '../../src/ui/cited.bn';
+import { PostcardView } from '../../src/ui/components/sd/PostcardView';
+import { lang, setLang, useLang } from '../../src/ui/lang';
 import { FlyAndSurvive } from '../../src/ui/screens/FlyAndSurvive';
 import './setup';
 
@@ -55,5 +58,29 @@ describe('the language switch', () => {
     expect(document.querySelector('.fly-day-num')!.textContent).toBe(day);
     act(() => fireEvent.click(toggle()));
     expect(finish()).toBe('FINISH MISSION ▸▸');
+  });
+});
+
+describe('cited texts in Bangla (spec UI rule 48)', () => {
+  it('a postcard reads in Bangla; its ⓘ keeps the English original, the source and the link', () => {
+    const card = POSTCARDS.find((c) => c.id === 'moon-tycho')!;
+    setLang('bn');
+    render(<PostcardView card={card} onClose={() => {}} />);
+    expect(screen.getByText('Tycho গহ্বরে সূর্যোদয়')).toBeTruthy();
+    expect(screen.getByText(CITED_BN[card.caption.value]!)).toBeTruthy();
+    expect(screen.queryByText(card.caption.value)).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'উৎস: Tycho গহ্বরে সূর্যোদয়' }));
+    expect(screen.getByText('মূল লেখা (ইংরেজি)')).toBeTruthy();
+    expect(screen.getByText(card.caption.value).getAttribute('lang')).toBe('en');
+    expect(screen.getByText(card.caption.source)).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'উৎস খোলো ↗' }).getAttribute('href')).toBe(card.caption.url);
+  });
+
+  it('in English the ⓘ shows the text with no "original" label', () => {
+    const card = POSTCARDS.find((c) => c.id === 'moon-tycho')!;
+    render(<PostcardView card={card} onClose={() => {}} />);
+    fireEvent.click(screen.getByRole('button', { name: `Source of ${card.title}` }));
+    expect(screen.queryByText('ORIGINAL (ENGLISH)')).toBeNull();
+    expect(screen.getAllByText(card.caption.value).length).toBe(2);
   });
 });

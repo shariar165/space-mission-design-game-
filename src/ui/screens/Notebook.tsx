@@ -15,6 +15,7 @@ import { useIsPhone } from '../sdGeometry';
 import { levelById } from '../levels';
 import { CATEGORY_LOOK, dangerLook, LESSON_WORDS, NOTEBOOK_WORDS, unlockHint } from '../sdWords';
 import * as f from '../format';
+import { said } from '../cited';
 
 const CATS: (LessonCategory | 'all')[] = ['all', 'signal', 'power', 'weather', 'nav', 'people'];
 const pad2 = (n: number) => String(n).padStart(2, '0');
@@ -83,7 +84,7 @@ export function Notebook({ facts, fresh, mode, onMode, onHome, onBack }: Props) 
                 {text.isGameEstimate && <span className="sd-verify">{NOTEBOOK_WORDS.toVerify}</span>}
                 <SourceInfo s={text} title={words.title.toLowerCase()} />
               </span>
-              <span className="sd-history-v">{text.value}</span>
+              <span className="sd-history-v">{said(text.value)}</span>
             </div>
             {engineer && (
               <div className="nb-numbers">

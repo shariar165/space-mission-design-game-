@@ -30,6 +30,7 @@ import { useIsPhone } from '../sdGeometry';
 import { BADGE_WORDS, BRAND_WORDS, CATEGORY_NAME, CREW_WORDS, dangerLook, finalLines, FLY_WORDS, GAME_NAME, hurtWords, optionShort, PANEL_SOUND, panelWords, POSTCARD_WORDS, RANK_WORDS, REPORT_STAMP, REPORT_WORDS, ROBOT_WORDS, robotNameOr, robotSays, savedWords, STAR_WORDS } from '../sdWords';
 import * as f from '../format';
 import { voiceContext } from '../voiceContext';
+import { said } from '../cited';
 
 /** The comic prints one panel every 2.4 s, its caption at 38 characters a second (as the design). */
 export const PANEL_STEP_MS = 2400;
@@ -255,7 +256,7 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
             <SourceInfo s={lesson} title={REPORT_WORDS.lessonTitle} />
           </span>
           <span className="rp-card-title">{lessonHazard ? dangerLook(lessonHazard, HAZARDS[lessonHazard]?.title ?? '').title : ''}</span>
-          <span className="rp-card-v">{lesson.value}</span>
+          <span className="rp-card-v">{said(lesson.value)}</span>
         </div>
       )}
       <div className="rp-actions">
@@ -349,9 +350,9 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
       {won.length ? (
         <div className="rp-postcards-row">
           {won.map((c) => (
-            <button key={c.id} type="button" className="rp-postcard" onClick={() => setCard(c.id)} aria-label={c.title}>
+            <button key={c.id} type="button" className="rp-postcard" onClick={() => setCard(c.id)} aria-label={said(c.title)}>
               <img src={postcardSrc(c)} alt="" />
-              <span>{c.title}</span>
+              <span>{said(c.title)}</span>
             </button>
           ))}
         </div>

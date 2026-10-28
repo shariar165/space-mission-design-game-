@@ -7,6 +7,7 @@
 import type { ReactNode } from 'react';
 import type { ScienceTargetsView, TargetCard } from '../../../engine/ops/index';
 import { targetById, type TargetBody } from '../../../engine/targets';
+import { said } from '../../cited';
 import * as f from '../../format';
 import { FLY_WORDS, MOON_WORDS, SCIENCE, targetName } from '../../sdWords';
 import { SDIcon } from '../sd/SDIcon';
@@ -60,7 +61,7 @@ function Row({ c, on, open, onSelect, engineer, phone }: { c: TargetCard; on: bo
           </span>
         )}
       </span>
-      {open && <span className="sci-card-learn">{t.learn.value}</span>}
+      {open && <span className="sci-card-learn">{said(t.learn.value)}</span>}
       {open && engineer && <span className="sci-card-eng">{SCIENCE.eng(f.meters(c.resolution_m), f.bits(c.image_bits), f.speed(c.dv_ms), f.days(c.days))}</span>}
       <span className="sci-card-chips">
         <span className={`sci-chip${c.fuelSegments ? ' cost' : ' free'}${c.blocker === 'fuel' ? ' alarm' : ''}`}>

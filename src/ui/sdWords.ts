@@ -5,6 +5,7 @@ import type { ComingUpKind, ConsoleOutcome, FlyChip, RobotMessage, VoiceKind } f
 import type { DeckCard, FuelFix, PackBlockerCode, PartId } from '../engine/pack';
 import type { FinalTransmission, Hurt, ReportPanel, Saved } from '../engine/ops/report';
 import type { TargetBody } from '../engine/targets';
+import type { RealStorm } from '../engine/spaceWeather';
 import type { Category } from '../engine/scoring';
 import type { LessonCategory, LessonUnlock } from '../engine/notebook';
 import type { SDIconName } from './components/sd/SDIcon';
@@ -617,6 +618,9 @@ export const DAILY_BRIEFING: Briefing = tr('DAILY_BRIEFING', {
   tip: 'You only get one try a day, so read each danger card before you choose.',
 });
 
+/** A DONKI time as the record writes it: "2024-05-10 17:00 UTC". */
+const donkiTime = (t: string) => t.replace('T', ' ').replace('Z', ' UTC');
+
 /** The Daily's space weather (spec UI rule 37): real DONKI storms, or the seeded stand-in when the file can't be read. */
 export const LIVE_WEATHER = tr('LIVE_WEATHER', {
   live: 'LIVE SUN · NASA DONKI',
@@ -632,6 +636,13 @@ export const LIVE_WEATHER = tr('LIVE_WEATHER', {
   briefLive: 'The solar storms on this flight really happened on the Sun this week. NASA’s DONKI database recorded them; tap ⓘ on a storm card to see the record.',
   briefOffline: 'Offline — simulated weather. The real space-weather file could not be read, so today’s storms are made up.',
   realKicker: 'DANGER CARD · REAL SUN',
+  /** What DONKI observed, on a real storm's card (the same words as the engine's record, spaceWeather.ts stormSourced). */
+  event: (s: RealStorm) =>
+    `${
+      s.kind === 'sep'
+        ? `Solar energetic particle event on ${donkiTime(s.time)}${s.instruments?.length ? `, seen by ${s.instruments.join(', ')}` : ''}`
+        : `Coronal mass ejection${s.speed_kms !== undefined ? ` at ${f.num(s.speed_kms)} km/s` : ''} on ${donkiTime(s.time)}`
+    }${s.flare ? `, from a ${s.flare} solar flare` : ''}`,
   realEvent: 'REAL EVENT · NASA DONKI',
   realOn: 'REAL',
   shareLive: '☀️ real Sun · NASA DONKI',
@@ -1174,12 +1185,29 @@ export const MOMENT_WORDS = tr('MOMENT_WORDS', {
 });
 
 // ---------------------------------------------------------------------------
+// ⓘ, the source of a number or a cited text (components/SourceInfo.tsx)
+
+export const SOURCE_WORDS = tr('SOURCE_WORDS', {
+  label: (title?: string) => (title ? `Source of ${title}` : 'Source'),
+  kicker: 'Source',
+  close: 'Close',
+  /** Above a cited text shown translated: ⓘ gives the English it was translated from. */
+  original: 'ORIGINAL (ENGLISH)',
+  estimate: 'GAME ESTIMATE · NOT NASA DATA',
+  computed: 'COMPUTED BY THE ENGINE',
+  published: 'PUBLISHED SOURCE',
+  unit: (u: string) => `unit: ${u}`,
+  open: 'Open source ↗',
+});
+
+// ---------------------------------------------------------------------------
 // Postcards from space
 
 export const POSTCARD_WORDS = tr('POSTCARD_WORDS', {
   menu: 'POSTCARDS',
   menuSub: 'Real NASA pictures your robots sent home.',
   view: (title: string) => `Postcard: ${title}`,
+  tile: (title: string, dest: string) => `${title} (${dest})`,
   title: 'POSTCARDS FROM SPACE',
   sub: 'Real pictures from NASA missions. Your robot sends one home as its science reaches Earth.',
   toast: (dest: string) => `📮 POSTCARD FROM ${dest}!`,

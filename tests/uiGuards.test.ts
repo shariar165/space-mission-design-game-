@@ -1,7 +1,8 @@
 // Guards for the UI rules (spec: "UI rules"):
 // (a) the engine stays pure TypeScript: no React, no DOM, no imports from src/ui;
 // (b) the UI never hard-codes a displayed number: no digits in JSX text, and no "number + unit" inside
-//     UI string literals. Design inputs (starters.ts, designOps.ts) are exempt: they are not displayed data.
+//     UI string literals. Design inputs (starters.ts, designOps.ts) are exempt: they are not displayed data. So is
+//     cited.bn.ts, the Bangla of the data's own Sourced texts: tests/cited.test.ts checks it keeps their numbers.
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -31,7 +32,7 @@ describe('engine purity', () => {
 });
 
 describe('UI shows engine numbers only', () => {
-  const uiFiles = files(join(root, 'src/ui'), /\.tsx?$/).filter((p) => !/(starters|designOps)\.ts$/.test(p));
+  const uiFiles = files(join(root, 'src/ui'), /\.tsx?$/).filter((p) => !/(starters|designOps|cited\.bn)\.ts$/.test(p));
 
   it('no digits in JSX text', () => {
     const bad: string[] = [];

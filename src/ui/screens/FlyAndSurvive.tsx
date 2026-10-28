@@ -353,7 +353,7 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
           },
           takes: { k: phone ? FLY_WORDS.takesShort : FLY_WORDS.takes, v: FLY_WORDS.duration(a.oneWay_s) },
           history: card.realSource
-            ? { k: LIVE_WEATHER.realEvent, s: card.realSource }
+            ? { k: LIVE_WEATHER.realEvent, s: card.realSource, ...(a.real ? { text: LIVE_WEATHER.event(a.real) } : {}) }
             : { k: FLY_WORDS.history, s: a.realHistory, ...(a.realHistory.isGameEstimate ? { badge: FLY_WORDS.toVerify } : {}) },
           choices: card.options.map((o): ChoiceView => {
             const chips = chipViews(o.chips);
