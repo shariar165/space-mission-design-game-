@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { dailyStreak, nextDailyIn_s, type DailyGrid, type DailyResult } from '../../engine/daily';
 import { BackButton } from '../components/sd/BackButton';
 import { ModeLever, type Mode } from '../components/sd/ModeLever';
+import { SoundToggle } from '../components/sd/SoundToggle';
 import { SDIcon } from '../components/sd/SDIcon';
 import { useIsPhone } from '../sdGeometry';
 import { DAILY_SCIENCE, DANGER_LOOK, dangerLook, GAME_NAME, LIVE_WEATHER } from '../sdWords';
@@ -209,7 +210,10 @@ export function Daily({ number, date, grid, played, mode, onMode, onHome, onBack
       <div className="dl-dots" />
       <div className="dl-top">
         <BackButton onBack={onBack ?? onHome} />
-        <ModeLever mode={mode} onMode={onMode} />
+        <span className="sd-top-keys">
+          <SoundToggle />
+          <ModeLever mode={mode} onMode={onMode} />
+        </span>
       </div>
       <div className="dl-stage">
         {phone && <span className="dl-made">{grid.alive ? 'YOU MADE IT.' : 'THE ROBOT IS GONE.'}</span>}

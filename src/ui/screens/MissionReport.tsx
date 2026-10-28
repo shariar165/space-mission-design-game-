@@ -21,6 +21,7 @@ import { SourceInfo } from '../components/SourceInfo';
 import { MissionSteps } from '../components/sd/MissionSteps';
 import { BackButton } from '../components/sd/BackButton';
 import { ModeLever, type Mode } from '../components/sd/ModeLever';
+import { SoundToggle } from '../components/sd/SoundToggle';
 import { SDIcon } from '../components/sd/SDIcon';
 import { useReducedMotion } from '../opsGeometry';
 import { useOpsRisk } from '../riskRunner';
@@ -446,7 +447,10 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
             </div>
             {stampEl}
           </div>
-          <ModeLever mode={mode} onMode={onMode} />
+          <span className="sd-top-keys">
+            <SoundToggle />
+            <ModeLever mode={mode} onMode={onMode} />
+          </span>
           {starsEl}
           <div className="rp-strip">{panelEls}</div>
           {promoEl}
@@ -494,7 +498,10 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
             {GAME_NAME}
           </button>
           <MissionSteps at={2} first={engineer ? 'BUILD' : 'PACK'} />
-          <ModeLever mode={mode} onMode={onMode} />
+          <span className="sd-top-keys">
+            <SoundToggle />
+            <ModeLever mode={mode} onMode={onMode} />
+          </span>
         </div>
       </div>
     </div>

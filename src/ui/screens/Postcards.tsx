@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { DESTINATIONS } from '../../engine/data';
 import { postcardAlbum, type AlbumCard } from '../../engine/postcards';
 import { BackButton } from '../components/sd/BackButton';
+import { SoundToggle } from '../components/sd/SoundToggle';
 import { PostcardView, postcardSrc } from '../components/sd/PostcardView';
 import { useIsPhone } from '../sdGeometry';
 import { GAME_NAME, POSTCARD_WORDS } from '../sdWords';
@@ -32,6 +33,7 @@ export function Postcards({ earned, onHome, onBack }: Props) {
         <span className="pc-count">
           {f.num(album.got)} / {f.num(album.total)}
         </span>
+        <SoundToggle className="pc-sound" />
       </header>
       <p className="pc-sub">{POSTCARD_WORDS.sub}</p>
       <ul className="pc-grid" aria-label={POSTCARD_WORDS.title}>

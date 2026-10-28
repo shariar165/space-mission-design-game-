@@ -45,6 +45,9 @@
 .sd-sound { font-size: 15px; line-height: 1; }
 .sd-ghost-btn.sd-sound[aria-pressed] { background: transparent; border-color: var(--sd-line-2); }
 .sd-ghost-btn.sd-sound[aria-pressed='false'] { opacity: 0.7; }
+/* The mute key beside the mode lever, in every screen's top bar. */
+.sd-top-keys { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.sd-top-keys .sd-sound, .pc-sound, .top-right .sd-sound { padding: 8px 10px; }
 
 /* ---- Crew file: rank plate (Home), panel, and the report's promotion ---- */
 .hm-kicker-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }

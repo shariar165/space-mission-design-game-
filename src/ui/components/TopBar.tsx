@@ -1,4 +1,5 @@
 import { BackButton } from './sd/BackButton';
+import { SoundToggle } from './sd/SoundToggle';
 import { DESTINATIONS } from '../../engine/data';
 import type { DestinationId } from '../../engine/types';
 import { Check, Logo } from './icons';
@@ -98,6 +99,7 @@ export function TopBar({ step, mode, onMode, missionName, onMissionName, destina
         })}
       </nav>
       <div className="top-right">
+        <SoundToggle />
         <div className="seg" role="group" aria-label="Mode">
           <button aria-pressed={mode === 'cadet'} onClick={() => onMode('cadet')}>
             Cadet

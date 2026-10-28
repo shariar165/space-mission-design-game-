@@ -28,6 +28,7 @@ import { MissionBriefing } from '../components/sd/MissionBriefing';
 import { NameTag } from '../components/sd/NameTag';
 import { MissionSteps } from '../components/sd/MissionSteps';
 import { ModeLever, type Mode } from '../components/sd/ModeLever';
+import { SoundToggle } from '../components/sd/SoundToggle';
 import { SDIcon } from '../components/sd/SDIcon';
 import { useLaunchPlan } from '../launchPlan';
 import { useIsPhone } from '../sdGeometry';
@@ -377,7 +378,10 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
             </button>
           )}
           {infoKey}
-          <ModeLever mode={mode} onMode={onMode} />
+          <span className="sd-top-keys">
+            <SoundToggle />
+            <ModeLever mode={mode} onMode={onMode} />
+          </span>
         </div>
         <div className="pk-deck-phone">
           <span className="sd-label">DANGER DECK · {dest.name.toUpperCase()}</span>
@@ -415,7 +419,10 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
         <MissionSteps at={0} />
         <div className="pk-top-right">
           {infoKey}
-          <ModeLever mode={mode} onMode={onMode} />
+          <span className="sd-top-keys">
+            <SoundToggle />
+            <ModeLever mode={mode} onMode={onMode} />
+          </span>
         </div>
       </header>
       <div className="pk-main">
