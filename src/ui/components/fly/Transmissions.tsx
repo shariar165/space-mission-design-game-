@@ -5,7 +5,7 @@
 import { useState, type ReactNode } from 'react';
 import type { FeedEntry, OrderLine, TransmissionFeed } from '../../../engine/ops/index';
 import * as f from '../../format';
-import { robotSays, targetName, TX_WORDS, type VoiceContext } from '../../sdWords';
+import { FLY_WORDS, robotSays, targetName, TX_WORDS, type VoiceContext } from '../../sdWords';
 import { useTeletype } from '../sd/Teletype';
 
 /** The phone log shows this many of the newest lines. */
@@ -27,7 +27,7 @@ function orderWhat(o: OrderLine, voice: VoiceContext): string {
   if (o.kind === 'power-plan') return TX_WORDS.plan;
   if (o.kind === 'standing-orders') return TX_WORDS.standing;
   if (o.kind === 'observe') return TX_WORDS.observe(targetName(o.targetId ?? ''));
-  if (o.kind === 'extension') return TX_WORDS.extend(`${f.num(o.years ?? 0)} ${o.years === 1 ? 'YEAR' : 'YEARS'}`);
+  if (o.kind === 'extension') return TX_WORDS.extend(FLY_WORDS.years(o.years ?? 0));
   return o.hazardType && o.optionId && voice.option ? voice.option(o.hazardType, o.optionId) : (o.optionId ?? '').toUpperCase();
 }
 
@@ -52,7 +52,7 @@ export function txLine(e: FeedEntry, voice: VoiceContext) {
     const m = e.message!;
     return {
       who: voice.name.toUpperCase(),
-      stamp: `${e.roundTrip_s !== undefined ? `${TX_WORDS.reply} · ` : ''}${m.delay_s < 1 ? TX_WORDS.noDelay : TX_WORDS.took(f.durationWords(m.delay_s))}`,
+      stamp: `${e.roundTrip_s !== undefined ? `${TX_WORDS.reply} · ` : ''}${m.delay_s < 1 ? TX_WORDS.noDelay : TX_WORDS.took(FLY_WORDS.duration(m.delay_s))}`,
       text: robotSays(m, voice),
     };
   }
@@ -145,7 +145,7 @@ export function Transmissions({ feed, voice, oneWay_s, phone, hot, footer }: Pro
       {footer ?? (
         <footer className="tx-foot">
           {TX_WORDS.footBefore(name)}
-          <b>{TX_WORDS.footAge(f.durationWords(oneWay_s))}</b>
+          <b>{TX_WORDS.footAge(FLY_WORDS.duration(oneWay_s))}</b>
           {TX_WORDS.footAfter}
         </footer>
       )}

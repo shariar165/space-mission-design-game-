@@ -27,26 +27,7 @@ import { SDIcon } from '../components/sd/SDIcon';
 import { useReducedMotion } from '../opsGeometry';
 import { useOpsRisk } from '../riskRunner';
 import { useIsPhone } from '../sdGeometry';
-import {
-  CATEGORY_NAME,
-  dangerLook,
-  finalLines,
-  GAME_NAME,
-  hurtWords,
-  optionShort,
-  PANEL_SOUND,
-  panelWords,
-  REPORT_STAMP,
-  POSTCARD_WORDS,
-  BADGE_WORDS,
-  CREW_WORDS,
-  RANK_WORDS,
-  ROBOT_WORDS,
-  robotNameOr,
-  robotSays,
-  savedWords,
-  STAR_WORDS,
-} from '../sdWords';
+import { BADGE_WORDS, CATEGORY_NAME, CREW_WORDS, dangerLook, finalLines, FLY_WORDS, GAME_NAME, hurtWords, optionShort, PANEL_SOUND, panelWords, POSTCARD_WORDS, RANK_WORDS, REPORT_STAMP, ROBOT_WORDS, robotNameOr, robotSays, savedWords, STAR_WORDS } from '../sdWords';
 import * as f from '../format';
 import { voiceContext } from '../voiceContext';
 
@@ -336,7 +317,7 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
         {last.kind === 'last-words' && <SourceInfo s={VOICE_RULES.lastWordsHistory} title="Opportunity’s last message" />}
       </span>
       <span className="rp-radio-v">“{robotSays(last, voiceContext(dest.name, robotName))}”</span>
-      <span className="rp-radio-t">{ROBOT_WORDS.took(dest.name.toUpperCase(), f.durationWords(last.delay_s))}</span>
+      <span className="rp-radio-t">{ROBOT_WORDS.took(dest.name.toUpperCase(), FLY_WORDS.duration(last.delay_s))}</span>
     </div>
   );
 

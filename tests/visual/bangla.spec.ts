@@ -82,7 +82,7 @@ test('Bangla: cold open, Home, naming the robot, the briefing and the coach', as
   await shot(page, 'crew', p);
 });
 
-test('Bangla: the first mission’s briefing, Pack, Launch Day, countdown and coach', async ({ page }, info) => {
+test('Bangla: the first mission’s briefing, Pack, Launch Day, countdown, coach and flight', async ({ page }, info) => {
   test.setTimeout(120_000);
   const p = info.project.name;
   await banglaPlayer(page, ['cold-open', 'name'], 'VOYA');
@@ -106,4 +106,20 @@ test('Bangla: the first mission’s briefing, Pack, Launch Day, countdown and co
   await expect(page.getByRole('dialog', { name: 'কীভাবে ওড়াবে' })).toBeVisible({ timeout: 60_000 });
   await page.waitForTimeout(500);
   await shot(page, 'coach', p);
+  await page.getByRole('button', { name: 'বাদ দাও', exact: true }).click();
+  await page.waitForTimeout(500);
+  await shot(page, 'fly', p);
+  // Fly on to the first card (a danger, or the eclipse plan), then answer it and watch the order cross space.
+  const card = page.getByRole('dialog', { name: /^(বিপদের কার্ড|আগাম পরিকল্পনা)/ });
+  for (let i = 0; i < 60 && !(await card.isVisible()); i++) {
+    const next = page.getByRole('button', { name: 'পরের ঘটনা' });
+    if ((await next.isVisible()) && (await next.isEnabled())) await next.click();
+    else await page.waitForTimeout(250);
+  }
+  await expect(card).toBeVisible();
+  await page.waitForTimeout(600);
+  await shot(page, 'card', p);
+  await page.locator('.dc-choice:not([disabled])').first().click();
+  await page.waitForTimeout(1500);
+  await shot(page, 'order', p);
 });
