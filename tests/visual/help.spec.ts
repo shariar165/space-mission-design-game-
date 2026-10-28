@@ -10,7 +10,8 @@ test('briefing, coach and back', async ({ page }, info) => {
     try {
       localStorage.setItem('mdt.mode', 'cadet');
       localStorage.removeItem('mdt.ops');
-      localStorage.removeItem('sd.seen');
+      // A new player who has already seen the cold open (coldopen.spec.ts shoots it).
+      localStorage.setItem('sd.seen', JSON.stringify(['cold-open']));
     } catch {
       /* ignore */
     }

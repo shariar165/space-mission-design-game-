@@ -2,6 +2,7 @@
 // the UI never computes a number itself. One flight model everywhere (the Mission operations engine):
 // Cadet: Home → (mission map) → Pack → Fly & Survive → Mission Report; Daily mission; Notebook; Rescue History.
 // Before the first Cadet mission (or Daily) the robot gets a name: Name Your Robot.
+// The very first launch opens with the cold open (Mars Climate Orbiter, 1999), then Name Your Robot, then Home.
 // Engineer: Build Bay → Fly & Survive → Mission Report (with Engineer details).
 // Every step has ◂ BACK: the steps visited are kept on a trail, and the browser's own Back button walks it too.
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -21,6 +22,7 @@ import { Postcards } from './screens/Postcards';
 import { postcardAlbum, postcardsEarned } from '../engine/postcards';
 import type { Crew } from './components/sd/CrewFile';
 import { BuildBay } from './screens/BuildBay';
+import { ColdOpen } from './screens/ColdOpen';
 import { Daily } from './screens/Daily';
 import { FlyAndSurvive } from './screens/FlyAndSurvive';
 import { Home } from './screens/Home';
@@ -66,12 +68,20 @@ interface CadetState {
 
 const cadetStart = (base: Design, levelId?: string): CadetState => ({ base, ...(levelId ? { levelId } : {}) });
 
+/** A new player: Cadet, no name screen behind them, no robot name and the cold open never seen (or skipped). */
+function firstLaunch(mode: Mode): boolean {
+  const seen = loadSeen();
+  return mode === 'cadet' && !seen.includes('cold-open') && !seen.includes('name') && !loadRobotName();
+}
+
 export function App() {
   const [mode, setMode] = useState<Mode>(storedMode);
   const [design, setDesign] = useState<Design>(() => starterDesign('mars', today()));
   const [cadet, setCadet] = useState<CadetState>(() => cadetStart(design));
   const [missionName, setMissionName] = useState(() => defaultMissionName('mars'));
-  const [step, setStep] = useState<Step>(() => (mode === 'cadet' ? 'home' : 'build'));
+  const [step, setStep] = useState<Step>(() => (mode === 'cadet' ? (firstLaunch(mode) ? 'cold' : 'home') : 'build'));
+  /** The cold open on show is the first launch's (it goes on to the name screen), not a replay from Home. */
+  const coldFirst = useRef(step === 'cold');
   /** The steps visited before this one, for ◂ BACK. */
   const [trail, setTrail] = useState<Step[]>([]);
   const [fixedSeed] = useState(urlSeed);
@@ -116,7 +126,7 @@ export function App() {
   /** Name Your Robot comes first: a Cadet who has never named the robot (nor skipped the screen). */
   const needsName = cadetMode && !robotName && !seen.includes('name');
   /** Where the name screen goes on to. */
-  const afterName = useRef<'build' | 'daily'>('build');
+  const afterName = useRef<'build' | 'daily' | 'home'>('build');
   const level = levelById(cadet.levelId);
   /** The design being built: Cadet packs on top of the level's starter, Engineer edits it directly. */
   const active = cadetMode ? cadet.base : design;
@@ -186,7 +196,7 @@ export function App() {
     const rest = [...t];
     while (rest.length) {
       const s = rest.pop()!;
-      if (s === step) continue;
+      if (s === step || s === 'cold') continue;
       if (s === 'name' && !needsName) continue;
       if (s === 'fly' && (step === 'report' || step === 'daily' || step === 'fly' || !flyDesign)) continue;
       if (s === 'report' && !flown) continue;
@@ -333,7 +343,7 @@ export function App() {
   const next = level && cadetMode && (progress[level.id] ?? 0) >= 1 ? nextLevel(level.id) : undefined;
   const home = () => go('home');
   const firstNew = fresh.length ? notebook(facts).find((c) => c.id === fresh[0]) : undefined;
-  const fullScreen = step === 'name' || step === 'launch' || step === 'fly' || step === 'report' || step === 'home' || step === 'daily' || step === 'notebook' || step === 'postcards' || (step === 'build' && cadetMode);
+  const fullScreen = step === 'cold' || step === 'name' || step === 'launch' || step === 'fly' || step === 'report' || step === 'home' || step === 'daily' || step === 'notebook' || step === 'postcards' || (step === 'build' && cadetMode);
 
   /** The mission briefing: what to do on this level (or a free build, or today's Daily). */
   const briefFor = (forDaily: boolean) =>
@@ -366,6 +376,18 @@ export function App() {
           onBack={back}
         />
       )}
+      {step === 'cold' && (
+        <ColdOpen
+          onDone={() => {
+            markSeen('cold-open');
+            if (!coldFirst.current) return back();
+            coldFirst.current = false;
+            // The first launch goes on to name the robot, then Home; nothing to go back to.
+            if (needsName) afterName.current = 'home';
+            setStep(needsName ? 'name' : 'home');
+          }}
+        />
+      )}
       {step === 'home' && (
         <Home
           progress={progress}
@@ -386,6 +408,7 @@ export function App() {
           crew={crewOf({ facts, postcards, played: daily.played })}
           mars={mars}
           onPostcards={() => go('postcards')}
+          onIntro={() => go('cold')}
         />
       )}
       {step === 'name' && (
@@ -401,7 +424,10 @@ export function App() {
           onDone={() => {
             markSeen('name');
             if (afterName.current === 'daily') openDaily(true);
-            else go('build');
+            else if (afterName.current === 'home') {
+              setTrail([]);
+              setStep('home');
+            } else go('build');
           }}
           onBack={back}
         />

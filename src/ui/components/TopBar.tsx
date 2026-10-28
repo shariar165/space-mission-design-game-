@@ -4,7 +4,7 @@ import { DESTINATIONS } from '../../engine/data';
 import type { DestinationId } from '../../engine/types';
 import { Check, Logo } from './icons';
 
-export type Step = 'home' | 'name' | 'map' | 'launch' | 'rescue' | 'build' | 'fly' | 'report' | 'daily' | 'notebook' | 'postcards';
+export type Step = 'cold' | 'home' | 'name' | 'map' | 'launch' | 'rescue' | 'build' | 'fly' | 'report' | 'daily' | 'notebook' | 'postcards';
 export type Mode = 'cadet' | 'engineer';
 
 interface StepDef {

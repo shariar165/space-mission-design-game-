@@ -1,6 +1,7 @@
 // HOME (Signal Delay design, screen 04). The whole idea in one picture: an order leaves Earth and you watch it crawl
 // to the robot, with MAVEN's real one-way light time at Mars arrival (engine). PLAY and the DAILY are the two big
-// keys; Rescue History, the Notebook, Postcards and Engineer mode sit on a smaller second row (spec UI rule 28).
+// keys; Rescue History, the Notebook, Postcards, the INTRO replay (the cold open) and Engineer mode sit on a smaller
+// second row (spec UI rules 28, 47).
 import { useMemo, useState } from 'react';
 import { countdown, signalDelay } from '../../engine/flightMap';
 import { evaluateDesign } from '../../engine/index';
@@ -18,7 +19,7 @@ import { useLoop } from '../sound';
 import { along, ring, useCycle, useIsPhone } from '../sdGeometry';
 import { isUnlocked, LEVELS, type Level, type Progress } from '../levels';
 import * as f from '../format';
-import { HOME_WORDS, HOW_TO_PLAY, LIVE_WEATHER, POSTCARD_WORDS } from '../sdWords';
+import { COLD_OPEN, HOME_WORDS, HOW_TO_PLAY, LIVE_WEATHER, POSTCARD_WORDS } from '../sdWords';
 
 /** The demo order loops every 6 s: 5 s of flight, then a second of RECEIVED (design). */
 export const HOME_LOOP_MS = 6000;
@@ -54,6 +55,8 @@ interface Props {
   onRescue: () => void;
   onNotebook: () => void;
   onPostcards: () => void;
+  /** Replay the cold open (spec UI rule 47). */
+  onIntro?: () => void;
 }
 
 /** The level PLAY continues: the first open level without a star, else the last open one. */
@@ -62,7 +65,7 @@ export function nextToPlay(progress: Progress): { level: Level; index: number } 
   return open.find((x) => !(progress[x.level.id] ?? 0)) ?? open[open.length - 1]!;
 }
 
-export function Home({ progress, mode, onMode, daily, rescue, notebook, postcards, crew, mars, onPlay, onMissions, onDaily, onRescue, onNotebook, onPostcards }: Props) {
+export function Home({ progress, mode, onMode, daily, rescue, notebook, postcards, crew, mars, onPlay, onMissions, onDaily, onRescue, onNotebook, onPostcards, onIntro }: Props) {
   const phone = useIsPhone();
   const still = useReducedMotion();
   useLoop('hum');
@@ -84,6 +87,7 @@ export function Home({ progress, mode, onMode, daily, rescue, notebook, postcard
     { label: 'RESCUE HISTORY', sub: 'Real robots that nearly died. Try to save them.', icon: 'rescue', tag: `${f.num(rescue.solved)} OF ${f.num(rescue.total)}`, hot: false, onClick: onRescue },
     { label: 'NOTEBOOK', sub: 'Real lessons you have earned.', icon: 'book', tag: `${f.num(notebook.got)} OF ${f.num(notebook.total)}`, hot: false, onClick: onNotebook },
     { label: POSTCARD_WORDS.menu, sub: POSTCARD_WORDS.menuSub, icon: 'postcard', tag: `${f.num(postcards.got)} OF ${f.num(postcards.total)}`, hot: false, onClick: onPostcards },
+    ...(onIntro ? [{ label: COLD_OPEN.menu, sub: COLD_OPEN.menuSub, icon: 'dish' as const, tag: COLD_OPEN.menuTag, hot: false, onClick: onIntro }] : []),
   ];
   const howToEl = howTo && <CoachCard title={HOW_TO_PLAY.label} onClose={() => setHowTo(false)} />;
   const howToKey = (
