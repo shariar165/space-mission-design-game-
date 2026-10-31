@@ -3,6 +3,7 @@
 // time, and the pictures on their way down. Pure functions of the state; the UI formats only.
 import { SCIENCE_RULES } from '../science';
 import { MARS_MOONS, type Target, type TargetBody } from '../targets';
+import { targetWeight } from '../objectives';
 import { gameEstimate, type Sourced } from '../types';
 import { inMoratorium, oneWayAt } from './commands';
 import { segmentsFromFraction } from './fly';
@@ -144,7 +145,7 @@ export function scienceTargetsView(s: OpsState): ScienceTargetsView {
       riskLevel,
       state,
       ...(blocker ? { blocker } : {}),
-      weight: t.weight.value,
+      weight: targetWeight(env.design, t),
       farSide: onFarSide(env, t),
     };
   });
@@ -291,7 +292,7 @@ export function missionAlbum(s: OpsState): MissionAlbum | undefined {
   const ts = targetScience(s);
   const targets = targetsOf(s.env);
   const frames = targets.map((t): AlbumFrame => {
-    const base = { targetId: t.id, weight: t.weight.value };
+    const base = { targetId: t.id, weight: targetWeight(s.env.design, t) };
     const im = imageOf(s, t.id);
     if (im && countsForScience(s, im)) return { ...base, status: 'home', day: Math.floor(im.sentAt!) };
     const part = ts.partial.find((p) => p.targetId === t.id);

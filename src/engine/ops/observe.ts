@@ -5,6 +5,7 @@
 import { DESTINATIONS, OPERATIONS } from '../data';
 import { observationPlan, SCIENCE_RULES, type ObservationPlan } from '../science';
 import { targetById, targetSetFor, type Target } from '../targets';
+import { OBJECTIVE_RULES, activeObjective, favouredWeight, objectiveMatched, targetWeight, type ObjectiveId } from '../objectives';
 import { inShadow } from './predictable';
 import { gameEstimate, type Sourced } from '../types';
 import type { ImageRecord, OpsEnvironment, OpsState } from './types';
@@ -102,7 +103,7 @@ export function targetScience(s: OpsState): TargetScience {
     if (!im) continue;
     if (countsForScience(s, im)) {
       home.push(t.id);
-      fraction += t.weight.value;
+      fraction += targetWeight(s.env.design, t);
     } else if (im.sentBits > 0 && im.bits > 0) partial.push({ targetId: t.id, fraction: im.sentBits / im.bits });
   }
   return { fraction: Math.min(1, fraction), home, partial };
@@ -119,6 +120,30 @@ export function scienceReturned(s: OpsState): number {
 /** The first science has come home (with targets: the first picture sent; elsewhere: the first data). */
 export function firstScienceHome(s: OpsState): boolean {
   return hasTargets(s.env) ? s.images.some((im) => countsForScience(s, im)) : s.downlinkedPrime_bits > 0;
+}
+
+export interface ObjectiveResult {
+  objective: ObjectiveId;
+  /** A matching instrument was packed. */
+  matched: boolean;
+  /** Share of the favoured targets' own (balanced) weight whose pictures came home, 0–1. */
+  favouredHome: number;
+  met: boolean;
+}
+
+/** How the flight did on its objective (undefined when it flies none). */
+export function objectiveResult(s: OpsState): ObjectiveResult | undefined {
+  const o = activeObjective(s.env.design);
+  if (!o) return undefined;
+  const matched = objectiveMatched(s.env.design, o);
+  const home = targetsOf(s.env)
+    .filter((t) => o.favours.includes(t.kind))
+    .reduce((a, t) => {
+      const im = imageOf(s, t.id);
+      return im && countsForScience(s, im) ? a + t.weight.value : a;
+    }, 0);
+  const favouredHome = home / favouredWeight(o);
+  return { objective: o.id, matched, favouredHome, met: matched && favouredHome >= OBJECTIVE_RULES.metFraction.value };
 }
 
 export { targetById };
