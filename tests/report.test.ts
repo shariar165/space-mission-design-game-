@@ -238,3 +238,115 @@ function runOperationsFrom(s: OpsState): OpsState {
   }
   return x;
 }
+
+// ---------------------------------------------------------------------------
+// Team section (spec: Team mode, Team report): each role's key decision and its effect, and the team score from the
+// objective met, the conflicts resolved and the danger-card calls that matched the recommendation (TEAM_RULES).
+
+describe('team section', () => {
+  type Act = import('../src/engine/team/log').TeamAct;
+  type Role = import('../src/engine/team/roles').RoleId;
+  const tbase = starterDesign('mars', '2028-11-15');
+  const tshelf = shelfFor('mars');
+  const tday = { date: tbase.launchDate, arrivalDate: tbase.arrivalDate };
+  const opts = { seed: 19 }; // a solar storm in cruise (Comms & Ops) and an insertion anomaly (the Engineer)
+
+  async function flyTeam(choose: (recommended: string, safest: string) => string, extra: [Role, Act][] = []) {
+    const { LocalTransport } = await import('../src/engine/team/transport');
+    const { initialTeamState } = await import('../src/engine/team/reduce');
+    const { stepSession } = await import('../src/engine/team/replay');
+    const { TEAM_RULES, holderOf } = await import('../src/engine/team/roles');
+    const { openDecisions, advanceOperations: adv } = await import('../src/engine/ops/index');
+    const cs = TEAM_RULES.callSigns.value;
+    const team = {
+      seats: [
+        { id: 'p1' as const, callSign: cs[0]!, roles: ['flight-director' as const] },
+        { id: 'p2' as const, callSign: cs[1]!, roles: ['spacecraft-engineer' as const] },
+        { id: 'p3' as const, callSign: cs[2]!, roles: ['science-lead' as const, 'comms-ops' as const] },
+      ],
+    };
+    const seatOf = (r: Role) => holderOf(team, r)!;
+    const tr = new LocalTransport();
+    let sess: import('../src/engine/team/replay').TeamSession = { team: initialTeamState(tbase, tshelf) };
+    tr.subscribe((a) => (sess = stepSession(sess, a, opts).session));
+    const send = (role: Role, act: Act) => tr.send({ seat: seatOf(role), role, act, ...(sess.ops ? { t: sess.ops.t } : {}) });
+    send('flight-director', { kind: 'setup', team });
+    send('science-lead', { kind: 'pack', part: 'spectrometer' });
+    send('flight-director', { kind: 'objective', objective: 'moons' });
+    for (const [r, a] of extra) send(r, a);
+    send('flight-director', { kind: 'launch', day: tday });
+    let observed = false;
+    while (sess.ops!.status === 'flying') {
+      const sci = sess.ops!.env.timeline.find((w) => w.phase === 'science')!;
+      sess = { ...sess, ops: adv(sess.ops!, observed ? {} : { until: sci.startDay + 0.1 }) };
+      if (!observed && sess.ops!.t >= sci.startDay) {
+        observed = true;
+        for (const id of ['phobos', 'valles-marineris']) send('science-lead', { kind: 'ops', op: { kind: 'command', command: { kind: 'observe', targetId: id } } });
+      }
+      for (const d of openDecisions(sess.ops!)) {
+        if (d.kind !== 'hazard') continue;
+        const type = sess.ops!.hazards.find((h) => h.id === d.hazardId)!.type;
+        const rec = d.hazardOptions!.find((o) => o.id !== d.safestOptionId)?.id ?? d.safestOptionId!;
+        send(TEAM_RULES.hazardRoles.value[type]!, { kind: 'recommend', decisionId: d.id, optionId: rec });
+        send('flight-director', { kind: 'call', decisionId: d.id, optionId: choose(rec, d.safestOptionId!) });
+      }
+    }
+    const { finishOperations } = await import('../src/engine/ops/index');
+    return { log: tr.log(), team: sess.team, ops: finishOperations(sess.ops!) };
+  }
+
+  it('one row per role, in role order, with the seat that held it', async () => {
+    const { teamReport } = await import('../src/engine/team/report');
+    const r = await flyTeam((rec) => rec);
+    const rep = teamReport(r.log, r);
+    expect(rep.rows.map((x) => x.role)).toEqual(['flight-director', 'spacecraft-engineer', 'science-lead', 'comms-ops']);
+    expect(rep.rows.map((x) => x.seat)).toEqual(['p1', 'p2', 'p3', 'p3']);
+  });
+
+  it('each role’s key decision: the objective, the danger it recommended on, the pictures it ordered', async () => {
+    const { teamReport } = await import('../src/engine/team/report');
+    const r = await flyTeam((rec) => rec);
+    const rep = teamReport(r.log, r);
+    const row = (role: string) => rep.rows.find((x) => x.role === role)!.key;
+    expect(row('flight-director')).toMatchObject({ kind: 'objective', objective: 'moons' });
+    expect(row('spacecraft-engineer')).toMatchObject({ kind: 'card', hazardType: 'insertion-anomaly' });
+    expect(row('comms-ops')).toMatchObject({ kind: 'card', hazardType: 'solar-storm' });
+    const sl = row('science-lead');
+    expect(sl.kind).toBe('observe');
+    if (sl.kind === 'observe') {
+      // with the spectrometer and the moons objective: Phobos 0.375 + Valles (0.4 / 0.68) × 0.16 ≈ 0.469118
+      expect(sl.ordered).toEqual(['phobos', 'valles-marineris']);
+      expect(sl.science).toBeCloseTo(0.375 + (0.4 / 0.68) * 0.16, 9);
+    }
+  });
+
+  it('the team score: objective met (half), no conflicts (a quarter), calls that matched the recommendation (a quarter)', async () => {
+    const { teamReport } = await import('../src/engine/team/report');
+    const agreed = teamReport(...(await (async () => { const r = await flyTeam((rec) => rec); return [r.log, r] as const; })()));
+    // Phobos home: 0.20 / 0.32 = 0.625 ≥ 0.5 → met; both calls follow the recommendation → 100
+    expect(agreed.objective).toMatchObject({ met: true });
+    expect(agreed.votes).toEqual({ total: 2, agreed: 2 });
+    expect(agreed.conflicts).toEqual({ raised: 0, resolved: 0 });
+    expect(agreed.score).toBeCloseTo(100, 9);
+    const overruled = await flyTeam((_, safest) => safest);
+    const o = teamReport(overruled.log, overruled);
+    // both calls overrule the recommendation (it was the unsafe option): 0.5 + 0.25 + 0.25 × 0/2 = 75
+    expect(o.votes).toEqual({ total: 2, agreed: 0 });
+    expect(o.score).toBeCloseTo(75, 9);
+  });
+
+  it('without an objective (the Moon) the other two parts share the score', async () => {
+    const { teamScore } = await import('../src/engine/team/report');
+    // conflicts 1 of 2 resolved, votes 1 of 1: (0.25 × 0.5 + 0.25 × 1) / 0.5 = 0.75 → 75
+    expect(teamScore(undefined, { raised: 2, resolved: 1 }, { total: 1, agreed: 1 })).toBeCloseTo(75, 9);
+    // with the objective met: 0.5 + 0.125 + 0.25 = 0.875 → 87.5
+    expect(teamScore(true, { raised: 2, resolved: 1 }, { total: 1, agreed: 1 })).toBeCloseTo(87.5, 9);
+  });
+
+  it('never touches the prime score or the stars: the same orders flown solo give the same debrief', async () => {
+    const { replayOperations, finishOperations } = await import('../src/engine/ops/index');
+    const r = await flyTeam((_, safest) => safest);
+    const solo = finishOperations(replayOperations(r.ops.env.design, opts, r.ops.actions));
+    expect(operationsDebrief(solo)).toEqual(operationsDebrief(r.ops));
+  });
+});

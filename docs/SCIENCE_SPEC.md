@@ -626,6 +626,26 @@ The settled card sends one ordinary `decide` at the mission time of the settling
   - A conflict still open at launch stays unresolved. The count feeds the Team score.
 - **Measured.** A Cadet Mars craft is at most $390M of the $500M cap. Its weight goes over only in tight windows with a full nose (2030: 11 kg over). The Moon levels' rideshare slot and the nose are where teams usually have to negotiate.
 
+**Team report** (`team/report.ts`). The Mission Report gets a Team section: one row per role (with the seat and call sign that held it), each with its key decision and what it did.
+
+Each role's key decision is the first one it has, in this order:
+
+| Role | Key decision, in order |
+| --- | --- |
+| Flight Director | the objective (met or not); a call; a part |
+| Engineer | a danger card it recommended on (a bad outcome first, else the latest); a part |
+| Science Lead | the pictures it ordered and the science home; a card; a part |
+| Comms & Ops | a card; the DSN days it booked; a part |
+
+A part row names the dangers the part covered that really happened.
+
+The **team score** (0–100, game rules) is Σ wᵢsᵢ with:
+- **objective:** 0.5, s = 1 if met;
+- **conflicts:** 0.25, s = resolved ÷ raised (1 with none);
+- **votes:** 0.25, s = settled cards whose result matched the recommendation ÷ settled cards (1 with none).
+
+With no objective (Moon levels, the Daily) the other two share the score in proportion to their weights. The team score is shown on its own and never changes the prime score or the stars: a team flight's debrief equals the same orders flown solo.
+
 **Quick messages only.** Players may be children, so the team talks in preset messages (`team.json` `quick`, words in `sdWords.ts`); there is no free text anywhere.
 
 **One action log** (`team/log.ts`). Every entry is `{seq, seat, role, t?, act}`: the seat, the role it acts as, the mission time for entries in flight, and the action (setup, objective, pack, unpack, launch, ops, recommend, vote, call, say). Refused entries stay in the log and in the state with their reason, as refused commands do in Mission operations.
