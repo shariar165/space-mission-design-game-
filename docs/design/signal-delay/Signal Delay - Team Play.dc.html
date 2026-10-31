@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&amp;family=B612:wght@400;700&amp;family=B612+Mono:wght@400;700&amp;family=VT323&amp;display=swap" rel="stylesheet">
+<style>html,body{background:#0b0c09}body{margin:0;background:#0b0c09;color:#cbbf9f}a{color:#ffb547;text-decoration:none}a:hover{color:#ffd28a}</style>
+</helmet>
+
+<section id="team-pack" data-screen-label="T3 Team Pack" style="background:#0b0c09;padding:56px 64px 80px;display:flex;flex-direction:column;gap:28px">
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <div style="font:400 14px/1 'B612 Mono',monospace;letter-spacing:.2em;color:#8a8270">SIGNAL DELAY · TEAM MODE · SCREEN T3</div>
+    <h1 style="margin:0;font:800 56px/1 'Big Shoulders Display',sans-serif;color:#efe6cf;letter-spacing:.02em">PACK · TEAM</h1>
+    <p style="margin:0;max-width:700px;font:400 16px/1.5 'B612',sans-serif;color:#a49b84;text-wrap:pretty">Every part belongs to a role. One rocket, one mass limit, one budget — each role's share shows in its colour. Go over and the screen names who has to negotiate. Talk with preset messages only.</p>
+  </div>
+  <div style="display:flex;gap:56px;align-items:flex-start;flex-wrap:wrap">
+    <div id="t3a" style="display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;gap:10px;align-items:center"><span style="padding:4px 9px;border-radius:3px;background:#ffb547;color:#1b1a16;font:700 13px/1 'B612 Mono',monospace">T3a</span><span style="font:400 13px/1 'B612 Mono',monospace;color:#8a8270;letter-spacing:.1em;white-space:nowrap">DESKTOP · 1440 × 900 · SHARED SCREEN</span></div>
+      <div style="width:1440px;height:900px;box-sizing:border-box;padding:18px;background:#1c1e18;border-radius:10px;box-shadow:0 30px 80px rgba(0,0,0,.55),inset 0 1px 0 #34372e;display:grid;grid-template-rows:60px minmax(0,1fr) 96px;gap:14px">
+        <div style="display:grid;grid-template-columns:300px minmax(0,1fr) 300px;align-items:center;gap:16px">
+          <div style="display:flex;flex-direction:column;gap:4px"><div style="font:900 30px/1 'Big Shoulders Display',sans-serif;color:#efe6cf;letter-spacing:.06em">SIGNAL DELAY</div><div style="font:400 11px/1 'B612 Mono',monospace;color:#8a8270;letter-spacing:.18em">TEAM · OBJECTIVE: ATMOSPHERE</div></div>
+          <div style="display:flex;justify-content:center;align-items:center;gap:14px;font:700 13px/1 'B612 Mono',monospace;letter-spacing:.18em;white-space:nowrap">
+            <span style="display:flex;align-items:center;gap:8px;color:#47c96b"><span style="width:10px;height:10px;border-radius:50%;background:#47c96b"></span>0 TEAM</span>
+            <span style="width:32px;height:1px;background:#3a3d33"></span>
+            <span style="display:flex;align-items:center;gap:8px;color:#ffb547"><span style="width:10px;height:10px;border-radius:50%;background:#ffb547;box-shadow:0 0 8px #ffb547"></span>1 PACK</span>
+            <span style="width:32px;height:1px;background:#3a3d33"></span>
+            <span style="display:flex;align-items:center;gap:8px;color:#6f685a"><span style="width:10px;height:10px;border-radius:50%;border:1px solid #6f685a"></span>2 FLY</span>
+            <span style="width:32px;height:1px;background:#3a3d33"></span>
+            <span style="display:flex;align-items:center;gap:8px;color:#6f685a"><span style="width:10px;height:10px;border-radius:50%;border:1px solid #6f685a"></span>3 REPORT</span>
+          </div>
+          <div style="display:flex;justify-content:flex-end;gap:6px"><sc-for list="{{ crew }}" as="c" hint-placeholder-count="4"><span title="{{ c.name }}" style="display:flex;align-items:center;gap:6px;padding:5px 9px 5px 5px;border-radius:16px;background:#0f100c;border:1px solid {{ c.col }}"><span style="width:20px;height:20px;border-radius:50%;background:{{ c.col }};display:grid;place-items:center"><dc-import name="SDIcon" icon="{{ c.icon }}" size="12" color="#1b1a16" hint-size="12px,12px"></dc-import></span><span style="font:700 10px/1 'B612 Mono',monospace;color:#cbbf9f">{{ c.p }}</span></span></sc-for></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:400px minmax(0,1fr) 400px;gap:14px;min-height:0">
+          <div style="background:#23251f;border:1px solid #3a3d33;border-radius:8px;box-shadow:inset 0 1px 0 #3e4137;padding:14px;display:flex;flex-direction:column;gap:10px;min-height:0">
+            <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:800 24px/1 'Big Shoulders Display',sans-serif;color:#efe6cf;letter-spacing:.04em">PARTS SHELF</span><span style="font:700 11px/1 'B612 Mono',monospace;letter-spacing:.14em;color:#8a8270">BY ROLE</span></div>
+            <div style="display:flex;flex-direction:column;gap:12px;overflow:auto;min-height:0;padding-right:2px">
+              <sc-for list="{{ groups }}" as="g" hint-placeholder-count="4">
+                <div style="display:flex;flex-direction:column;gap:5px">
+                  <div style="display:flex;align-items:center;gap:8px;padding-bottom:4px;border-bottom:2px solid {{ g.col }}">
+                    <dc-import name="SDIcon" icon="{{ g.icon }}" size="16" color="{{ g.col }}" hint-size="16px,16px"></dc-import>
+                    <span style="flex:1;font:900 17px/1 'Big Shoulders Display',sans-serif;letter-spacing:.06em;color:{{ g.col }}">{{ g.name }}</span>
+                    <span style="font:400 18px/1 'VT323',monospace;color:#cbbf9f">{{ g.sub }}</span>
+                  </div>
+                  <sc-for list="{{ g.parts }}" as="p" hint-placeholder-count="3">
+                    <button onClick="{{ p.toggle }}" style="cursor:{{ p.cur }};display:grid;grid-template-columns:34px minmax(0,1fr) auto;align-items:center;gap:10px;padding:6px 8px 6px 6px;border-radius:5px;text-align:left;border:1px solid {{ p.bd }};border-bottom:3px solid #121410;background:{{ p.bg }}" style-hover="border-color:#ffb547">
+                      <span style="width:34px;height:34px;border-radius:4px;background:{{ p.tile }};display:grid;place-items:center"><dc-import name="SDIcon" icon="{{ p.icon }}" size="19" color="{{ p.tileFg }}" hint-size="19px,19px"></dc-import></span>
+                      <span style="display:flex;flex-direction:column;gap:3px;min-width:0"><span style="font:700 14px/1.1 'B612',sans-serif;color:{{ p.nameCol }}">{{ p.n }}</span><span style="font:400 16px/1 'VT323',monospace;color:#8a8270">{{ p.kg }} KG · ${{ p.c }}M</span></span>
+                      <span style="display:flex;align-items:center;gap:4px;padding:4px 7px;border-radius:3px;background:{{ p.stBg }};font:700 10px/1 'B612 Mono',monospace;letter-spacing:.1em;color:{{ p.stFg }};white-space:nowrap"><sc-if value="{{ p.req }}" hint-placeholder-val="{{ false }}"><dc-import name="SDIcon" icon="lock" size="11" color="{{ p.stFg }}" hint-size="11px,11px"></dc-import></sc-if>{{ p.st }}</span>
+                    </button>
+                  </sc-for>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="position:relative;background:#121410;border:1px solid #2c2f27;border-radius:8px;display:flex;flex-direction:column;align-items:center;gap:14px;overflow:hidden;padding:14px">
+            <div style="position:absolute;inset:0;background-image:radial-gradient(#23251f 1px,transparent 1px);background-size:22px 22px;opacity:.7"></div>
+            <sc-if value="{{ over }}" hint-placeholder-val="{{ true }}">
+              <div style="position:relative;align-self:stretch;border-radius:7px;background:#d8432b;box-shadow:0 0 0 3px #7d2213,0 0 30px rgba(216,67,43,.45);padding:12px 16px;display:flex;flex-direction:column;gap:8px">
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span style="font:900 30px/1 'Big Shoulders Display',sans-serif;letter-spacing:.08em;color:#efe6cf">{{ overTitle }}</span><span style="font:400 28px/1 'VT323',monospace;color:#efe6cf">{{ overAmt }}</span></div>
+                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                  <span style="display:flex;align-items:center;gap:6px;padding:5px 10px 5px 5px;border-radius:14px;background:#1b1a16"><span style="width:16px;height:16px;border-radius:50%;background:{{ cA.col }}"></span><span style="font:700 12px/1 'B612 Mono',monospace;letter-spacing:.08em;color:{{ cA.col }}">{{ cA.name }}</span></span>
+                  <span style="font:400 26px/1 'VT323',monospace;color:#efe6cf">⇄</span>
+                  <span style="display:flex;align-items:center;gap:6px;padding:5px 10px 5px 5px;border-radius:14px;background:#1b1a16"><span style="width:16px;height:16px;border-radius:50%;background:{{ cB.col }}"></span><span style="font:700 12px/1 'B612 Mono',monospace;letter-spacing:.08em;color:{{ cB.col }}">{{ cB.name }}</span></span>
+                </div>
+                <span style="font:400 14px/1.35 'B612',sans-serif;color:#efe6cf">{{ overHint }}</span>
+              </div>
+            </sc-if>
+            <div style="position:relative;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:0">
+              <div style="width:400px;height:96px;border-radius:50% 50% 0 0 / 100% 100% 0 0;background:#e8e0cc;display:flex;align-items:flex-end;justify-content:center;padding-bottom:10px;box-sizing:border-box"><span style="font:800 16px/1 'Big Shoulders Display',sans-serif;letter-spacing:.24em;color:#1b1a16">ROCKET NOSE</span></div>
+              <div style="width:400px;padding:0 12px 12px;box-sizing:border-box;background:#e8e0cc;border-radius:0 0 6px 6px">
+                <div style="display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:62px;grid-auto-flow:dense;gap:4px;padding:4px;background:#1b1a16;border-radius:4px;min-height:200px">
+                  <sc-for list="{{ blocks }}" as="b" hint-placeholder-count="8">
+                    <button onClick="{{ b.toggle }}" title="{{ b.tip }}" style="cursor:{{ b.cur }};grid-column:span {{ b.span }};border:none;border-radius:4px;background:{{ b.col }};box-shadow:inset 0 -4px 0 rgba(0,0,0,.22);padding:6px;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;text-align:left">
+                      <dc-import name="SDIcon" icon="{{ b.icon }}" size="18" color="#1b1a16" hint-size="18px,18px"></dc-import>
+                      <span style="font:800 13px/1 'Big Shoulders Display',sans-serif;letter-spacing:.04em;color:#1b1a16">{{ b.short }}</span>
+                    </button>
+                  </sc-for>
+                  <div style="grid-column:1 / -1;height:62px;border-radius:4px;background:repeating-linear-gradient(135deg,#4a4d42 0 8px,#3e4137 8px 16px);display:flex;align-items:center;justify-content:center;font:800 14px/1 'Big Shoulders Display',sans-serif;letter-spacing:.16em;color:#cbbf9f">BUS + MAIN FUEL · 1,000 KG</div>
+                </div>
+              </div>
+              <div style="width:280px;height:24px;background:#9fb49a;clip-path:polygon(8% 0,92% 0,100% 100%,0 100%)"></div>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:12px;min-height:0">
+            <div style="background:#23251f;border:1px solid #3a3d33;border-radius:8px;box-shadow:inset 0 1px 0 #3e4137;padding:14px;display:flex;flex-direction:column;gap:12px">
+              <span style="font:800 24px/1 'Big Shoulders Display',sans-serif;color:#efe6cf;letter-spacing:.04em">SHARED LIMITS</span>
+              <sc-for list="{{ bars }}" as="br" hint-placeholder-count="2">
+                <div style="display:flex;flex-direction:column;gap:6px">
+                  <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:700 11px/1 'B612 Mono',monospace;letter-spacing:.16em;color:#cbbf9f">{{ br.label }}</span><span style="font:400 22px/1 'VT323',monospace;color:{{ br.numCol }}">{{ br.num }}</span></div>
+                  <div style="position:relative;height:26px;border-radius:3px;background:#050c07;box-shadow:inset 0 0 8px #000;display:flex;overflow:hidden">
+                    <sc-for list="{{ br.segs }}" as="sg" hint-placeholder-count="5"><span title="{{ sg.tip }}" style="width:{{ sg.w }};background:{{ sg.bg }};box-shadow:inset -2px 0 0 #050c07"></span></sc-for>
+                    <span style="position:absolute;top:0;bottom:0;right:{{ br.overW }};width:3px;background:#efe6cf;box-shadow:0 0 6px #efe6cf"></span>
+                  </div>
+                </div>
+              </sc-for>
+              <div style="display:flex;flex-direction:column;gap:5px;padding-top:10px;border-top:1px dashed #3a3d33">
+                <div style="display:grid;grid-template-columns:14px minmax(0,1fr) 70px 54px 44px;gap:8px;font:700 9px/1 'B612 Mono',monospace;letter-spacing:.12em;color:#6f685a"><span></span><span>ROLE</span><span style="text-align:right">MASS</span><span style="text-align:right">COST</span><span style="text-align:right">SHARE</span></div>
+                <sc-for list="{{ legend }}" as="l" hint-placeholder-count="4"><div style="display:grid;grid-template-columns:14px minmax(0,1fr) 70px 54px 44px;gap:8px;align-items:center"><span style="width:14px;height:14px;border-radius:3px;background:{{ l.col }}"></span><span style="font:700 12px/1 'B612 Mono',monospace;color:{{ l.col }}">{{ l.name }}</span><span style="text-align:right;font:400 19px/1 'VT323',monospace;color:#cbbf9f">{{ l.kg }}</span><span style="text-align:right;font:400 19px/1 'VT323',monospace;color:#cbbf9f">${{ l.c }}M</span><span style="text-align:right;font:400 19px/1 'VT323',monospace;color:{{ l.shareCol }}">{{ l.share }}</span></div></sc-for>
+              </div>
+            </div>
+            <div style="position:relative;flex:1;min-height:0;background:#f3ecd9;border-radius:6px;box-shadow:0 10px 24px rgba(0,0,0,.4);display:flex;flex-direction:column;overflow:hidden">
+              <div style="padding:10px 14px 8px;border-bottom:2px dashed #c4b897;display:flex;justify-content:space-between;align-items:center"><span style="font:700 10px/1 'B612 Mono',monospace;letter-spacing:.18em;color:#7a715c">TEAM LINE · PRESET ONLY</span><span style="font:700 10px/1 'B612 Mono',monospace;letter-spacing:.12em;color:#7a715c">{{ msgCount }} MSGS</span></div>
+              <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;padding:10px 14px;overflow:hidden">
+                <sc-for list="{{ log }}" as="m" hint-placeholder-count="4"><div style="display:flex;align-items:center;gap:8px"><span style="flex:none;padding:3px 6px;border-radius:3px;background:{{ m.col }};font:700 10px/1 'B612 Mono',monospace;color:#1b1a16">{{ m.ab }}</span><span style="font:400 22px/1 'VT323',monospace;color:#1b1a16">{{ m.t }}</span></div></sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:14px">
+          <div style="background:#23251f;border:1px solid #3a3d33;border-radius:8px;box-shadow:inset 0 1px 0 #3e4137;padding:10px 14px;display:flex;align-items:center;gap:16px">
+            <div style="display:flex;flex-direction:column;gap:6px"><span style="font:700 10px/1 'B612 Mono',monospace;letter-spacing:.16em;color:#8a8270">SPEAKING AS</span>
+              <div style="display:flex;gap:4px"><sc-for list="{{ speakers }}" as="sp" hint-placeholder-count="4"><button onClick="{{ sp.go }}" title="{{ sp.name }}" style="cursor:pointer;width:44px;height:44px;border-radius:5px;border:2px solid {{ sp.bd }};background:{{ sp.bg }};display:grid;place-items:center;padding:0"><dc-import name="SDIcon" icon="{{ sp.icon }}" size="20" color="{{ sp.fg }}" hint-size="20px,20px"></dc-import></button></sc-for></div>
+            </div>
+            <span style="width:1px;align-self:stretch;background:#3a3d33"></span>
+            <div style="flex:1;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px">
+              <sc-for list="{{ qms }}" as="q" hint-placeholder-count="5"><button onClick="{{ q.go }}" style="cursor:pointer;height:56px;border-radius:5px;border:1px solid #121410;border-bottom:4px solid #1a1b16;background:#3a3d33;font:800 18px/1 'Big Shoulders Display',sans-serif;letter-spacing:.06em;color:#efe6cf" style-hover="background:#4a4d42" style-active="transform:translateY(2px)">{{ q.t }}</button></sc-for>
+            </div>
+          </div>
+          <a href="{{ launchHref }}" style="pointer-events:{{ launchPe }};height:76px;align-self:center;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;background:{{ launchBg }};border-bottom:6px solid {{ launchEdge }};box-shadow:{{ launchGlow }}"><span style="font:900 32px/1 'Big Shoulders Display',sans-serif;letter-spacing:.12em;color:{{ launchFg }}">LAUNCH</span><span style="font:700 10px/1 'B612 Mono',monospace;letter-spacing:.12em;color:{{ launchFg }}">{{ launchSub }}</span></a>
+        </div>
+      </div>
+    </div>
+
+    <div id="t3b" style="display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;gap:10px;align-items:center"><span style="padding:4px 9px;border-radius:3px;background:#ffb547;color:#1b1a16;font:700 13px/1 'B612 Mono',monospace">T3b</span><span style="font:400 13px/1 'B612 Mono',monospace;color:#8a8270;letter-spacing:.1em;white-space:nowrap">MOBILE · 390 × 844</span></div>
+      <div style="width:390px;height:844px;box-sizing:border-box;padding:12px 12px 16px;background:#1c1e18;border-radius:34px;box-shadow:0 30px 80px rgba(0,0,0,.55),0 0 0 8px #0f100c;display:flex;flex-direction:column;gap:9px;overflow:hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:0 12px;height:26px;font:700 12px/1 'B612 Mono',monospace;color:#8a8270"><span>9:41</span><span style="font:900 16px/1 'Big Shoulders Display',sans-serif;color:#efe6cf;letter-spacing:.08em">1 PACK · TEAM</span><span style="display:flex;gap:3px"><sc-for list="{{ crew }}" as="c" hint-placeholder-count="4"><span style="width:9px;height:9px;border-radius:50%;background:{{ c.col }}"></span></sc-for></span></div>
+        <sc-if value="{{ over }}" hint-placeholder-val="{{ true }}">
+          <div style="border-radius:6px;background:#d8432b;padding:8px 10px;display:flex;flex-direction:column;gap:5px">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span style="font:900 19px/1 'Big Shoulders Display',sans-serif;letter-spacing:.06em;color:#efe6cf">{{ overTitle }}</span><span style="font:400 20px/1 'VT323',monospace;color:#efe6cf">{{ overAmt }}</span></div>
+            <span style="display:flex;align-items:center;gap:6px;font:700 10px/1.2 'B612 Mono',monospace;color:#efe6cf"><span style="width:10px;height:10px;border-radius:50%;background:{{ cA.col }};box-shadow:0 0 0 1.5px #1b1a16"></span>{{ cA.ab }} ⇄ <span style="width:10px;height:10px;border-radius:50%;background:{{ cB.col }};box-shadow:0 0 0 1.5px #1b1a16"></span>{{ cB.ab }} · {{ overHintShort }}</span>
+          </div>
+        </sc-if>
+        <sc-for list="{{ bars }}" as="br" hint-placeholder-count="2">
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:700 10px/1 'B612 Mono',monospace;letter-spacing:.14em;color:#cbbf9f">{{ br.labelShort }}</span><span style="font:400 18px/1 'VT323',monospace;color:{{ br.numCol }}">{{ br.num }}</span></div>
+            <div style="position:relative;height:18px;border-radius:3px;background:#050c07;display:flex;overflow:hidden"><sc-for list="{{ br.segs }}" as="sg" hint-placeholder-count="5"><span style="width:{{ sg.w }};background:{{ sg.bg }};box-shadow:inset -2px 0 0 #050c07"></span></sc-for><span style="position:absolute;top:0;bottom:0;right:{{ br.overW }};width:2px;background:#efe6cf"></span></div>
+          </div>
+        </sc-for>
+        <div style="flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:8px;scrollbar-width:none">
+          <sc-for list="{{ groups }}" as="g" hint-placeholder-count="4">
+            <div style="display:flex;flex-direction:column;gap:4px">
+              <div style="display:flex;align-items:center;gap:6px;border-bottom:2px solid {{ g.col }};padding-bottom:3px"><dc-import name="SDIcon" icon="{{ g.icon }}" size="13" color="{{ g.col }}" hint-size="13px,13px"></dc-import><span style="flex:1;font:900 13px/1 'Big Shoulders Display',sans-serif;letter-spacing:.06em;color:{{ g.col }}">{{ g.name }}</span><span style="font:400 15px/1 'VT323',monospace;color:#cbbf9f">{{ g.sub }}</span></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
+                <sc-for list="{{ g.parts }}" as="p" hint-placeholder-count="3"><button onClick="{{ p.toggle }}" style="cursor:{{ p.cur }};min-height:44px;display:grid;grid-template-columns:26px minmax(0,1fr);align-items:center;gap:6px;padding:4px 6px 4px 4px;border-radius:4px;text-align:left;border:1px solid {{ p.bd }};background:{{ p.bg }}"><span style="width:26px;height:26px;border-radius:3px;background:{{ p.tile }};display:grid;place-items:center"><dc-import name="SDIcon" icon="{{ p.icon }}" size="14" color="{{ p.tileFg }}" hint-size="14px,14px"></dc-import></span><span style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font:700 11px/1.1 'B612',sans-serif;color:{{ p.nameCol }}">{{ p.n }}</span><span style="font:400 13px/1 'VT323',monospace;color:#8a8270">${{ p.c }}M · {{ p.st }}</span></span></button></sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px"><span style="font:700 9px/1.1 'B612 Mono',monospace;letter-spacing:.1em;color:#8a8270;width:52px">AS</span><sc-for list="{{ speakers }}" as="sp" hint-placeholder-count="4"><button onClick="{{ sp.go }}" style="cursor:pointer;flex:1;height:44px;border-radius:5px;border:2px solid {{ sp.bd }};background:{{ sp.bg }};display:grid;place-items:center;padding:0"><dc-import name="SDIcon" icon="{{ sp.icon }}" size="18" color="{{ sp.fg }}" hint-size="18px,18px"></dc-import></button></sc-for></div>
+        <div style="display:flex;gap:5px;overflow-x:auto;scrollbar-width:none;flex:none"><sc-for list="{{ qms }}" as="q" hint-placeholder-count="5"><button onClick="{{ q.go }}" style="cursor:pointer;flex:none;height:44px;padding:0 10px;border-radius:5px;border:1px solid #121410;border-bottom:3px solid #1a1b16;background:#3a3d33;font:800 14px/1 'Big Shoulders Display',sans-serif;letter-spacing:.06em;color:#efe6cf;white-space:nowrap">{{ q.t }}</button></sc-for></div>
+        <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:#f3ecd9;border-radius:4px"><span style="padding:2px 5px;border-radius:2px;background:{{ lastCol }};font:700 9px/1 'B612 Mono',monospace;color:#1b1a16">{{ lastAb }}</span><span style="font:400 18px/1 'VT323',monospace;color:#1b1a16">{{ lastT }}</span></div>
+        <a href="{{ launchHref }}" style="pointer-events:{{ launchPe }};height:54px;flex:none;border-radius:7px;display:flex;align-items:center;justify-content:center;gap:10px;background:{{ launchBg }};border-bottom:5px solid {{ launchEdge }}"><span style="font:900 24px/1 'Big Shoulders Display',sans-serif;letter-spacing:.12em;color:{{ launchFg }}">LAUNCH</span><span style="font:700 9px/1 'B612 Mono',monospace;color:{{ launchFg }}">{{ launchSub }}</span></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="team-fly" data-screen-label="T4 Team Fly" style="background:#0b0c09;padding:56px 64px 80px;display:flex;flex-direction:column;gap:28px;border-top:1px solid #23251f">
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <div style="font:400 14px/1 'B612 Mono',monospace;letter-spacing:.2em;color:#8a8270">SIGNAL DELAY · TEAM MODE · SCREEN T4</div>
+    <h1 style="margin:0;font:800 56px/1 'Big Shoulders Display',sans-serif;color:#efe6cf;letter-spacing:.02em">FLY &amp; SURVIVE · TEAM</h1>
+    <p style="margin:0;max-width:700px;font:400 16px/1.5 'B612',sans-serif;color:#a49b84;text-wrap:pretty">Each danger belongs to one role: they recommend. Everyone drops a vote token on A or B. The Flight Director makes the final call — and can overrule. The clock pauses while the team decides; the signal delay doesn't.</p>
+  </div>
+  <div style="display:flex;gap:56px;align-items:flex-start;flex-wrap:wrap">
+    <div id="t4a" style="display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;gap:10px;align-items:center"><span style="padding:4px 9px;border-radius:3px;background:#ffb547;color:#1b1a16;font:700 13px/1 'B612 Mono',monospace">T4a</span><span style="font:400 13px/1 'B612 Mono',monospace;color:#8a8270;letter-spacing:.1em;white-space:nowrap">DESKTOP · 1440 × 900 · SHARED SCREEN</span></div>
+      <div style="width:1440px;height:900px;box-sizing:border-box;padding:18px;background:#1c1e18;border-radius:10px;box-shadow:0 30px 80px rgba(0,0,0,.55),inset 0 1px 0 #34372e;display:grid;grid-template-rows:72px minmax(0,1fr) 96px;gap:14px">
+        <div style="display:grid;grid-template-columns:260px minmax(0,1fr) 260px;align-items:center;gap:16px">
+          <div style="display:flex;flex-direction:column;gap:4px"><div style="font:900 30px/1 'Big Shoulders Display',sans-serif;color:#efe6cf;letter-spacing:.06em">SIGNAL DELAY</div><div style="font:400 11px/1 'B612 Mono',monospace;color:#8a8270;letter-spacing:.18em">2 FLY · TEAM OF 4</div></div>
+          <div style="display:flex;justify-content:center;gap:12px">
+            <sc-for list="{{ res }}" as="r" hint-placeholder-count="4">
+              <div style="position:relative;display:flex;align-items:center;gap:10px;padding:8px 14px 8px 8px;background:#23251f;border:1px solid #3a3d33;border-radius:6px;box-shadow:inset 0 1px 0 #3e4137,0 2px 0 #121410">
+                <div style="width:42px;height:42px;border-radius:4px;background:#050c07;display:grid;place-items:center;box-shadow:inset 0 0 10px #000"><dc-import name="SDIcon" icon="{{ r.icon }}" size="24" color="{{ r.col }}" hint-size="24px,24px"></dc-import></div>
+                <div style="display:flex;flex-direction:column;gap:6px"><div style="display:flex;gap:3px"><sc-for list="{{ r.segs }}" as="g" hint-placeholder-count="5"><span style="width:14px;height:12px;border-radius:2px;background:{{ g.bg }};box-shadow:{{ g.sh }}"></span></sc-for></div><span style="display:flex;justify-content:space-between;gap:8px;font:700 10px/1 'B612 Mono',monospace;letter-spacing:.14em;color:#cbbf9f">{{ r.name }}<span style="width:8px;height:8px;border-radius:50%;background:{{ r.ownCol }}" title="{{ r.ownName }}"></span></span></div>
+                <sc-if value="{{ r.hasDelta }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:-10px;right:-8px;padding:3px 6px;border-radius:3px;background:{{ r.deltaCol }};color:#1b1a16;font:700 12px/1 'B612 Mono',monospace">{{ r.delta }}</span></sc-if>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;justify-content:flex-end"><span style="padding:8px 12px;border-radius:4px;background:#050c07;box-shadow:inset 0 0 8px #000;font:400 22px/1 'VT323',monospace;color:#ffb547;white-space:nowrap">MARS IN 93 DAYS</span></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:14px;min-height:0">
+          <div style="position:relative;background:#050c07;border:1px solid #2c2f27;border-radius:8px;overflow:hidden;display:flex;flex-direction:column;align-items:center;gap:14px;padding:16px">
+            <div style="position:absolute;inset:0;background:radial-gradient(circle at 30% 50%,rgba(140,255,158,.06),transparent 60%),repeating-linear-gradient(0deg,rgba(140,255,158,.03) 0 2px,transparent 2px 4px)"></div>
+            <div style="position:relative;align-self:stretch;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:16px;padding:10px 14px;border-radius:7px;background:#1c1e18;border:1px solid #3a3d33">
+              <span style="font:700 11px/1.2 'B612 Mono',monospace;letter-spacing:.16em;color:#8a8270">WHOSE<br>DECISION</span>
+              <div style="display:flex;align-items:center;gap:8px">
+                <sc-for list="{{ steps }}" as="st" hint-placeholder-count="3">
+                  <div style="flex:1;display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:5px;background:{{ st.bg }};border:1px solid {{ st.bd }};box-shadow:{{ st.glow }}">
+                    <span style="width:30px;height:30px;border-radius:50%;flex:none;background:{{ st.dot }};display:grid;place-items:center"><dc-import name="SDIcon" icon="{{ st.icon }}" size="16" color="#1b1a16" hint-size="16px,16px"></dc-import></span>
+                    <span style="display:flex;flex-direction:column;gap:4px;min-width:0"><span style="font:700 10px/1 'B612 Mono',monospace;letter-spacing:.14em;color:{{ st.sub }}">{{ st.n }} · {{ st.label }}</span><span style="font:800 16px/1 'Big Shoulders Display',sans-serif;letter-spacing:.04em;color:{{ st.fg }};white-space:nowrap">{{ st.who }}</span></span>
+                  </div>
+                </sc-for>
+              </div>
+              <span style="font:400 20px/1 'VT323',monospace;color:#ffb547;white-space:nowrap">CLOCK PAUSED</span>
+            </div>
+
+            <div style="position:relative;flex:1;display:flex;align-items:center;justify-content:center;gap:18px;min-height:0">
+              <sc-for list="{{ optL }}" as="o" hint-placeholder-count="1">
+                <div style="width:236px;padding:16px;box-sizing:border-box;border-radius:8px;border:2px solid {{ o.bd }};border-bottom-width:6px;background:#23251f;box-shadow:{{ o.glow }};display:flex;flex-direction:column;gap:10px">
+                  <button onClick="{{ o.fdPick }}" style="cursor:pointer;background:none;border:none;padding:0;text-align:left;display:flex;flex-direction:column;gap:8px">
+                    <span style="display:flex;justify-content:space-between;align-items:center"><span style="font:900 40px/1 'Big Shoulders Display',sans-serif;color:{{ o.letCol }}">{{ o.k }}</span><span style="font:400 18px/1 'VT323',monospace;color:#47c96b">{{ o.keyHint }}</span></span>
+                    <span style="font:800 30px/0.95 'Big Shoulders Display',sans-serif;color:#efe6cf;letter-spacing:.03em">{{ o.label }}</span>
+                    <span style="font:400 15px/1.35 'B612',sans-serif;color:#cbbf9f">{{ o.sub }}</span>
+                  </button>
+                  <div style="display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ o.chips }}" as="k" hint-placeholder-count="2"><span style="display:flex;align-items:center;gap:5px;padding:5px 8px;border-radius:4px;border:1.5px solid {{ k.col }};font:400 20px/1 'VT323',monospace;color:{{ k.col }}"><dc-import name="SDIcon" icon="{{ k.icon }}" size="16" color="{{ k.col }}" hint-size="16px,16px"></dc-import>{{ k.v }}</span></sc-for></div>
+                  <div style="display:flex;flex-direction:column;gap:6px;padding-top:10px;border-top:1px dashed #3a3d33">
+                    <span style="display:flex;justify-content:space-between;font:700 10px/1 'B612 Mono',monospace;letter-spacing:.14em;color:#8a8270"><span>VOTES · TAP YOUR TOKEN</span><span style="color:#efe6cf">{{ o.count }}</span></span>
+                    <div style="display:flex;gap:6px"><sc-for list="{{ o.tokens }}" as="tk" hint-placeholder-count="3"><button onClick="{{ tk.go }}" title="{{ tk.name }}" style="cursor:pointer;width:46px;height:46px;border-radius:50%;padding:0;border:2px {{ tk.bs }} {{ tk.col }};background:{{ tk.bg }};box-shadow:{{ tk.sh }};display:grid;place-items:center;font:700 11px/1 'B612 Mono',monospace;color:{{ tk.fg }}">{{ tk.ab }}</button></sc-for></div>
+                  </div>
+                </div>
+              </sc-for>
+
+              <div style="width:420px;border-radius:10px;background:#efe6cf;box-shadow:0 24px 60px rgba(0,0,0,.6);overflow:hidden;display:flex;flex-direction:column">
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:#d8432b"><span style="display:flex;align-items:center;gap:10px;font:700 13px/1 'B612 Mono',monospace;letter-spacing:.18em;color:#efe6cf"><dc-import name="SDIcon" icon="storm" size="22" color="#efe6cf" hint-size="22px,22px"></dc-import>DANGER CARD</span><span style="font:700 13px/1 'B612 Mono',monospace;letter-spacing:.14em;color:#efe6cf">DAY 214</span></div>
+                <div style="display:flex;align-items:center;gap:10px;padding:10px 20px;background:{{ recCol }}">
+                  <span style="width:30px;height:30px;border-radius:4px;background:#1b1a16;display:grid;place-items:center"><dc-import name="SDIcon" icon="power" size="17" color="{{ recCol }}" hint-size="17px,17px"></dc-import></span>
+                  <span style="display:flex;flex-direction:column;gap:3px"><span style="font:700 10px/1 'B612 Mono',monospace;letter-spacing:.16em;color:#1b1a16">RECOMMENDED BY SPACECRAFT ENGINEER · BEN</span><span style="font:900 20px/1 'Big Shoulders Display',sans-serif;letter-spacing:.05em;color:#1b1a16">{{ recLine }}</span></span>
+                </div>
+                <div style="padding:18px 22px 20px;display:flex;flex-direction:column;gap:14px">
+                  <div style="font:900 52px/0.9 'Big Shoulders Display',sans-serif;color:#1b1a16">SOLAR STORM</div>
+                  <div style="font:400 18px/1.4 'B612',sans-serif;color:#1b1a16;text-wrap:pretty">The Sun just flared. A cloud of charged particles hits the spacecraft in two days.</div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                    <div style="padding:9px 12px;border-radius:5px;background:#1b1a16;display:flex;flex-direction:column;gap:4px"><span style="font:700 10px/1 'B612 Mono',monospace;letter-spacing:.16em;color:#a49b84">DANGER ARRIVES</span><span style="font:400 24px/1 'VT323',monospace;color:#ff8a6d">IN 2 DAYS</span></div>
+                    <div style="padding:9px 12px;border-radius:5px;background:#1b1a16;display:flex;flex-direction:column;gap:4px"><span style="font:700 10px/1 'B612 Mono',monospace;letter-spacing:.16em;color:#a49b84">YOUR ORDER TAKES</span><span style="font:400 24px/1 'VT323',monospace;color:#ffb547">4 MINUTES</span></div>
+                  </div>
+                  <div style="padding-top:12px;border-top:2px dashed #c4b897;display:flex;flex-direction:column;gap:5px">
+                    <span style="font:700 11px/1 'B612 Mono',monospace;letter-spacing:.18em;color:#b23a22">REAL HISTORY</span>
+                    <span style="font:400 15px/1.45 'B612',sans-serif;color:#3a372e;text-wrap:pretty">October 2003: a huge solar storm hit Mars Odyssey. Its radiation instrument, MARIE, stopped working and never came back.</span>
+                  </div>
+                </div>
+              </div>
+
+              <sc-for list="{{ optR }}" as="o" hint-placeholder-count="1">
+                <div style="width:236px;padding:16px;box-sizing:border-box;border-radius:8px;border:2px solid {{ o.bd }};border-bottom-width:6px;background:#23251f;box-shadow:{{ o.glow }};display:flex;flex-direction:column;gap:10px">
+                  <button onClick="{{ o.fdPick }}" style="cursor:pointer;background:none;border:none;padding:0;text-align:left;display:flex;flex-direction:column;gap:8px">
+                    <span style="display:flex;justify-content:space-between;align-items:center"><span style="font:900 40px/1 'Big Shoulders Display',sans-serif;color:{{ o.letCol }}">{{ o.k }}</span><span style="font:400 18px/1 'VT323',monospace;color:#47c96b">{{ o.keyHint }}</span></span>
+                    <span style="font:800 30px/0.95 'Big Shoulders Display',sans-serif;color:#efe6cf;letter-spacing:.03em">{{ o.label }}</span>
+                    <span style="font:400 15px/1.35 'B612',sans-serif;color:#cbbf9f">{{ o.sub }}</span>
+                  </button>
+                  <div style="display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ o.chips }}" as="k" hint-placeholder-count="2"><span style="display:flex;align-items:center;gap:5px;padding:5px 8px;border-radius:4px;border:1.5px solid {{ k.col }};font:400 20px/1 'VT323',monospace;color:{{ k.col }}"><dc-import name="SDIcon" icon="{{ k.icon }}" size="16" color="{{ k.col }}" hint-size="16px,16px"></dc-import>{{ k.v }}</span></sc-for></div>
+                  <div style="display:flex;flex-direction:column;gap:6px;padding-top:10px;border-top:1px dashed #3a3d33">
+                    <span style="display:flex;justify-content:space-between;font:700 10px/1 'B612 Mono',monospace;letter-spacing:.14em;color:#8a8270"><span>VOTES · TAP YOUR TOKEN</span><span style="color:#efe6cf">{{ o.count }}</span></span>
+                    <div style="display:flex;gap:6px"><sc-for list="{{ o.tokens }}" as="tk" hint-placeholder-count="3"><button onClick="{{ tk.go }}" title="{{ tk.name }}" style="cursor:pointer;width:46px;height:46px;border-radius:50%;padding:0;border:2px {{ tk.bs }} {{ tk.col }};background:{{ tk.bg }};box-shadow:{{ tk.sh }};display:grid;place-items:center;font:700 11px/1 'B612 Mono',monospace;color:{{ tk.fg }}">{{ tk.ab }}</button></sc-for></div>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="position:relative;background:#f3ecd9;border-radius:6px;box-shadow:0 10px 24px rgba(0,0,0,.4);display:flex;flex-direction:column;overflow:hidden;min-height:0">
+            <div style="position:absolute;left:0;top:0;bottom:0;width:20px;border-right:1px dashed #c4b897;background-image:radial-gradient(circle,#1c1e18 3.5px,transparent 4.5px);background-size:20px 24px"></div>
+            <div style="padding:12px 16px 10px 32px;border-bottom:2px dashed #c4b897;display:flex;flex-direction:column;gap:5px"><span style="font:700 10px/1 'B612 Mono',monospace;letter-spacing:.18em;color:#7a715c">TELETYPE 02 · VOYA ⇄ TEAM</span><span style="font:800 24px/1 'Big Shoulders Display',sans-serif;color:#1b1a16;letter-spacing:.04em">TRANSMISSIONS</span></div>
+            <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:9px;padding:12px 16px 14px 32px;overflow:hidden">
+              <sc-for list="{{ feed }}" as="f" hint-placeholder-count="6">
+                <div style="display:flex;flex-direction:column;gap:3px">
+                  <span style="display:flex;align-items:center;gap:6px;font:700 9px/1 'B612 Mono',monospace;letter-spacing:.14em;color:#7a715c">{{ f.day }}<span style="padding:2px 5px;border-radius:2px;background:{{ f.tagBg }};color:{{ f.tagFg }}">{{ f.who }}</span></span>
+                  <span style="font:400 21px/1.05 'VT323',monospace;color:{{ f.col }}">{{ f.t }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:200px 220px minmax(0,1fr) 300px;gap:14px">
+          <div style="background:#23251f;border:1px solid #3a3d33;border-radius:8px;padding:10px 14px;display:flex;flex-direction:column;justify-content:center;gap:6px"><span style="font:700 10px/1 'B612 Mono',monospace;letter-spacing:.16em;color:#8a8270">MISSION DAY</span><span style="font:400 48px/0.8 'VT323',monospace;color:#8cff9e;text-shadow:0 0 10px rgba(140,255,158,.5)">214</span></div>
+          <div style="background:#23251f;border:1px solid #3a3d33;border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;justify-content:center"><span style="font:700 10px/1 'B612 Mono',monospace;letter-spacing:.16em;color:#8a8270">SPEED · LOCKED FOR VOTE</span><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px"><sc-for list="{{ speeds }}" as="sp" hint-placeholder-count="4"><span style="height:38px;border-radius:5px;border:1px solid #121410;border-bottom:4px solid {{ sp.edge }};background:{{ sp.bg }};display:grid;place-items:center;font:700 13px/1 'B612 Mono',monospace;color:{{ sp.fg }};opacity:{{ sp.op }}">{{ sp.l }}</span></sc-for></div></div>
+          <div style="background:#23251f;border:1px solid #3a3d33;border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:12px">
+            <div style="display:flex;flex-direction:column;gap:5px"><span style="font:700 9px/1 'B612 Mono',monospace;letter-spacing:.14em;color:#8a8270">AS</span><div style="display:flex;gap:3px"><sc-for list="{{ speakers }}" as="sp" hint-placeholder-count="4"><button onClick="{{ sp.go }}" title="{{ sp.name }}" style="cursor:pointer;width:34px;height:34px;border-radius:4px;border:2px solid {{ sp.bd }};background:{{ sp.bg }};display:grid;place-items:center;padding:0"><dc-import name="SDIcon" icon="{{ sp.icon }}" size="16" color="{{ sp.fg }}" hint-size="16px,16px"></dc-import></button></sc-for></div></div>
+            <div style="flex:1;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px"><sc-for list="{{ qmsFly }}" as="q" hint-placeholder-count="5"><button onClick="{{ q.go }}" style="cursor:pointer;height:52px;border-radius:5px;border:1px solid #121410;border-bottom:4px solid #1a1b16;background:#3a3d33;font:800 15px/1 'Big Shoulders Display',sans-serif;letter-spacing:.05em;color:#efe6cf" style-hover="background:#4a4d42">{{ q.t }}</button></sc-for></div>
+          </div>
+          <button onClick="{{ finalCall }}" style="cursor:{{ fcCur }};border-radius:8px;border:3px solid #1b1a16;border-bottom-width:7px;background:{{ fcBg }};box-shadow:{{ fcGlow }};display:grid;grid-template-columns:52px minmax(0,1fr);align-items:center;gap:12px;padding:0 14px;text-align:left">
+            <span style="width:52px;height:52px;border-radius:6px;background:#1b1a16;display:grid;place-items:center;font:400 34px/1 'VT323',monospace;color:{{ fdCol }}">F</span>
+            <span style="display:flex;flex-direction:column;gap:5px"><span style="font:900 28px/1 'Big Shoulders Display',sans-serif;letter-spacing:.1em;color:{{ fcFg }}">FINAL CALL</span><span style="font:700 10px/1.2 'B612 Mono',monospace;letter-spacing:.08em;color:{{ fcFg }}">{{ fcSub }}</span></span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="t4b" style="display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;gap:10px;align-items:center"><span style="padding:4px 9px;border-radius:3px;background:#ffb547;color:#1b1a16;font:700 13px/1 'B612 Mono',monospace">T4b</span><span style="font:400 13px/1 'B612 Mono',monospace;color:#8a8270;letter-spacing:.1em;white-space:nowrap">MOBILE · 390 × 844</span></div>
+      <div style="width:390px;height:844px;box-sizing:border-box;padding:12px 12px 16px;background:#1c1e18;border-radius:34px;box-shadow:0 30px 80px rgba(0,0,0,.55),0 0 0 8px #0f100c;display:flex;flex-direction:column;gap:8px;overflow:hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:0 12px;height:26px;font:700 12px/1 'B612 Mono',monospace;color:#8a8270"><span>9:41</span><span style="font:900 16px/1 'Big Shoulders Display',sans-serif;color:#efe6cf;letter-spacing:.08em">DAY 214</span><span style="color:#ffb547">PAUSED</span></div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px">
+          <sc-for list="{{ res }}" as="r" hint-placeholder-count="4"><div style="display:flex;flex-direction:column;align-items:center;gap:5px;padding:6px 0;background:#23251f;border:1px solid #3a3d33;border-radius:6px"><dc-import name="SDIcon" icon="{{ r.icon }}" size="18" color="{{ r.col }}" hint-size="18px,18px"></dc-import><div style="display:flex;gap:2px"><sc-for list="{{ r.segs }}" as="g" hint-placeholder-count="5"><span style="width:9px;height:7px;border-radius:1px;background:{{ g.bg }}"></span></sc-for></div></div></sc-for>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px">
+          <sc-for list="{{ steps }}" as="st" hint-placeholder-count="3"><div style="display:flex;align-items:center;gap:5px;padding:5px 6px;border-radius:4px;background:{{ st.bg }};border:1px solid {{ st.bd }}"><span style="width:16px;height:16px;border-radius:50%;flex:none;background:{{ st.dot }}"></span><span style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font:700 8px/1 'B612 Mono',monospace;letter-spacing:.1em;color:{{ st.sub }}">{{ st.label }}</span><span style="font:800 11px/1 'Big Shoulders Display',sans-serif;color:{{ st.fg }};white-space:nowrap">{{ st.whoShort }}</span></span></div></sc-for>
+        </div>
+        <div style="border-radius:8px;background:#efe6cf;overflow:hidden;display:flex;flex-direction:column">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 12px;background:#d8432b"><span style="display:flex;align-items:center;gap:6px;font:700 10px/1 'B612 Mono',monospace;letter-spacing:.16em;color:#efe6cf"><dc-import name="SDIcon" icon="storm" size="15" color="#efe6cf" hint-size="15px,15px"></dc-import>DANGER CARD</span><span style="font:700 10px/1 'B612 Mono',monospace;color:#efe6cf">ORDER TAKES 4 MIN</span></div>
+          <div style="display:flex;align-items:center;gap:8px;padding:7px 12px;background:{{ recCol }}"><dc-import name="SDIcon" icon="power" size="15" color="#1b1a16" hint-size="15px,15px"></dc-import><span style="font:700 9px/1.25 'B612 Mono',monospace;letter-spacing:.08em;color:#1b1a16">RECOMMENDED BY SPACECRAFT ENGINEER<br><span style="font:900 15px/1 'Big Shoulders Display',sans-serif;letter-spacing:.04em">{{ recLine }}</span></span></div>
+          <div style="padding:10px 12px 12px;display:flex;flex-direction:column;gap:6px"><span style="font:900 34px/0.9 'Big Shoulders Display',sans-serif;color:#1b1a16">SOLAR STORM</span><span style="font:400 13px/1.35 'B612',sans-serif;color:#1b1a16">The Sun just flared. Particles hit the spacecraft in two days.</span></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+          <sc-for list="{{ optAll }}" as="o" hint-placeholder-count="2">
+            <div style="padding:9px;border-radius:7px;border:2px solid {{ o.bd }};border-bottom-width:5px;background:#23251f;display:flex;flex-direction:column;gap:6px">
+              <button onClick="{{ o.fdPick }}" style="cursor:pointer;background:none;border:none;padding:0;text-align:left;display:flex;flex-direction:column;gap:3px"><span style="font:900 22px/1 'Big Shoulders Display',sans-serif;color:{{ o.letCol }}">{{ o.k }}</span><span style="font:800 18px/0.95 'Big Shoulders Display',sans-serif;color:#efe6cf">{{ o.label }}</span><span style="font:400 15px/1 'VT323',monospace;color:#ffb547">{{ o.fxLine }}</span></button>
+              <div style="display:flex;gap:4px"><sc-for list="{{ o.tokens }}" as="tk" hint-placeholder-count="3"><button onClick="{{ tk.go }}" style="cursor:pointer;width:44px;height:44px;border-radius:50%;padding:0;border:2px {{ tk.bs }} {{ tk.col }};background:{{ tk.bg }};display:grid;place-items:center;font:700 10px/1 'B612 Mono',monospace;color:{{ tk.fg }}">{{ tk.ab }}</button></sc-for></div>
+            </div>
+          </sc-for>
+        </div>
+        <button onClick="{{ finalCall }}" style="cursor:{{ fcCur }};height:68px;flex:none;border-radius:8px;border:3px solid #1b1a16;border-bottom-width:6px;background:{{ fcBg }};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px"><span style="font:900 26px/1 'Big Shoulders Display',sans-serif;letter-spacing:.1em;color:{{ fcFg }}">FINAL CALL</span><span style="font:700 9px/1 'B612 Mono',monospace;letter-spacing:.06em;color:{{ fcFg }}">{{ fcSub }}</span></button>
+        <div style="flex:1;min-height:0;background:#f3ecd9;border-radius:5px;padding:8px 10px;display:flex;flex-direction:column;justify-content:flex-end;gap:5px;overflow:hidden">
+          <sc-for list="{{ feedShort }}" as="f" hint-placeholder-count="3"><div style="display:flex;align-items:baseline;gap:6px"><span style="flex:none;padding:2px 4px;border-radius:2px;background:{{ f.tagBg }};font:700 8px/1 'B612 Mono',monospace;color:{{ f.tagFg }}">{{ f.who }}</span><span style="font:400 17px/1 'VT323',monospace;color:{{ f.col }}">{{ f.t }}</span></div></sc-for>
+        </div>
+        <div style="display:flex;gap:5px;overflow-x:auto;scrollbar-width:none;flex:none"><sc-for list="{{ qmsFly }}" as="q" hint-placeholder-count="5"><button onClick="{{ q.go }}" style="cursor:pointer;flex:none;height:44px;padding:0 10px;border-radius:5px;border:1px solid #121410;border-bottom:3px solid #1a1b16;background:#3a3d33;font:800 14px/1 'Big Shoulders Display',sans-serif;letter-spacing:.05em;color:#efe6cf;white-space:nowrap">{{ q.t }}</button></sc-for></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="team-report" data-screen-label="T5 Team Report" style="background:#0b0c09;padding:56px 64px 80px;display:flex;flex-direction:column;gap:28px;border-top:1px solid #23251f">
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <div style="font:400 14px/1 'B612 Mono',monospace;letter-spacing:.2em;color:#8a8270">SIGNAL DELAY · TEAM MODE · SCREEN T5</div>
+    <h1 style="margin:0;font:800 56px/1 'Big Shoulders Display',sans-serif;color:#efe6cf;letter-spacing:.02em">MISSION REPORT · TEAM DEBRIEF</h1>
+    <p style="margin:0;max-width:700px;font:400 16px/1.5 'B612',sans-serif;color:#a49b84;text-wrap:pretty">Sits after the Mission Album, before FINAL TRANSMISSION. One row per role: the call that mattered most and what it did. The team score rewards agreeing, solving conflicts, and meeting the objective.</p>
+  </div>
+  <div style="display:flex;gap:56px;align-items:flex-start;flex-wrap:wrap">
+    <div id="t5a" style="display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;gap:10px;align-items:center"><span style="padding:4px 9px;border-radius:3px;background:#ffb547;color:#1b1a16;font:700 13px/1 'B612 Mono',monospace">T5a</span><span style="font:400 13px/1 'B612 Mono',monospace;color:#8a8270;letter-spacing:.1em;white-space:nowrap">DESKTOP · 1440 × 900</span></div>
+      <div style="width:1440px;height:900px;box-sizing:border-box;padding:18px;background:#1c1e18;border-radius:10px;box-shadow:0 30px 80px rgba(0,0,0,.55),inset 0 1px 0 #34372e;display:grid;grid-template-rows:60px minmax(0,1fr);gap:14px">
+        <div style="display:grid;grid-template-columns:300px minmax(0,1fr) 300px;align-items:center;gap:16px">
+          <div style="display:flex;flex-direction:column;gap:4px"><div style="font:900 30px/1 'Big Shoulders Display',sans-serif;color:#efe6cf;letter-spacing:.06em">SIGNAL DELAY</div><div style="font:400 11px/1 'B612 Mono',monospace;color:#8a8270;letter-spacing:.18em">TEAM · MISSION REPORT</div></div>
+          <div style="display:flex;justify-content:center;align-items:center;gap:14px;font:700 13px/1 'B612 Mono',monospace;letter-spacing:.18em;white-space:nowrap">
+            <span style="display:flex;align-items:center;gap:8px;color:#47c96b"><span style="width:10px;height:10px;border-radius:50%;background:#47c96b"></span>1 PACK</span>
+            <span style="width:32px;height:1px;background:#3a3d33"></span>
+            <span style="display:flex;align-items:center;gap:8px;color:#47c96b"><span style="width:10px;height:10px;border-radius:50%;background:#47c96b"></span>2 FLY</span>
+            <span style="width:32px;height:1px;background:#3a3d33"></span>
+            <span style="display:flex;align-items:center;gap:8px;color:#ffb547"><span style="width:10px;height:10px;border-radius:50%;background:#ffb547;box-shadow:0 0 8px #ffb547"></span>3 REPORT</span>
+          </div>
+          <div style="display:flex;justify-content:flex-end;gap:6px;font:700 11px/1 'B612 Mono',monospace;letter-spacing:.12em;color:#8a8270;align-items:center">ALBUM <span style="color:#47c96b">✓</span> · <span style="color:#ffb547">DEBRIEF</span> · TRANSMISSION</div>
+        </div>
+        <div style="background:#efe6cf;border-radius:6px;box-shadow:0 20px 50px rgba(0,0,0,.5);padding:26px 32px;display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:28px;min-height:0">
+          <div style="display:flex;flex-direction:column;gap:14px;min-height:0">
+            <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:20px;padding-bottom:12px;border-bottom:3px solid #1b1a16">
+              <div style="display:flex;flex-direction:column;gap:8px"><span style="font:700 12px/1 'B612 Mono',monospace;letter-spacing:.2em;color:#7a715c">ORBITER-1 · CREW OF 4 · OBJECTIVE: STUDY THE ATMOSPHERE</span><span style="font:900 64px/0.9 'Big Shoulders Display',sans-serif;color:#1b1a16">TEAM DEBRIEF</span></div>
+              <span style="font:700 12px/1.4 'B612 Mono',monospace;letter-spacing:.12em;color:#7a715c;text-align:right">9 DECISIONS<br>DAY 0 → 672</span>
+            </div>
+            <div style="display:grid;grid-template-columns:12px 190px minmax(0,1fr) minmax(0,1fr) 130px;gap:16px;font:700 10px/1 'B612 Mono',monospace;letter-spacing:.16em;color:#7a715c;padding:0 4px"><span></span><span>ROLE</span><span>KEY DECISION</span><span>EFFECT ON THE MISSION</span><span style="text-align:right">VERDICT</span></div>
+            <div style="flex:1;display:flex;flex-direction:column;gap:8px;min-height:0">
+              <sc-for list="{{ debrief }}" as="d" hint-placeholder-count="4">
+                <div style="flex:1;display:grid;grid-template-columns:12px 190px minmax(0,1fr) minmax(0,1fr) 130px;gap:16px;align-items:center;padding:10px 4px 10px 0;border-bottom:2px dashed #c4b897">
+                  <span style="align-self:stretch;border-radius:2px;background:{{ d.col }};box-shadow:inset 0 0 0 1.5px #1b1a16"></span>
+                  <span style="display:flex;flex-direction:column;gap:6px"><span style="font:900 22px/0.95 'Big Shoulders Display',sans-serif;color:#1b1a16">{{ d.name }}</span><span style="display:flex;align-items:center;gap:6px;font:700 11px/1 'B612 Mono',monospace;letter-spacing:.1em;color:#5a5446"><dc-import name="SDIcon" icon="{{ d.icon }}" size="14" color="#1b1a16" hint-size="14px,14px"></dc-import>{{ d.p }}</span></span>
+                  <span style="display:flex;flex-direction:column;gap:5px"><span style="font:700 10px/1 'B612 Mono',monospace;letter-spacing:.14em;color:#7a715c">{{ d.when }}</span><span style="font:400 23px/1.05 'VT323',monospace;color:#1b1a16">{{ d.call }}</span></span>
+                  <span style="display:flex;flex-direction:column;gap:6px"><span style="font:400 15px/1.4 'B612',sans-serif;color:#3a372e;text-wrap:pretty">{{ d.effect }}</span><span style="display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ d.chips }}" as="k" hint-placeholder-count="2"><span style="display:flex;align-items:center;gap:4px;padding:3px 6px;border-radius:3px;background:#1b1a16;font:400 17px/1 'VT323',monospace;color:{{ k.col }}"><dc-import name="SDIcon" icon="{{ k.icon }}" size="13" color="{{ k.col }}" hint-size="13px,13px"></dc-import>{{ k.v }}</span></sc-for></span></span>
+                  <span style="justify-self:end;padding:6px 8px;border:2.5px solid {{ d.vCol }};border-radius:3px;transform:rotate(-5deg);font:900 15px/1.05 'Big Shoulders Display',sans-serif;letter-spacing:.08em;color:{{ d.vCol }};text-align:center">{{ d.verdict }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="background:#1b1a16;border-radius:6px;padding:18px;display:flex;flex-direction:column;gap:14px">
+              <span style="font:700 11px/1 'B612 Mono',monospace;letter-spacing:.2em;color:#a49b84">TEAM SCORE</span>
+              <span style="display:flex;align-items:baseline;gap:8px"><span style="font:400 120px/0.75 'VT323',monospace;color:#8cff9e;text-shadow:0 0 16px rgba(140,255,158,.5)">{{ score }}</span><span style="font:400 30px/1 'VT323',monospace;color:#47c96b">/ 100</span></span>
+              <sc-for list="{{ scoreRows }}" as="s" hint-placeholder-count="3">
+                <div style="display:flex;flex-direction:column;gap:6px;padding-top:10px;border-top:1px dashed #3a3d33">
+                  <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:700 11px/1 'B612 Mono',monospace;letter-spacing:.14em;color:#efe6cf">{{ s.l }}</span><span style="font:400 22px/1 'VT323',monospace;color:#ffb547">+{{ s.pts }}</span></div>
+                  <div style="display:flex;gap:3px"><sc-for list="{{ s.pips }}" as="pp" hint-placeholder-count="9"><span style="flex:1;height:10px;border-radius:2px;background:{{ pp.bg }}"></span></sc-for></div>
+                  <span style="font:400 18px/1 'VT323',monospace;color:#8cff9e">{{ s.v }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <span style="font:400 14px/1.45 'B612',sans-serif;color:#3a372e;text-wrap:pretty">{{ scoreNote }}</span>
+            <a href="Signal Delay - Mission Report.dc.html" style="margin-top:auto;height:58px;border-radius:5px;border:2px solid #1b1a16;border-bottom-width:5px;background:#efe6cf;display:grid;place-items:center;font:800 20px/1 'Big Shoulders Display',sans-serif;letter-spacing:.1em;color:#1b1a16">NEXT · FINAL TRANSMISSION ▸</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="t5b" style="display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;gap:10px;align-items:center"><span style="padding:4px 9px;border-radius:3px;background:#ffb547;color:#1b1a16;font:700 13px/1 'B612 Mono',monospace">T5b</span><span style="font:400 13px/1 'B612 Mono',monospace;color:#8a8270;letter-spacing:.1em;white-space:nowrap">MOBILE · 390 × 844</span></div>
+      <div style="width:390px;height:844px;box-sizing:border-box;padding:12px 12px 16px;background:#1c1e18;border-radius:34px;box-shadow:0 30px 80px rgba(0,0,0,.55),0 0 0 8px #0f100c;display:flex;flex-direction:column;gap:8px;overflow:hidden">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:0 12px;height:26px;font:700 12px/1 'B612 Mono',monospace;color:#8a8270"><span>9:41</span><span style="font:900 16px/1 'Big Shoulders Display',sans-serif;color:#efe6cf;letter-spacing:.08em">3 REPORT</span><span>2 / 3</span></div>
+        <div style="flex:1;min-height:0;background:#efe6cf;border-radius:6px;padding:14px;display:flex;flex-direction:column;gap:9px;overflow:hidden">
+          <div style="display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:8px;border-bottom:2px solid #1b1a16"><span style="display:flex;flex-direction:column;gap:5px"><span style="font:700 9px/1 'B612 Mono',monospace;letter-spacing:.14em;color:#7a715c">CREW OF 4 · ATMOSPHERE</span><span style="font:900 34px/0.9 'Big Shoulders Display',sans-serif;color:#1b1a16">TEAM DEBRIEF</span></span><span style="display:flex;align-items:baseline;gap:3px;padding:6px 8px;border-radius:4px;background:#1b1a16"><span style="font:400 40px/0.75 'VT323',monospace;color:#8cff9e">{{ score }}</span><span style="font:400 16px/1 'VT323',monospace;color:#47c96b">/100</span></span></div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px"><sc-for list="{{ scoreRows }}" as="s" hint-placeholder-count="3"><div style="padding:6px;border-radius:4px;background:#1b1a16;display:flex;flex-direction:column;gap:4px"><span style="font:700 8px/1.15 'B612 Mono',monospace;letter-spacing:.08em;color:#a49b84">{{ s.ls }}</span><span style="font:400 18px/1 'VT323',monospace;color:#8cff9e">{{ s.vs }}</span></div></sc-for></div>
+          <div style="flex:1;min-height:0;display:flex;flex-direction:column;gap:6px">
+            <sc-for list="{{ debrief }}" as="d" hint-placeholder-count="4">
+              <div style="flex:1;display:grid;grid-template-columns:6px minmax(0,1fr);gap:8px;padding-bottom:6px;border-bottom:1.5px dashed #c4b897">
+                <span style="border-radius:2px;background:{{ d.col }};box-shadow:inset 0 0 0 1px #1b1a16"></span>
+                <div style="display:flex;flex-direction:column;gap:3px;min-width:0">
+                  <div style="display:flex;justify-content:space-between;align-items:center;gap:6px"><span style="font:900 15px/1 'Big Shoulders Display',sans-serif;color:#1b1a16">{{ d.name }} · {{ d.p }}</span><span style="flex:none;padding:2px 4px;border:1.5px solid {{ d.vCol }};border-radius:2px;font:900 10px/1 'Big Shoulders Display',sans-serif;letter-spacing:.06em;color:{{ d.vCol }}">{{ d.verdictShort }}</span></div>
+                  <span style="font:400 16px/1 'VT323',monospace;color:#1b1a16">{{ d.call }}</span>
+                  <span style="font:400 11px/1.3 'B612',sans-serif;color:#3a372e">{{ d.effectShort }}</span>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <a href="Signal Delay - Mission Report.dc.html" style="height:54px;flex:none;border-radius:7px;display:grid;place-items:center;background:#ffb547;border-bottom:5px solid #9a6514;font:900 20px/1 'Big Shoulders Display',sans-serif;letter-spacing:.1em;color:#1b1a16">NEXT · FINAL TRANSMISSION</a>
+      </div>
+    </div>
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;rolePalette&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Signal&quot;,&quot;Colour-blind safe&quot;],&quot;default&quot;:&quot;Signal&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+const PAL={
+ 'Signal':{fd:'#ffb547',eng:'#5fb8d9',sci:'#9fd36a',com:'#e58fd0'},
+ 'Colour-blind safe':{fd:'#e69f00',eng:'#56b4e9',sci:'#f0e442',com:'#cc79a7'}
+};
+const R=[
+ {k:'fd',name:'FLIGHT DIRECTOR',short:'FLIGHT DIR.',ab:'FD',icon:'star',p:'AMARA'},
+ {k:'eng',name:'SPACECRAFT ENGINEER',short:'ENGINEER',ab:'ENG',icon:'power',p:'BEN'},
+ {k:'sci',name:'SCIENCE LEAD',short:'SCIENCE',ab:'SCI',icon:'camera',p:'CHLO'},
+ {k:'com',name:'COMMS & OPS',short:'COMMS',ab:'COM',icon:'dish',p:'DEV'}
+];
+const RK=Object.fromEntries(R.map(r=>[r.k,r]));
+const PARTS=[
+ {id:'cpu',r:'fd',n:'Flight Computer',short:'CPU',icon:'computer',kg:60,c:10,req:true},
+ {id:'shield',r:'fd',n:'Debris Shield',short:'SHIELD',icon:'shield',kg:180,c:8},
+ {id:'panel',r:'eng',n:'Solar Panels',short:'PANELS',icon:'panel',kg:220,c:12,req:true},
+ {id:'batt',r:'eng',n:'Extra Battery',short:'BATTERY',icon:'battery',kg:160,c:7},
+ {id:'tank',r:'eng',n:'Extra Fuel Tank',short:'FUEL',icon:'tank',kg:520,c:9},
+ {id:'heat',r:'eng',n:'Heater',short:'HEATER',icon:'heater',kg:40,c:3},
+ {id:'cam',r:'sci',n:'Camera',short:'CAMERA',icon:'camera',kg:70,c:9,req:true},
+ {id:'spec',r:'sci',n:'Spectrometer',short:'SPECTRO',icon:'star',kg:90,c:14},
+ {id:'uv',r:'sci',n:'UV Imager',short:'UV',icon:'eclipse',kg:60,c:11},
+ {id:'mag',r:'sci',n:'Magnetometer',short:'MAG',icon:'orbit',kg:30,c:6},
+ {id:'dish',r:'com',n:'Big Dish',short:'DISH',icon:'dish',kg:120,c:10,req:true},
+ {id:'ant2',r:'com',n:'Backup Antenna',short:'BACKUP',icon:'data',kg:40,c:5},
+ {id:'mem',r:'com',n:'Extra Memory',short:'MEMORY',icon:'computer',kg:20,c:6}
+];
+const MASS=2550,BUS=1000,BUDGET=90;
+const QM=['NEED MORE POWER','TOO HEAVY','AGREE','TOO RISKY','YOUR TURN'];
+const OPT={
+ A:{label:'SAFE MODE',sub:'Instruments off. Ride it out with the computer protected.',chips:[['power','−1','#ffb547'],['data','−1','#ffb547']],fxLine:'PWR −1 · DATA −1',fx:{power:-1,data:-1}},
+ B:{label:'KEEP WORKING',sub:'Spectrometer records the storm. The computer might glitch.',chips:[['sys','−2','#ff8a6d'],['data','+1','#8cff9e']],fxLine:'SYS −2 · DATA +1',fx:{sys:-2,data:1}}
+};
+const RES=[['power','POWER',3,'eng'],['fuel','FUEL',3,'eng'],['data','DATA',2,'com'],['sys','SYSTEMS',4,'fd']];
+const ON={bg:'#ffb547',fg:'#1b1a16',edge:'#9a6514'},OFF={bg:'#3a3d33',fg:'#cbbf9f',edge:'#1a1b16'};
+const DEBRIEF=[
+ {k:'fd',when:'DAY 0 · OBJECTIVE',call:'LOCKED "STUDY THE ATMOSPHERE" OVER ONE OBJECTION.',effect:'Every later target choice had a reason. All 3 must-have targets were shot.',chips:[['check','3/3 TARGETS','#8cff9e']],verdict:'OBJECTIVE MET',vs:'MET',vc:'#1f7a3c',es:'3 of 3 must-have targets shot.'},
+ {k:'eng',when:'DAY 214 · SOLAR STORM',call:'RECOMMENDED SAFE MODE. TEAM AGREED 3–0.',effect:'Lost a little power, but the computer never glitched. The Odyssey problem didn\'t repeat.',chips:[['power','−1','#ffb547'],['sys','±0','#8cff9e']],verdict:'GOOD CALL',vs:'GOOD',vc:'#1f7a3c',es:'Computer safe; power −1.'},
+ {k:'sci',when:'PACK · OVER BUDGET',call:'KEPT THE UV IMAGER. GAVE UP THE BACKUP ANTENNA.',effect:'Caused the only budget fight. The limb photos — the objective\'s top target — came from that imager.',chips:[['camera','LIMB SHOT','#8cff9e'],['dish','NO BACKUP','#ff8a6d']],verdict:'WORTH IT',vs:'WORTH IT',vc:'#a8620a',es:'Budget fight; won the limb photo.'},
+ {k:'com',when:'DAY 316 · DSN PASS',call:'SPENT THE MADRID PASS ON LIMB IMAGES, NOT DEIMOS.',effect:'5 of 6 images reached Earth. The Deimos picture is still in the robot\'s memory.',chips:[['data','5/6 DOWN','#ffb547']],verdict:'COST 1 IMAGE',vs:'−1 IMAGE',vc:'#b23a22',es:'5 of 6 images downlinked.'}
+];
+
+class Component extends DCLogic {
+  state={packed:{cpu:1,panel:1,cam:1,dish:1,shield:1,batt:1,tank:1,spec:1,uv:1,ant2:1},spk:'sci',
+    log:[{r:'eng',t:'NEED MORE POWER'},{r:'sci',t:'TOO RISKY'},{r:'com',t:'TOO HEAVY'},{r:'fd',t:'YOUR TURN'}],
+    votes:{eng:'A',sci:'B',com:null},fdPick:null,sent:false,fspk:'com',
+    flog:[{w:'bot',d:212,t:'CRUISING. ALL QUIET OUT HERE.'},{w:'bot',d:214,t:'SUN JUST FLARED. PARTICLES HIT ME IN 2 DAYS. ORDERS?'},{w:'eng',d:214,t:'RECOMMEND A · SAFE MODE'},{w:'sci',d:214,t:'TOO RISKY'},{w:'fd',d:214,t:'YOUR TURN'}]};
+  componentDidMount(){this.kd=e=>{if(e.key==='f'||e.key==='F')this.callIt();};window.addEventListener('keydown',this.kd);}
+  componentWillUnmount(){window.removeEventListener('keydown',this.kd);}
+  pal(){return PAL[this.props.rolePalette]||PAL.Signal;}
+  majority(){const v=this.state.votes,c={A:0,B:0};Object.values(v).forEach(x=>x&&c[x]++);return c.A>=c.B?'A':'B';}
+  callIt(){const s=this.state;if(s.sent)return this.setState({sent:false,fdPick:null,votes:{eng:'A',sci:'B',com:null}});
+    const pick=s.fdPick||this.majority();this.setState({sent:true,fdPick:pick,flog:s.flog.concat([{w:'fd',d:214,t:'FINAL CALL: '+pick+' · '+OPT[pick].label},{w:'earth',d:214,t:'ORDER SENT. ARRIVES IN 4 MIN.'}]).slice(-7)});}
+  renderVals(){
+    const s=this.state,P=this.pal(),pk=s.packed;
+    const crew=R.map(r=>({name:r.name,col:P[r.k],icon:r.icon,p:r.p}));
+    const tot={},kg={};R.forEach(r=>{tot[r.k]=0;kg[r.k]=0;});
+    PARTS.forEach(p=>{if(pk[p.id]){tot[p.r]+=p.c;kg[p.r]+=p.kg;}});
+    const cost=Object.values(tot).reduce((a,b)=>a+b,0),mass=BUS+Object.values(kg).reduce((a,b)=>a+b,0);
+    const overB=cost-BUDGET,overM=mass-MASS,over=overB>0||overM>0;
+    const opt={};R.forEach(r=>opt[r.k]=PARTS.filter(p=>p.r===r.k&&pk[p.id]&&!p.req).reduce((a,p)=>a+(overB>0?p.c:p.kg),0));
+    const ranked=R.slice().sort((a,b)=>opt[b.k]-opt[a.k]),A=ranked[0],B=ranked[1];
+    const cuts=PARTS.filter(p=>pk[p.id]&&!p.req&&(p.r===A.k||p.r===B.k)).filter(p=>overB>0?p.c>=overB:p.kg>=overM).sort((a,b)=>(overB>0?a.c-b.c:a.kg-b.kg)).slice(0,2);
+    const overTitle=overB>0?'OVER BUDGET — NEGOTIATE':'TOO HEAVY — NEGOTIATE';
+    const overAmt=overB>0?'+$'+overB+'M':'+'+overM.toLocaleString()+' KG';
+    const overHint=cuts.length?'One cut fixes it: '+cuts.map(p=>p.n+' ('+(overB>0?'$'+p.c+'M':p.kg+' kg')+', '+RK[p.r].short.toLowerCase()+')').join(' or ')+'. The Flight Director breaks a tie.':'Both roles need to give something up. The Flight Director breaks a tie.';
+    const overHintShort=cuts.length?'CUT '+cuts[0].short:'BOTH MUST CUT';
+    const groups=R.map(r=>({name:r.name,icon:r.icon,col:P[r.k],sub:'$'+tot[r.k]+'M · '+kg[r.k]+' KG',parts:PARTS.filter(p=>p.r===r.k).map(p=>{const on=!!pk[p.id];
+      return {...p,cur:p.req?'default':'pointer',bd:on?P[r.k]:'#3a3d33',bg:on?'#1c1e18':'#1a1b16',tile:on?P[r.k]:'#0f100c',tileFg:on?'#1b1a16':P[r.k],nameCol:on?'#efe6cf':'#8a8270',
+        st:p.req?'NEEDED':on?'PACKED':'ADD',stBg:p.req?'#3a3d33':on?P[r.k]:'transparent',stFg:p.req?'#cbbf9f':on?'#1b1a16':'#8a8270',
+        toggle:()=>!p.req&&this.setState(st=>{const n={...st.packed};if(n[p.id])delete n[p.id];else n[p.id]=1;return {packed:n};})};})}));
+    const blocks=PARTS.filter(p=>pk[p.id]).map(p=>({icon:p.icon,short:p.short,col:P[p.r],span:p.kg>=150?2:1,cur:p.req?'default':'pointer',tip:p.n+' · '+RK[p.r].name,
+      toggle:()=>!p.req&&this.setState(st=>{const n={...st.packed};delete n[p.id];return {packed:n};})}));
+    const pct=(v,lim)=>Math.max(0,v/lim*100*(lim/Math.max(lim,v===0?lim:lim)));
+    const scaleM=Math.max(MASS,mass),scaleB=Math.max(BUDGET,cost);
+    const bars=[
+      {label:'MASS · SHARED',labelShort:'MASS',num:mass.toLocaleString()+' / '+MASS.toLocaleString()+' KG',numCol:overM>0?'#ff8a6d':'#8cff9e',overW:((scaleM-MASS)/scaleM*100)+'%',
+        segs:[{w:(BUS/scaleM*100)+'%',bg:'#4a4d42',tip:'Bus'}].concat(R.map(r=>({w:(kg[r.k]/scaleM*100)+'%',bg:P[r.k],tip:r.name})))},
+      {label:'BUDGET · SHARED',labelShort:'BUDGET',num:'$'+cost+'M / $'+BUDGET+'M',numCol:overB>0?'#ff8a6d':'#8cff9e',overW:((scaleB-BUDGET)/scaleB*100)+'%',
+        segs:R.map(r=>({w:(tot[r.k]/scaleB*100)+'%',bg:P[r.k],tip:r.name}))}];
+    const legend=R.map(r=>({name:r.ab,col:P[r.k],kg:kg[r.k],c:tot[r.k],share:Math.round(tot[r.k]/Math.max(1,cost)*100)+'%',shareCol:over&&(r.k===A.k||r.k===B.k)?'#ff8a6d':'#cbbf9f'}));
+    const speakers=R.map(r=>{const on=s.spk===r.k;return {name:r.name,icon:r.icon,bd:on?P[r.k]:'#3a3d33',bg:on?P[r.k]:'#0f100c',fg:on?'#1b1a16':P[r.k],go:()=>this.setState({spk:r.k,fspk:r.k})};});
+    const qms=QM.map(t=>({t,go:()=>this.setState(st=>({log:st.log.concat([{r:st.spk,t}]).slice(-8)}))}));
+    const log=s.log.slice(-6).map(m=>({ab:RK[m.r].ab,col:P[m.r],t:m.t}));
+    const last=s.log[s.log.length-1];
+    // fly
+    const votes=s.votes,pick=s.fdPick;
+    const allIn=['eng','sci','com'].every(k=>votes[k]);
+    const phase=s.sent?3:allIn?2:1;
+    const stepDef=[['RECOMMEND','eng','power'],['VOTE','all','check'],['FINAL CALL','fd','star']];
+    const steps=stepDef.map(([label,who,icon],i)=>{const n=i+1,done=n<phase||s.sent,cur=n===phase&&!s.sent,col=who==='all'?'#efe6cf':P[who];
+      const whoTxt=who==='all'?(cur?'WAITING: '+['eng','sci','com'].filter(k=>!votes[k]).map(k=>RK[k].ab).join(' + '):'ALL ROLES'):RK[who].name;
+      return {n,label,icon:done?'check':icon,who:whoTxt,whoShort:who==='all'?(cur?'WAIT '+['eng','sci','com'].filter(k=>!votes[k]).map(k=>RK[k].ab).join('+'):'ALL'):RK[who].ab+(who==='fd'?' · F':''),
+        bg:cur?'#2b2d25':'#171914',bd:cur?col:'#2c2f27',glow:cur?'0 0 14px '+col+'55':'none',dot:done?'#47c96b':cur?col:'#3a3d33',fg:cur?col:done?'#8a8270':'#6f685a',sub:cur?'#efe6cf':'#6f685a'};});
+    const cnt={A:0,B:0};Object.values(votes).forEach(x=>x&&cnt[x]++);
+    const finalPick=pick||this.majority();
+    const optV=o=>{const d=OPT[o],chosen=s.sent?finalPick===o:pick===o;
+      return {k:o,label:d.label,sub:d.sub,fxLine:d.fxLine,keyHint:o==='A'?'◂ ←':'→ ▸',chips:d.chips.map(([icon,v,col])=>({icon,v,col})),count:cnt[o]+' OF 3',
+        bd:chosen?P.fd:'#4a4d42',glow:chosen?'0 0 0 2px '+P.fd+',0 0 24px '+P.fd+'44':'none',letCol:chosen?P.fd:'#8a8270',
+        fdPick:()=>!s.sent&&this.setState({fdPick:pick===o?null:o}),
+        tokens:['eng','sci','com'].map(k=>{const on=votes[k]===o;return {ab:RK[k].ab,name:RK[k].name+' votes '+o,col:P[k],bs:on?'solid':'dashed',bg:on?P[k]:'transparent',fg:on?'#1b1a16':P[k],sh:on?'0 0 10px '+P[k]+'88':'none',
+          go:()=>!s.sent&&this.setState(st=>({votes:{...st.votes,[k]:st.votes[k]===o?null:o}}))};})};};
+    const optA=optV('A'),optB=optV('B');
+    const overrule=cnt[finalPick]<2&&allIn;
+    const fcSub=s.sent?'SENT: '+finalPick+' · '+OPT[finalPick].label+' · PRESS AGAIN TO RESET':(pick?'SEND '+pick+' · '+OPT[pick].label:'TEAM LEANS '+finalPick+' · TAP A CARD TO CHOOSE')+(overrule?' · OVERRULES TEAM':'');
+    const res=RES.map(([k,n,v,own])=>{const d=s.sent?(OPT[finalPick].fx[k]||0):0,nv=Math.max(0,Math.min(5,v+d));
+      return {icon:k,name:n,col:nv<=1?'#ff8a6d':'#8cff9e',ownCol:P[own],ownName:'Watched by '+RK[own].name,hasDelta:!!d,delta:(d>0?'+':'−')+Math.abs(d),deltaCol:d>0?'#8cff9e':'#ffb547',
+        segs:[0,1,2,3,4].map(i=>({bg:i<nv?(nv<=1?'#ff8a6d':'#8cff9e'):'#2c2f27',sh:i<nv?'0 0 6px rgba(140,255,158,.4)':'none'}))};});
+    const tag=w=>w==='bot'?{who:'VOYA',tagBg:'#1b1a16',tagFg:'#efe6cf',col:'#1b1a16'}:w==='earth'?{who:'EARTH',tagBg:'#b23a22',tagFg:'#efe6cf',col:'#b23a22'}:{who:RK[w].ab,tagBg:P[w],tagFg:'#1b1a16',col:'#3a372e'};
+    const feed=s.flog.slice(-7).map(f=>({day:'DAY '+f.d,t:f.t,...tag(f.w)}));
+    const qmsFly=QM.map(t=>({t,go:()=>this.setState(st=>({flog:st.flog.concat([{w:st.fspk,d:214,t}]).slice(-9)}))}));
+    const speeds=[['II',1],['1×',0],['10×',0],['100×',0]].map(([l,on])=>({l,bg:on?'#ffb547':'#3a3d33',fg:on?'#1b1a16':'#8a8270',edge:on?'#9a6514':'#1a1b16',op:on?1:.5}));
+    const canCall=true;
+    // report
+    const debrief=DEBRIEF.map(d=>({...d,name:RK[d.k].name,p:RK[d.k].p,icon:RK[d.k].icon,col:P[d.k],chips:d.chips.map(([icon,v,col])=>({icon,v,col})),vCol:d.vc,verdictShort:d.vs,effectShort:d.es}));
+    const pips=(n,of)=>Array.from({length:of},(_,i)=>({bg:i<n?'#8cff9e':'#2c2f27'}));
+    const scoreRows=[
+      {l:'AGREEMENTS',ls:'AGREED',v:'7 OF 9 DECISIONS AGREED FIRST TIME',vs:'7 / 9',pts:35,pips:pips(7,9)},
+      {l:'CONFLICTS SOLVED',ls:'CONFLICTS',v:'2 OF 3 TALKED OUT · 1 OVERRULED',vs:'2 / 3',pts:20,pips:pips(2,3)},
+      {l:'OBJECTIVE MET',ls:'OBJECTIVE',v:'ATMOSPHERE · 3 OF 3 MUST-HAVES',vs:'MET',pts:30,pips:pips(1,1)}];
+    return {crew,groups,blocks,over,overTitle,overAmt,overHint,overHintShort,cA:{name:A.name,ab:A.ab,col:P[A.k]},cB:{name:B.name,ab:B.ab,col:P[B.k]},
+      bars,legend,speakers,qms,log,msgCount:s.log.length,lastAb:RK[last.r].ab,lastCol:P[last.r],lastT:last.t,
+      launchHref:'#t4a',launchPe:over?'none':'auto',launchBg:over?'#3a3d33':'#ffb547',launchFg:over?'#6f685a':'#1b1a16',launchEdge:over?'#1a1b16':'#9a6514',launchGlow:over?'none':'0 0 22px rgba(255,181,71,.35)',
+      launchSub:over?'FIX '+(overB>0?'BUDGET':'MASS')+' FIRST':'ALL LIMITS GREEN',
+      res,steps,optL:[optA],optR:[optB],optAll:[optA,optB],recCol:P.eng,recLine:'A · SAFE MODE',fdCol:P.fd,
+      finalCall:()=>this.callIt(),fcSub,fcBg:s.sent?'#47c96b':'#ffb547',fcFg:'#1b1a16',fcGlow:s.sent?'none':'0 0 24px rgba(255,181,71,.4)',fcCur:canCall?'pointer':'default',
+      feed,feedShort:feed.slice(-3),qmsFly,speeds,
+      debrief,score:85,scoreRows,scoreNote:'One overrule cost points, but the objective was met. A team that talks out every conflict can reach 100.'};
+  }
+}
+</script>
+</body>
+</html>
