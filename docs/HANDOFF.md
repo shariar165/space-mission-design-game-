@@ -1,6 +1,6 @@
 # Handoff: where Signal Delay stands
 
-State on **Oct 28, 2026**, at the feature freeze. `main` is at `755e90c` (PR #45), clean, CI green, deployed to https://shariar165.github.io/space-mission-design-game-/ .
+State on **Oct 28, 2026**, at the feature freeze, plus the Team Mode engine (Oct 31, PRs #47–#50, see below). `main` is clean, CI green, deployed to https://shariar165.github.io/space-mission-design-game-/ .
 
 Read this first in a new session, then `CLAUDE.md` (commands, architecture, UI rules) and the relevant section of `docs/SCIENCE_SPEC.md` (v1.2, the source of truth for every equation and rule).
 
@@ -31,6 +31,40 @@ Every change reached `main` through a pull request with CI green.
 | #35–#38 | Sound (one Web Audio manager, mute key) and the Mars Climate Orbiter cold open with its RECEIVE TRANSMISSION gate (spec v1.1) |
 | #39–#44 | EN / বাংলা switch on every Cadet screen; cited texts, Rescue History and the mission map in Bangla with the English original in ⓘ (spec v1.2) |
 | #45 | Full screenshot run before the freeze: ribbon labels never overlap, the countdown keeps clear of the robot, the 1,000× key fits, Bangla day counts |
+
+## In progress: Team Mode (spec v1.3, Oct 31, 2026)
+
+The engine is merged (PRs #47–#50); the UI is next. The approved plan is in `~/.claude/plans/breezy-pondering-clarke.md`.
+
+**Done (engine):**
+
+| PR | What | Code | Tests |
+| --- | --- | --- | --- |
+| #47 | Mars mission objectives: atmosphere, surface, moons | `objectives.json`, `src/engine/objectives.ts` (`targetWeight`), `objectiveResult` in `ops/observe.ts` | `tests/objectives.test.ts` |
+| #48 | Team core: roles, permissions, the one action log, `LocalTransport`, `replayTeam` / `stepSession`, danger-card votes | `team.json`, `src/engine/team/` | `tests/team.test.ts` |
+| #49 | Each role's share of mass, budget and nose squares; conflicts | `team/negotiate.ts` (`teamSpend`, `teamConflicts`) | `tests/teamNegotiate.test.ts` |
+| #50 | Each role's key decision and the team score | `team/report.ts` (`teamReport`, `teamScore`) | `tests/report.test.ts` "team section" |
+
+The objectives use the instrument-match rule: the objective's targets carry 60% of the science only with a matching instrument packed (user choice).
+
+**User decisions:**
+- The team score is separate: it never changes the stars.
+- Roles are optional and open: anyone may act for an empty role. With no Flight Director, cards go by majority; a tie goes to the recommendation.
+- Objectives are Mars only; the Moon levels and the Daily stay balanced.
+- Each seat gets a colour and a call sign from a preset list. There is no text input; the team uses quick messages only.
+- Mass, budget and nose space use the real limits, with no team-only caps.
+
+**Next (UI), each a small PR with shots at 1440 and 390:**
+1. **Import the mockup.** Through the claude_design MCP, import `Signal Delay - Team Setup.dc.html` (+ `support.js` if changed) from https://claude.ai/design/p/c7f6be74-4ab5-4b91-ad14-112f0dc4ff77 into `docs/design/signal-delay/`. Add it to `design.spec.ts` `SCREENS`. The MCP was refused (403) in the session that built the engine; a new session after `/design-login` should reach it.
+2. **Team Setup screen** (`screens/TeamSetup.tsx`, `sd-team.css`, App step `team`, a TEAM key in Home `.hm-second`, `sd.team` in `saves.ts`):
+   - a `useTeam` hook over `LocalTransport` that feeds `stepSession`;
+   - the objective picker, also on the solo Pack briefing (Mars) and in Build Bay;
+   - `TEAM_WORDS` / `OBJECTIVE_WORDS` in `sdWords.ts` with Bangla.
+3. **Pack and Fly & Survive:**
+   - Pack: a role chip on each part, a `teamSpend` strip and a conflict banner.
+   - Danger card: a vote strip (recommend, votes, the Flight Director's CALL); the clock held with `setHold`.
+   - A quick-message panel, and keys marked with the role that owns them.
+4. **Report and docs:** a `teamEl` section in `MissionReport.tsx`; README (Team Mode, objectives); this file and CLAUDE.md.
 
 ## Open items
 
