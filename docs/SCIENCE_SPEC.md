@@ -612,6 +612,20 @@ One to four players share one craft (local co-op on one device first; online lat
 
 The settled card sends one ordinary `decide` at the mission time of the settling entry, so light time, the deadline and the robot's default at the deadline work exactly as in solo play.
 
+**Shared mass, budget and space** (`team/negotiate.ts`). The launch mass, the development cost and the 6 × 6 nose are shared; the limits are the same meters solo players see, with no team-only caps.
+- **Each role's spend** (`teamSpend`) is its own subsystems' share of the same evaluation, so the roles add up exactly to the meters:
+  - Flight Director: the bus.
+  - Science Lead: the instruments.
+  - Engineer: power, battery, tanks, propellant, kit and the engine's cost.
+  - Comms & Ops: the radio.
+  - The 30% growth margin is spread pro rata. Squares go to whoever packed each part.
+- **Over a limit**, the conflict names the roles that packed optional (unlocked) parts there, the biggest spender first. For cost, only the parts that change the cost count: instruments, the dish, power.
+- **Conflicts over the log** (`teamConflicts`):
+  - A packing that takes the mass or the cost over raises a conflict; a later one that brings it back under resolves it.
+  - A part refused for lack of room raises a space conflict, resolved when that part is packed after someone makes room.
+  - A conflict still open at launch stays unresolved. The count feeds the Team score.
+- **Measured.** A Cadet Mars craft is at most $390M of the $500M cap. Its weight goes over only in tight windows with a full nose (2030: 11 kg over). The Moon levels' rideshare slot and the nose are where teams usually have to negotiate.
+
 **Quick messages only.** Players may be children, so the team talks in preset messages (`team.json` `quick`, words in `sdWords.ts`); there is no free text anywhere.
 
 **One action log** (`team/log.ts`). Every entry is `{seq, seat, role, t?, act}`: the seat, the role it acts as, the mission time for entries in flight, and the action (setup, objective, pack, unpack, launch, ops, recommend, vote, call, say). Refused entries stay in the log and in the state with their reason, as refused commands do in Mission operations.
