@@ -16,6 +16,8 @@ export interface Objective {
   instruments: string[];
   /** One line on the real mission behind the pairing. */
   why: Sourced<string>;
+  /** The role it leans on hardest, and why (Team mode: each objective strains a different role). */
+  strain: Sourced<{ role: 'flight-director' | 'spacecraft-engineer' | 'science-lead' | 'comms-ops'; why: 'drag' | 'data' | 'fuel' }>;
 }
 
 const DATA = objectivesJson as unknown as { rules: { share: Sourced<number>; metFraction: Sourced<number> }; objectives: Objective[] };

@@ -18,6 +18,7 @@ import './styles/sd-notebook.css';
 import './styles/sd-moments.css';
 import './styles/sd-science.css';
 import './styles/sd-postcards.css';
+import './styles/sd-team.css';
 
 applyLang();
 

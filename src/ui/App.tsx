@@ -4,6 +4,7 @@
 // Before the first Cadet mission (or Daily) the robot gets a name: Name Your Robot.
 // The very first launch opens with the cold open (Mars Climate Orbiter, 1999), then Name Your Robot, then Home.
 // Engineer: Build Bay → Fly & Survive → Mission Report (with Engineer details).
+// Team mode (local co-op): Home → Team Setup → Mission Objective → Pack (Mars), every team action on one log (useTeam).
 // Every step has ◂ BACK: the steps visited are kept on a trail, and the browser's own Back button walks it too.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { dailyDate, dailyDesign, dailyGrid, dailyNumber, dailySeed, dailyStreak } from '../engine/daily';
@@ -17,7 +18,13 @@ import type { RescueCaseId } from '../engine/rescue';
 import type { Design, DestinationId } from '../engine/types';
 import { TopBar, type Mode, type Step } from './components/TopBar';
 import { LEVELS, levelById, loadProgress, maxStars, nextLevel, saveProgress, shelfOf, withStars, type Level, type Progress } from './levels';
-import { loadDaily, loadFlights, loadPostcards, loadRobotName, loadSeen, saveDaily, saveFlights, savePostcards, saveRobotName, saveSeen, type DailySave } from './saves';
+import { loadDaily, loadFlights, loadPostcards, loadRobotName, loadSeen, loadTeam, saveDaily, saveFlights, savePostcards, saveRobotName, saveSeen, saveTeam, type DailySave } from './saves';
+import { defaultTeam } from '../engine/team/setup';
+import type { Team } from '../engine/team/roles';
+import type { ObjectiveId } from '../engine/objectives';
+import { useTeam } from './useTeam';
+import { TeamObjective } from './screens/TeamObjective';
+import { TeamSetup } from './screens/TeamSetup';
 import { Postcards } from './screens/Postcards';
 import { postcardAlbum, postcardsEarned } from '../engine/postcards';
 import type { Crew } from './components/sd/CrewFile';
@@ -118,6 +125,15 @@ export function App() {
       savePostcards(next);
       return next;
     });
+  /** Team mode: the crew being set up (kept as sd.team) and the team's one action log. */
+  const [teamDraft, setTeamDraft] = useState<Team>(() => loadTeam() ?? defaultTeam(4));
+  const changeTeam = (t: Team) => {
+    setTeamDraft(t);
+    saveTeam(t);
+  };
+  const teamPlay = useTeam();
+  /** The Mars starter the team packs on (objectives are Mars only). */
+  const teamBase = useMemo(() => starterDesign('mars', today()), []);
   const nameRobot = (n: string) => {
     setRobotName(n);
     saveRobotName(n);
@@ -265,8 +281,8 @@ export function App() {
     setMode(m);
   };
 
-  const playLevel = (l: Level) => {
-    const s = { ...starterDesign(l.destination, today()), ...(l.targets ? { scienceTargets: true } : {}) };
+  const playLevel = (l: Level, objective?: ObjectiveId) => {
+    const s = { ...starterDesign(l.destination, today()), ...(l.targets ? { scienceTargets: true } : {}), ...(objective ? { objective } : {}) };
     setCadet(cadetStart(s, l.id));
     setDesign(s);
     setMissionName(defaultMissionName(l.destination));
@@ -346,7 +362,7 @@ export function App() {
   const next = level && cadetMode && (progress[level.id] ?? 0) >= 1 ? nextLevel(level.id) : undefined;
   const home = () => go('home');
   const firstNew = fresh.length ? notebook(facts).find((c) => c.id === fresh[0]) : undefined;
-  const fullScreen = step === 'cold' || step === 'name' || step === 'launch' || step === 'fly' || step === 'report' || step === 'home' || step === 'daily' || step === 'notebook' || step === 'postcards' || (step === 'build' && cadetMode);
+  const fullScreen = step === 'team' || step === 'objective' || step === 'cold' || step === 'name' || step === 'launch' || step === 'fly' || step === 'report' || step === 'home' || step === 'daily' || step === 'notebook' || step === 'postcards' || (step === 'build' && cadetMode);
 
   /** The mission briefing: what to do on this level (or a free build, or today's Daily). */
   const briefFor = (forDaily: boolean) =>
@@ -412,6 +428,31 @@ export function App() {
           mars={mars}
           onPostcards={() => go('postcards')}
           onIntro={() => go('cold')}
+          onTeam={() => go('team')}
+        />
+      )}
+      {step === 'team' && (
+        <TeamSetup
+          team={teamDraft}
+          onTeam={changeTeam}
+          mode={mode}
+          onMode={changeMode}
+          onBack={back}
+          onNext={() => {
+            teamPlay.start(teamDraft, teamBase, shelfFor('mars'), { seed });
+            go('objective');
+          }}
+        />
+      )}
+      {step === 'objective' && teamPlay.session && (
+        <TeamObjective
+          state={teamPlay.session.team}
+          design={teamBase}
+          onSend={teamPlay.send}
+          mode={mode}
+          onMode={changeMode}
+          onBack={back}
+          onNext={(o) => playLevel(levelById('mars')!, o)}
         />
       )}
       {step === 'name' && (

@@ -86,7 +86,7 @@
 .hm.phone .hm-daily .hm-key-icon { width: 40px; height: 40px; grid-column: 1; grid-row: 1; }
 .hm.phone .hm-daily .hm-key-label { grid-column: 2; grid-row: 1; font-size: 17px; }
 .hm.phone .hm-daily .hm-key-tag { grid-column: 3; grid-row: 1; }
-.hm.phone .hm-second { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.hm.phone .hm-second { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
 .hm.phone .hm-mini { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 5px; padding: 8px 4px; min-width: 0; }
 .hm.phone .hm-mini-label { font-size: 9px; letter-spacing: 0.06em; white-space: normal; text-align: center; }
 .hm.phone .hm-second-mode { grid-column: 1 / -1; margin-left: 0; display: flex; justify-content: center; padding-top: 4px; }

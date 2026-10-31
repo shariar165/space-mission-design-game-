@@ -7,18 +7,21 @@
   "objectives": [
     {
       "id": "atmosphere",
+      "strain": { "value": { "role": "science-lead", "why": "drag" }, "unit": "role, reason", "source": "Game rule (Mission objectives, Team mode): the role this objective leans on hardest: the limb is seen from deep dips into the upper air, where drag heats the craft (a Science Lead danger card)", "isGameEstimate": true },
       "favours": ["limb"],
       "instruments": ["maven-science-payload"],
       "why": { "value": "MAVEN dipped into the upper air with instruments that sniff and count its gases.", "unit": "", "source": "Game rule (Mission objectives): pairing after MAVEN, whose deep dips sampled the upper atmosphere", "url": "https://science.nasa.gov/mission/maven/", "isGameEstimate": true }
     },
     {
       "id": "surface",
+      "strain": { "value": { "role": "comms-ops", "why": "data" }, "unit": "role, reason", "source": "Game rule (Mission objectives, Team mode): the role this objective leans on hardest: the landmarks are the biggest pictures, so they need the most time on the dishes (Comms & Ops books them)", "isGameEstimate": true },
       "favours": ["surface"],
       "instruments": ["camera", "radar"],
       "why": { "value": "Mars Reconnaissance Orbiter mapped the ground with a camera and looked under it with radar.", "unit": "", "source": "Game rule (Mission objectives): pairing after MRO's HiRISE camera and SHARAD radar", "url": "https://science.nasa.gov/mission/mars-reconnaissance-orbiter/", "isGameEstimate": true }
     },
     {
       "id": "moons",
+      "strain": { "value": { "role": "spacecraft-engineer", "why": "fuel" }, "unit": "role, reason", "source": "Game rule (Mission objectives, Team mode): the role this objective leans on hardest: reaching Phobos and Deimos means raising the orbit, which burns the most fuel (the Engineer’s tank)", "isGameEstimate": true },
       "favours": ["moon"],
       "instruments": ["spectrometer"],
       "why": { "value": "A spectrometer splits the light of Phobos and Deimos to find what they are made of.", "unit": "", "source": "Game rule (Mission objectives): pairing after orbiter spectrometers that observed Mars' moons (to verify which observations to cite)", "isGameEstimate": true }

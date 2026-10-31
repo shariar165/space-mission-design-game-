@@ -20,7 +20,7 @@ import { useLoop } from '../sound';
 import { along, ring, useCycle, useIsPhone } from '../sdGeometry';
 import { isUnlocked, LEVELS, type Level, type Progress } from '../levels';
 import * as f from '../format';
-import { COLD_OPEN, HOME_WORDS, HOW_TO_PLAY, LEVEL_WORDS, LIVE_WEATHER, POSTCARD_WORDS } from '../sdWords';
+import { COLD_OPEN, HOME_WORDS, HOW_TO_PLAY, LEVEL_WORDS, LIVE_WEATHER, POSTCARD_WORDS, TEAM_WORDS } from '../sdWords';
 
 /** The demo order loops every 6 s: 5 s of flight, then a second of RECEIVED (design). */
 export const HOME_LOOP_MS = 6000;
@@ -54,6 +54,8 @@ interface Props {
   onRescue: () => void;
   onNotebook: () => void;
   onPostcards: () => void;
+  /** TEAM: Team Setup (spec: Team mode). */
+  onTeam?: () => void;
   /** Replay the cold open (spec UI rule 47). */
   onIntro?: () => void;
 }
@@ -64,7 +66,7 @@ export function nextToPlay(progress: Progress): { level: Level; index: number } 
   return open.find((x) => !(progress[x.level.id] ?? 0)) ?? open[open.length - 1]!;
 }
 
-export function Home({ progress, mode, onMode, daily, rescue, notebook, postcards, crew, mars, onPlay, onMissions, onDaily, onRescue, onNotebook, onPostcards, onIntro }: Props) {
+export function Home({ progress, mode, onMode, daily, rescue, notebook, postcards, crew, mars, onPlay, onMissions, onDaily, onRescue, onNotebook, onPostcards, onIntro, onTeam }: Props) {
   const phone = useIsPhone();
   const still = useReducedMotion();
   useLoop('hum');
@@ -90,6 +92,7 @@ export function Home({ progress, mode, onMode, daily, rescue, notebook, postcard
       hot: !daily.played,
       onClick: onDaily,
     },
+    ...(onTeam ? [{ label: TEAM_WORDS.menu, sub: TEAM_WORDS.menuSub, icon: 'star' as const, tag: TEAM_WORDS.menuTag, hot: false, onClick: onTeam }] : []),
     { label: HOME_WORDS.rescue, sub: HOME_WORDS.rescueSub, icon: 'rescue', tag: HOME_WORDS.count(f.num(rescue.solved), f.num(rescue.total)), hot: false, onClick: onRescue },
     { label: HOME_WORDS.notebook, sub: HOME_WORDS.notebookSub, icon: 'book', tag: HOME_WORDS.count(f.num(notebook.got), f.num(notebook.total)), hot: false, onClick: onNotebook },
     { label: POSTCARD_WORDS.menu, sub: POSTCARD_WORDS.menuSub, icon: 'postcard', tag: HOME_WORDS.count(f.num(postcards.got), f.num(postcards.total)), hot: false, onClick: onPostcards },
