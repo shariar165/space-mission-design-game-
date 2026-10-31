@@ -2,10 +2,13 @@
 // red, each printed only once it has reached Earth (engine transmissionFeed): a robot line says how long it took,
 // an order says where it is on its trip. Desktop: a paper column beside the CRT, newest at the bottom. Phone: the
 // latest line on a strip; tap it for the log. Words in sdWords (TX_WORDS, robotSays).
+// Team mode (design T4): the team's quick messages and its votes on danger cards print in between, in time order
+// (engine team/fly.ts withTeamLines), each marked with the role that sent it.
 import { useState, type ReactNode } from 'react';
 import type { FeedEntry, OrderLine, TransmissionFeed } from '../../../engine/ops/index';
+import { withTeamLines, type TeamTxLine, type TxRow } from '../../../engine/team/fly';
 import * as f from '../../format';
-import { FLY_WORDS, robotSays, targetName, TX_WORDS, type VoiceContext } from '../../sdWords';
+import { FLY_WORDS, QUICK_WORDS, ROLE_WORDS, robotSays, TEAM_FLY_WORDS, targetName, TX_WORDS, type VoiceContext } from '../../sdWords';
 import { useTeletype } from '../sd/Teletype';
 
 /** The phone log shows this many of the newest lines. */
@@ -21,6 +24,8 @@ interface Props {
   hot?: FeedEntry;
   /** Replaces the paper's footer (desktop): the DOWNLINK key once pictures are ordered. */
   footer?: ReactNode;
+  /** Team mode: the team's lines in flight. */
+  team?: TeamTxLine[];
 }
 
 function orderWhat(o: OrderLine, voice: VoiceContext): string {
@@ -60,7 +65,28 @@ export function txLine(e: FeedEntry, voice: VoiceContext) {
   return { who: TX_WORDS.fromEarth(voice.name.toUpperCase()), stamp: orderStamp(o), text: `▸ ${TX_WORDS.order(orderWhat(o, voice))}` };
 }
 
-const keyOf = (e: FeedEntry) => `${e.from}:${e.at}:${e.message?.kind ?? e.order?.kind}:${e.message?.seq ?? e.order?.targetId ?? e.order?.hazardId ?? ''}`;
+const keyOf = (e: TxRow) => (e.from === 'team' ? `team:${e.seq}` : `${e.from}:${e.at}:${e.message?.kind ?? e.order?.kind}:${e.message?.seq ?? e.order?.targetId ?? e.order?.hazardId ?? ''}`);
+
+/** A team line's words: the quick message, or the step of the vote with the option's name. */
+export function teamText(l: TeamTxLine, voice: VoiceContext): string {
+  const w = l.what;
+  if (w.kind === 'say') return QUICK_WORDS[w.quick] ?? w.quick;
+  const opt = w.hazardType && voice.option ? voice.option(w.hazardType, w.optionId) : w.optionId.toUpperCase();
+  return TEAM_FLY_WORDS.line[w.kind](opt);
+}
+
+function TeamRow({ l, voice }: { l: TeamTxLine; voice: VoiceContext }) {
+  return (
+    <li className="tx-line team">
+      <span className="tx-meta">
+        <span>
+          {TX_WORDS.day(f.dayPad(l.at))} <span className={`tx-role tm-r-${l.role}`}>{ROLE_WORDS[l.role].ab}</span>
+        </span>
+      </span>
+      <span className="tx-text">{teamText(l, voice)}</span>
+    </li>
+  );
+}
 
 function Line({ e, voice, typing, hot }: { e: FeedEntry; voice: VoiceContext; typing: boolean; hot: boolean }) {
   const l = txLine(e, voice);
@@ -90,23 +116,23 @@ function Line({ e, voice, typing, hot }: { e: FeedEntry; voice: VoiceContext; ty
   );
 }
 
-export function Transmissions({ feed, voice, oneWay_s, phone, hot, footer }: Props) {
+export function Transmissions({ feed, voice, oneWay_s, phone, hot, footer, team }: Props) {
   const [open, setOpen] = useState(false);
-  const entries = feed.entries;
+  const entries: TxRow[] = team ? withTeamLines(feed.entries, team) : feed.entries;
   const latest = entries[entries.length - 1];
   const name = voice.name.toUpperCase();
-  const isHot = (e: FeedEntry) => hot !== undefined && keyOf(e) === keyOf(hot);
-  const list = (rows: FeedEntry[]) => (
+  const isHot = (e: TxRow) => hot !== undefined && keyOf(e) === keyOf(hot);
+  const list = (rows: TxRow[]) => (
     <ol className="tx-list" role="log" aria-label={TX_WORDS.logLabel}>
-      {[...rows].reverse().map((e, i) => (
-        <Line key={keyOf(e)} e={e} voice={voice} typing={i === 0} hot={isHot(e)} />
-      ))}
+      {[...rows].reverse().map((e, i) =>
+        e.from === 'team' ? <TeamRow key={keyOf(e)} l={e} voice={voice} /> : <Line key={keyOf(e)} e={e} voice={voice} typing={i === 0} hot={isHot(e)} />,
+      )}
       {rows.length === 0 && <li className="tx-empty">{TX_WORDS.empty}</li>}
     </ol>
   );
 
   if (phone) {
-    const l = latest && txLine(latest, voice);
+    const l = latest && (latest.from === 'team' ? { who: ROLE_WORDS[latest.role].ab, stamp: TEAM_FLY_WORDS.team, text: teamText(latest, voice) } : txLine(latest, voice));
     return (
       <>
         <button type="button" className={`tx-strip${latest && isHot(latest) ? ' hot' : ''}`} aria-expanded={open} aria-label={TX_WORDS.logLabel} onClick={() => setOpen((o) => !o)}>
