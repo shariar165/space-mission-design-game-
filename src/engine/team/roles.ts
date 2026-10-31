@@ -24,12 +24,14 @@ export interface Team {
 /** Orders that go by role (a hazard response goes through the vote instead). */
 export type OrderKind = 'power-plan' | 'standing-orders' | 'observe' | 'dsn';
 
-const { partRoles, commandRoles, hazardRoles, callSigns, quick, scoreWeights } = teamJson;
+const { partRoles, commandRoles, hazardRoles, defaultRoles, callSigns, quick, scoreWeights } = teamJson;
 
-export const TEAM_RULES = { partRoles, commandRoles, hazardRoles, callSigns, quick, scoreWeights } as unknown as {
+export const TEAM_RULES = { partRoles, commandRoles, hazardRoles, defaultRoles, callSigns, quick, scoreWeights } as unknown as {
   partRoles: Sourced<Record<string, RoleId>>;
   commandRoles: Sourced<Record<OrderKind, RoleId>>;
   hazardRoles: Sourced<Record<string, RoleId>>;
+  /** Players ("1"–"4") → the roles each seat starts with. */
+  defaultRoles: Sourced<Record<string, RoleId[][]>>;
   callSigns: Sourced<string[]>;
   quick: Sourced<string[]>;
   scoreWeights: Sourced<{ objective: number; conflicts: number; votes: number }>;

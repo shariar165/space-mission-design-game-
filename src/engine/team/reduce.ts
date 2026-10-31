@@ -27,6 +27,10 @@ export interface TeamState {
   shelf: PartId[];
   team?: Team;
   objective?: ObjectiveId;
+  /** The other roles' voices on the objective (cleared by a new pick). */
+  objectiveVoices: Partial<Record<RoleId, 'agree' | 'object'>>;
+  /** Locked by the Flight Director: everyone agreed, or an objection was overruled. */
+  objectiveLocked?: { how: 'agreed' | 'overruled'; seq: number };
   packed: Packed;
   /** Who packed each part (the starting pack belongs to the parts' roles). */
   owners: Partial<Record<PartId, RoleId>>;
@@ -52,6 +56,10 @@ export type TeamRefusal =
   | 'not-packed'
   | 'no-room'
   | 'no-objective-here'
+  | 'no-objective'
+  | 'objective-locked'
+  | 'auto-agree'
+  | 'waiting-votes'
   | 'use-vote'
   | 'unknown-decision'
   | 'unknown-option'
@@ -78,6 +86,7 @@ export function initialTeamState(base: Design, shelf: PartId[]): TeamState {
     shelf,
     packed,
     owners: Object.fromEntries(packed.map((q) => [q.id, partRole(q.id)])),
+    objectiveVoices: {},
     launched: false,
     votes: {},
     feed: [],
@@ -96,10 +105,21 @@ const clone = (s: TeamState): TeamState => ({
   ...s,
   packed: [...s.packed],
   owners: { ...s.owners },
+  objectiveVoices: { ...s.objectiveVoices },
   votes: Object.fromEntries(Object.entries(s.votes).map(([k, v]) => [k, { ...v, voices: { ...v.voices } }])),
   feed: [...s.feed],
   refused: [...s.refused],
 });
+
+/** The roles that vote on the Flight Director's objective. */
+export const OBJECTIVE_VOTERS: RoleId[] = ['spacecraft-engineer', 'science-lead', 'comms-ops'];
+
+/** A role the Flight Director's own player holds agrees with the pick by itself (and so does everyone in a team of one). */
+export function objectiveAutoAgrees(team: Team, role: RoleId): boolean {
+  if (team.seats.length === 1) return true;
+  const fd = holderOf(team, 'flight-director');
+  return fd !== undefined && holderOf(team, role) === fd;
+}
 
 /** The role an order needs, or a refusal (hazard responses go through the vote). */
 function orderRole(op: OpsOp, ops: OpsState): RoleId | 'use-vote' {
@@ -153,9 +173,32 @@ export function applyTeamAction(state: TeamState, a: TeamAction, ops?: OpsState)
     case 'objective': {
       if (s.launched) return refuse('launched');
       if (s.base.destination !== 'mars') return refuse('no-objective-here');
+      if (s.objectiveLocked) return refuse('objective-locked');
       const r = needs('flight-director');
       if (r) return refuse(r);
       s.objective = act.objective;
+      s.objectiveVoices = {};
+      return done();
+    }
+    case 'objective-voice':
+    case 'objective-lock': {
+      if (s.launched) return refuse('launched');
+      if (s.base.destination !== 'mars') return refuse('no-objective-here');
+      if (!s.objective) return refuse('no-objective');
+      if (s.objectiveLocked) return refuse('objective-locked');
+      if (act.kind === 'objective-voice') {
+        if (a.role === 'flight-director') return refuse('wrong-role');
+        if (objectiveAutoAgrees(team, a.role)) return refuse('auto-agree');
+        if (!mayActAs(team, a.seat, a.role)) return refuse('not-your-role');
+        if (act.voice === 'none') delete s.objectiveVoices[a.role];
+        else s.objectiveVoices[a.role] = act.voice;
+        return done();
+      }
+      const r = needs('flight-director');
+      if (r) return refuse(r);
+      const voices = OBJECTIVE_VOTERS.map((v) => (objectiveAutoAgrees(team, v) ? 'agree' : s.objectiveVoices[v]));
+      if (voices.some((v) => v === undefined)) return refuse('waiting-votes');
+      s.objectiveLocked = { how: voices.includes('object') ? 'overruled' : 'agreed', seq: a.seq };
       return done();
     }
     case 'pack':
