@@ -20,6 +20,7 @@ import { TopBar, type Mode, type Step } from './components/TopBar';
 import { LEVELS, levelById, loadProgress, maxStars, nextLevel, saveProgress, shelfOf, withStars, type Level, type Progress } from './levels';
 import { loadDaily, loadFlights, loadPostcards, loadRobotName, loadSeen, loadTeam, saveDaily, saveFlights, savePostcards, saveRobotName, saveSeen, saveTeam, type DailySave } from './saves';
 import { defaultTeam } from '../engine/team/setup';
+import { teamDesign } from '../engine/team/reduce';
 import type { Team } from '../engine/team/roles';
 import type { ObjectiveId } from '../engine/objectives';
 import { useTeam } from './useTeam';
@@ -134,8 +135,8 @@ export function App() {
   const teamPlay = useTeam();
   /** The level in play is the team's (packing and launching go through the team's log). */
   const [teamRun, setTeamRun] = useState(false);
-  /** The Mars starter the team packs on (objectives are Mars only). */
-  const teamBase = useMemo(() => starterDesign('mars', today()), []);
+  /** The Mars starter the team packs on (objectives are Mars only), with the Mars level's science targets. */
+  const teamBase = useMemo(() => ({ ...starterDesign('mars', today()), ...(levelById('mars')?.targets ? { scienceTargets: true } : {}) }), []);
   const nameRobot = (n: string) => {
     setRobotName(n);
     saveRobotName(n);
@@ -306,6 +307,11 @@ export function App() {
     go('fly');
   };
   const launch = () => ev.blockers.length === 0 && launchDesign(active);
+  /** Team mode: the Flight Director's launch is on the team's log; fly the design the team's flight started with. */
+  const launchTeam = () => {
+    const s = teamPlay.current();
+    if (s?.team.launched) launchDesign(teamDesign(s.team));
+  };
 
   /**
    * Today's Daily: the same craft and seed for everyone; played once, then its card. With live weather the real
@@ -355,8 +361,15 @@ export function App() {
     } else go('report');
   };
 
-  /** Fly again: back to packing (Cadet) or the Build Bay (Engineer), with a new seed. */
+  /** Fly again: back to packing (Cadet) or the Build Bay (Engineer), with a new seed. A team starts a new log. */
   const flyAgain = () => {
+    if (teamRun) {
+      const next = fixedSeed ?? newSeed();
+      setSeed(next);
+      setFlown(undefined);
+      teamPlay.start(teamDraft, teamBase, shelfFor('mars'), { seed: next });
+      return go('objective');
+    }
     setSeed(fixedSeed ?? newSeed());
     setFlown(undefined);
     setDailyRun(false);
@@ -383,6 +396,8 @@ export function App() {
   const starterPack = useMemo(() => initialPack(cadet.base, level ? shelfOf(level) : shelfFor(cadet.base.destination)), [cadet.base, level]);
   const teamNow = teamRun ? teamPlay.session?.team : undefined;
   const packedNow = teamNow ? teamNow.packed : (keptPack?.packed ?? starterPack);
+  /** The team's flight: launched by its Flight Director. */
+  const teamFly = teamNow?.launched ? teamNow : undefined;
 
   return (
     <div className={`app${step === 'build' && !cadetMode ? ' fixed' : ''}${cadetMode ? ' is-cadet' : ''}${step === 'fly' ? ' is-fly' : ''}`}>
@@ -548,14 +563,14 @@ export function App() {
           onPacked={(p) => setPackSave({ key: packKey, packed: p, ...(keptPack?.pick !== undefined ? { pick: keptPack.pick } : {}) })}
           {...(keptPack?.pick !== undefined ? { pick: keptPack.pick } : {})}
           onDays={() => go('launch')}
-          {...(teamNow ? { team: { state: teamNow, log: teamPlay.log, send: teamPlay.send, ...(teamNow.objective ? { objective: teamNow.objective } : {}) } } : {})}
+          {...(teamNow ? { team: { state: teamNow, log: teamPlay.log, send: teamPlay.send, ...(teamNow.objective ? { objective: teamNow.objective } : {}) }, onLaunch: launchTeam } : {})}
         />
       )}
       {step === 'build' && !cadetMode && <BuildBay design={design} ev={ev} engineer onChange={setDesign} onLaunch={launch} />}
       {step === 'fly' && flyDesign && (
         <FlyAndSurvive
           design={flyDesign}
-          seed={seed}
+          seed={(teamFly && teamPlay.opts?.seed) ?? seed}
           {...(dailyRun && dailyWeather?.status === 'live' ? { storms: dailyWeather.storms } : {})}
           mode={mode}
           onMode={changeMode}
@@ -571,6 +586,7 @@ export function App() {
           onLaunchSeen={() => markSeen(launchKey)}
           onPostcards={addPostcards}
           {...(level ? { teaches: level.steps } : {})}
+          {...(teamFly ? { team: { state: teamFly, log: teamPlay.log, send: teamPlay.send, ...(teamFly.objective ? { objective: teamFly.objective } : {}), ...(teamPlay.session?.ops ? { ops: teamPlay.session.ops } : {}) } } : {})}
         />
       )}
       {step === 'report' && flown && flyDesign && (

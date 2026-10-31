@@ -1,6 +1,8 @@
 // The danger card (design: cream card with a red header, choices on either side; swipe it on a phone).
 // Time stops while it is open. ← and → (and ↓ for a third choice) pick on a keyboard.
-import { useRef, useState, type PointerEvent as RPointerEvent } from 'react';
+// Team mode (design: Signal Delay - Team Play.dc.html, T4): the card carries the recommendation band, each choice its
+// vote tokens, and the screen hands in the vote strip (`top`) and the final call (`bottom`).
+import { useRef, useState, type PointerEvent as RPointerEvent, type ReactNode } from 'react';
 import type { Sourced } from '../../../engine/types';
 import { SourceInfo } from '../SourceInfo';
 import { SDIcon, type SDIconName } from '../sd/SDIcon';
@@ -27,6 +29,26 @@ export interface ChoiceView {
   blocker?: string;
   /** "THE ROBOT'S DEFAULT", "STANDING ORDER". */
   tag?: string;
+  /** Team mode: the option's letter and the voters' tokens. */
+  team?: ChoiceTeam;
+}
+
+/** One voter's token under a choice: filled where the seat voted, tap to vote there. */
+export interface TokenView {
+  key: string;
+  text: string;
+  /** The seat's role colour (tm-r-<role>). */
+  role: string;
+  on: boolean;
+  label: string;
+  onTap?: () => void;
+}
+
+export interface ChoiceTeam {
+  letter: string;
+  votes: string;
+  count: string;
+  tokens: TokenView[];
 }
 
 export interface CardView {
@@ -43,6 +65,8 @@ export interface CardView {
   choices: ChoiceView[];
   /** Footer under the card (e.g. "LET THE ROBOT DECIDE"). */
   footer?: { label: string; onClick: () => void };
+  /** Team mode: who recommended which choice (or whose turn it is to). */
+  band?: { role: string; icon: SDIconName; kicker: string; label?: string };
 }
 
 
@@ -59,7 +83,35 @@ function Chips({ chips }: { chips: ChipView[] }) {
   );
 }
 
-function Choice({ c, side, engineer, phone, hot, onPick }: { c: ChoiceView; side: number; engineer: boolean; phone: boolean; hot: boolean; onPick: () => void }) {
+function Tokens({ t }: { t: ChoiceTeam }) {
+  return (
+    <div className="dc-votes">
+      <span className="dc-votes-head">
+        <span>{t.votes}</span>
+        <span>{t.count}</span>
+      </span>
+      <span className="dc-tokens">
+        {t.tokens.map((k) => (
+          <button key={k.key} type="button" className={`dc-token tm-r-${k.role}${k.on ? ' on' : ''}`} aria-label={k.label} title={k.label} aria-pressed={k.on} disabled={!k.onTap} onClick={k.onTap}>
+            {k.text}
+          </button>
+        ))}
+      </span>
+    </div>
+  );
+}
+
+function Choice(props: { c: ChoiceView; side: number; engineer: boolean; phone: boolean; hot: boolean; onPick: () => void }) {
+  if (!props.c.team) return <ChoiceKey {...props} />;
+  return (
+    <div className={`dc-choice-wrap side-${props.side}`}>
+      <ChoiceKey {...props} />
+      <Tokens t={props.c.team} />
+    </div>
+  );
+}
+
+function ChoiceKey({ c, side, engineer, phone, hot, onPick }: { c: ChoiceView; side: number; engineer: boolean; phone: boolean; hot: boolean; onPick: () => void }) {
   return (
     <button
       type="button"
@@ -69,7 +121,7 @@ function Choice({ c, side, engineer, phone, hot, onPick }: { c: ChoiceView; side
       aria-keyshortcuts={side === 0 ? 'ArrowLeft' : side === 1 ? 'ArrowRight' : 'ArrowDown'}
       onClick={onPick}
     >
-      <span className="dc-hint">{(phone ? FLY_WORDS.swipePhone : FLY_WORDS.swipe)[side]}</span>
+      {c.team ? <span className="dc-letter">{c.team.letter}</span> : <span className="dc-hint">{(phone ? FLY_WORDS.swipePhone : FLY_WORDS.swipe)[side]}</span>}
       <span className="dc-label">{c.label}</span>
       {!phone && <span className="dc-sub">{c.sub}</span>}
       {c.tag && <span className="dc-tag">{c.tag}</span>}
@@ -95,6 +147,15 @@ function Paper({ card, engineer, phone, drag }: { card: CardView; engineer: bool
         </span>
         <span className="dc-day">{card.day}</span>
       </div>
+      {card.band && (
+        <div className={`dc-band tm-r-${card.band.role}`}>
+          <SDIcon icon={card.band.icon} size={phone ? 18 : 20} color="var(--sd-paper-ink)" />
+          <span className="dc-band-text">
+            <span className="dc-band-k">{card.band.kicker}</span>
+            {card.band.label && <span className="dc-band-v">{card.band.label}</span>}
+          </span>
+        </div>
+      )}
       <div className="dc-body">
         <h2 className="dc-title">{card.title}</h2>
         <p className="dc-line">{card.line}</p>
@@ -127,7 +188,7 @@ function Paper({ card, engineer, phone, drag }: { card: CardView; engineer: bool
   );
 }
 
-export function DangerCard({ card, engineer, phone, onPick }: { card: CardView; engineer: boolean; phone: boolean; onPick: (id: string) => void }) {
+export function DangerCard({ card, engineer, phone, onPick, top, bottom }: { card: CardView; engineer: boolean; phone: boolean; onPick: (id: string) => void; top?: ReactNode; bottom?: ReactNode }) {
   const [dx, setDx] = useState(0);
   const start = useRef<number | undefined>(undefined);
   const [a, b, third] = card.choices;
@@ -135,7 +196,8 @@ export function DangerCard({ card, engineer, phone, onPick }: { card: CardView; 
 
   if (!phone)
     return (
-      <div className="dc-overlay" role="dialog" aria-modal="true" aria-label={`${card.kicker}: ${card.title}`}>
+      <div className={`dc-overlay${top ? ' team' : ''}`} role="dialog" aria-modal="true" aria-label={`${card.kicker}: ${card.title}`}>
+        {top}
         <div className="dc-row">
           {a && <Choice c={a} side={0} engineer={engineer} phone={false} hot={false} onPick={() => pick(a)} />}
           <div className="dc-center">
@@ -149,6 +211,7 @@ export function DangerCard({ card, engineer, phone, onPick }: { card: CardView; 
           </div>
           {b && <Choice c={b} side={1} engineer={engineer} phone={false} hot={false} onPick={() => pick(b)} />}
         </div>
+        {bottom}
       </div>
     );
 
@@ -173,13 +236,15 @@ export function DangerCard({ card, engineer, phone, onPick }: { card: CardView; 
     },
   };
   return (
-    <div className="dc-overlay phone" role="dialog" aria-modal="true" aria-label={`${card.kicker}: ${card.title}`}>
+    <div className={`dc-overlay phone${top ? ' team' : ''}`} role="dialog" aria-modal="true" aria-label={`${card.kicker}: ${card.title}`}>
+      {top}
       <Paper card={card} engineer={engineer} phone drag={{ x: dx, handlers: { ...handlers, onPointerCancel: handlers.onPointerUp } }} />
       <div className="dc-phone-choices">
         {a && <Choice c={a} side={0} engineer={engineer} phone hot={dx < -SWIPE_HINT_PX} onPick={() => pick(a)} />}
         {b && <Choice c={b} side={1} engineer={engineer} phone hot={dx > SWIPE_HINT_PX} onPick={() => pick(b)} />}
       </div>
       {third && <Choice c={third} side={2} engineer={engineer} phone hot={false} onPick={() => pick(third)} />}
+      {bottom}
       {card.footer && (
         <button type="button" className="dc-footer" onClick={card.footer.onClick}>
           {card.footer.label}

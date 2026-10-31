@@ -323,3 +323,99 @@
 .pk.phone.team .tp-group .pk-tray-card { width: auto; }
 .pk.team .tm-steps { gap: 8px; font-size: 11px; letter-spacing: 0.1em; }
 .pk.team .tm-steps li + li::before { width: 14px; margin-right: 2px; }
+
+/* ---- Team Fly (T4): the vote strip, the recommendation band, the vote tokens, the final call ---- */
+.dc-overlay.team { flex-direction: column; justify-content: flex-start; gap: 12px; padding: 12px 16px; box-sizing: border-box; overflow-y: auto; }
+.dc-overlay.team .dc-row { align-items: flex-start; }
+.tf-strip { align-self: stretch; display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--sd-line); background: var(--sd-panel); flex: none; }
+.tf-strip-k { white-space: normal; width: 76px; line-height: 1.25; }
+.tf-steps { flex: 1; min-width: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0; padding: 0; list-style: none; }
+.tf-step { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 7px 10px; border-radius: 6px; border: 1px solid var(--sd-line); background: var(--sd-deeper); color: var(--sd-ink-4); }
+.tf-step.on { border-color: var(--role); background: var(--sd-panel-hover); box-shadow: 0 0 0 1px var(--role); color: var(--role); }
+.tf-step.done { color: var(--sd-ink-3); }
+.tf-step.all.on { --role: var(--sd-amber); }
+.tf-step-dot { flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; border: 1.5px solid currentColor; }
+.tf-step.on .tf-step-dot { background: var(--role); border-color: var(--role); }
+.tf-step-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.tf-step-k { font: 700 10px/1 var(--sd-mono); letter-spacing: 0.14em; color: var(--sd-ink-4); white-space: nowrap; }
+.tf-step-v { font: 800 14px/1 var(--sd-display); letter-spacing: 0.03em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tf-held { font: 400 20px/1 var(--sd-crt-font); color: var(--sd-amber); white-space: nowrap; }
+
+.dc-band { display: flex; align-items: center; gap: 12px; padding: 9px 20px; background: var(--role); color: var(--sd-paper-ink); }
+.dc-band-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.dc-band-k { font: 700 10.5px/1.2 var(--sd-mono); letter-spacing: 0.14em; }
+.dc-band-v { font: 800 18px/1 var(--sd-display); letter-spacing: 0.03em; }
+.dc-letter { font: 900 30px/0.9 var(--sd-display); color: var(--sd-ink-4); }
+.dc-choice-wrap { display: flex; flex-direction: column; width: 270px; border-radius: 8px; border: 2px solid var(--sd-line-2); background: var(--sd-panel); overflow: hidden; }
+.dc-choice-wrap .dc-choice { width: auto; border: none; border-radius: 0; padding: 16px 18px 12px; }
+.dc-choice-wrap.side-1 .dc-letter { text-align: right; }
+.dc-choice-wrap.side-2 { width: 480px; }
+.dc-votes { display: flex; flex-direction: column; gap: 8px; padding: 10px 18px 14px; border-top: 1px solid var(--sd-line); }
+.dc-votes-head { display: flex; justify-content: space-between; gap: 8px; font: 700 10px/1.1 var(--sd-mono); letter-spacing: 0.12em; color: var(--sd-ink-4); }
+.dc-tokens { display: flex; flex-wrap: wrap; gap: 8px; }
+.dc-token { min-width: 50px; height: 50px; padding: 0 10px; border-radius: 25px; border: 2px dashed var(--role); background: transparent; font: 700 13px/1 var(--sd-mono); letter-spacing: 0.06em; color: var(--role); cursor: pointer; }
+.dc-token.on { border-style: solid; background: var(--role); color: var(--sd-paper-ink); }
+.dc-token:disabled { cursor: default; }
+.dc-token:disabled:not(.on) { opacity: 0.45; }
+.dc-token:hover:not(:disabled) { background: var(--sd-panel-hover); }
+
+.tf-call { display: flex; align-items: center; gap: 14px; padding: 12px 18px; border-radius: 8px; background: var(--sd-amber); border: 2px solid var(--sd-amber-edge); box-shadow: 0 0 22px rgba(255, 181, 71, 0.35); color: var(--sd-paper-ink); min-width: 0; }
+.tf-call.wait { background: var(--sd-panel); border-color: var(--sd-line-2); box-shadow: none; color: var(--sd-ink-3); }
+.tf-call-badge { flex: none; width: 46px; height: 46px; border-radius: 5px; display: grid; place-items: center; background: var(--sd-paper-ink); color: var(--sd-amber); font: 900 18px/1 var(--sd-display); }
+.tf-call-text { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.tf-call-title { font: 900 26px/0.9 var(--sd-display); letter-spacing: 0.04em; }
+.tf-call-line { font: 700 11px/1.25 var(--sd-mono); letter-spacing: 0.12em; }
+
+/* the footer: the clock, the quick messages, and the final call while a card is open */
+.fly-bottom.team { grid-template-columns: 330px minmax(0, 1fr) auto; }
+.fly-bottom.team .tp-msgs { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.fly-bottom.team .tf-call { width: 300px; box-sizing: border-box; }
+
+/* console keys wear their role; team lines on the teletype */
+.fly-action.by-role { border-color: var(--role); color: var(--role); }
+.fly-action.by-role:hover, .fly-action.by-role[aria-pressed='true'] { background: var(--role); color: var(--sd-paper-ink); }
+.tx-line.team .tx-text { color: var(--sd-paper-ink); }
+.tx-role { display: inline-block; margin-left: 6px; padding: 1px 5px; border-radius: 3px; background: var(--role); color: var(--sd-paper-ink); letter-spacing: 0.06em; }
+
+/* phone (T4b) */
+.tf-strip.phone { padding: 0; border: none; background: none; width: 100%; }
+.tf-strip.phone .tf-steps { gap: 6px; }
+.tf-strip.phone .tf-step { padding: 7px 8px; gap: 8px; }
+.tf-strip.phone .tf-step-dot { width: 20px; height: 20px; }
+.tf-strip.phone .tf-step-k { font-size: 9px; letter-spacing: 0.12em; }
+.tf-strip.phone .tf-step-v { font-size: 12px; }
+.dc-overlay.phone.team { gap: 10px; }
+.dc-overlay.phone .dc-band { padding: 8px 14px; gap: 10px; }
+.dc-overlay.phone .dc-band-k { font-size: 9px; }
+.dc-overlay.phone .dc-band-v { font-size: 15px; }
+.dc-overlay.phone .dc-choice-wrap { width: auto; }
+.dc-overlay.phone .dc-choice-wrap .dc-choice { padding: 10px 12px 8px; }
+.dc-overlay.phone .dc-letter { font-size: 22px; }
+.dc-overlay.phone .dc-votes { padding: 8px 10px 10px; gap: 6px; }
+.dc-overlay.phone .dc-votes-head { font-size: 8.5px; letter-spacing: 0.08em; }
+.dc-overlay.phone .dc-tokens { gap: 6px; }
+.dc-overlay.phone .dc-token { min-width: 44px; height: 44px; padding: 0 8px; font-size: 11px; }
+.tf-call.phone { width: 100%; box-sizing: border-box; justify-content: center; text-align: center; padding: 12px; }
+.tf-call.phone .tf-call-title { font-size: 26px; }
+.tf-call.phone .tf-call-line { font-size: 10px; }
+.fly.phone .tp-quick, .dc-overlay.phone .tp-quick { width: 100%; box-sizing: border-box; grid-template-columns: 1fr; padding: 8px 10px; gap: 8px; }
+.fly.phone .tp-as, .dc-overlay.phone .tp-as { flex-direction: row; align-items: center; justify-content: space-between; padding: 0; border: none; }
+.fly.phone .tp-as-key, .dc-overlay.phone .tp-as-key { width: 48px; height: 40px; }
+.fly.phone .tp-msgs, .dc-overlay.phone .tp-msgs { display: flex; overflow-x: auto; gap: 6px; padding-bottom: 2px; }
+.fly.phone .tp-msg, .dc-overlay.phone .tp-msg { flex: none; min-height: 40px; padding: 0 12px; font-size: 11px; white-space: nowrap; }
+/* the team card fits the CRT beside TRANSMISSIONS: narrower choices and paper, a smaller title */
+.dc-overlay.team:not(.phone) .dc-row { gap: 14px; }
+.dc-overlay.team:not(.phone) .dc-paper { width: 430px; }
+.dc-overlay.team:not(.phone) .dc-title { font-size: 38px; }
+.dc-overlay.team:not(.phone) .dc-line { font-size: 17px; }
+.dc-overlay.team:not(.phone) .dc-choice-wrap { width: 230px; }
+.dc-overlay.team:not(.phone) .dc-choice-wrap.side-2 { width: 430px; }
+.dc-overlay.team:not(.phone) .dc-label { font-size: 23px; }
+.dc-overlay.team:not(.phone) .dc-votes { padding: 10px 14px 12px; }
+.dc-overlay.team:not(.phone) .dc-votes-head { font-size: 9px; letter-spacing: 0.1em; }
+.dc-overlay.team:not(.phone) .dc-token { min-width: 46px; height: 46px; }
+.dc-overlay.phone.team .sd-history { display: none; }
+.dc-overlay.team:not(.phone) .dc-body { padding: 16px 22px 16px; gap: 12px; }
+.dc-overlay.team:not(.phone) .dc-fact { padding: 8px 12px; }
+.dc-overlay.team:not(.phone) .sd-history { padding-top: 10px; gap: 4px; }
+.dc-overlay.team:not(.phone) .sd-history-v { font-size: 14px; line-height: 1.35; }
