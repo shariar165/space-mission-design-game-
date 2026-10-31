@@ -218,4 +218,12 @@ test('Bangla: Team Setup and the Mission Objective', async ({ page }, info) => {
   await page.getByRole('button', { name: 'বিজ্ঞান-প্রধান: আপত্তি' }).click();
   await page.waitForTimeout(600);
   await shot(page, 'team-objective', p);
+  // everyone agrees after all, then the team's Pack
+  await page.getByRole('button', { name: 'বিজ্ঞান-প্রধান: রাজি' }).click();
+  for (const r of ['যান-প্রকৌশলী', 'যোগাযোগ ও অপারেশন']) await page.getByRole('button', { name: `${r}: রাজি` }).click();
+  await page.getByRole('button', { name: 'লক্ষ্য পাকা করো' }).click();
+  await page.getByRole('button', { name: 'এরপর · গোছাও' }).click();
+  await page.waitForTimeout(1500);
+  await page.getByRole('button', { name: 'আরও বিদ্যুৎ চাই' }).click();
+  await shot(page, 'team-pack', p);
 });
