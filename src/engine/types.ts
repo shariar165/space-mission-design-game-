@@ -71,6 +71,8 @@ export interface Design {
   kit?: DesignKit;
   /** The Moon 3 level: the science is the Moon's targets (Mars always flies its targets). */
   scienceTargets?: boolean;
+  /** Mars only: the mission objective that sets the targets' science weights (objectives.ts). None = balanced. */
+  objective?: 'atmosphere' | 'surface' | 'moons';
 }
 
 export interface DesignKit {
