@@ -4,7 +4,7 @@
 import { useCallback, useRef, useState } from 'react';
 import type { StartOptions } from '../engine/ops/index';
 import type { PartId } from '../engine/pack';
-import type { TeamAct } from '../engine/team/log';
+import type { TeamAct, TeamAction } from '../engine/team/log';
 import { initialTeamState } from '../engine/team/reduce';
 import { stepSession, type TeamSession } from '../engine/team/replay';
 import type { RoleId, Team } from '../engine/team/roles';
@@ -21,6 +21,8 @@ export interface TeamPlay {
   send: (role: RoleId, act: TeamAct) => void;
   /** End the session (leaving Team mode). */
   stop: () => void;
+  /** The log so far, in order (empty before a start). */
+  log: readonly TeamAction[];
 }
 
 export function useTeam(): TeamPlay {
@@ -58,5 +60,7 @@ export function useTeam(): TeamPlay {
     transport.current.send({ seat: actorFor(team, role), role, act });
   }, []);
 
-  return { ...(session ? { session } : {}), start, send, stop };
+  // the log is read on each render: every entry re-renders through setSession
+  const log = transport.current?.log() ?? [];
+  return { ...(session ? { session } : {}), start, send, stop, log };
 }

@@ -7,7 +7,7 @@ import { evaluateDesign } from '../src/engine/index';
 import { footprint, noseSquares, PACK, shelfFor } from '../src/engine/pack';
 import { ROLE_IDS, TEAM_RULES, type RoleId, type Team } from '../src/engine/team/roles';
 import { applyTeamAction, initialTeamState, teamDesign, type TeamState } from '../src/engine/team/reduce';
-import { teamConflicts, teamSpend } from '../src/engine/team/negotiate';
+import { spendShares, teamConflicts, teamSpend } from '../src/engine/team/negotiate';
 import type { TeamAct, TeamAction } from '../src/engine/team/log';
 import { starterDesign } from '../src/ui/starters';
 
@@ -89,6 +89,27 @@ describe('each role’s spend', () => {
     // the Engineer (propellant, power, kit) outweighs the Science Lead and Comms & Ops; the FD packed nothing optional
     expect(sp.over.mass).toEqual(['spacecraft-engineer', 'science-lead', 'comms-ops']);
     expect(sp.over.cost).toBeUndefined();
+  });
+});
+
+describe('the Shared Limits panel (Team Pack, T3)', () => {
+  it('each role’s part of each limit and of the total cost; how far over a limit the craft is', () => {
+    const s = stateOf(logOf(...FULL, pack('spacecraft-engineer', 'spare')));
+    const ev = evaluateDesign(teamDesign(s));
+    const sp = teamSpend(s, ev);
+    const sh = spendShares(sp);
+    for (const r of ROLE_IDS) {
+      // mass ÷ limit, cost ÷ limit, cost ÷ Σ cost
+      expect(sh.roles[r].massOfLimit).toBeCloseTo(sp.roles[r].mass_kg / sp.limits.mass_kg, 12);
+      expect(sh.roles[r].costOfLimit).toBeCloseTo(sp.roles[r].cost_M / sp.limits.cost_M, 12);
+      expect(sh.roles[r].costShare).toBeCloseTo(sp.roles[r].cost_M / ev.meters.cost.used, 12);
+    }
+    expect(ROLE_IDS.reduce((a, r) => a + sh.roles[r].costShare, 0)).toBeCloseTo(1, 12);
+    // used and over: 11 kg over in the 2030 window (rounded in the comment at the top)
+    expect(sh.mass.used).toBeCloseTo(ev.meters.mass.used, 9);
+    expect(sh.mass.over).toBeCloseTo(ev.meters.mass.used - ev.meters.mass.limit, 9);
+    expect(sh.mass.over).toBeGreaterThan(0);
+    expect(sh.cost.over).toBe(0);
   });
 });
 

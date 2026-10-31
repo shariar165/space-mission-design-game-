@@ -2,6 +2,9 @@
 // squares, and weight is a separate limit on the scale beside it. The Danger Deck shows what is coming, so you pack
 // for it, then arm and launch on the best day (or change it on the Launch Day step; Engineer always goes there). Every number comes from the engine (pack.ts,
 // evaluateDesign, cadetGauges); this screen only lays them out.
+// Team mode (design: Signal Delay - Team Play.dc.html, T3): with `team`, every packing is a team log entry made as the
+// part's role, the shelf is grouped by role, the nose parts wear their role's colour, and SHARED LIMITS, the conflict
+// banner, the TEAM LINE and the quick messages join the screen (components/team/TeamPanels). The Flight Director launches.
 import { useMemo, useState } from 'react';
 import { cadetGauges } from '../../engine/cadet';
 import { DESTINATIONS, HAZARDS, LESSONS } from '../../engine/data';
@@ -22,6 +25,13 @@ import {
   type PartId,
 } from '../../engine/pack';
 import type { Design } from '../../engine/types';
+import type { ObjectiveId } from '../../engine/objectives';
+import type { TeamAct, TeamAction } from '../../engine/team/log';
+import { teamSpend } from '../../engine/team/negotiate';
+import type { TeamState } from '../../engine/team/reduce';
+import { partRole, ROLE_IDS, type RoleId } from '../../engine/team/roles';
+import { ConflictBanner, CrewChips, QuickBar, SharedLimits, TeamLine } from '../components/team/TeamPanels';
+import { TeamSteps } from './TeamSetup';
 import { SourceInfo } from '../components/SourceInfo';
 import { BackButton } from '../components/sd/BackButton';
 import { MissionBriefing } from '../components/sd/MissionBriefing';
@@ -49,6 +59,9 @@ import {
   SCIENCE_PARTS,
   shortDate,
   STAMP,
+  OBJECTIVE_WORDS,
+  ROLE_WORDS,
+  TEAM_PACK_WORDS,
   WEIGHT_WORDS,
   type Briefing,
 } from '../sdWords';
@@ -82,19 +95,33 @@ interface Props {
   pick?: number;
   /** Open the Launch Day step (CHANGE ▸). */
   onDays?: () => void;
+  /** Team mode: packing goes through the team's log. */
+  team?: PackTeam;
 }
 
 type Hl = { dangers: string[]; parts: PartId[] } | undefined;
 
-export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLesson, onHome, onLaunch, onBack, brief, onBriefSeen, robotName, onRobotName, packed: kept, onPacked, pick, onDays }: Props) {
+/** Team mode: the team's state and log, and how to act as a role (useTeam). */
+export interface PackTeam {
+  state: TeamState;
+  log: readonly TeamAction[];
+  send: (role: RoleId, act: TeamAct) => void;
+  objective?: ObjectiveId;
+}
+
+export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLesson, onHome, onLaunch, onBack, brief, onBriefSeen, robotName, onRobotName, packed: kept, onPacked, pick, onDays, team }: Props) {
   const engineer = mode === 'engineer';
   const phone = useIsPhone();
   const dest = DESTINATIONS[base.destination];
-  const [packed, setPackedRaw] = useState<Packed>(() => kept ?? initialPack(base, shelf));
+  const [soloPacked, setPackedRaw] = useState<Packed>(() => kept ?? initialPack(base, shelf));
+  /** The packing: the team's (its log decides) or this player's own. */
+  const packed = team ? team.state.packed : soloPacked;
   const setPacked = (p: Packed) => {
     setPackedRaw(p);
     onPacked?.(p);
   };
+  /** Team mode: the role whose voice the quick messages carry. */
+  const [speaker, setSpeaker] = useState<RoleId>('flight-director');
   const [hl, setHl] = useState<Hl>();
   const [armed, setArmed] = useState(false);
   const [noRoom, setNoRoom] = useState<PartId>();
@@ -117,13 +144,22 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
 
   const add = (id: PartId) => {
     const next = packPart(packed, id);
+    // a team's refused packing still goes on the log: it raises the space conflict the report counts
+    if (team) team.send(partRole(id), { kind: 'pack', part: id });
     if (!next) return setNoRoom(id);
     setNoRoom(undefined);
-    setPacked(next);
+    if (!team) setPacked(next);
   };
   const remove = (id: PartId) => {
     setNoRoom(undefined);
-    setPacked(unpackPart(packed, id));
+    if (team) team.send(partRole(id), { kind: 'unpack', part: id });
+    else setPacked(unpackPart(packed, id));
+  };
+  const spend = team ? teamSpend(team.state, ev) : undefined;
+  const ownerOf = (id: PartId): RoleId => team?.state.owners[id] ?? partRole(id);
+  const go = () => {
+    if (team && plan.day) team.send('flight-director', { kind: 'launch', day: plan.day });
+    onLaunch(design);
   };
   const lit = (id: PartId) => !!hl?.parts.includes(id);
   const hoverPart = (id: PartId) => setHl({ dangers: coversOf(id), parts: [id] });
@@ -157,8 +193,8 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
               <button
                 key={p.id}
                 type="button"
-                className={`pk-part${lit(p.id) ? ' lit' : ''}${locked ? ' locked' : ''}`}
-                style={{ gridColumn: `${p.c + 1} / span ${fp.w}`, gridRow: `${p.r + 1} / span ${fp.h}`, background: look.color }}
+                className={`pk-part${lit(p.id) ? ' lit' : ''}${locked ? ' locked' : ''}${team ? ` tm-r-${ownerOf(p.id)} by-role` : ''}`}
+                style={{ gridColumn: `${p.c + 1} / span ${fp.w}`, gridRow: `${p.r + 1} / span ${fp.h}`, ...(team ? {} : { background: look.color }) }}
                 title={locked ? PACK_WORDS.alwaysPacked(look.name) : PACK_WORDS.tapToUnpack(look.name)}
                 aria-label={locked ? PACK_WORDS.alwaysPackedLabel(look.name) : PACK_WORDS.unpack(look.name)}
                 onClick={() => !locked && remove(p.id)}
@@ -200,9 +236,7 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
     </div>
   );
 
-  const shelfCards = (
-    <div className="pk-tray-list">
-      {trayFits.map(({ id, fits }) => {
+  const trayCard = ({ id, fits }: { id: PartId; fits: boolean }) => {
         const look = PART_LOOK[id];
         const fp = footprint(id);
         return (
@@ -236,7 +270,27 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
             </span>
           </button>
         );
-      })}
+  };
+  const shelfCards = (
+    <div className="pk-tray-list">
+      {team
+        ? ROLE_IDS.map((r) => {
+            const mine = trayFits.filter((t) => partRole(t.id) === r);
+            const sp = spend!.roles[r];
+            return (
+              <div key={r} className={`tp-group tm-r-${r}`} role="group" aria-label={ROLE_WORDS[r].name}>
+                <div className="tp-group-head">
+                  <span className="tp-group-name">
+                    <SDIcon icon={ROLE_WORDS[r].icon} size={15} color="var(--role)" />
+                    {phone ? ROLE_WORDS[r].short : ROLE_WORDS[r].name}
+                  </span>
+                  <span className="tp-group-spend">{TEAM_PACK_WORDS.roleSpend(f.money(sp.cost_M), f.kg(sp.mass_kg))}</span>
+                </div>
+                {mine.map(trayCard)}
+              </div>
+            );
+          })
+        : trayFits.map(trayCard)}
       {tray.length === 0 && <div className="pk-empty">{PACK_WORDS.shelfEmpty}</div>}
     </div>
   );
@@ -337,7 +391,7 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
         </span>
         <span className="pk-arm-word">{PACK_WORDS.arm}</span>
       </button>
-      <button type="button" className={`pk-go${ready ? ' ready' : ''}`} disabled={!ready} onClick={() => onLaunch(design)}>
+      <button type="button" className={`pk-go${ready ? ' ready' : ''}`} disabled={!ready} onClick={go}>
         {PACK_WORDS.launch}
       </button>
     </div>
@@ -369,9 +423,15 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
     </div>
   );
 
+  // ---- Team mode pieces (T3) ----
+  const banner = spend && <ConflictBanner spend={spend} {...(noRoom ? { noRoom: { part: PART_LOOK[noRoom].name, role: partRole(noRoom) } } : {})} />;
+  const quick = team && <QuickBar speaker={speaker} onSpeaker={setSpeaker} onSay={(q) => team.send(speaker, { kind: 'say', quick: q })} />;
+  const line = team && <TeamLine state={team.state} log={team.log} {...(phone ? { max: 1 } : {})} />;
+  const teamKicker = team?.objective ? TEAM_PACK_WORDS.kicker(OBJECTIVE_WORDS.objectives[team.objective].title) : TEAM_PACK_WORDS.kickerNone;
+
   if (phone)
     return (
-      <div className={`sd pk phone${engineer ? ' eng' : ''}`}>
+      <div className={`sd pk phone${engineer ? ' eng' : ''}${team ? ' team' : ''}`}>
         <div className="fly-status">
           {onBack ? (
             <BackButton onBack={onBack} />
@@ -387,10 +447,18 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
             <ModeLever mode={mode} onMode={onMode} />
           </span>
         </div>
-        <div className="pk-deck-phone">
-          <span className="sd-label">{PACK_WORDS.deckOf(dest.name)}</span>
-          {deckList}
-        </div>
+        {team ? (
+          <>
+            <span className="tp-phone-kicker">{teamKicker}</span>
+            {banner}
+            {spend && <SharedLimits spend={spend} compact />}
+          </>
+        ) : (
+          <div className="pk-deck-phone">
+            <span className="sd-label">{PACK_WORDS.deckOf(dest.name)}</span>
+            {deckList}
+          </div>
+        )}
         <div className="pk-nose-row">
           {nose}
           {scale}
@@ -400,6 +468,8 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
         {lesson}
         {shelfCards}
         {calendar}
+        {quick}
+        {line}
         {checklist}
         {launch}
         {briefing}
@@ -407,7 +477,7 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
     );
 
   return (
-    <div className={`sd pk${engineer ? ' eng' : ''}`}>
+    <div className={`sd pk${engineer ? ' eng' : ''}${team ? ' team' : ''}`}>
       <header className="pk-top">
         <div className="pk-top-left">
           {onBack && <BackButton onBack={onBack} />}
@@ -415,12 +485,12 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
           <button type="button" className="sd-brand-name" onClick={onHome} aria-label={BRAND_WORDS.home}>
             {GAME_NAME}
           </button>
-          <span className="sd-brand-sub">{BRAND_WORDS.sub(missionName, dest.name)}</span>
+          <span className="sd-brand-sub">{team ? teamKicker : BRAND_WORDS.sub(missionName, dest.name)}</span>
           </div>
         </div>
-        <MissionSteps at={0} />
+        {team ? <TeamSteps at={1} /> : <MissionSteps at={0} />}
         <div className="pk-top-right">
-          {infoKey}
+          {team?.state.team ? <CrewChips team={team.state.team} /> : infoKey}
           <span className="sd-top-keys">
             <LangToggle />
             <SoundToggle />
@@ -431,13 +501,14 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
       <div className="pk-main">
         <section className="pk-panel pk-tray" aria-label={PACK_WORDS.shelfLabel}>
           <div className="pk-panel-head">
-            <span className="pk-panel-title">{PACK_WORDS.shelf}</span>
-            <span className="sd-label dim">{PACK_WORDS.tapToPack}</span>
+            <span className="pk-panel-title">{team ? TEAM_PACK_WORDS.shelf : PACK_WORDS.shelf}</span>
+            <span className="sd-label dim">{team ? TEAM_PACK_WORDS.byRole : PACK_WORDS.tapToPack}</span>
           </div>
           {shelfCards}
         </section>
         <section className="pk-fairing" aria-label={PACK_WORDS.fairing}>
           <div className="pk-dots" />
+          {banner}
           <div className="pk-nose-row">
             {nose}
             {scale}
@@ -448,16 +519,24 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
           </div>
           {lesson}
         </section>
-        <section className="pk-panel pk-deck" aria-label={PACK_WORDS.deckLabel(dest.name)}>
-          <div className="pk-deck-head">
-            <span className="pk-panel-title">{PACK_WORDS.deckOf(dest.name)}</span>
-            <span className="pk-deck-sub">{PACK_WORDS.deckSub}</span>
+        {team && spend ? (
+          <div className="tp-side">
+            <SharedLimits spend={spend} />
+            {line}
+            <section className="pk-panel pk-cal-panel">{calendar}</section>
           </div>
-          {deckList}
-        </section>
+        ) : (
+          <section className="pk-panel pk-deck" aria-label={PACK_WORDS.deckLabel(dest.name)}>
+            <div className="pk-deck-head">
+              <span className="pk-panel-title">{PACK_WORDS.deckOf(dest.name)}</span>
+              <span className="pk-deck-sub">{PACK_WORDS.deckSub}</span>
+            </div>
+            {deckList}
+          </section>
+        )}
       </div>
       <footer className="pk-bottom">
-        <section className="pk-panel pk-cal-panel">{calendar}</section>
+        {team ? quick : <section className="pk-panel pk-cal-panel">{calendar}</section>}
         <section className="pk-panel pk-launch-panel">
           {checklist}
           {launch}

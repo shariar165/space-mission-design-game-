@@ -74,6 +74,29 @@ export function teamSpend(s: TeamState, ev: FullEvaluation): TeamSpend {
   return { roles, limits: { mass_kg: ev.meters.mass.limit, cost_M: ev.meters.cost.limit, squares: noseSquares(s.packed).total }, over };
 }
 
+export interface SpendShares {
+  /** Each role's part of the mass and cost limits (for the bars) and of the total cost (the SHARE column). */
+  roles: Record<RoleId, { massOfLimit: number; costOfLimit: number; costShare: number }>;
+  /** What the craft uses of each limit, and how far over it is (0 when under). */
+  mass: { used: number; limit: number; over: number };
+  cost: { used: number; limit: number; over: number };
+}
+
+/** The Shared Limits panel's fractions (Team Pack): each role's part of each limit and of the cost, and any overrun. */
+export function spendShares(sp: TeamSpend): SpendShares {
+  const sum = (k: 'mass_kg' | 'cost_M') => ROLE_IDS.reduce((a, r) => a + sp.roles[r][k], 0);
+  const mass = sum('mass_kg');
+  const cost = sum('cost_M');
+  const roles = Object.fromEntries(
+    ROLE_IDS.map((r) => [r, { massOfLimit: sp.roles[r].mass_kg / sp.limits.mass_kg, costOfLimit: sp.roles[r].cost_M / sp.limits.cost_M, costShare: cost > 0 ? sp.roles[r].cost_M / cost : 0 }]),
+  ) as SpendShares['roles'];
+  return {
+    roles,
+    mass: { used: mass, limit: sp.limits.mass_kg, over: Math.max(0, mass - sp.limits.mass_kg) },
+    cost: { used: cost, limit: sp.limits.cost_M, over: Math.max(0, cost - sp.limits.cost_M) },
+  };
+}
+
 export interface Conflict {
   resource: Resource;
   /** The entry that went over (or, for space, the packing refused for no room). */

@@ -132,6 +132,8 @@ export function App() {
     saveTeam(t);
   };
   const teamPlay = useTeam();
+  /** The level in play is the team's (packing and launching go through the team's log). */
+  const [teamRun, setTeamRun] = useState(false);
   /** The Mars starter the team packs on (objectives are Mars only). */
   const teamBase = useMemo(() => starterDesign('mars', today()), []);
   const nameRobot = (n: string) => {
@@ -281,7 +283,8 @@ export function App() {
     setMode(m);
   };
 
-  const playLevel = (l: Level, objective?: ObjectiveId) => {
+  const playLevel = (l: Level, objective?: ObjectiveId, asTeam = false) => {
+    setTeamRun(asTeam);
     const s = { ...starterDesign(l.destination, today()), ...(l.targets ? { scienceTargets: true } : {}), ...(objective ? { objective } : {}) };
     setCadet(cadetStart(s, l.id));
     setDesign(s);
@@ -378,7 +381,8 @@ export function App() {
   const packKey = `${cadet.levelId ?? 'free'}-${cadet.base.destination}`;
   const keptPack = packSave?.key === packKey ? packSave : undefined;
   const starterPack = useMemo(() => initialPack(cadet.base, level ? shelfOf(level) : shelfFor(cadet.base.destination)), [cadet.base, level]);
-  const packedNow = keptPack?.packed ?? starterPack;
+  const teamNow = teamRun ? teamPlay.session?.team : undefined;
+  const packedNow = teamNow ? teamNow.packed : (keptPack?.packed ?? starterPack);
 
   return (
     <div className={`app${step === 'build' && !cadetMode ? ' fixed' : ''}${cadetMode ? ' is-cadet' : ''}${step === 'fly' ? ' is-fly' : ''}`}>
@@ -452,7 +456,7 @@ export function App() {
           mode={mode}
           onMode={changeMode}
           onBack={back}
-          onNext={(o) => playLevel(levelById('mars')!, o)}
+          onNext={(o) => playLevel(levelById('mars')!, o, true)}
         />
       )}
       {step === 'name' && (
@@ -544,6 +548,7 @@ export function App() {
           onPacked={(p) => setPackSave({ key: packKey, packed: p, ...(keptPack?.pick !== undefined ? { pick: keptPack.pick } : {}) })}
           {...(keptPack?.pick !== undefined ? { pick: keptPack.pick } : {})}
           onDays={() => go('launch')}
+          {...(teamNow ? { team: { state: teamNow, log: teamPlay.log, send: teamPlay.send, ...(teamNow.objective ? { objective: teamNow.objective } : {}) } } : {})}
         />
       )}
       {step === 'build' && !cadetMode && <BuildBay design={design} ev={ev} engineer onChange={setDesign} onLaunch={launch} />}
