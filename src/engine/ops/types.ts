@@ -196,6 +196,9 @@ export type OpsAction =
   | { t: number; kind: 'decide'; decisionId: string; optionId: string }
   | { t: number; kind: 'dsn'; fromDay: number; toDay: number; booking: DsnBooking };
 
+/** An action without its time: applied at whatever mission time it is replayed at (Team mode stamps it). */
+export type OpsOp = OpsAction extends infer A ? (A extends unknown ? Omit<A, 't'> : never) : never;
+
 export type ResponseSource = 'player' | 'standing-order' | 'fault-protection';
 
 export interface HazardRecord {

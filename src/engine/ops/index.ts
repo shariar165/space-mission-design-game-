@@ -32,6 +32,7 @@ import type {
   OpsAction,
   OpsEnvironment,
   OpsEvent,
+  OpsOp,
   OpsPhase,
   OpsState,
   PowerPlan,
@@ -176,21 +177,27 @@ export function finishOperations(state: OpsState, opts: { policy?: HazardPolicy;
   return s;
 }
 
+/** Fly on to time t (no further once the mission waits for the extension decision or has ended). */
+export function advanceTo(state: OpsState, t: number): OpsState {
+  let s = state;
+  while (s.status === 'flying' && s.t < t) s = advanceOperations(s, { until: t });
+  return s;
+}
+
+/** Apply one logged action at the current time (replays: Mission operations and Team mode). */
+export function applyOpsAction(s: OpsState, a: OpsOp): OpsState {
+  if (a.kind === 'command') return sendCommand(s, a.command).state;
+  if (a.kind === 'decide') return decide(s, a.decisionId, a.optionId).state;
+  return bookDsn(s, a.fromDay, a.toDay, a.booking).state;
+}
+
 /**
  * Rebuild a mission from its seed and action log (save/load). With `until`, stop at that mission time (resume a
  * session where it was left) instead of flying on to the end.
  */
 export function replayOperations(design: Design, opts: StartOptions, actions: OpsAction[], until?: number): OpsState {
   let s = startOperations(design, opts);
-  for (const a of actions) {
-    while ((s.status === 'flying' || s.status === 'awaiting-extension') && s.t < a.t) {
-      if (s.status === 'awaiting-extension') break;
-      s = advanceOperations(s, { until: a.t });
-    }
-    if (a.kind === 'command') s = sendCommand(s, a.command).state;
-    else if (a.kind === 'decide') s = decide(s, a.decisionId, a.optionId).state;
-    else s = bookDsn(s, a.fromDay, a.toDay, a.booking).state;
-  }
+  for (const a of actions) s = applyOpsAction(advanceTo(s, a.t), a);
   if (until !== undefined) {
     while (s.status === 'flying' && s.t < until - 1e-12) s = advanceOperations(s, { until });
     return s;
