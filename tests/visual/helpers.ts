@@ -118,10 +118,11 @@ export async function toMarsOrbit(page: Page) {
  * Text inside `selector` that is cut off: every text run's box must sit inside each ancestor that clips it (overflow
  * hidden / clip: both axes; a scroll box: across only, since it scrolls down) and inside the window across. Returns
  * one line per clipped run ("SHIELD UP: left 11px past main.sd-crt.fly-crt"); empty when everything fits. Screen-reader-only
- * text (a box of a pixel or two) is skipped.
+ * text (a box of a pixel or two) is skipped. `scrollers`: boxes meant to scroll sideways (a strip of keys), where
+ * text past the edge is reached by scrolling.
  */
-export async function clippedText(page: Page, selector: string): Promise<string[]> {
-  return page.evaluate((sel) => {
+export async function clippedText(page: Page, selector: string, scrollers: string[] = []): Promise<string[]> {
+  return page.evaluate(([sel, sideways]) => {
     const root = document.querySelector(sel);
     if (!root) return [`nothing matches ${sel}`];
     const name = (a: Element) => a.tagName.toLowerCase() + (a.classList.length ? `.${[...a.classList].join('.')}` : '');
@@ -149,7 +150,8 @@ export async function clippedText(page: Page, selector: string): Promise<string[
         ] as [string, number][];
         for (const [side, px] of d) if (px > 1) out.push(`${text.slice(0, 40)}: ${side} ${Math.round(px)}px past ${by}`);
       };
-      miss({ left: 0, right: window.innerWidth, top: 0, bottom: window.innerHeight }, false, 'the window');
+      const across = sideways!.some((x) => el.closest(x));
+      if (!across) miss({ left: 0, right: window.innerWidth, top: 0, bottom: window.innerHeight }, false, 'the window');
       // only the ancestors that contain the box clip it: past an absolute box, the next positioned one; past a fixed
       // box, none (the window)
       // inside a scroll box, text below it is reached by scrolling (outer boxes then only clip across), but text above
@@ -162,7 +164,11 @@ export async function clippedText(page: Page, selector: string): Promise<string[
         skip = false;
         const o = [cs.overflowX, cs.overflowY];
         const b = a.getBoundingClientRect();
-        if (o.some((x) => x === 'auto' || x === 'scroll')) {
+        if (across) {
+          // inside a sideways strip only the up-and-down cut counts
+          if (!scrolls && o.some((x) => x === 'hidden' || x === 'clip') && (b.top - r.top > 1 || r.bottom - b.bottom > 1)) out.push(`${text.slice(0, 40)}: cut top or bottom by ${name(a)}`);
+          if (o.some((x) => x === 'auto' || x === 'scroll') && !sideways!.some((x) => a.matches(x))) scrolls = true;
+        } else if (o.some((x) => x === 'auto' || x === 'scroll')) {
           miss(b, false, name(a));
           if (b.top - a.scrollTop - r.top > 1) out.push(`${text.slice(0, 40)}: above the top of ${name(a)}, out of scroll reach`);
           scrolls = true;
@@ -172,5 +178,5 @@ export async function clippedText(page: Page, selector: string): Promise<string[
       }
     }
     return [...new Set(out)];
-  }, selector);
+  }, [selector, scrollers] as const);
 }

@@ -335,6 +335,43 @@ describe('team section', () => {
     expect(o.score).toBeCloseTo(75, 9);
   });
 
+  it('the score in parts (T5 TEAM SCORE): agreements, conflicts solved, objective met, adding up to the score', async () => {
+    const { teamReport, teamScoreParts } = await import('../src/engine/team/report');
+    const r = await flyTeam((_, safest) => safest);
+    const rep = teamReport(r.log, r);
+    // overruled twice: agreements 0 of 2 → 0 of 25; no conflicts → 25 of 25; objective met → 50 of 50
+    expect(rep.parts).toEqual([
+      { id: 'votes', points: 0, max: 25, n: 0, of: 2 },
+      { id: 'conflicts', points: 25, max: 25, n: 0, of: 0 },
+      { id: 'objective', points: 50, max: 50, n: 1, of: 1 },
+    ]);
+    expect(rep.parts.reduce((a, x) => a + x.points, 0)).toBeCloseTo(rep.score, 9);
+    expect(rep.max).toBeCloseTo(100, 9); // 25 + 25 + 50
+    // no objective: the two parts share 100 in proportion (25 : 25 → 50 : 50); 1 of 2 resolved → 25, 1 of 1 → 50
+    const moon = teamScoreParts(undefined, { raised: 2, resolved: 1 }, { total: 1, agreed: 1 });
+    expect(moon).toEqual([
+      { id: 'votes', points: 50, max: 50, n: 1, of: 1 },
+      { id: 'conflicts', points: 25, max: 50, n: 1, of: 2 },
+    ]);
+  });
+
+  it('a card row says when it was settled and how the seats voted; every row has a verdict', async () => {
+    const { teamReport } = await import('../src/engine/team/report');
+    const r = await flyTeam((rec) => rec);
+    const rep = teamReport(r.log, r);
+    const comms = rep.rows.find((x) => x.role === 'comms-ops')!;
+    expect(comms.key.kind).toBe('card');
+    if (comms.key.kind === 'card') {
+      const call = r.log.find((a) => a.act.kind === 'call' && a.act.decisionId === Object.values(r.team.votes).find((v) => v.hazardType === 'solar-storm')!.decisionId)!;
+      expect(comms.key.day).toBe(call.t);
+      // p3 (Science + Comms) recommended, the Flight Director called the same option: 2 for, none against
+      expect(comms.key.support).toBe(2);
+      expect(comms.key.against).toBe(0);
+    }
+    // the objective was met; the pictures all came home; a card that went well
+    expect(rep.rows.map((x) => x.verdict)).toEqual(rep.rows.map((x) => (x.key.kind === 'card' && x.key.bad ? 'bad' : 'good')));
+  });
+
   it('without an objective (the Moon) the other two parts share the score', async () => {
     const { teamScore } = await import('../src/engine/team/report');
     // conflicts 1 of 2 resolved, votes 1 of 1: (0.25 × 0.5 + 0.25 × 1) / 0.5 = 0.75 → 75

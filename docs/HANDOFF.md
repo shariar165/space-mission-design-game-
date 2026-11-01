@@ -1,6 +1,6 @@
 # Handoff: where Signal Delay stands
 
-State on **Oct 28, 2026**, at the feature freeze, plus the Team Mode engine (Oct 31, PRs #47–#50, see below). `main` is clean, CI green, deployed to https://shariar165.github.io/space-mission-design-game-/ .
+State on **Oct 28, 2026**, at the feature freeze, plus Team Mode (engine PRs #47–#50; local co-op UI PRs #52–#57, Nov 1, see below). `main` is clean, CI green, deployed to https://shariar165.github.io/space-mission-design-game-/ .
 
 Read this first in a new session, then `CLAUDE.md` (commands, architecture, UI rules) and the relevant section of `docs/SCIENCE_SPEC.md` (v1.2, the source of truth for every equation and rule).
 
@@ -32,9 +32,9 @@ Every change reached `main` through a pull request with CI green.
 | #39–#44 | EN / বাংলা switch on every Cadet screen; cited texts, Rescue History and the mission map in Bangla with the English original in ⓘ (spec v1.2) |
 | #45 | Full screenshot run before the freeze: ribbon labels never overlap, the countdown keeps clear of the robot, the 1,000× key fits, Bangla day counts |
 
-## In progress: Team Mode (spec v1.3, Oct 31, 2026)
+## Team Mode (spec v1.3, Oct 31 – Nov 1, 2026)
 
-The engine is merged (PRs #47–#50); the UI is in progress (below). The approved plan is in `~/.claude/plans/breezy-pondering-clarke.md`.
+The engine is merged (PRs #47–#50). Local co-op, on one shared screen, is built end to end (PRs #52–#57, below); check that each is merged. Next is the Online Mission Room (T6), in a fresh session. The approved plan is in `~/.claude/plans/breezy-pondering-clarke.md`.
 
 **Done (engine):**
 
@@ -61,19 +61,25 @@ The objectives use the instrument-match rule: the objective's targets carry 60% 
    - `useTeam.ts`: `LocalTransport` + `stepSession`; on a shared screen a role's keys act as its holder (`actorFor`). The crew is saved as `sd.team`.
    - Engine: `team/setup.ts` (`defaultTeam`, `setPlayers`, `handRole`, `nextCallSign`, `crewView`, `objectiveCards`, `objectiveVote`), the `objective-voice` / `objective-lock` acts in `reduce.ts`, `team.json` `defaultRoles`, `objectives.json` `strain`. Tests `tests/teamSetup.test.ts`, `tests/ui/teamSetup.test.tsx`; shots `tests/visual/team.spec.ts` (`npm run shots -- team`) and the Bangla pair in `bangla.spec.ts`.
    - NEXT · PACK opens the ordinary Mars Pack with the locked objective in the design; the team parts of Pack come next.
-3. **Done: Team Pack** (mockup T3; spec UI rule 50; PR #54, stacked on #53): `Pack` takes `team` (App `teamRun`); panels in `components/team/TeamPanels.tsx` (`SharedLimits`, `ConflictBanner`, `TeamLine`, `QuickBar`, `CrewChips`); engine `spendShares`; words `TEAM_PACK_WORDS`, `QUICK_WORDS`. Launch Day uses the team's packing.
-4. **Done: Team Fly** (mockup T4; spec UI rule 51, "One flight" in Team mode, decision 90; PR #55, stacked on #54):
+3. **Done: Team Pack** (mockup T3; spec UI rule 50; PR #54): `Pack` takes `team` (App `teamRun`); panels in `components/team/TeamPanels.tsx` (`SharedLimits`, `ConflictBanner`, `TeamLine`, `QuickBar`, `CrewChips`); engine `spendShares`; words `TEAM_PACK_WORDS`, `QUICK_WORDS`. Launch Day uses the team's packing.
+4. **Done: Team Fly** (mockup T4; spec UI rule 51, "One flight" in Team mode, decision 90; PR #55):
    - **One flight.** `FlyAndSurvive` takes `team`. `useOpsSession` gets options: `persist: false`, `onOp` (every console order also goes on the team log as its role, `opRole`, at the mission time) and `initial` (the screen starts from the team's flight, so leaving and coming back flies on). `tests/teamFly.test.ts` checks that a clock stepped in slices, with a vote and an order through the log, ends where `replayTeam` ends.
    - **The card's vote.** Engine `team/fly.ts` `cardVote` (stage, recommender, voters, tally, leans, waiting). `components/team/TeamVote.tsx` (`VoteStrip`, `FinalCall`); `DangerCard` takes a band, per-choice tokens, and `top` / `bottom` slots. A tap on a card is the recommendation, then the Flight Director's call; tokens are the votes. The settled choice goes to `respond`.
    - The quick messages replace COMING UP; `Transmissions` takes `team` lines (`teamFlightLines`, `withTeamLines`). Words `TEAM_FLY_WORDS` with Bangla. Tests `tests/ui/teamFly.test.tsx`; shots `team.spec.ts` "team fly" and Bangla.
    - App flies `teamDesign` with the team's seed (`useTeam` `opts`, `current()`); FLY AGAIN in a team starts a new log at the objective.
-5. **Next: Report and docs** (mockup T5): a `teamEl` section in `MissionReport.tsx` from `teamReport` / `teamScore` (pass the team state and log from App); README (Team Mode, objectives); this file and CLAUDE.md.
-6. **Still open:** the solo objective picker (the Mars Pack briefing and the Engineer Build Bay; today a solo player picks through TEAM → SOLO); the online room (T6) waits for an online Transport.
+5. **Done: Team Debrief and docs** (mockup T5; spec UI rule 52, decision 91; PR #57):
+   - `components/team/TeamDebrief.tsx` in `MissionReport` (`team` prop from App: the team state and log). It sits after the album; NEXT · FINAL TRANSMISSION brings the robot's last message (desktop; a phone stacks them). Rows, stamps and the TEAM SCORE panel come from engine `teamReport`, which now also gives `parts` (`teamScoreParts`), `max`, each row's `verdict` (`rowVerdict`), and a card's `day`, `support` and `against`. Words `TEAM_REPORT_WORDS` with Bangla.
+   - Tests: `tests/report.test.ts` "team section", `tests/ui/teamReport.test.tsx`; shots `team.spec.ts` "team report" and the Bangla team test, with `clippedText` checks.
+   - README: "Judge in 3 minutes" (a timed route, solo then team) and "Team Mode: 2–4 players" (roles, the six steps, one log).
+   - Bangla: counter words right after a number (`${n}টি`) are gone from the team words, and `tests/lang.test.ts` now fails on one.
+6. **Done: danger cards fit** (PR #56, from main). At 1440 the solo card's side choices were cut off, and a three-choice card was taller than the map at 900 high. The row now narrows, and the overlay scrolls from its top. `tests/visual/cardfit.spec.ts` checks every text run of the first three solo cards (Cadet and Engineer) at both sizes with `helpers.ts` `clippedText`; `team.spec.ts` checks the team card the same way.
+7. **Next: the Online Mission Room** (mockup T6, in `Signal Delay - Team Setup.dc.html`). Every player joins on their own phone. The engine is ready for it: the mission is (base design, seed, team log), every action goes through `Transport`, and the same log replays to the same mission (`replayTeam`; the screen's flight already joins the log at each entry's mission time). It needs an online `Transport` (room code, seats, ordering of entries, rejoin from the log), a T6 screen, and a decision on hosting; the game is a static GitHub Pages site today.
+8. **Still open:** the solo objective picker (the Mars Pack briefing and the Engineer Build Bay; today a solo player picks through TEAM → SOLO). In a team flight, FINISH MISSION lets the robot answer the remaining cards with its defaults, and those are not team votes, so the debrief counts only the cards the team voted on.
 
 ## Open items
 
 1. **Delete `OpsSummary`.** `src/ui/components/ops/OpsPanels.tsx:269` is dead code from the old operations console: no screen imports it, and its words are English only. Remove the component, its last assertions in `tests/ui/opsDrawers.test.tsx` (the `render(<OpsSummary …>)` lines and the import), and its styles: `.ops-summary` in `src/ui/styles/ops.css` (lines 282, 295–302, 399) and in `sd-fly.css` (lines 149, 260, 261). Keep `.ops-ext` and `.ops-ext-title`, which `ExtensionDecision` still uses. Run `npm test` and the `fly` and `report` shots.
-2. **"Judge in 3 minutes" README section.** Not written yet. A short section near the top of `README.md` (and in its Contents list) for a judge with three minutes. It should give the play link, one path through the game (for example Moon 1 or Mars: Pack, Fly & Survive at 100×, the Science Targets globe, the Mission Report), and where the real science shows: ⓘ on any number, Engineer mode's EQUATIONS drawer, `docs/VALIDATION_RESULTS.md`. Use screenshots already in `docs/images/` or fresh ones from `test-results/shots/`.
+2. **"Judge in 3 minutes" README section.** Written (PR #57): a timed route through the Daily, a danger card, Engineer mode, the report, then Team Mode and বাংলা. Still to do: add a screenshot (e.g. the team vote or the Team Debrief from `test-results/shots/`) to `docs/images/`.
 3. **Atlas V payload curves are placeholders.** `src/data/launchVehicles.json` `atlas-v-401` and `atlas-v-411` `payloadCurve` are game estimates. NASA's LSP Performance Query (elvperf.ksc.nasa.gov) can only be used interactively, so a person must export 6–8 points per vehicle (C3 −2 to 40 km²/s²). Until then the launch-capacity validation rows are not real evidence. After the export: set `isGameEstimate: false` with the source and URL, then run `npm run test:validation` and `npm run todo-data`.
 
 Smaller follow-ups, not blocking:

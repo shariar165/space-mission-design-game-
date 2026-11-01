@@ -1,7 +1,7 @@
 // Game shots of Team Mode (spec: Team mode; designs: Signal Delay - Team Setup.dc.html T1–T2, Team Play.dc.html T3–T4), to compare with
 // docs/design/signal-delay/shots/team-*.png. Run: npm run shots -- team
-import { test, type Page } from '@playwright/test';
-import { routeDonki } from './helpers';
+import { expect, test, type Page } from '@playwright/test';
+import { clippedText, routeDonki } from './helpers';
 
 const SEEN = ['coach', 'name', 'cold-open', 'brief:mars', 'launch:mars'];
 
@@ -70,7 +70,8 @@ test('team pack', async ({ page }, info) => {
   if (info.project.name === 'mobile') await page.screenshot({ path: 'test-results/shots/team-pack-full-page-mobile.png', fullPage: true });
 });
 
-test('team fly', async ({ page }, info) => {
+/** Four players, STUDY THE ATMOSPHERE locked, the starter pack launched; on to the first danger card. */
+async function toTeamCard(page: Page) {
   // seed 19: the first danger card is a solar storm, Comms & Ops' to recommend
   await openTeam(page, '/?seed=19');
   await page.getByRole('button', { name: 'NEXT · OBJECTIVE' }).click();
@@ -85,7 +86,14 @@ test('team fly', async ({ page }, info) => {
   const card = page.getByRole('dialog', { name: /DANGER CARD/ });
   for (let i = 0; i < 30 && !(await card.isVisible()); i++) await page.getByRole('button', { name: 'Next event' }).click();
   await page.waitForTimeout(400);
+  return card;
+}
+
+test('team fly', async ({ page }, info) => {
+  const card = await toTeamCard(page);
   await shot(page, 'team-fly-recommend', info.project.name);
+  // no text on the team card is cut off (cardfit.spec.ts does the solo cards)
+  expect(await clippedText(page, '.dc-overlay', ['.tp-msgs']), 'recommend').toEqual([]);
   // the design's state: recommended A, one voice each way, the Flight Director's final call to make
   await card.locator('.dc-choice').first().click();
   await card.getByRole('button', { name: 'SPACECRAFT ENGINEER: vote A' }).first().click();
@@ -98,9 +106,34 @@ test('team fly', async ({ page }, info) => {
   }
   await page.waitForTimeout(400);
   await shot(page, 'team-fly', info.project.name);
+  expect(await clippedText(page, '.dc-overlay', ['.tp-msgs']), 'vote').toEqual([]);
   if (info.project.name === 'mobile') await page.screenshot({ path: 'test-results/shots/team-fly-full-page-mobile.png', fullPage: true });
   // the final call: the card closes and the order flies
   await card.locator('.dc-choice').first().click();
   await page.waitForTimeout(1200);
   await shot(page, 'team-fly-order', info.project.name);
+});
+
+test('team report', async ({ page }, info) => {
+  const mobile = info.project.name === 'mobile';
+  const card = await toTeamCard(page);
+  // Comms & Ops recommends A, the Flight Director calls it; then the robot flies the rest
+  await card.locator('.dc-choice').first().click();
+  await card.locator('.dc-choice').first().click();
+  // FINISH (on a phone the order's trip panel lies over the keys, so the click goes to the key itself)
+  await page.getByRole('button', { name: 'FINISH MISSION ▸▸' }).first().dispatchEvent('click');
+  await page.getByRole('dialog', { name: 'FINISH THE MISSION?' }).getByRole('button', { name: 'FINISH MISSION ▸▸' }).click();
+  await page.getByRole('button', { name: 'SEE MISSION REPORT ▸' }).click({ timeout: 60_000 });
+  const feed = page.getByRole('button', { name: /^FEED THE PAPER · FINAL TRANSMISSION/ });
+  if (!mobile && (await feed.first().isVisible({ timeout: 30_000 }).catch(() => false))) await feed.first().click();
+  const td = page.getByRole('region', { name: 'Team debrief' });
+  await expect(td).toBeVisible({ timeout: 30_000 });
+  await td.scrollIntoViewIfNeeded();
+  await page.waitForTimeout(1200);
+  await shot(page, 'team-report', info.project.name);
+  expect(await clippedText(page, '.td')).toEqual([]);
+  if (mobile) await td.screenshot({ path: 'test-results/shots/team-report-section-mobile.png' });
+  await page.getByRole('button', { name: /NEXT · FINAL TRANSMISSION/ }).click();
+  await page.waitForTimeout(800);
+  await shot(page, 'team-report-next', info.project.name);
 });
