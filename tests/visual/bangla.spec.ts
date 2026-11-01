@@ -226,4 +226,13 @@ test('Bangla: Team Setup and the Mission Objective', async ({ page }, info) => {
   await page.waitForTimeout(1500);
   await page.getByRole('button', { name: 'আরও বিদ্যুৎ চাই' }).click();
   await shot(page, 'team-pack', p);
+  // Team Fly: launch, then the first danger card's vote (the related role recommends the first choice)
+  await page.locator('.pk-arm').click();
+  await page.locator('.pk-go').click();
+  await page.waitForTimeout(800);
+  const card = page.getByRole('dialog', { name: /বিপদের কার্ড/ });
+  for (let i = 0; i < 30 && !(await card.isVisible()); i++) await page.getByRole('button', { name: 'পরের ঘটনা' }).click();
+  await card.locator('.dc-choice').first().click();
+  await page.waitForTimeout(600);
+  await shot(page, 'team-fly', p);
 });

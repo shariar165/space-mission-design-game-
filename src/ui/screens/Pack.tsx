@@ -158,7 +158,8 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
   const spend = team ? teamSpend(team.state, ev) : undefined;
   const ownerOf = (id: PartId): RoleId => team?.state.owners[id] ?? partRole(id);
   const go = () => {
-    if (team && plan.day) team.send('flight-director', { kind: 'launch', day: plan.day });
+    // a team that comes back from its flight flies on: the launch is already on the log
+    if (team && plan.day && !team.state.launched) team.send('flight-director', { kind: 'launch', day: plan.day });
     onLaunch(design);
   };
   const lit = (id: PartId) => !!hl?.parts.includes(id);

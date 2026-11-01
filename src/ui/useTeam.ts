@@ -17,12 +17,19 @@ export interface TeamPlay {
   session?: TeamSession;
   /** A new session: the setup entry is the log's first. */
   start: (team: Team, base: Design, shelf: PartId[], opts: StartOptions) => void;
-  /** Act as a role: on a shared screen the role's holder (or the first seat, for an open role) sends it. */
-  send: (role: RoleId, act: TeamAct) => void;
+  /**
+   * Act as a role: on a shared screen the role's holder (or the first seat, for an open role) sends it. In flight,
+   * `t` is the mission time on screen: the team's flight is flown to it before the entry applies.
+   */
+  send: (role: RoleId, act: TeamAct, t?: number) => void;
+  /** The seed and options the team's flight starts with (Fly & Survive flies the same mission). */
+  opts?: StartOptions;
   /** End the session (leaving Team mode). */
   stop: () => void;
   /** The log so far, in order (empty before a start). */
   log: readonly TeamAction[];
+  /** The session as of the last entry sent (read at once, before the screen re-renders). */
+  current: () => TeamSession | undefined;
 }
 
 export function useTeam(): TeamPlay {
@@ -30,6 +37,7 @@ export function useTeam(): TeamPlay {
   const live = useRef<TeamSession | undefined>(undefined);
   const unsubscribe = useRef<(() => void) | undefined>(undefined);
   const [session, setSession] = useState<TeamSession>();
+  const [opts, setOpts] = useState<StartOptions>();
 
   const stop = useCallback(() => {
     unsubscribe.current?.();
@@ -37,6 +45,7 @@ export function useTeam(): TeamPlay {
     transport.current = undefined;
     live.current = undefined;
     setSession(undefined);
+    setOpts(undefined);
   }, []);
 
   const start = useCallback(
@@ -49,18 +58,20 @@ export function useTeam(): TeamPlay {
         setSession(live.current);
       });
       transport.current = t;
+      setOpts(opts);
       t.send({ seat: actorFor(team, 'flight-director'), role: 'flight-director', act: { kind: 'setup', team } });
     },
     [stop],
   );
 
-  const send = useCallback((role: RoleId, act: TeamAct) => {
+  const send = useCallback((role: RoleId, act: TeamAct, t?: number) => {
     const team = live.current?.team.team;
     if (!transport.current || !team) return;
-    transport.current.send({ seat: actorFor(team, role), role, act });
+    transport.current.send({ seat: actorFor(team, role), role, act, ...(t !== undefined ? { t } : {}) });
   }, []);
 
   // the log is read on each render: every entry re-renders through setSession
   const log = transport.current?.log() ?? [];
-  return { ...(session ? { session } : {}), start, send, stop, log };
+  const current = useCallback(() => live.current, []);
+  return { ...(session ? { session } : {}), start, send, stop, log, current, ...(opts ? { opts } : {}) };
 }

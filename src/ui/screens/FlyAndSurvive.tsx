@@ -2,6 +2,11 @@
 // own; danger cards stop time; you pick; the order flies to the robot at light speed and you wait to hear back.
 // One screen for both modes, driven by the Mission operations engine. Every number comes from consoleView
 // (ops/console.ts) and the Fly view model (ops/fly.ts); this screen only lays them out.
+// Team mode (design: Signal Delay - Team Play.dc.html, T4; spec UI rule 51): with `team`, a danger card goes through
+// the team's vote (the related role recommends, the others vote with their tokens, the Flight Director makes the final
+// call; engine team/fly.ts cardVote) and the settled choice is sent here; every console order also goes to the team's
+// log at the mission time it is sent, so the screen's flight is the mission the log replays. The quick messages
+// replace the COMING UP ribbon, the team's lines print in TRANSMISSIONS, and each console key wears its role's colour.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { DESTINATIONS, HAZARDS, PARTS } from '../../engine/data';
 import { flightMap, ghostFor, pathAhead } from '../../engine/flightMap';
@@ -65,6 +70,10 @@ import {
   SCIENCE,
   resultLines,
   TILE,
+  OBJECTIVE_WORDS,
+  ROLE_WORDS,
+  TEAM_FLY_WORDS,
+  TEAM_WORDS,
   type Briefing,
   type TileKey,
 } from '../sdWords';
@@ -72,6 +81,23 @@ import { OPS_SPEEDS, useOpsSession, type OpsSpeed } from '../useOpsSession';
 import * as f from '../format';
 import { voiceContext } from '../voiceContext';
 import type { RealStorm } from '../../engine/spaceWeather';
+import type { ObjectiveId } from '../../engine/objectives';
+import { cardVote, opRole, teamFlightLines } from '../../engine/team/fly';
+import type { TeamAct, TeamAction } from '../../engine/team/log';
+import type { TeamState } from '../../engine/team/reduce';
+import { TEAM_RULES, type RoleId } from '../../engine/team/roles';
+import { QuickBar } from '../components/team/TeamPanels';
+import { FinalCall, letterOf, VoteStrip } from '../components/team/TeamVote';
+
+/** Team mode: the team's state and log, and how to act as a role at a mission time (useTeam). */
+export interface FlyTeam {
+  state: TeamState;
+  log: readonly TeamAction[];
+  send: (role: RoleId, act: TeamAct, t?: number) => void;
+  objective?: ObjectiveId;
+  /** The team's flight (useTeam's session): the screen starts from it, so the two are one mission. */
+  ops?: OpsState;
+}
 
 interface Props {
   design: Design;
@@ -101,6 +127,8 @@ interface Props {
   robotName?: string;
   /** The build steps the level teaches: the Moon globe shows the trim-burn tag where fuel is taught (spec: UI rule 46). */
   teaches?: string[];
+  /** Team mode: danger cards go through the team's vote, and every order through its log. */
+  team?: FlyTeam;
 }
 
 type Panel = 'power' | 'call' | 'queue' | 'eqs' | 'downlink';
@@ -117,10 +145,12 @@ function chipViews(chips: FlyChip[]): ChipView[] {
   return chips.map((k) => ({ icon: CHIP_ICON[k.gauge], text: k.gauge === 'coins' ? `${f.signedInt(k.delta)} COINS` : f.signedInt(k.delta), tone: 'cost' as const }));
 }
 
-export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName, onHome, onDone, onBack, coach, onCoachSeen, brief, robotName, launchMoment, onLaunchSeen, onPostcards, teaches }: Props) {
+export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName, onHome, onDone, onBack, coach, onCoachSeen, brief, robotName, launchMoment, onLaunchSeen, onPostcards, teaches, team }: Props) {
   const name = robotNameOr(robotName);
   const engineer = mode === 'engineer';
-  const ops = useOpsSession(design, seed, storms);
+  const ops = useOpsSession(design, seed, storms, team ? { persist: false, onOp: (op, t) => team.send(opRole(op), { kind: 'ops', op }, t), ...(team.ops ? { initial: team.ops } : {}) } : {});
+  /** Team mode: the role whose voice the quick messages carry. */
+  const [speaker, setSpeaker] = useState<RoleId>('flight-director');
   const { state, view } = ops;
   const phone = useIsPhone();
   const still = useReducedMotion();
@@ -336,6 +366,23 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
   };
 
   const a = view?.alert;
+  // ---- Team mode: where the card's vote stands; the vote's steps are team log entries at the mission time ----
+  const tv = team?.state.team && a && card ? cardVote(team.state, a.decisionId, a.type) : undefined;
+  const optionIds = card?.options.map((o) => o.id) ?? [];
+  const teamSend = (role: RoleId, act: TeamAct) => team?.send(role, act, state?.t);
+  const voteFor = (optionId: string) => {
+    if (!tv || !a) return;
+    if (tv.stage === 'recommend') teamSend(tv.recommender.role, { kind: 'recommend', decisionId: a.decisionId, optionId });
+    else if (tv.stage !== 'settled' && tv.director) teamSend('flight-director', { kind: 'call', decisionId: a.decisionId, optionId });
+  };
+  // The vote settled (the call, the majority, or a team of one's recommendation): send that choice to the robot.
+  const settled = tv?.result ? `${tv.decisionId}:${tv.result.optionId}` : undefined;
+  useEffect(() => {
+    if (tv?.result) respond(tv.result.optionId);
+  }, [settled]); // eslint-disable-line react-hooks/exhaustive-deps
+  const seatSign = (seat?: string) => team?.state.team?.seats.find((x) => x.id === seat)?.callSign ?? '';
+  const voterName = (roles: RoleId[]) => TEAM_WORDS.join(roles.map((r) => ROLE_WORDS[r].name));
+
   const hazardCard: CardView | undefined =
     card && a
       ? {
@@ -372,9 +419,40 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
                   ? { blocker: BLOCKER[o.blockedBy[0]].toUpperCase() }
                   : {}),
               ...(o.isFallback ? { tag: a.fallback.by === 'standing-order' ? FLY_WORDS.standingOrder : FLY_WORDS.robotDefault } : {}),
+              ...(tv && !tv.solo
+                ? {
+                    team: {
+                      letter: letterOf(optionIds, o.id),
+                      votes: phone ? TEAM_FLY_WORDS.votesShort : TEAM_FLY_WORDS.votes,
+                      count: TEAM_FLY_WORDS.votesOf(f.num(tv.tally[o.id] ?? 0), f.num(tv.voters.length)),
+                      tokens: tv.voters.map((v) => ({
+                        key: v.seat,
+                        text: TEAM_WORDS.join(v.roles.map((r) => ROLE_WORDS[r].ab)),
+                        role: v.roles[0]!,
+                        on: v.voice === o.id,
+                        label: v.voice ? TEAM_FLY_WORDS.tokenTaken(voterName(v.roles), letterOf(optionIds, v.voice)) : TEAM_FLY_WORDS.token(voterName(v.roles), letterOf(optionIds, o.id)),
+                        ...(tv.stage === 'vote' && v.voice === undefined && !blocked ? { onTap: () => teamSend(v.roles[0]!, { kind: 'vote', decisionId: a.decisionId, optionId: o.id }) } : {}),
+                      })),
+                    },
+                  }
+                : {}),
             };
           }),
           footer: { label: a.blockedByConjunction ? FLY_WORDS.letRobotRuns : FLY_WORDS.letRobot, onClick: ops.deferAlert },
+          ...(tv
+            ? {
+                band: {
+                  role: tv.recommender.role,
+                  icon: ROLE_WORDS[tv.recommender.role].icon,
+                  ...(tv.recommend
+                    ? {
+                        kicker: TEAM_FLY_WORDS.recommendedBy(ROLE_WORDS[tv.recommender.role].name, seatSign(tv.voters.find((v) => v.recommender)?.seat ?? tv.director)),
+                        label: TEAM_FLY_WORDS.pick(letterOf(optionIds, tv.recommend), optionShort(a.type, tv.recommend, card.options.find((o) => o.id === tv.recommend)?.label ?? tv.recommend)),
+                      }
+                    : { kicker: tv.solo ? TEAM_FLY_WORDS.soloCall : TEAM_FLY_WORDS.recommendNow(ROLE_WORDS[tv.recommender.role].name) }),
+                },
+              }
+            : {}),
         }
       : undefined;
 
@@ -416,7 +494,7 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
   };
 
   const openCard = hazardCard ?? eclipseView;
-  const pickCard = (id: string) => (hazardCard ? respond(id) : chooseEclipse(id));
+  const pickCard = (id: string) => (hazardCard ? (tv ? voteFor(id) : respond(id)) : chooseEclipse(id));
 
   // OBSERVE: the order leaves now and lands one light time later. The globe stays on the target to watch it land.
   const observe = () => {
@@ -655,13 +733,16 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
     </div>
   );
 
+  /** Team mode: a console key wears the colour of the role that sends its order (team.json commandRoles). */
+  const keyRole = (k: 'power-plan' | 'dsn' | 'observe') => (team ? ` by-role tm-r-${TEAM_RULES.commandRoles.value[k]}` : '');
+  const keyTitle = (label: string, k: 'power-plan' | 'dsn' | 'observe') => (team ? { title: TEAM_FLY_WORDS.keyOwner(label, ROLE_WORDS[TEAM_RULES.commandRoles.value[k]].name) } : {});
   const actions = !openCard && !flying && !returning && !reply && !ops.result && !awaitingExt && !debrief && !sciShown && (
     <div className="fly-actions">
-      <button type="button" className="fly-action" aria-pressed={panel === 'power'} onClick={() => setPanel((p) => (p === 'power' ? undefined : 'power'))}>
+      <button type="button" className={`fly-action${keyRole('power-plan')}`} {...keyTitle(FLY_WORDS.powerPlan, 'power-plan')} aria-pressed={panel === 'power'} onClick={() => setPanel((p) => (p === 'power' ? undefined : 'power'))}>
         <SDIcon icon="power" size={16} />
         {FLY_WORDS.powerPlan}
       </button>
-      <button type="button" className="fly-action" aria-pressed={panel === 'call'} onClick={() => setPanel((p) => (p === 'call' ? undefined : 'call'))}>
+      <button type="button" className={`fly-action${keyRole('dsn')}`} {...keyTitle(FLY_WORDS.callHome, 'dsn')} aria-pressed={panel === 'call'} onClick={() => setPanel((p) => (p === 'call' ? undefined : 'call'))}>
         <SDIcon icon="dish" size={16} />
         {FLY_WORDS.callHome}
       </button>
@@ -675,7 +756,7 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
         </button>
       )}
       {panelOk && (
-        <button type="button" className="fly-action sci-key" onClick={openScience}>
+        <button type="button" className={`fly-action sci-key${keyRole('observe')}`} {...keyTitle(sci?.available ? SCIENCE.reopen : MOON_WORDS.reopen, 'observe')} onClick={openScience}>
           <SDIcon icon={sci?.available ? 'camera' : 'orbit'} size={16} />
           {sci?.available ? SCIENCE.reopen : MOON_WORDS.reopen}
         </button>
@@ -874,12 +955,16 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
       {replyBox}
       {waitBox}
       {!phone && resultBox}
-      {!phone && openCard && <DangerCard card={openCard} engineer={engineer} phone={false} onPick={pickCard} />}
+      {!phone && openCard && <DangerCard card={openCard} engineer={engineer} phone={false} onPick={pickCard} {...(tv ? { top: <VoteStrip view={tv} phone={false} /> } : {})} />}
       {actions}
       {drawers}
       {!phone && sciPanel}
     </main>
   );
+
+  // ---- Team mode: the quick messages (sent at the mission time) and the team's lines for TRANSMISSIONS ----
+  const quick = team && <QuickBar speaker={speaker} onSpeaker={setSpeaker} onSay={(q) => team.send(speaker, { kind: 'say', quick: q }, state.t)} />;
+  const teamLines = team ? teamFlightLines(team.state, team.log) : undefined;
 
   const progressBar = (
     <div className="fly-progress" role="progressbar" aria-label={FLY_WORDS.progress} aria-valuemin={0} aria-valuemax={1} aria-valuenow={progress.fraction}>
@@ -966,7 +1051,7 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
       <button type="button" className="sd-brand-name" onClick={onHome} aria-label={BRAND_WORDS.home}>
         {GAME_NAME}
       </button>
-      <span className="sd-brand-sub">{BRAND_WORDS.sub(missionName, dest.name)}</span>
+      <span className="sd-brand-sub">{team?.objective ? TEAM_FLY_WORDS.kicker(OBJECTIVE_WORDS.objectives[team.objective].title) : BRAND_WORDS.sub(missionName, dest.name)}</span>
     </div>
   );
 
@@ -985,7 +1070,7 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
           <ModeLever mode={mode} onMode={onMode} />
         </div>
         {resources}
-        <Transmissions feed={feed!} voice={voice} oneWay_s={view.clock.oneWay_s} phone {...(reply ? { hot: reply } : {})} />
+        <Transmissions feed={feed!} voice={voice} oneWay_s={view.clock.oneWay_s} phone {...(reply ? { hot: reply } : {})} {...(teamLines ? { team: teamLines } : {})} />
         {crt}
         <div className="fly-bottom">
           <div className="fly-clock-row">
@@ -996,12 +1081,34 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
             {speeds}
           </div>
           {progressBar}
-          <div className="fly-ribbon phone">
-            <span className="fly-ribbon-title">{FLY_WORDS.comingUp}</span>
-            {ribbon}
-          </div>
+          {team ? (
+            quick
+          ) : (
+            <div className="fly-ribbon phone">
+              <span className="fly-ribbon-title">{FLY_WORDS.comingUp}</span>
+              {ribbon}
+            </div>
+          )}
         </div>
-        {openCard && <DangerCard card={openCard} engineer={engineer} phone onPick={pickCard} />}
+        {openCard && (
+          <DangerCard
+            card={openCard}
+            engineer={engineer}
+            phone
+            onPick={pickCard}
+            {...(tv
+              ? {
+                  top: <VoteStrip view={tv} phone />,
+                  bottom: (
+                    <>
+                      <FinalCall view={tv} options={optionIds} phone />
+                      {quick}
+                    </>
+                  ),
+                }
+              : {})}
+          />
+        )}
         {resultBox}
         {sciPanel}
         {downlink}
@@ -1024,9 +1131,9 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
       </header>
       <div className="fly-mid">
         {crt}
-        <Transmissions feed={feed!} voice={voice} oneWay_s={view.clock.oneWay_s} phone={false} {...(reply ? { hot: reply } : {})} {...(downlinkFoot ? { footer: downlinkFoot } : {})} />
+        <Transmissions feed={feed!} voice={voice} oneWay_s={view.clock.oneWay_s} phone={false} {...(reply ? { hot: reply } : {})} {...(downlinkFoot ? { footer: downlinkFoot } : {})} {...(teamLines ? { team: teamLines } : {})} />
       </div>
-      <footer className="fly-bottom">
+      <footer className={`fly-bottom${team ? ' team' : ''}`}>
         <div className="fly-clock">
           <div className="fly-day sd-well" aria-label={FLY_WORDS.dayLabel(f.num(view.clock.day))}>
             <span className="fly-day-k">{FLY_WORDS.dayK}</span>
@@ -1036,13 +1143,20 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
           {speeds}
           {progressBar}
         </div>
-        <div className="fly-ribbon">
-          <div className="fly-ribbon-head">
-            <span>{FLY_WORDS.comingUpSub}</span>
-            <span className="dim">{FLY_WORDS.nextMonths(f.num(coming.months))}</span>
+        {team ? (
+          <>
+            {quick}
+            {tv && <FinalCall view={tv} options={optionIds} phone={false} />}
+          </>
+        ) : (
+          <div className="fly-ribbon">
+            <div className="fly-ribbon-head">
+              <span>{FLY_WORDS.comingUpSub}</span>
+              <span className="dim">{FLY_WORDS.nextMonths(f.num(coming.months))}</span>
+            </div>
+            {ribbon}
           </div>
-          {ribbon}
-        </div>
+        )}
       </footer>
       {downlink}
       {overlays}

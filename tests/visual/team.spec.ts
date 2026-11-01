@@ -1,17 +1,17 @@
-// Game shots of Team Mode (spec: Team mode; design: Signal Delay - Team Setup.dc.html, T1 and T2), to compare with
+// Game shots of Team Mode (spec: Team mode; designs: Signal Delay - Team Setup.dc.html T1–T2, Team Play.dc.html T3–T4), to compare with
 // docs/design/signal-delay/shots/team-*.png. Run: npm run shots -- team
 import { test, type Page } from '@playwright/test';
 import { routeDonki } from './helpers';
 
 const SEEN = ['coach', 'name', 'cold-open', 'brief:mars', 'launch:mars'];
 
-async function openTeam(page: Page) {
+async function openTeam(page: Page, url = '/') {
   await page.addInitScript((seen) => {
     localStorage.setItem('sd.seen', JSON.stringify(seen));
     localStorage.setItem('mdt.mode', 'cadet');
   }, SEEN);
   await routeDonki(page);
-  await page.goto('/');
+  await page.goto(url);
   await page.getByRole('button', { name: /^TEAM: / }).click();
   await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(500);
@@ -68,4 +68,39 @@ test('team pack', async ({ page }, info) => {
   await page.waitForTimeout(800);
   await shot(page, 'team-pack-full', info.project.name);
   if (info.project.name === 'mobile') await page.screenshot({ path: 'test-results/shots/team-pack-full-page-mobile.png', fullPage: true });
+});
+
+test('team fly', async ({ page }, info) => {
+  // seed 19: the first danger card is a solar storm, Comms & Ops' to recommend
+  await openTeam(page, '/?seed=19');
+  await page.getByRole('button', { name: 'NEXT · OBJECTIVE' }).click();
+  await page.getByRole('button', { name: /STUDY THE ATMOSPHERE/ }).click();
+  for (const r of ['SPACECRAFT ENGINEER', 'SCIENCE LEAD', 'COMMS & OPS']) await page.getByRole('button', { name: `${r}: AGREE` }).click();
+  await page.getByRole('button', { name: 'LOCK OBJECTIVE' }).click();
+  await page.getByRole('button', { name: 'NEXT · PACK' }).click();
+  await page.waitForTimeout(1500);
+  await page.getByRole('switch', { name: 'Arm' }).click();
+  await page.getByRole('button', { name: 'LAUNCH', exact: true }).click();
+  await page.waitForTimeout(800);
+  const card = page.getByRole('dialog', { name: /DANGER CARD/ });
+  for (let i = 0; i < 30 && !(await card.isVisible()); i++) await page.getByRole('button', { name: 'Next event' }).click();
+  await page.waitForTimeout(400);
+  await shot(page, 'team-fly-recommend', info.project.name);
+  // the design's state: recommended A, one voice each way, the Flight Director's final call to make
+  await card.locator('.dc-choice').first().click();
+  await card.getByRole('button', { name: 'SPACECRAFT ENGINEER: vote A' }).first().click();
+  await card.getByRole('button', { name: 'SCIENCE LEAD: vote B' }).first().click();
+  // on a phone the card covers the screen and carries its own quick messages
+  const bar = info.project.name === 'mobile' ? card : page;
+  for (const [as, say] of [['SCIENCE LEAD', 'SCIENCE FIRST'], ['FLIGHT DIRECTOR', 'GOOD CALL']]) {
+    await bar.getByRole('button', { name: `Speak as ${as}` }).click();
+    await bar.getByRole('button', { name: say, exact: true }).click();
+  }
+  await page.waitForTimeout(400);
+  await shot(page, 'team-fly', info.project.name);
+  if (info.project.name === 'mobile') await page.screenshot({ path: 'test-results/shots/team-fly-full-page-mobile.png', fullPage: true });
+  // the final call: the card closes and the order flies
+  await card.locator('.dc-choice').first().click();
+  await page.waitForTimeout(1200);
+  await shot(page, 'team-fly-order', info.project.name);
 });

@@ -17,6 +17,7 @@ import {
   type CommandReceipt,
   type OpsAction,
   type OpsConsoleView,
+  type OpsOp,
   type OpsState,
   type PowerPlan,
 } from '../engine/ops/index';
@@ -151,8 +152,25 @@ export interface OpsSession {
   restart: () => void;
 }
 
+/**
+ * Team mode (spec: Team mode): every order also goes to the team's one log (`onOp`, at the mission time it is sent),
+ * so the flight on screen and the team's flight are one mission; a danger card is answered by the team's vote, which
+ * then calls `respond`. A team flight is not saved (`persist: false`): its log is the record.
+ */
+export interface OpsSessionOptions {
+  persist?: boolean;
+  onOp?: (op: OpsOp, t: number) => void;
+  /** The flight to start from (the team's flight: a team that comes back to the screen flies on where its log left it). */
+  initial?: OpsState;
+}
+
 /** `storms`: a live Daily's real DONKI storms (spaceWeather.ts); they are part of the saved session's key. */
-export function useOpsSession(design: Design, seed: number, storms?: RealStorm[]): OpsSession {
+export function useOpsSession(design: Design, seed: number, storms?: RealStorm[], options: OpsSessionOptions = {}): OpsSession {
+  const persist = options.persist !== false;
+  const onOp = useRef(options.onOp);
+  onOp.current = options.onOp;
+  const initial = useRef(options.initial);
+  initial.current = options.initial;
   const key = useMemo(() => JSON.stringify(design) + (storms ? `|donki|${storms.map((x) => x.id).join(',')}` : ''), [design, storms]);
   const [state, setState] = useState<OpsState>();
   const [error, setError] = useState<string>();
@@ -181,7 +199,7 @@ export function useOpsSession(design: Design, seed: number, storms?: RealStorm[]
     setDeferred([]);
     const id = setTimeout(() => {
       try {
-        setState(load(design, seed, key, storms));
+        setState(initial.current ?? (persist ? load(design, seed, key, storms) : startOperations(design, { seed, ...(storms ? { storms } : {}) })));
       } catch (e) {
         setError(e instanceof Error ? e.message : String(e));
       }
@@ -274,7 +292,7 @@ export function useOpsSession(design: Design, seed: number, storms?: RealStorm[]
 
   // Save the action log and the clock whenever an action is taken or the clock stops.
   useEffect(() => {
-    if (state && (speed === 0 || state.actions.length)) save({ key, seed, t: state.t, actions: state.actions });
+    if (persist && state && (speed === 0 || state.actions.length)) save({ key, seed, t: state.t, actions: state.actions });
   }, [state?.actions.length, speed, state?.status, key, seed]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const refuse = (r: CommandReceipt) => setNotice({ kind: 'refused', reason: r.reason ?? 'not-flying', ...(r.retryAfterDay !== undefined ? { retryAfterDay: r.retryAfterDay } : {}) });
@@ -293,6 +311,7 @@ export function useOpsSession(design: Design, seed: number, storms?: RealStorm[]
   const sendPlan = (plan: PowerPlan) => {
     const s = stateRef.current;
     if (!s) return;
+    onOp.current?.({ kind: 'command', command: { kind: 'power-plan', plan } }, s.t);
     const r = sendCommand(s, { kind: 'power-plan', plan });
     setState(r.state);
     if (r.receipt.accepted) setNotice({ kind: 'sent' });
@@ -302,6 +321,7 @@ export function useOpsSession(design: Design, seed: number, storms?: RealStorm[]
   const observe = (targetId: string): boolean => {
     const s = stateRef.current;
     if (!s) return false;
+    onOp.current?.({ kind: 'command', command: { kind: 'observe', targetId } }, s.t);
     const r = sendCommand(s, { kind: 'observe', targetId });
     setState(r.state);
     if (!r.receipt.accepted) {
@@ -316,6 +336,7 @@ export function useOpsSession(design: Design, seed: number, storms?: RealStorm[]
   const book = (day: number, dish: 34 | 70, hours: number) => {
     const s = stateRef.current;
     if (!s) return;
+    onOp.current?.({ kind: 'dsn', fromDay: day, toDay: day, booking: { dish, hours } }, s.t);
     const r = bookDsn(s, day, day, { dish, hours });
     setState(r.state);
     if (r.receipt.accepted) setNotice({ kind: 'booked', day, dish });
@@ -325,6 +346,7 @@ export function useOpsSession(design: Design, seed: number, storms?: RealStorm[]
   const extend = (optionId: string) => {
     const s = stateRef.current;
     if (!s) return;
+    onOp.current?.({ kind: 'decide', decisionId: 'extension', optionId }, s.t);
     const r = decide(s, 'extension', optionId);
     setState(r.state);
     if (!r.receipt.accepted) refuse(r.receipt);
@@ -369,7 +391,7 @@ export function useOpsSession(design: Design, seed: number, storms?: RealStorm[]
     dismissResult: () => setResult(undefined),
     dismissNotice: () => setNotice(undefined),
     restart: () => {
-      save(undefined);
+      if (persist) save(undefined);
       setSpeedRaw(0);
       setTransit(undefined);
       setTrips([]);

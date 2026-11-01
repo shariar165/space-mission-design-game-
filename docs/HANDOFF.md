@@ -62,10 +62,12 @@ The objectives use the instrument-match rule: the objective's targets carry 60% 
    - Engine: `team/setup.ts` (`defaultTeam`, `setPlayers`, `handRole`, `nextCallSign`, `crewView`, `objectiveCards`, `objectiveVote`), the `objective-voice` / `objective-lock` acts in `reduce.ts`, `team.json` `defaultRoles`, `objectives.json` `strain`. Tests `tests/teamSetup.test.ts`, `tests/ui/teamSetup.test.tsx`; shots `tests/visual/team.spec.ts` (`npm run shots -- team`) and the Bangla pair in `bangla.spec.ts`.
    - NEXT · PACK opens the ordinary Mars Pack with the locked objective in the design; the team parts of Pack come next.
 3. **Done: Team Pack** (mockup T3; spec UI rule 50; PR #54, stacked on #53): `Pack` takes `team` (App `teamRun`); panels in `components/team/TeamPanels.tsx` (`SharedLimits`, `ConflictBanner`, `TeamLine`, `QuickBar`, `CrewChips`); engine `spendShares`; words `TEAM_PACK_WORDS`, `QUICK_WORDS`. Launch Day uses the team's packing.
-4. **Next: Team Fly** (mockup T4). The flight still runs its own `useOpsSession`, and the team session starts a second flight at the FD's launch. Join the two: drive the danger card through the team vote (`recommend` / `vote` / `call` → `decide`).
-   - Danger card: a vote strip (recommend, votes, the Flight Director's CALL); the clock held with `setHold`.
-   - A quick-message panel, and keys marked with the role that owns them.
-5. **Report and docs** (mockup T5): a `teamEl` section in `MissionReport.tsx`; README (Team Mode, objectives); this file and CLAUDE.md.
+4. **Done: Team Fly** (mockup T4; spec UI rule 51, "One flight" in Team mode, decision 90; PR #55, stacked on #54):
+   - **One flight.** `FlyAndSurvive` takes `team`. `useOpsSession` gets options: `persist: false`, `onOp` (every console order also goes on the team log as its role, `opRole`, at the mission time) and `initial` (the screen starts from the team's flight, so leaving and coming back flies on). `tests/teamFly.test.ts` checks that a clock stepped in slices, with a vote and an order through the log, ends where `replayTeam` ends.
+   - **The card's vote.** Engine `team/fly.ts` `cardVote` (stage, recommender, voters, tally, leans, waiting). `components/team/TeamVote.tsx` (`VoteStrip`, `FinalCall`); `DangerCard` takes a band, per-choice tokens, and `top` / `bottom` slots. A tap on a card is the recommendation, then the Flight Director's call; tokens are the votes. The settled choice goes to `respond`.
+   - The quick messages replace COMING UP; `Transmissions` takes `team` lines (`teamFlightLines`, `withTeamLines`). Words `TEAM_FLY_WORDS` with Bangla. Tests `tests/ui/teamFly.test.tsx`; shots `team.spec.ts` "team fly" and Bangla.
+   - App flies `teamDesign` with the team's seed (`useTeam` `opts`, `current()`); FLY AGAIN in a team starts a new log at the objective.
+5. **Next: Report and docs** (mockup T5): a `teamEl` section in `MissionReport.tsx` from `teamReport` / `teamScore` (pass the team state and log from App); README (Team Mode, objectives); this file and CLAUDE.md.
 6. **Still open:** the solo objective picker (the Mars Pack briefing and the Engineer Build Bay; today a solo player picks through TEAM → SOLO); the online room (T6) waits for an online Transport.
 
 ## Open items

@@ -1824,3 +1824,35 @@ export const TEAM_PACK_WORDS = tr('TEAM_PACK_WORDS', {
   say: (role: string, words: string) => `${role} says: ${words}`,
   partRole: (part: string, role: string) => `${part} (${role})`,
 });
+
+/** Team Fly (design T4): the danger card's vote strip, the role tokens, the final call and the team's teletype lines. */
+export const TEAM_FLY_WORDS = tr('TEAM_FLY_WORDS', {
+  kicker: (objective: string) => `FLY · ${objective}`,
+  whose: 'WHOSE DECISION',
+  stages: { recommend: 'RECOMMEND', vote: 'VOTE', call: 'FINAL CALL' } as Record<'recommend' | 'vote' | 'call', string>,
+  stage: (n: string, word: string) => `${n} · ${word}`,
+  allRoles: 'ALL ROLES',
+  allShort: 'ALL',
+  clockHeld: 'CLOCK PAUSED',
+  /** The option letters on the cards, in order. */
+  letters: ['A', 'B', 'C'],
+  pick: (letter: string, label: string) => `${letter} · ${label}`,
+  recommendedBy: (role: string, sign: string) => `RECOMMENDED BY ${role} · ${sign}`,
+  recommendNow: (role: string) => `${role}: TAP A CARD TO RECOMMEND`,
+  votes: 'VOTES · TAP YOUR TOKEN',
+  votesShort: 'VOTES',
+  votesOf: (n: string, total: string) => `${n} OF ${total}`,
+  token: (who: string, letter: string) => `${who}: vote ${letter}`,
+  tokenTaken: (who: string, letter: string) => `${who} voted ${letter}`,
+  finalCall: 'FINAL CALL',
+  leans: (letter: string) => `TEAM LEANS ${letter}`,
+  noLean: 'NO VOTES YET',
+  tapCard: 'TAP A CARD TO CHOOSE',
+  waiting: (n: string, one: boolean) => `WAITING FOR ${n} ${one ? 'VOTE' : 'VOTES'}`,
+  soloCall: 'YOUR CALL · TAP A CARD',
+  called: (letter: string) => `CALLED · ${letter}`,
+  lockedForVote: 'LOCKED FOR VOTE',
+  line: { recommend: (opt: string) => `RECOMMEND ${opt}`, vote: (opt: string) => `VOTE ${opt}`, call: (opt: string) => `FINAL CALL · ${opt}` },
+  keyOwner: (key: string, role: string) => `${key} (${role})`,
+  team: 'TEAM',
+});
