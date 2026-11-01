@@ -1783,3 +1783,44 @@ export const OBJECTIVE_WORDS = tr('OBJECTIVE_WORDS', {
     moons: { title: 'VISIT THE MOONS', line: 'Swing close to Phobos and Deimos and find out what they are made of.' },
   } as Record<ObjectiveId, { title: string; line: string }>,
 });
+
+/** The preset quick messages (team.json `quick`): the only way the team talks, since players may be children. */
+export const QUICK_WORDS: Record<string, string> = tr('QUICK_WORDS', {
+  agree: 'AGREE',
+  disagree: 'DISAGREE',
+  'too-heavy': 'TOO HEAVY',
+  'need-power': 'NEED MORE POWER',
+  'save-fuel': 'SAVE FUEL',
+  'science-first': 'SCIENCE FIRST',
+  'wait-signal': 'WAIT FOR THE SIGNAL',
+  'good-call': 'GOOD CALL',
+  help: 'HELP?',
+});
+
+/** Team Pack (design T3): the shelf by role, the shared limits, the conflict banner, the team line. */
+export const TEAM_PACK_WORDS = tr('TEAM_PACK_WORDS', {
+  kicker: (objective: string) => `TEAM · OBJECTIVE: ${objective}`,
+  kickerNone: 'TEAM · TO MARS',
+  shelf: 'PARTS SHELF',
+  byRole: 'BY ROLE',
+  roleSpend: (cost: string, mass: string) => `${cost} · ${mass}`,
+  limits: 'SHARED LIMITS',
+  mass: 'MASS · SHARED',
+  budget: 'BUDGET · SHARED',
+  of: (used: string, limit: string) => `${used} / ${limit}`,
+  colRole: 'ROLE',
+  colMass: 'MASS',
+  colCost: 'COST',
+  colShare: 'SHARE',
+  over: { mass: 'TOO HEAVY · NEGOTIATE', cost: 'OVER BUDGET · NEGOTIATE', room: 'NO ROOM · NEGOTIATE' } as Record<'mass' | 'cost' | 'room', string>,
+  overBy: (amount: string) => `+${amount}`,
+  overLine: 'Talk it over: one cut fixes it. The Flight Director breaks a tie.',
+  roomLine: (part: string) => `${part} does not fit. Someone has to make room.`,
+  line: 'TEAM LINE · PRESET ONLY',
+  msgs: (n: string) => `${n} MSGS`,
+  empty: 'NO MESSAGES YET. TAP ONE BELOW.',
+  speakingAs: 'SPEAKING AS',
+  speakAs: (role: string) => `Speak as ${role}`,
+  say: (role: string, words: string) => `${role} says: ${words}`,
+  partRole: (part: string, role: string) => `${part} (${role})`,
+});

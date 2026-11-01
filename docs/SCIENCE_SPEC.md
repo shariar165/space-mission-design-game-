@@ -985,6 +985,14 @@ The UI (`src/ui/`, React + Vite) follows the Claude Design mockups for Build Bay
     - The crew is saved in the browser (`sd.team`). Seats are told apart by a badge colour and their call sign; role colours follow the mockup.
     - Every count and rule on these screens comes from the engine (`crewView`, `objectiveCards`, `objectiveVote`).
 
+50. **Team Pack** (v1.3; design `Signal Delay - Team Play.dc.html`, screen T3). The team's Mars Pack is the same Pack with a team layer:
+    - Every packing is a team log entry made as the part's role. A packing refused for lack of room still goes on the log, since it raises the space conflict.
+    - The shelf is grouped by role, with each role's cost and mass, and the nose parts wear their role's colour.
+    - SHARED LIMITS replaces the Danger Deck: one bar per limit, split by role, and a table of each role's mass, cost and share of the cost (`teamSpend`, `spendShares`).
+    - Over the mass or the budget (or out of room), a red banner over the nose names the limit, by how much, and the roles that have to talk.
+    - The TEAM LINE shows the preset messages so far; SPEAKING AS picks the role a quick message speaks for. There is no text input.
+    - LAUNCH sends the Flight Director's launch entry with the launch day, then flies.
+
 ## Decision log
 
 | # | Date | Decision |

@@ -61,12 +61,12 @@ The objectives use the instrument-match rule: the objective's targets carry 60% 
    - `useTeam.ts`: `LocalTransport` + `stepSession`; on a shared screen a role's keys act as its holder (`actorFor`). The crew is saved as `sd.team`.
    - Engine: `team/setup.ts` (`defaultTeam`, `setPlayers`, `handRole`, `nextCallSign`, `crewView`, `objectiveCards`, `objectiveVote`), the `objective-voice` / `objective-lock` acts in `reduce.ts`, `team.json` `defaultRoles`, `objectives.json` `strain`. Tests `tests/teamSetup.test.ts`, `tests/ui/teamSetup.test.tsx`; shots `tests/visual/team.spec.ts` (`npm run shots -- team`) and the Bangla pair in `bangla.spec.ts`.
    - NEXT · PACK opens the ordinary Mars Pack with the locked objective in the design; the team parts of Pack come next.
-3. **Next: Pack and Fly & Survive** (mockup T3, T4):
-   - Pack: a role chip on each part, a `teamSpend` strip and a conflict banner; pack/unpack through `useTeam.send`.
+3. **Done: Team Pack** (mockup T3; spec UI rule 50; PR #54, stacked on #53): `Pack` takes `team` (App `teamRun`); panels in `components/team/TeamPanels.tsx` (`SharedLimits`, `ConflictBanner`, `TeamLine`, `QuickBar`, `CrewChips`); engine `spendShares`; words `TEAM_PACK_WORDS`, `QUICK_WORDS`. Launch Day uses the team's packing.
+4. **Next: Team Fly** (mockup T4). The flight still runs its own `useOpsSession`, and the team session starts a second flight at the FD's launch. Join the two: drive the danger card through the team vote (`recommend` / `vote` / `call` → `decide`).
    - Danger card: a vote strip (recommend, votes, the Flight Director's CALL); the clock held with `setHold`.
    - A quick-message panel, and keys marked with the role that owns them.
-4. **Report and docs** (mockup T5): a `teamEl` section in `MissionReport.tsx`; README (Team Mode, objectives); this file and CLAUDE.md.
-5. **Still open:** the solo objective picker (the Mars Pack briefing and the Engineer Build Bay; today a solo player picks through TEAM → SOLO); the online room (T6) waits for an online Transport.
+5. **Report and docs** (mockup T5): a `teamEl` section in `MissionReport.tsx`; README (Team Mode, objectives); this file and CLAUDE.md.
+6. **Still open:** the solo objective picker (the Mars Pack briefing and the Engineer Build Bay; today a solo player picks through TEAM → SOLO); the online room (T6) waits for an online Transport.
 
 ## Open items
 

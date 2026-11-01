@@ -44,3 +44,28 @@ test('team objective', async ({ page }, info) => {
   await page.waitForTimeout(300);
   await shot(page, 'team-objective-locked', info.project.name);
 });
+
+test('team pack', async ({ page }, info) => {
+  await openTeam(page);
+  await page.getByRole('button', { name: 'NEXT · OBJECTIVE' }).click();
+  await page.getByRole('button', { name: /STUDY THE ATMOSPHERE/ }).click();
+  for (const r of ['SPACECRAFT ENGINEER', 'SCIENCE LEAD', 'COMMS & OPS']) await page.getByRole('button', { name: `${r}: AGREE` }).click();
+  await page.getByRole('button', { name: 'LOCK OBJECTIVE' }).click();
+  await page.getByRole('button', { name: 'NEXT · PACK' }).click();
+  await page.waitForTimeout(1500); // the launch calendar works out its days
+  // a few messages on the team line, as in the design
+  for (const [as, say] of [['SPACECRAFT ENGINEER', 'NEED MORE POWER'], ['SCIENCE LEAD', 'SCIENCE FIRST'], ['COMMS & OPS', 'TOO HEAVY'], ['FLIGHT DIRECTOR', 'GOOD CALL']]) {
+    await page.getByRole('button', { name: `Speak as ${as}` }).click();
+    await page.getByRole('button', { name: say, exact: true }).click();
+  }
+  await shot(page, 'team-pack', info.project.name);
+  // pack every part that still fits, to go over a limit
+  for (let i = 0; i < 12; i++) {
+    const fits = page.locator('.pk-tray-card:not(.nofit)');
+    if ((await fits.count()) === 0) break;
+    await fits.first().click();
+  }
+  await page.waitForTimeout(800);
+  await shot(page, 'team-pack-full', info.project.name);
+  if (info.project.name === 'mobile') await page.screenshot({ path: 'test-results/shots/team-pack-full-page-mobile.png', fullPage: true });
+});
