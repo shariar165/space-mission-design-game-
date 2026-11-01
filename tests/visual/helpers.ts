@@ -113,3 +113,64 @@ export async function toMarsOrbit(page: Page) {
   }
   throw new Error('never reached Mars orbit');
 }
+
+/**
+ * Text inside `selector` that is cut off: every text run's box must sit inside each ancestor that clips it (overflow
+ * hidden / clip: both axes; a scroll box: across only, since it scrolls down) and inside the window across. Returns
+ * one line per clipped run ("SHIELD UP: left 11px past main.sd-crt.fly-crt"); empty when everything fits. Screen-reader-only
+ * text (a box of a pixel or two) is skipped.
+ */
+export async function clippedText(page: Page, selector: string): Promise<string[]> {
+  return page.evaluate((sel) => {
+    const root = document.querySelector(sel);
+    if (!root) return [`nothing matches ${sel}`];
+    const name = (a: Element) => a.tagName.toLowerCase() + (a.classList.length ? `.${[...a.classList].join('.')}` : '');
+    const out: string[] = [];
+    const walk = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+      const text = (n.textContent ?? '').trim();
+      const el = n.parentElement;
+      if (!text || !el || el.getClientRects().length === 0) continue;
+      const range = document.createRange();
+      range.selectNodeContents(n);
+      const r = range.getBoundingClientRect();
+      if (r.width === 0 || r.height === 0) continue;
+      let tiny = false;
+      for (let a: Element | null = el; a; a = a.parentElement) {
+        const b = a.getBoundingClientRect();
+        if (b.width <= 2 || b.height <= 2 || getComputedStyle(a).visibility === 'hidden') tiny = true;
+      }
+      if (tiny) continue;
+      const miss = (box: { left: number; right: number; top: number; bottom: number }, both: boolean, by: string) => {
+        const d = [
+          ['left', box.left - r.left],
+          ['right', r.right - box.right],
+          ...(both ? [['top', box.top - r.top], ['bottom', r.bottom - box.bottom]] : []),
+        ] as [string, number][];
+        for (const [side, px] of d) if (px > 1) out.push(`${text.slice(0, 40)}: ${side} ${Math.round(px)}px past ${by}`);
+      };
+      miss({ left: 0, right: window.innerWidth, top: 0, bottom: window.innerHeight }, false, 'the window');
+      // only the ancestors that contain the box clip it: past an absolute box, the next positioned one; past a fixed
+      // box, none (the window)
+      // inside a scroll box, text below it is reached by scrolling (outer boxes then only clip across), but text above
+      // its scrolled-to top never is
+      let skip = false;
+      let scrolls = false;
+      for (let a: Element | null = el; a && a !== document.documentElement; a = a.parentElement) {
+        const cs = getComputedStyle(a);
+        if (skip && cs.position === 'static') continue;
+        skip = false;
+        const o = [cs.overflowX, cs.overflowY];
+        const b = a.getBoundingClientRect();
+        if (o.some((x) => x === 'auto' || x === 'scroll')) {
+          miss(b, false, name(a));
+          if (b.top - a.scrollTop - r.top > 1) out.push(`${text.slice(0, 40)}: above the top of ${name(a)}, out of scroll reach`);
+          scrolls = true;
+        } else if (o.some((x) => x === 'hidden' || x === 'clip')) miss(b, !scrolls, name(a));
+        if (cs.position === 'fixed') break;
+        if (cs.position === 'absolute') skip = true;
+      }
+    }
+    return [...new Set(out)];
+  }, selector);
+}
