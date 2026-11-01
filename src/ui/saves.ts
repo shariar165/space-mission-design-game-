@@ -2,6 +2,7 @@
 // Notebook's flight facts and the Daily results. Every read and write survives missing storage.
 import type { DailyGrid } from '../engine/daily';
 import { emptyFacts, type NotebookFacts } from '../engine/notebook';
+import { teamProblem, type Team } from '../engine/team/roles';
 import { cleanRobotName } from './sdWords';
 
 const NOTEBOOK_KEY = 'sd.notebook';
@@ -90,3 +91,18 @@ export const loadGlobeMode = (): '2d' | '3d' | undefined => {
   return v.mode === '2d' || v.mode === '3d' ? v.mode : undefined;
 };
 export const saveGlobeMode = (mode: '2d' | '3d') => write(GLOBE_KEY, { mode });
+
+/** Team mode: the crew last set up (seats, call signs, roles), so the next team starts from it. */
+const TEAM_KEY = 'sd.team';
+export const loadTeam = (): Team | undefined => {
+  const v = read<{ seats?: unknown }>(TEAM_KEY, {});
+  const team = { seats: Array.isArray(v.seats) ? (v.seats as Team['seats']) : [] };
+  try {
+    const p = teamProblem(team);
+    // a crew saved mid-handover (a player left without a role) is still a fine place to start
+    return p === undefined || p === 'no-role' ? team : undefined;
+  } catch {
+    return undefined;
+  }
+};
+export const saveTeam = (team: Team) => write(TEAM_KEY, { seats: team.seats });

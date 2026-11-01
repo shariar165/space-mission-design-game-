@@ -206,3 +206,16 @@ test('Bangla: the mission map, Rescue History and a cited text with its ⓘ', as
   await page.locator('.solved').scrollIntoViewIfNeeded();
   await shot(page, 'rescue-solved', p);
 });
+
+test('Bangla: Team Setup and the Mission Objective', async ({ page }, info) => {
+  const p = info.project.name;
+  await banglaPlayer(page, ['cold-open', 'name', 'coach', 'brief:mars', 'launch:mars']);
+  await page.getByRole('button', { name: /^দল: / }).click();
+  await page.waitForTimeout(400);
+  await shot(page, 'team-setup', p);
+  await page.getByRole('button', { name: 'এরপর · লক্ষ্য' }).click();
+  await page.getByRole('button', { name: /বায়ুমণ্ডল পরীক্ষা/ }).click();
+  await page.getByRole('button', { name: 'বিজ্ঞান-প্রধান: আপত্তি' }).click();
+  await page.waitForTimeout(600);
+  await shot(page, 'team-objective', p);
+});

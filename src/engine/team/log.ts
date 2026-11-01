@@ -12,6 +12,10 @@ export type TeamAct =
   /** The first entry: who plays and which roles each seat holds. */
   | { kind: 'setup'; team: Team }
   | { kind: 'objective'; objective: ObjectiveId }
+  /** The other roles on the Flight Director's pick: agree, object, or take the voice back ('none'). */
+  | { kind: 'objective-voice'; voice: 'agree' | 'object' | 'none' }
+  /** The Flight Director locks the objective (or overrules an objection) once every voice is in. */
+  | { kind: 'objective-lock' }
   | { kind: 'pack'; part: PartId }
   | { kind: 'unpack'; part: PartId }
   /** The Flight Director launches on this day: the design is fixed from here on. */

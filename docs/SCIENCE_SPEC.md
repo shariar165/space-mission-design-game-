@@ -605,6 +605,12 @@ One to four players share one craft (local co-op on one device first; online lat
 - In flight: the power plan → Engineer; OBSERVE → Science Lead; DSN bookings → Comms & Ops; standing orders and the extension → Flight Director.
 - A hazard is never answered directly: it goes through the danger-card vote.
 
+**The objective vote** (Mars; mockup screen T2). The Flight Director picks the objective; each of the three other roles then agrees or objects (a role may change or take back its voice). A role held by the Flight Director's own seat agrees by itself, and so does every role in a team of one. Once every voice is in, the Flight Director locks the objective: **agreed** if nobody objected, **overruled** otherwise. A new pick clears the voices; a locked objective cannot be changed. The team goes on to packing only with a locked objective. The vote is in the log (`objective-voice`, `objective-lock`); it does not count in the team score.
+
+**Each objective leans on one role** (`objectives.json` `strain`, a game rule): the atmosphere on the Science Lead (the limb is seen from deep dips, where drag heats the craft: a Science Lead danger card), the surface on Comms & Ops (the landmarks are the biggest pictures, so they need the most dish time), the moons on the Engineer (raising the orbit to Phobos and Deimos burns the most fuel). The objective card shows its targets with their share of the science (the rule's 60% split by weight), the parts whose instrument makes it count, and the role it leans on.
+
+**Setting up** (`team/setup.ts`; mockup screen T1). One to four players. The default crews (`team.json` `defaultRoles`): one player holds all four; two split Flight Director + Comms & Ops / Engineer + Science Lead; three give Science Lead + Comms & Ops to the third; four hold one each. A tap on a role's holder hands it to the next player round the table; a player left with no role is named, and the team cannot start until everyone holds one. A tap on a call sign steps to the next one on the list that no one else has. On one shared screen, a role's keys act as its holder (or the first seat, for an open role).
+
 **Danger cards.** The related role recommends: dangers seen from Earth (solar storms, CME shocks, debris) → Comms & Ops; dangers to the science (dust storms, drag heating) → Science Lead; the craft's own faults → Engineer. Every other seat may vote once. Then:
 1. **Flight Director held:** the Flight Director's call settles the card.
 2. **No Flight Director:** the card settles once every seat has a voice, by majority. A tie goes to the recommendation, or (if the recommendation is not among the leaders) to the craft's own default response.
@@ -648,7 +654,7 @@ With no objective (Moon levels, the Daily) the other two share the score in prop
 
 **Quick messages only.** Players may be children, so the team talks in preset messages (`team.json` `quick`, words in `sdWords.ts`); there is no free text anywhere.
 
-**One action log** (`team/log.ts`). Every entry is `{seq, seat, role, t?, act}`: the seat, the role it acts as, the mission time for entries in flight, and the action (setup, objective, pack, unpack, launch, ops, recommend, vote, call, say). Refused entries stay in the log and in the state with their reason, as refused commands do in Mission operations.
+**One action log** (`team/log.ts`). Every entry is `{seq, seat, role, t?, act}`: the seat, the role it acts as, the mission time for entries in flight, and the action (setup, objective, objective-voice, objective-lock, pack, unpack, launch, ops, recommend, vote, call, say). Refused entries stay in the log and in the state with their reason, as refused commands do in Mission operations.
 
 All entries travel through a **Transport** (`team/transport.ts`: `send`, `subscribe`, `log`). `LocalTransport` is one device passed around the table; an online transport will implement the same interface.
 
@@ -971,6 +977,14 @@ The UI (`src/ui/`, React + Vite) follows the Claude Design mockups for Build Bay
     - **Type.** Hind Siliguri carries the Bangla letters: the browser falls back to it glyph by glyph, so digits and Latin keep the game fonts. Bangla has no capitals and its letters join, so the wide letter-spacing of the uppercase labels is turned off in Bangla.
     - **Layout.** Bangla runs longer than English. Every Bangla screen is shot at 1440 × 900 and 390 × 844, and a page that scrolls sideways fails the shot.
 
+49. **Team Setup and the Mission Objective** (v1.3; design `Signal Delay - Team Setup.dc.html`, screens T1 and T2). Home's TEAM key opens Team Setup:
+    - SOLO or TEAM, the number of players, each seat's call sign (a tap steps to the next free one), and the four role cards with HELD BY (a tap hands the role on).
+    - A CRT line says who holds two roles, or who has none yet (NEXT waits).
+    - The online room is shown but off ("coming later").
+    - NEXT · OBJECTIVE starts the team's log with the setup entry. On the Mission Objective screen the Flight Director picks one of three cards (pictures of its targets, each target's share of the science, the parts that make it count, the role it leans on); the other roles AGREE or OBJECT; the lock key reads WAITING FOR VOTES, LOCK OBJECTIVE or OVERRULE · FINAL CALL; once locked, NEXT · PACK opens the Mars Pack flying that objective.
+    - The crew is saved in the browser (`sd.team`). Seats are told apart by a badge colour and their call sign; role colours follow the mockup.
+    - Every count and rule on these screens comes from the engine (`crewView`, `objectiveCards`, `objectiveVote`).
+
 ## Decision log
 
 | # | Date | Decision |
@@ -1063,3 +1077,4 @@ The UI (`src/ui/`, React + Vite) follows the Claude Design mockups for Build Bay
 | 86 | Oct 28, 2026 | **Bangla for the cited texts** (user request, rule 48, v1.2). Real history, "what we learn", postcard titles and captions, Rescue History and its clues, the Jupiter lesson and rank jobs are shown in Bangla. The Bangla is a UI table keyed by the exact English (`cited.bn.ts`), not a field in the data, so every data value stays English and Sourced; ⓘ shows the English original with its source and link, and "to verify" tags stay. Level titles stay English with a Bangla subtitle for what the level teaches. The Engineer Build Bay stays English. Dates on Rescue History, Mars-now, the Daily and the report comparison use Bangla month names. ⓘ now moves itself to stay on screen when a long text is taller than the room below its button. |
 | 87 | Oct 31, 2026 | **Mission objectives tie science to the instruments** (user choice). Re-weighting alone would not change the winning design: in a calm Cadet Mars flight every pack reaches the same five targets, and pictures do not depend on the instruments. So an objective's targets carry 60% of the science only with a matching instrument (after MAVEN, MRO's HiRISE and SHARAD, and orbiter spectrometers); without one they count at the others' rate. Objectives are Mars only; the Moon and the Daily stay balanced (user choice). |
 | 88 | Oct 31, 2026 | **Team mode** (user request, local co-op first). Roles are optional; an empty role is open to anyone, and with no Flight Director a danger card goes by majority, ties to the recommendation (user choice). Seats get a colour and a call sign from a preset list, and the team talks in preset quick messages only, since players may be children. Every team action goes through one log and a Transport; the mission is (base design, seed, team log). |
+| 89 | Oct 31, 2026 | **The objective vote and the team screens** (rule 49). The Team Setup mockup adds a vote on the objective: the Flight Director picks, the others agree or object, and the FD locks or overrules. It is kept in the log so online play gets it for free, and it does not count in the team score (which stays as rule 88 set it). The mockup leaned the atmosphere on Comms & Ops; the game leans it on the Science Lead and the surface on Comms & Ops, so each objective strains the role that owns its real risk in `team.json` (drag heating is a Science Lead card; big pictures need Comms' dish time). The mockup's MUST / HIGH / BONUS tags became each target's share of the science, which the engine computes. Players are call signs, not the mockup's names (user choice). The online room is shown but off until online play exists. |

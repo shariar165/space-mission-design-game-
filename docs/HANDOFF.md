@@ -34,7 +34,7 @@ Every change reached `main` through a pull request with CI green.
 
 ## In progress: Team Mode (spec v1.3, Oct 31, 2026)
 
-The engine is merged (PRs #47–#50); the UI is next. The approved plan is in `~/.claude/plans/breezy-pondering-clarke.md`.
+The engine is merged (PRs #47–#50); the UI is in progress (below). The approved plan is in `~/.claude/plans/breezy-pondering-clarke.md`.
 
 **Done (engine):**
 
@@ -54,17 +54,19 @@ The objectives use the instrument-match rule: the objective's targets carry 60% 
 - Each seat gets a colour and a call sign from a preset list. There is no text input; the team uses quick messages only.
 - Mass, budget and nose space use the real limits, with no team-only caps.
 
-**Next (UI), each a small PR with shots at 1440 and 390:**
-1. **Import the mockup.** Through the claude_design MCP, import `Signal Delay - Team Setup.dc.html` (+ `support.js` if changed) from https://claude.ai/design/p/c7f6be74-4ab5-4b91-ad14-112f0dc4ff77 into `docs/design/signal-delay/`. Add it to `design.spec.ts` `SCREENS`. The MCP was refused (403) in the session that built the engine; a new session after `/design-login` should reach it.
-2. **Team Setup screen** (`screens/TeamSetup.tsx`, `sd-team.css`, App step `team`, a TEAM key in Home `.hm-second`, `sd.team` in `saves.ts`):
-   - a `useTeam` hook over `LocalTransport` that feeds `stepSession`;
-   - the objective picker, also on the solo Pack briefing (Mars) and in Build Bay;
-   - `TEAM_WORDS` / `OBJECTIVE_WORDS` in `sdWords.ts` with Bangla.
-3. **Pack and Fly & Survive:**
-   - Pack: a role chip on each part, a `teamSpend` strip and a conflict banner.
+**UI, each a small PR with shots at 1440 and 390** (mockups `Signal Delay - Team Setup.dc.html` and `Signal Delay - Team Play.dc.html` in `docs/design/signal-delay/`; reference shots `shots/team-*.png`):
+1. **Done: mockups imported** (PR #52). T1 setup, T2 objective, T6 online room (later); T3 pack, T4 fly, T5 report. `design.spec.ts` shoots each artboard.
+2. **Done: Team Setup and the Mission Objective** (spec UI rule 49; PR #53):
+   - `screens/TeamSetup.tsx` (T1, App step `team`, Home's TEAM key) and `screens/TeamObjective.tsx` (T2, App step `objective`), styles `sd-team.css`, words `ROLE_WORDS` / `TEAM_WORDS` / `OBJECTIVE_WORDS` with Bangla.
+   - `useTeam.ts`: `LocalTransport` + `stepSession`; on a shared screen a role's keys act as its holder (`actorFor`). The crew is saved as `sd.team`.
+   - Engine: `team/setup.ts` (`defaultTeam`, `setPlayers`, `handRole`, `nextCallSign`, `crewView`, `objectiveCards`, `objectiveVote`), the `objective-voice` / `objective-lock` acts in `reduce.ts`, `team.json` `defaultRoles`, `objectives.json` `strain`. Tests `tests/teamSetup.test.ts`, `tests/ui/teamSetup.test.tsx`; shots `tests/visual/team.spec.ts` (`npm run shots -- team`) and the Bangla pair in `bangla.spec.ts`.
+   - NEXT · PACK opens the ordinary Mars Pack with the locked objective in the design; the team parts of Pack come next.
+3. **Next: Pack and Fly & Survive** (mockup T3, T4):
+   - Pack: a role chip on each part, a `teamSpend` strip and a conflict banner; pack/unpack through `useTeam.send`.
    - Danger card: a vote strip (recommend, votes, the Flight Director's CALL); the clock held with `setHold`.
    - A quick-message panel, and keys marked with the role that owns them.
-4. **Report and docs:** a `teamEl` section in `MissionReport.tsx`; README (Team Mode, objectives); this file and CLAUDE.md.
+4. **Report and docs** (mockup T5): a `teamEl` section in `MissionReport.tsx`; README (Team Mode, objectives); this file and CLAUDE.md.
+5. **Still open:** the solo objective picker (the Mars Pack briefing and the Engineer Build Bay; today a solo player picks through TEAM → SOLO); the online room (T6) waits for an online Transport.
 
 ## Open items
 

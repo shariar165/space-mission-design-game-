@@ -5,6 +5,8 @@ import type { ComingUpKind, ConsoleOutcome, FlyChip, RobotMessage, VoiceKind } f
 import type { DeckCard, FuelFix, PackBlockerCode, PartId } from '../engine/pack';
 import type { FinalTransmission, Hurt, ReportPanel, Saved } from '../engine/ops/report';
 import type { TargetBody } from '../engine/targets';
+import type { ObjectiveId } from '../engine/objectives';
+import type { RoleId } from '../engine/team/roles';
 import type { RealStorm } from '../engine/spaceWeather';
 import type { Category } from '../engine/scoring';
 import type { LessonCategory, LessonUnlock } from '../engine/notebook';
@@ -1638,4 +1640,146 @@ export const DAILY_WORDS = tr('DAILY_WORDS', {
   shareAlive: (day: string) => `🤖 alive · day ${day}`,
   shareLost: (day: string) => `💥 lost · day ${day}`,
   shareQuiet: '🟦 a quiet flight',
+});
+
+// ---------------------------------------------------------------------------
+// Team mode (spec: Team mode; design: Signal Delay - Team Setup.dc.html, screens T1 and T2). Call signs stay English,
+// like robot names.
+
+/** The four roles: names, the duty line and what each one owns (with the design's icons). */
+export const ROLE_WORDS: Record<RoleId, { name: string; short: string; ab: string; duty: string; icon: SDIconName; owns: { label: string; icon: SDIconName }[] }> = tr('ROLE_WORDS', {
+  'flight-director': {
+    name: 'FLIGHT DIRECTOR',
+    short: 'FLIGHT DIR.',
+    ab: 'FD',
+    duty: 'Sets the objective, guards the budget, makes the final call.',
+    icon: 'star',
+    owns: [
+      { label: 'OBJECTIVE', icon: 'star' },
+      { label: 'BUDGET', icon: 'lock' },
+      { label: 'FINAL CALL', icon: 'check' },
+    ],
+  },
+  'spacecraft-engineer': {
+    name: 'SPACECRAFT ENGINEER',
+    short: 'ENGINEER',
+    ab: 'ENG',
+    duty: 'Keeps power, battery and fuel in the green.',
+    icon: 'power',
+    owns: [
+      { label: 'POWER', icon: 'power' },
+      { label: 'BATTERY', icon: 'battery' },
+      { label: 'FUEL', icon: 'fuel' },
+    ],
+  },
+  'science-lead': {
+    name: 'SCIENCE LEAD',
+    short: 'SCIENCE',
+    ab: 'SCI',
+    duty: 'Chooses the instruments and the Mars targets.',
+    icon: 'camera',
+    owns: [
+      { label: 'INSTRUMENTS', icon: 'camera' },
+      { label: 'TARGETS', icon: 'orbit' },
+    ],
+  },
+  'comms-ops': {
+    name: 'COMMS & OPS',
+    short: 'COMMS & OPS',
+    ab: 'COM',
+    duty: 'Runs the antenna, the calls home and the command queue.',
+    icon: 'dish',
+    owns: [
+      { label: 'ANTENNA', icon: 'dish' },
+      { label: 'CALLS HOME', icon: 'calendar' },
+      { label: 'QUEUE', icon: 'computer' },
+    ],
+  },
+});
+
+/** Team Setup (T1) and the Home key. */
+export const TEAM_WORDS = tr('TEAM_WORDS', {
+  menu: 'TEAM',
+  menuSub: 'Up to four players fly one robot together',
+  menuTag: 'CO-OP',
+  kicker: 'TEAM MODE · TO MARS',
+  /** The four steps along the top (numbered by the screen). */
+  steps: ['TEAM', 'PACK', 'FLY', 'REPORT'],
+  step: (n: string, word: string) => `${n} ${word}`,
+  crew: 'CREW',
+  whoFlies: 'WHO’S FLYING',
+  play: 'PLAY',
+  players: 'PLAYERS',
+  where: 'WHERE',
+  callSigns: 'CALL SIGNS',
+  callSignTitle: (sign: string) => `${sign}: tap for another call sign`,
+  solo: 'SOLO',
+  soloSub: 'One player holds all four roles.',
+  team: 'TEAM',
+  teamSub: 'Two to four players. Each role argues its case.',
+  local: 'LOCAL',
+  localSub: 'One shared screen: a classroom projector or one laptop.',
+  localShort: 'ONE SHARED SCREEN',
+  online: 'ONLINE ROOM',
+  onlineSub: 'Coming later: every player joins on their own phone.',
+  onlineShort: 'COMING LATER',
+  chipSolo: 'SOLO',
+  chipCrew: (n: string) => `LOCAL · ${n} CREW`,
+  chipShort: (n: string) => `${n} CREW`,
+  role: (n: string, ab: string) => `ROLE ${n} · ${ab}`,
+  heldBy: 'HELD BY',
+  handOn: (role: string, sign: string) => `${role}, held by ${sign}: tap to hand it to the next player`,
+  roles: (n: string) => `${n} ROLES`,
+  lineSolo: 'SOLO FLIGHT · YOU HOLD ALL FOUR ROLES',
+  lineTeam: (n: string) => `${n} PLAYERS · ONE SHARED SCREEN`,
+  soloNoVotes: 'NO VOTES. EVERY CALL IS YOURS.',
+  doubled: (names: string, many: boolean) => `${names} ${many ? 'HOLD' : 'HOLDS'} TWO ROLES.`,
+  oneEach: 'ONE ROLE EACH. EVERY ROLE CAN OBJECT.',
+  idle: (names: string) => `${names} HAS NO ROLE YET. TAP A HELD BY CHIP.`,
+  nextObjective: 'NEXT: THE FLIGHT DIRECTOR PICKS THE MISSION OBJECTIVE.',
+  tapHint: 'Tap a HELD BY chip to hand a role to someone else.',
+  next: 'NEXT · OBJECTIVE',
+  /** Call signs or roles joined, as the design writes them. */
+  join: (names: string[]) => names.join(' + '),
+});
+
+/** The Mission Objective (T2): the Flight Director picks, the others agree or object. */
+export const OBJECTIVE_WORDS = tr('OBJECTIVE_WORDS', {
+  title: 'MISSION OBJECTIVE',
+  phoneTitle: 'OBJECTIVE',
+  picks: 'PICKS',
+  fdChip: (sign: string) => `FLIGHT DIRECTOR · ${sign}`,
+  fdPhone: (sign: string) => `FLIGHT DIRECTOR ${sign} PICKS · OTHERS VOTE`,
+  soloPhone: 'YOU PICK · NOBODY ELSE VOTES',
+  num: (n: string) => `OBJECTIVE ${n}`,
+  matters: 'TARGETS THAT MATTER MOST',
+  share: (p: string) => `${p} OF SCIENCE`,
+  needs: (parts: string) => `COUNTS WITH: ${parts}`,
+  or: ' OR ',
+  packed: 'ON BOARD',
+  hardest: (why: string) => `HARDEST ON · ${why}`,
+  strainShort: (ab: string, why: string) => `${ab} · ${why}`,
+  why: { drag: 'DRAG RISK', data: 'MOST DATA', fuel: 'MOST FUEL' },
+  stampPick: 'FD PICK',
+  stampLocked: 'LOCKED',
+  agree: 'AGREE',
+  object: 'OBJECT',
+  auto: 'SAME PLAYER AS FLIGHT DIRECTOR · AGREES',
+  autoShort: 'AGREES',
+  voteTitle: (role: string, word: string) => `${role}: ${word}`,
+  msgPick: 'FLIGHT DIRECTOR: PICK AN OBJECTIVE.',
+  msgWait: (n: string, one: boolean) => `WAITING FOR ${n} ${one ? 'VOTE' : 'VOTES'}.`,
+  msgObject: (roles: string, one: boolean) => `${roles} ${one ? 'OBJECTS' : 'OBJECT'}. TALK, THEN RE-PICK OR OVERRULE.`,
+  msgAll: 'ALL AGREE. READY TO LOCK.',
+  msgLocked: (t: string) => `OBJECTIVE LOCKED: ${t}.`,
+  msgOverruled: (t: string) => `OVERRULED. OBJECTIVE LOCKED: ${t}.`,
+  lock: 'LOCK OBJECTIVE',
+  waiting: 'WAITING FOR VOTES',
+  overrule: 'OVERRULE · FINAL CALL',
+  nextPack: 'NEXT · PACK',
+  objectives: {
+    atmosphere: { title: 'STUDY THE ATMOSPHERE', line: 'Find out how much air Mars has left, and where the rest went.' },
+    surface: { title: 'MAP THE SURFACE', line: 'Shoot the biggest landmarks on the planet as sharp as the camera allows.' },
+    moons: { title: 'VISIT THE MOONS', line: 'Swing close to Phobos and Deimos and find out what they are made of.' },
+  } as Record<ObjectiveId, { title: string; line: string }>,
 });
