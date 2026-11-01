@@ -27,6 +27,13 @@ const SCREENS: { file: string; name: string; desk: string; phone: string; jumps?
   { file: 'Signal Delay - Home.dc.html', name: 'home', desk: '4a', phone: '4b' },
   { file: 'Signal Delay - Home.dc.html', name: 'daily', desk: '5a', phone: '5b' },
   { file: 'Signal Delay - Notebook.dc.html', name: 'notebook', desk: '6a', phone: '6b' },
+  // Team Mode (spec: Team mode): setup, the objective vote, the online room (later), and the team parts of Pack, Fly and the report.
+  { file: 'Signal Delay - Team Setup.dc.html', name: 'team-setup', desk: 't1a', phone: 't1b' },
+  { file: 'Signal Delay - Team Setup.dc.html', name: 'team-objective', desk: 't2a', phone: 't2b' },
+  { file: 'Signal Delay - Team Setup.dc.html', name: 'team-online', desk: 't6a', phone: 't6b' },
+  { file: 'Signal Delay - Team Play.dc.html', name: 'team-pack', desk: 't3a', phone: 't3b' },
+  { file: 'Signal Delay - Team Play.dc.html', name: 'team-fly', desk: 't4a', phone: 't4b' },
+  { file: 'Signal Delay - Team Play.dc.html', name: 'team-report', desk: 't5a', phone: 't5b' },
 ];
 
 /** Fly jump buttons → shot names (kept the same as the game shots in fly.spec.ts). */
