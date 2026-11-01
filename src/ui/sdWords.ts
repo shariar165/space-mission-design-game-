@@ -1856,3 +1856,72 @@ export const TEAM_FLY_WORDS = tr('TEAM_FLY_WORDS', {
   keyOwner: (key: string, role: string) => `${key} (${role})`,
   team: 'TEAM',
 });
+
+/** Team Debrief (design T5): the Mission Report's Team section, after the album and before FINAL TRANSMISSION. */
+export const TEAM_REPORT_WORDS = tr('TEAM_REPORT_WORDS', {
+  title: 'TEAM DEBRIEF',
+  crew: (n: string) => `CREW OF ${n}`,
+  objective: (title: string) => `OBJECTIVE: ${title}`,
+  decisions: (n: string, one: boolean) => `${n} ${one ? 'DANGER CARD' : 'DANGER CARDS'} VOTED`,
+  cols: { role: 'ROLE', key: 'KEY DECISION', effect: 'EFFECT ON THE MISSION', verdict: 'VERDICT' },
+  score: 'TEAM SCORE',
+  outOf: (max: string) => `/ ${max}`,
+  outOfShort: (max: string) => `/${max}`,
+  points: (p: string) => `+${p}`,
+  parts: { votes: 'AGREEMENTS', conflicts: 'CONFLICTS SOLVED', objective: 'OBJECTIVE MET' } as Record<'votes' | 'conflicts' | 'objective', string>,
+  partsShort: { votes: 'AGREED', conflicts: 'CONFLICTS', objective: 'OBJECTIVE' } as Record<'votes' | 'conflicts' | 'objective', string>,
+  nOf: (n: string, of: string) => `${n} / ${of}`,
+  votesLine: (n: string, of: string) => `${n} OF ${of} CALLS WENT WITH THE RECOMMENDATION`,
+  noVotes: 'NO DANGER CARD TO VOTE ON',
+  conflictsLine: (n: string, of: string) => `${n} OF ${of} BUDGET FIGHTS TALKED OUT`,
+  noConflicts: 'NO BUDGET FIGHTS',
+  objectiveLine: (title: string, met: boolean) => `${title} · ${met ? 'MET' : 'MISSED'}`,
+  met: 'MET',
+  missed: 'MISSED',
+  none: 'NONE',
+  note: 'The team score is the team’s own: it never changes the stars. Follow the recommendations, talk out every budget fight and meet the objective for a full score.',
+  next: 'NEXT · FINAL TRANSMISSION',
+  label: 'Team debrief',
+  /** The key decision's kicker. */
+  when: {
+    objective: 'BEFORE LAUNCH · OBJECTIVE',
+    card: (day: string, hazard: string) => `DAY ${day} · ${hazard}`,
+    observe: 'IN ORBIT · PICTURES',
+    dsn: 'DSN PASSES',
+    part: 'PACK · A PART',
+    none: 'NO CALL',
+  },
+  /** The key decision. */
+  call: {
+    objective: (title: string, overruled: boolean) => `LOCKED “${title}”${overruled ? ' OVER AN OBJECTION' : ''}.`,
+    recommended: (opt: string) => `RECOMMENDED ${opt}.`,
+    called: (opt: string) => `CALLED ${opt}.`,
+    agreed: (yes: string, no: string) => `TEAM AGREED ${yes}–${no}.`,
+    chose: (opt: string, yes: string, no: string) => `TEAM CHOSE ${opt} ${yes}–${no}.`,
+    observe: (n: string, one: boolean) => `ORDERED ${n} ${one ? 'PICTURE' : 'PICTURES'}.`,
+    dsn: (days: string) => `BOOKED ${days} OF DSN PASSES.`,
+    part: (name: string) => `PACKED THE ${name}.`,
+    none: 'NOTHING ON THE LOG.',
+  },
+  /** What it did. */
+  effect: {
+    objective: (share: string, met: boolean) => (met ? `Met: ${share} of the objective’s science came home.` : `Missed: only ${share} of the objective’s science came home.`),
+    noInstrument: 'No instrument for the objective was on board.',
+    cardGood: 'The craft came through it.',
+    cardBad: 'It went badly: the craft paid for it.',
+    observe: (home: string, ordered: string, names: string, science: string) => `${home} of ${ordered} came home (${names}). Science returned: ${science}.`,
+    dsn: 'More time on the big dishes, so more data came home.',
+    part: (dangers: string) => `It covered the ${dangers}, and that came.`,
+    partIdle: 'None of the dangers it covers came this time.',
+    none: 'No call fell to this role on this flight.',
+  },
+  /** The stamp, by the key decision's kind and its verdict. */
+  verdict: {
+    objective: { good: 'OBJECTIVE MET', bad: 'OBJECTIVE MISSED' },
+    card: { good: 'GOOD CALL', bad: 'COSTLY CALL' },
+    observe: { good: 'ALL HOME', mixed: 'SOME HOME', bad: 'NONE HOME' },
+    dsn: { good: 'MORE DATA' },
+    part: { good: 'WORTH IT', none: 'NOT NEEDED' },
+    none: { none: 'NO CALL' },
+  } as Record<string, Partial<Record<'good' | 'bad' | 'mixed' | 'none', string>>>,
+});

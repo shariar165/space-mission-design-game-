@@ -13,6 +13,10 @@ import type { Design } from '../../engine/types';
 import { ComicArt } from '../components/report/ComicArt';
 import { FinalTransmission } from '../components/report/FinalTransmission';
 import { MissionAlbum } from '../components/report/MissionAlbum';
+import { TeamDebrief } from '../components/team/TeamDebrief';
+import type { TeamAction } from '../../engine/team/log';
+import type { TeamState } from '../../engine/team/reduce';
+import { teamReport } from '../../engine/team/report';
 import { PostcardView, postcardSrc } from '../components/sd/PostcardView';
 import { POSTCARDS, postcardsEarned } from '../../engine/postcards';
 import type { RankDef } from '../../engine/ranks';
@@ -60,9 +64,11 @@ interface Props {
   robotName?: string;
   /** What this flight earned in the crew file: a new rank, new badges. */
   promotion?: { rank?: RankDef; badges: string[] };
+  /** A team's flight: the TEAM DEBRIEF comes after the album, before FINAL TRANSMISSION (spec UI rule 52). */
+  team?: { state: TeamState; log: readonly TeamAction[] };
 }
 
-export function MissionReport({ state, design, mode, onMode, missionName, next, newCard, onFlyAgain, onHome, onBack, homeLabel, robotName, promotion }: Props) {
+export function MissionReport({ state, design, mode, onMode, missionName, next, newCard, onFlyAgain, onHome, onBack, homeLabel, robotName, promotion, team }: Props) {
   const engineer = mode === 'engineer';
   const phone = useIsPhone();
   const still = useReducedMotion();
@@ -77,10 +83,18 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
   // At Mars the album comes first (spec: UI rule 43); FEED THE PAPER brings the final transmission (desktop).
   const album = useMemo(() => missionAlbum(state), [state]);
   const [albumFed, setAlbumFed] = useState(!album || phone);
+  // A team's debrief comes next (desktop: its NEXT brings the final transmission; a phone shows both in turn).
+  const tr = useMemo(() => (team ? teamReport(team.log, { team: team.state, ops: state }) : undefined), [team?.state, team?.log, state]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [teamFed, setTeamFed] = useState(!tr || phone);
   const finalTop = useRef<HTMLDivElement>(null);
+  const teamTop = useRef<HTMLDivElement>(null);
+  const scrollTo = (el: HTMLElement | null) => el?.scrollIntoView?.({ behavior: still ? 'auto' : 'smooth', block: 'start' });
   useEffect(() => {
-    if (albumFed && album && !phone) finalTop.current?.scrollIntoView?.({ behavior: still ? 'auto' : 'smooth', block: 'start' });
+    if (albumFed && album && !phone) scrollTo(tr ? teamTop.current : finalTop.current);
   }, [albumFed]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (teamFed && tr && !phone) scrollTo(finalTop.current);
+  }, [teamFed]); // eslint-disable-line react-hooks/exhaustive-deps
   const [t, setT] = useState(0);
   /** The comic prints once the final transmission has (or the paper is fed by hand). */
   const [printing, setPrinting] = useState(!ft);
@@ -292,13 +306,22 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
   // The final transmission holds the robot's last words; only a robot that never flew has just its pad message here.
   const last = ft ? undefined : heardMessages(state).latest;
   const albumEl = album && <MissionAlbum album={album} name={name.toUpperCase()} phone={phone} onFeed={() => setAlbumFed(true)} />;
-  const finalEl = ft && albumFed && (
+  const teamEl = tr && team && albumFed && (
+    <TeamDebrief
+      report={tr}
+      state={team.state}
+      phone={phone}
+      onNext={() => (phone ? scrollTo(finalTop.current) : setTeamFed(true))}
+      {...(onBack && !phone && !album ? { back: <BackButton onBack={onBack} className="rp-back" /> } : {})}
+    />
+  );
+  const finalEl = ft && albumFed && teamFed && (
     <FinalTransmission
       ft={ft}
       lines={finalLines(ft, { dest: dest.name, name, title: type, label })}
       name={name}
       phone={phone}
-      {...(onBack && !phone && !album ? { back: <BackButton onBack={onBack} className="rp-back ft-back" /> } : {})}
+      {...(onBack && !phone && !album && !tr ? { back: <BackButton onBack={onBack} className="rp-back ft-back" /> } : {})}
       onPrinted={() => setPrinting(true)}
       onFeed={feed}
     />
@@ -408,7 +431,8 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
         <div className="rp-sheet">
           {onBack && <BackButton onBack={onBack} className="rp-back" />}
           {albumEl}
-          {finalEl}
+          {teamEl}
+          <div ref={finalTop}>{finalEl}</div>
           <div className="rp-phone-head" ref={reportTop}>
             <div>
               <span className="rp-kicker">{REPORT_WORDS.kickerPhone(missionName, f.num(panels.at(-1)!.day))}</span>
@@ -445,11 +469,12 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
         <div className="rp-holes right" />
         {album && onBack && <BackButton onBack={onBack} className="rp-back ft-back" />}
         {albumEl}
+        <div ref={teamTop}>{teamEl}</div>
         <div ref={finalTop}>{finalEl}</div>
         <header className="rp-head" ref={reportTop as React.RefObject<HTMLElement | null>}>
           <div className="rp-head-l">
             {/* One Back: the album's when there is one (a lost robot has an album but no final transmission). */}
-            {onBack && !ft && !album && <BackButton onBack={onBack} className="rp-back" />}
+            {onBack && !ft && !album && !tr && <BackButton onBack={onBack} className="rp-back" />}
             <span className="rp-kicker">{REPORT_WORDS.kicker(missionName, dest.name, f.dayPad(panels.at(-1)!.day))}</span>
             <h1 className="rp-title">{REPORT_WORDS.title}</h1>
           </div>

@@ -235,4 +235,15 @@ test('Bangla: Team Setup and the Mission Objective', async ({ page }, info) => {
   await card.locator('.dc-choice').first().click();
   await page.waitForTimeout(600);
   await shot(page, 'team-fly', p);
+  // the Flight Director calls it, the robot flies the rest, and the report's TEAM DEBRIEF (after the album)
+  await card.locator('.dc-choice').first().click();
+  await page.locator('.fly-action.finish').first().dispatchEvent('click');
+  await page.locator('.sd-overlay .sd-cta').click();
+  await page.locator('.fly-end .sd-cta').click({ timeout: 60_000 });
+  if (p !== 'mobile') await page.locator('.al-feed').click({ timeout: 30_000 });
+  const td = page.locator('.td');
+  await td.waitFor({ timeout: 30_000 });
+  await td.scrollIntoViewIfNeeded();
+  await page.waitForTimeout(800);
+  await shot(page, 'team-report', p);
 });

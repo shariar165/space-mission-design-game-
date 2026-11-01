@@ -613,6 +613,7 @@ export function App() {
           onFlyAgain={dailyRun ? home : flyAgain}
           onHome={home}
           onBack={back}
+          {...(teamFly ? { team: { state: teamFly, log: teamPlay.log } } : {})}
           homeLabel={NAV.home}
         />
       )}

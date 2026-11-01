@@ -15,7 +15,19 @@ export type KeyDecision =
   /** The Flight Director's objective, and whether it was met. */
   | { kind: 'objective'; objective: ObjectiveId; met: boolean }
   /** A danger card the role recommended on (the Flight Director: called), how it was settled and whether it went badly. */
-  | { kind: 'card'; hazardType: string; optionId: string; recommended: string; how: VoteHow; bad: boolean }
+  | {
+      kind: 'card';
+      hazardType: string;
+      optionId: string;
+      recommended: string;
+      how: VoteHow;
+      bad: boolean;
+      /** Mission day the card was settled (the settling entry's time). */
+      day?: number;
+      /** Seats whose voice was the settled option, and seats that wanted another. */
+      support: number;
+      against: number;
+    }
   /** The pictures the role ordered and the science home (0–1, with the objective's weights). */
   | { kind: 'observe'; ordered: string[]; home: string[]; science: number }
   /** DSN days the role booked. */
@@ -24,11 +36,24 @@ export type KeyDecision =
   | { kind: 'part'; part: PartId; covered: string[] }
   | { kind: 'none' };
 
+/** How the key decision turned out: good (met, held, all home, a part that was needed), bad, mixed, or none. */
+export type RowVerdict = 'good' | 'bad' | 'mixed' | 'none';
+
 export interface TeamRow {
   role: RoleId;
   seat?: SeatId;
   callSign?: string;
   key: KeyDecision;
+  verdict: RowVerdict;
+}
+
+/** One part of the team score: its points and the most it can give, with the count behind it (n of `of`). */
+export interface ScorePart {
+  id: 'votes' | 'conflicts' | 'objective';
+  points: number;
+  max: number;
+  n: number;
+  of: number;
 }
 
 export interface TeamReport {
@@ -38,6 +63,10 @@ export interface TeamReport {
   votes: { total: number; agreed: number };
   /** 0–100. */
   score: number;
+  /** The score in parts (agreements, conflicts solved, objective met); their points add up to `score`. */
+  parts: ScorePart[];
+  /** The most the score can be (the parts' maxima: 100). */
+  max: number;
 }
 
 /**
@@ -45,11 +74,40 @@ export interface TeamReport {
  * (1 with none). With no objective (the Moon, the Daily) the other two share the score in proportion to their weights.
  */
 export function teamScore(objectiveMet: boolean | undefined, conflicts: TeamReport['conflicts'], votes: TeamReport['votes']): number {
+  return teamScoreParts(objectiveMet, conflicts, votes).reduce((a, x) => a + x.points, 0);
+}
+
+/**
+ * The team score in its parts: each part's points are 100 wᵢ sᵢ (with no objective, the weights rescaled to share
+ * 100) and `max` is 100 wᵢ, so the parts add up to `teamScore`.
+ */
+export function teamScoreParts(objectiveMet: boolean | undefined, conflicts: TeamReport['conflicts'], votes: TeamReport['votes']): ScorePart[] {
   const w = TEAM_RULES.scoreWeights.value;
-  const c = conflicts.raised ? conflicts.resolved / conflicts.raised : 1;
-  const v = votes.total ? votes.agreed / votes.total : 1;
-  if (objectiveMet === undefined) return (100 * (w.conflicts * c + w.votes * v)) / (w.conflicts + w.votes);
-  return 100 * (w.objective * (objectiveMet ? 1 : 0) + w.conflicts * c + w.votes * v);
+  const scale = objectiveMet === undefined ? 100 / (w.conflicts + w.votes) : 100;
+  const part = (id: ScorePart['id'], weight: number, n: number, of: number): ScorePart => ({ id, points: scale * weight * (of ? n / of : 1), max: scale * weight, n, of });
+  return [
+    part('votes', w.votes, votes.agreed, votes.total),
+    part('conflicts', w.conflicts, conflicts.resolved, conflicts.raised),
+    ...(objectiveMet === undefined ? [] : [part('objective', w.objective, objectiveMet ? 1 : 0, 1)]),
+  ];
+}
+
+/** good: met, held, every picture home, a part whose danger came; bad: missed, went badly, none home. */
+export function rowVerdict(k: KeyDecision): RowVerdict {
+  switch (k.kind) {
+    case 'objective':
+      return k.met ? 'good' : 'bad';
+    case 'card':
+      return k.bad ? 'bad' : 'good';
+    case 'observe':
+      return k.home.length === k.ordered.length ? 'good' : k.home.length === 0 ? 'bad' : 'mixed';
+    case 'dsn':
+      return 'good';
+    case 'part':
+      return k.covered.length ? 'good' : 'none';
+    case 'none':
+      return 'none';
+  }
 }
 
 /** The Team section, from the team log and the flown mission. */
@@ -75,7 +133,20 @@ export function teamReport(log: readonly TeamAction[], r: { team: TeamState; ops
     const rows = mine.map((v) => ({ v, bad: hazardOf(v.decisionId)?.choice?.badOutcome === true }));
     const pick = rows.find((x) => x.bad) ?? rows.at(-1);
     if (!pick) return undefined;
-    return { kind: 'card', hazardType: pick.v.hazardType, optionId: pick.v.result!.optionId, recommended: pick.v.recommend!.optionId, how: pick.v.result!.how, bad: pick.bad };
+    const chosen = pick.v.result!.optionId;
+    const voices = Object.values(pick.v.voices).filter((o) => o !== undefined);
+    const day = log.find((a) => a.seq === pick.v.result!.seq)?.t;
+    return {
+      kind: 'card',
+      hazardType: pick.v.hazardType,
+      optionId: chosen,
+      recommended: pick.v.recommend!.optionId,
+      how: pick.v.result!.how,
+      bad: pick.bad,
+      ...(day !== undefined ? { day } : {}),
+      support: voices.filter((o) => o === chosen).length,
+      against: voices.filter((o) => o !== chosen).length,
+    };
   };
   const observe = (role: RoleId): KeyDecision | undefined => {
     const ordered = done.flatMap((a) => (a.role === role && a.act.kind === 'ops' && a.act.op.kind === 'command' && a.act.op.command.kind === 'observe' ? [a.act.op.command.targetId] : []));
@@ -105,8 +176,9 @@ export function teamReport(log: readonly TeamAction[], r: { team: TeamState; ops
     const seatId = s.team ? holderOf(s.team, role) : undefined;
     const seat = s.team?.seats.find((x) => x.id === seatId);
     const key = order[role].reduce<KeyDecision | undefined>((k, f) => k ?? f(), undefined) ?? { kind: 'none' };
-    return { role, ...(seat ? { seat: seat.id, callSign: seat.callSign } : {}), key };
+    return { role, ...(seat ? { seat: seat.id, callSign: seat.callSign } : {}), key, verdict: rowVerdict(key) };
   });
   const c = { raised: conflicts.length, resolved: conflicts.filter((x) => x.resolvedSeq !== undefined).length };
-  return { rows, ...(objective ? { objective } : {}), conflicts: c, votes, score: teamScore(objective?.met, c, votes) };
+  const parts = teamScoreParts(objective?.met, c, votes);
+  return { rows, ...(objective ? { objective } : {}), conflicts: c, votes, score: parts.reduce((a, x) => a + x.points, 0), parts, max: parts.reduce((a, x) => a + x.max, 0) };
 }

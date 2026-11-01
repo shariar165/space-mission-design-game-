@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
 // EN / বাংলা (spec UI rule 48): every word in sdWords.ts has a Bangla version in sdWords.bn.ts, with the same shape;
 // numbers stay in Latin digits; the switch changes what the word exports say, and is saved in the browser.
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import * as f from '../src/ui/format';
 import { lang, setLang } from '../src/ui/lang';
@@ -65,6 +67,11 @@ describe('Bangla words (spec UI rule 48)', () => {
     // every Bangla string is written in Bangla (bar names that are the same in both) and keeps Latin digits
     expect(leaves.filter((l) => !BENGALI.test(l.bn) && !SAME_IN_BOTH.has(l.bn) && !ENGLISH_BY_RULE.test(l.path)).map((l) => l.path)).toEqual([]);
     expect(leaves.filter((l) => BENGALI_DIGIT.test(l.bn)).map((l) => l.path)).toEqual([]);
+  });
+
+  it('no counter word right after a number: "${n}টি" makes the browser draw the digit in the Bangla font (write "${n} ভোট")', () => {
+    const src = readFileSync(join(process.cwd(), 'src/ui/sdWords.bn.ts'), 'utf8');
+    expect(src.split('\n').filter((l) => /\}ট[িা]/.test(l)).map((l) => l.trim())).toEqual([]);
   });
 
   it('opsWords (the console drawers and the event feed): every export has its Bangla, with the same shape', () => {

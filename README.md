@@ -23,7 +23,9 @@
 ## Contents
 
 - [About the game](#about-the-game)
+- [Judge in 3 minutes](#judge-in-3-minutes)
 - [How to play](#how-to-play)
+  - [Team Mode: 2–4 players](#team-mode-24-players)
 - [Real science, not invented numbers](#real-science-not-invented-numbers)
 - [NASA data used in this game](#nasa-data-used-in-this-game)
 - [Validation against real missions](#validation-against-real-missions)
@@ -61,6 +63,25 @@ It is designed for students and curious players first (**Cadet mode**), and for 
 
 ---
 
+## Judge in 3 minutes
+
+Open **[the game](https://shariar165.github.io/space-mission-design-game-/)** (desktop or phone, no install) and follow this route. Each step says what to look for.
+
+| Time | Do this | Look for |
+| --- | --- | --- |
+| 0:00 | Watch the cold open (about 15 s) or press **SKIP**, then name the robot or skip. | The opening is Mars Climate Orbiter's real last night (Sept. 23, 1999), told only from cited facts. |
+| 0:20 | On Home, look at the Mars plate, then press **DAILY**: today's Mars mission launches straight away. | The plate's Earth–Mars distance and light time are today's, from the planets' real orbits. The Daily is the same flight for every player that day. |
+| 0:40 | In flight, press **100×** (or **NEXT EVENT ▸**) until the first danger card opens. | "Danger arrives in …" against "your order takes …": the order really crosses space at the speed of light, at that day's Earth–Mars distance. |
+| 1:10 | Choose with **←** or **→** (or swipe), then flip the **CADET / ENGINEER** lever. | The order crawling out and the reply crawling back. In Engineer mode, every readout shows its equation, and **ⓘ** shows the source, with a **game estimate** badge where there is no public source. |
+| 1:40 | Press **FINISH MISSION ▸▸**, then **SEE MISSION REPORT ▸**. | The album of pictures that came home, the robot's final transmission, the flight as a comic, and you against the real MAVEN. |
+| 2:10 | Click the **SIGNAL DELAY** wordmark to go Home, press **TEAM** (co-op), choose **TEAM** with **4** players, and press **NEXT · OBJECTIVE**. | Four roles (Flight Director, Spacecraft Engineer, Science Lead, Comms & Ops), each with a colour and a call sign. The Flight Director picks the mission objective, and every other role can agree or object. |
+| 2:40 | Tap AGREE for each role, press **LOCK OBJECTIVE** and **NEXT · PACK**, flip **ARM**, press **LAUNCH**, then **NEXT EVENT ▸** until a danger card opens. | The team vote: the related role recommends, the others tap their tokens, and the Flight Director makes the final call. Only then does the order leave. |
+| 3:00 | Press **EN / বাংলা** in any top bar. | The whole game in Bangla, with the English original kept behind every cited text. |
+
+For the code: `npm test` runs about 800 tests, including the validation of the model against MAVEN and OSIRIS-REx ([`docs/VALIDATION_RESULTS.md`](docs/VALIDATION_RESULTS.md)). The rules are in [`docs/SCIENCE_SPEC.md`](docs/SCIENCE_SPEC.md), and every value that is a guess is listed in [`TODO_DATA.md`](TODO_DATA.md).
+
+---
+
 ## How to play
 
 <table>
@@ -95,10 +116,35 @@ Each mission earns up to three stars, all for the **science you bring home** (th
 - **বাংলা.** EN / বাংলা in every top bar switches the game's words to Bangla (numbers and units stay the same; NASA mission and target names stay in English). The data's cited texts (real history, what each target teaches, postcard captions, Rescue History) are shown in Bangla too, with the English original and its source in ⓘ. Level titles stay English, with a Bangla line saying what each teaches. The Engineer Build Bay stays English.
 - **Cold open.** A first launch opens on a single key, ▶ RECEIVE TRANSMISSION (it lets the sound start), then the night Mars Climate Orbiter went silent (Sept. 23, 1999), in about 15 seconds told only from the game's cited facts, then you name your robot. SKIP anytime; INTRO on Home replays it.
 - **Sound.** Synthesised in the browser (no audio files): teletype clack, CRT hum, radio static while a signal is in transit, beeps when an order or reply arrives, the danger alert and the printer's rattle. It starts after your first click or key, is quiet by default, and the 🔊 key in every top bar mutes it.
+- **Team Mode.** Up to four players fly one robot to Mars on one shared screen, with four roles, votes on danger cards and a team score. See [Team Mode](#team-mode-24-players) below.
 - **Daily mission.** The same Mars flight for every player each day, with a spoiler-free share card (like a word-puzzle grid).
 - **Rescue History.** Investigate a real lost mission from its published failure report. The first case is Mars Climate Orbiter (1999), lost to a pound-force versus newton mix-up.
 - **Engineer's Notebook.** Lessons unlocked by what you do in flight. Each one points at a real event already cited in the game's data.
 - **Engineer mode.** Design the whole spacecraft in the Build Bay (bus, instruments, arrays or RTGs, antenna, engine, propellant, orbits, launch dates), then fly it with live readouts and an EQUATIONS drawer.
+
+### Team Mode: 2–4 players
+
+A real mission is flown by a team, so Signal Delay can be too. **TEAM** on Home (co-op) puts up to four players around **one shared screen**: a classroom projector or one laptop. The robot goes to Mars. An online room, with every player on their own phone, is planned.
+
+**The four roles.** Each player takes one or more roles. Each role has a colour, and each player has a call sign (no names are typed).
+
+| Role | Owns | Recommends on |
+| --- | --- | --- |
+| **Flight Director** | the mission objective, the launch, the extension, every final call | (decides) |
+| **Spacecraft Engineer** | power and the craft's own parts | the craft's own faults |
+| **Science Lead** | the instruments and the pictures (OBSERVE) | dangers to the science (dust storms, drag) |
+| **Comms & Ops** | the radio and the DSN bookings | dangers seen from Earth (solar storms, debris) |
+
+**How a team plays.**
+
+1. **Team Setup.** Choose 1–4 players. Tap a role's HELD BY chip to hand it to the next player. With two or three players, someone holds two roles. One player alone holds all four, and every call is theirs.
+2. **Mission Objective.** The Flight Director picks one of three Mars objectives: study the atmosphere, map the surface, or visit the moons. Each other role says AGREE or OBJECT. The Flight Director locks it, or overrules an objection.
+3. **Pack.** Everyone packs into one nose against the real mass and budget limits. Each role's spend shows on the shared bars. When the team goes over a limit, a banner (TOO HEAVY · NEGOTIATE) names the roles whose parts collide, until one cut fixes it. Only the Flight Director can launch.
+4. **Fly.** A danger card stops the clock for a vote. The related role taps a card to recommend it, every other player taps their token on the choice they want, and the Flight Director makes the final call (and may call early). Each console key belongs to a role: POWER PLAN to the Engineer, CALL HOME to Comms & Ops, OBSERVE to the Science Lead.
+5. **Talk.** The team talks only in **preset quick messages** (AGREE, TOO HEAVY, SCIENCE FIRST, WAIT FOR THE SIGNAL, …), since players may be children. The messages print on the teletype beside the robot's own.
+6. **Report.** After the album comes the **TEAM DEBRIEF**. It gives one row per role: the call that mattered most, what it did, and a stamp. Then comes the **team score** out of 100: half for meeting the objective, a quarter for talking out every budget fight, and a quarter for final calls that went with the recommendation. The team score is the team's own and never changes the stars.
+
+**One mission, one log.** Every team action (a vote, an order, a quick message) goes on one log with the mission time it was sent. The same base design, seed and log always replay to exactly the same mission, which is what will let the online room keep every phone in step.
 
 **Controls:** ← / → (or swipe) to choose a response, ↓ for a third option, `?` for help. Time runs at 10×, 100× or 1000× mission days a minute, and **FINISH MISSION** lets the robot fly the rest so every flight reaches the report.
 
@@ -310,7 +356,8 @@ Every push to `main` runs the tests, builds with the Pages base path and publish
 ```
 src/
   data/            Sourced catalogues: destinations, orbitalElements, launchVehicles, rideshares, parts,
-                   missions, hazards, operations, pack, crisisCards, lessons, rescueCases, notebook, targets
+                   missions, hazards, operations, pack, crisisCards, lessons, rescueCases, notebook, targets,
+                   objectives, team
   engine/          Simulation engine (pure TypeScript, no UI)
     ephemeris.ts   JPL approximate planet positions; Bennu from the JPL SBDB
     trajectory.ts  Hohmann, Lambert, capture Δv, orbit changes, launch windows
@@ -327,8 +374,11 @@ src/
                    downlink, album)
     science.ts / targets.ts   what a picture costs (vis-viva, MAVEN-fitted drag); the six Mars targets
     pack.ts / daily.ts / notebook.ts / rescue.ts   game modes
+    objectives.ts  the three Mars mission objectives (objectives.json)
+    team/          Team Mode: roles and permissions, the one action log, votes, replay,
+                   shared limits and conflicts, the team report and score, LocalTransport
   ui/              React screens (Home, Pack, FlyAndSurvive, MissionReport, Daily, Notebook,
-                   Rescue, BuildBay), components, words (sdWords.ts), styles
+                   Rescue, BuildBay, TeamSetup, TeamObjective), components, words (sdWords.ts), styles
 tests/             physics, validation, data audit, engine API, UI guards, ui/ component tests,
                    visual/ Playwright screenshot specs
 docs/              SCIENCE_SPEC.md, VALIDATION_RESULTS.md, design/ (mockup copies), images/
