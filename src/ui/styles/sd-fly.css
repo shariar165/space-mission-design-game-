@@ -80,10 +80,11 @@
 .fly-drawer.wide { left: 50%; right: auto; transform: translateX(-50%); width: 720px; top: 40px; bottom: auto; max-height: calc(100% - 80px); }
 
 /* Danger card overlay */
-.dc-overlay { position: absolute; inset: 0; background: rgba(3, 6, 4, 0.72); display: flex; align-items: center; justify-content: center; z-index: 5; }
-.dc-row { display: flex; align-items: center; justify-content: center; gap: 22px; }
-.dc-center { display: flex; flex-direction: column; align-items: stretch; gap: 12px; }
-.dc-paper { width: 480px; border-radius: 10px; background: var(--sd-paper); box-shadow: var(--sd-shadow-card); overflow: hidden; display: flex; flex-direction: column; color: var(--sd-paper-ink); }
+.dc-overlay { position: absolute; inset: 0; background: rgba(3, 6, 4, 0.72); display: flex; align-items: safe center; justify-content: center; z-index: 5; overflow-y: auto; padding: 14px 0; box-sizing: border-box; }
+.dc-row { display: flex; align-items: center; justify-content: center; gap: 22px; box-sizing: border-box; max-width: 100%; padding: 0 16px; }
+.dc-row > .dc-choice { flex: 0 1 270px; min-width: 0; }
+.dc-center { display: flex; flex-direction: column; align-items: stretch; gap: 12px; flex: 0 1 480px; min-width: 0; }
+.dc-paper { width: 480px; max-width: 100%; border-radius: 10px; background: var(--sd-paper); box-shadow: var(--sd-shadow-card); overflow: hidden; display: flex; flex-direction: column; color: var(--sd-paper-ink); }
 .dc-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; background: var(--sd-red); }
 .dc-kicker { display: flex; align-items: center; gap: 10px; font: 700 13px/1 var(--sd-mono); letter-spacing: 0.18em; color: var(--sd-paper); }
 .dc-day { font: 700 13px/1 var(--sd-mono); letter-spacing: 0.14em; color: var(--sd-paper); }
@@ -101,7 +102,7 @@
 .dc-choice { cursor: pointer; width: 270px; padding: 20px; box-sizing: border-box; text-align: left; border-radius: 8px; border: 2px solid var(--sd-line-2); border-bottom-width: 6px; background: var(--sd-panel); display: flex; flex-direction: column; gap: 12px; color: var(--sd-ink-2); }
 .dc-choice:hover:not(:disabled), .dc-choice.hot { border-color: var(--sd-amber); background: var(--sd-panel-hover); }
 .dc-choice:disabled { cursor: not-allowed; opacity: 0.5; }
-.dc-choice.side-2 { width: 480px; padding: 12px 20px; gap: 8px; }
+.dc-choice.side-2 { width: 480px; max-width: 100%; padding: 12px 20px; gap: 8px; }
 .dc-hint { font: 400 22px/1 var(--sd-crt-font); color: var(--sd-crt-mid); }
 .dc-choice.side-1 .dc-hint { text-align: right; width: 100%; }
 .dc-label { font: 800 27px/0.95 var(--sd-display); color: var(--sd-ink); letter-spacing: 0.03em; }
@@ -113,6 +114,21 @@
 .dc-eng { font: 400 12px/1.4 var(--sd-mono); color: var(--sd-crt-mid); }
 .dc-footer { cursor: pointer; align-self: center; padding: 8px 14px; border-radius: 4px; border: 1px dashed var(--sd-line-2); background: transparent; color: var(--sd-ink-3); font: 700 11px/1 var(--sd-mono); letter-spacing: 0.14em; }
 .dc-footer:hover { color: var(--sd-amber); border-color: var(--sd-amber); }
+/* A desktop shorter than the design's 960 px: a tighter card, so a three-choice card with its history fits the CRT
+   (the overlay scrolls when one still does not). */
+@media (max-height: 960px) {
+  .dc-overlay:not(.phone) .dc-head { padding: 10px 18px; }
+  .dc-overlay:not(.phone) .dc-body { padding: 16px 22px 18px; gap: 12px; }
+  .dc-overlay:not(.phone) .dc-title { font-size: 40px; }
+  .dc-overlay:not(.phone) .dc-line { font-size: 18px; line-height: 1.3; }
+  .dc-overlay:not(.phone) .dc-fact { padding: 8px 10px; }
+  .dc-overlay:not(.phone) .dc-fact-v { font-size: 22px; }
+  .dc-overlay:not(.phone) .sd-history { padding-top: 10px; gap: 5px; }
+  .dc-overlay:not(.phone) .sd-history-v { font-size: 14px; line-height: 1.4; }
+  .dc-overlay:not(.phone) .dc-choice { padding: 16px; gap: 10px; }
+  .dc-overlay:not(.phone) .dc-choice.side-2 { padding: 10px 18px; gap: 6px; }
+  .dc-overlay:not(.phone) .dc-center { gap: 10px; }
+}
 
 /* Bottom row: clock + ribbon */
 .fly-bottom { display: grid; grid-template-columns: 330px minmax(0, 1fr); gap: 14px; min-height: 0; }
