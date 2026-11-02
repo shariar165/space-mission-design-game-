@@ -1,7 +1,8 @@
 // TEAM SETUP (Signal Delay design: Signal Delay - Team Setup.dc.html, screen T1; spec: Team mode). Solo or team,
 // one to four players, and who holds which of the four roles. Each seat has a call sign from the preset list (tap it
-// for the next one; nobody types a name). A tap on HELD BY hands a role to the next player. The online room comes
-// later, so its key is shown but off. Every rule is the engine's (team/setup.ts); words in sdWords (TEAM_WORDS).
+// for the next one; nobody types a name). A tap on HELD BY hands a role to the next player. ONLINE ROOM (a team only)
+// opens a room the phones join instead (screens/OnlineHost.tsx). Every rule is the engine's (team/setup.ts); words in
+// sdWords (TEAM_WORDS).
 import { useRef } from 'react';
 import { ROLE_IDS, type RoleId, type SeatId, type Team } from '../../engine/team/roles';
 import { crewView, handRole, nextCallSign, setPlayers } from '../../engine/team/setup';
@@ -25,6 +26,11 @@ interface Props {
   onBack: () => void;
   /** NEXT · OBJECTIVE: the team is set up. */
   onNext: () => void;
+  /** LOCAL (one shared screen) or ONLINE ROOM (each player on a phone; spec: Online room). */
+  place: 'local' | 'online';
+  onPlace: (p: 'local' | 'online') => void;
+  /** NEXT · OPEN ROOM. */
+  onRoom: () => void;
 }
 
 /** The step dots along the top: 0 TEAM, 1 PACK, 2 FLY, 3 REPORT (this screen is step 0). */
@@ -50,7 +56,7 @@ export function SeatBadge({ seat, sign }: { seat: SeatId; sign: string }) {
   );
 }
 
-export function TeamSetup({ team, onTeam, mode, onMode, onBack, onNext }: Props) {
+export function TeamSetup({ team, onTeam, mode, onMode, onBack, onNext, place, onPlace, onRoom }: Props) {
   const phone = useIsPhone();
   const crew = crewView(team);
   const solo = crew.players === 1;
@@ -61,11 +67,13 @@ export function TeamSetup({ team, onTeam, mode, onMode, onBack, onNext }: Props)
   const holder = (r: RoleId) => team.seats.find((s) => s.roles.includes(r));
   const names = (ids: SeatId[]) => TEAM_WORDS.join(ids.map(sign));
 
-  const line1 = solo ? TEAM_WORDS.lineSolo : TEAM_WORDS.lineTeam(f.num(crew.players));
-  const line2 = solo ? TEAM_WORDS.soloNoVotes : crew.doubled.length ? TEAM_WORDS.doubled(names(crew.doubled), crew.doubled.length > 1) : TEAM_WORDS.oneEach;
-  const ready = crew.idle.length === 0;
-  const msg = ready ? TEAM_WORDS.nextObjective : TEAM_WORDS.idle(names(crew.idle));
-  const chip = solo ? TEAM_WORDS.chipSolo : phone ? TEAM_WORDS.chipShort(f.num(crew.players)) : TEAM_WORDS.chipCrew(f.num(crew.players));
+  /** The online room: each phone takes its own role there, so the crew on this screen does not apply. */
+  const online = place === 'online' && !solo;
+  const line1 = solo ? TEAM_WORDS.lineSolo : online ? TEAM_WORDS.lineOnline : TEAM_WORDS.lineTeam(f.num(crew.players));
+  const line2 = solo ? TEAM_WORDS.soloNoVotes : online ? TEAM_WORDS.onlineCrew : crew.doubled.length ? TEAM_WORDS.doubled(names(crew.doubled), crew.doubled.length > 1) : TEAM_WORDS.oneEach;
+  const ready = online || crew.idle.length === 0;
+  const msg = online ? TEAM_WORDS.nextRoomMsg : ready ? TEAM_WORDS.nextObjective : TEAM_WORDS.idle(names(crew.idle));
+  const chip = solo ? TEAM_WORDS.chipSolo : online ? TEAM_WORDS.chipOnline : phone ? TEAM_WORDS.chipShort(f.num(crew.players)) : TEAM_WORDS.chipCrew(f.num(crew.players));
 
   const modeKeys = (
     <div className="tm-modes">
@@ -107,10 +115,11 @@ export function TeamSetup({ team, onTeam, mode, onMode, onBack, onNext }: Props)
   const placeKeys = (
     <div className="tm-places">
       {[
-        { on: true, off: false, label: TEAM_WORDS.local, sub: phone ? TEAM_WORDS.localShort : TEAM_WORDS.localSub, icon: 'computer' as const },
-        { on: false, off: true, label: TEAM_WORDS.online, sub: phone ? TEAM_WORDS.onlineShort : TEAM_WORDS.onlineSub, icon: 'dish' as const },
+        { on: !online, off: false, label: TEAM_WORDS.local, sub: phone ? TEAM_WORDS.localShort : TEAM_WORDS.localSub, icon: 'computer' as const, go: () => onPlace('local') },
+        // an online room is for a team: SOLO greys it out (design T1)
+        { on: online, off: solo, label: TEAM_WORDS.online, sub: phone ? TEAM_WORDS.onlineShort : TEAM_WORDS.onlineSub, icon: 'dish' as const, go: () => onPlace('online') },
       ].map((k) => (
-        <button key={k.label} type="button" className="tm-key tm-place" aria-pressed={k.on} disabled={k.off}>
+        <button key={k.label} type="button" className="tm-key tm-place" aria-pressed={k.on} disabled={k.off} title={k.off ? TEAM_WORDS.soloNoRoom : undefined} onClick={k.go}>
           <span className="tm-place-icon">
             <SDIcon icon={k.icon} size={phone ? 20 : 24} color={k.on ? 'var(--sd-paper-ink)' : 'var(--sd-crt-hi)'} />
           </span>
@@ -176,8 +185,8 @@ export function TeamSetup({ team, onTeam, mode, onMode, onBack, onNext }: Props)
   );
 
   const next = (
-    <button type="button" className="tm-next" disabled={!ready} onClick={onNext}>
-      {TEAM_WORDS.next}
+    <button type="button" className="tm-next" disabled={!ready} onClick={online ? onRoom : onNext}>
+      {online ? TEAM_WORDS.nextRoom : TEAM_WORDS.next}
     </button>
   );
 

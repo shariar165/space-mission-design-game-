@@ -15,8 +15,11 @@ import type { Design } from '../engine/types';
 export interface TeamPlay {
   /** The session so far (absent until a team starts). */
   session?: TeamSession;
-  /** A new session: the setup entry is the log's first. */
-  start: (team: Team, base: Design, shelf: PartId[], opts: StartOptions) => void;
+  /**
+   * A new session: the setup entry is the log's first. `transport`: the online room's host (OnlineHost) instead of one
+   * device; a room resumed from its code already has a log, which is replayed instead of a new setup.
+   */
+  start: (team: Team, base: Design, shelf: PartId[], opts: StartOptions, transport?: Transport) => void;
   /**
    * Act as a role: on a shared screen the role's holder (or the first seat, for an open role) sends it. In flight,
    * `t` is the mission time on screen: the team's flight is flown to it before the entry applies.
@@ -49,17 +52,20 @@ export function useTeam(): TeamPlay {
   }, []);
 
   const start = useCallback(
-    (team: Team, base: Design, shelf: PartId[], opts: StartOptions) => {
+    (team: Team, base: Design, shelf: PartId[], opts: StartOptions, given?: Transport) => {
       stop();
-      const t = new LocalTransport();
-      live.current = { team: initialTeamState(base, shelf) };
+      const t = given ?? new LocalTransport();
+      let s: TeamSession = { team: initialTeamState(base, shelf) };
+      for (const a of t.log()) s = stepSession(s, a, opts).session;
+      live.current = s;
       unsubscribe.current = t.subscribe((a) => {
         live.current = stepSession(live.current!, a, opts).session;
         setSession(live.current);
       });
       transport.current = t;
       setOpts(opts);
-      t.send({ seat: actorFor(team, 'flight-director'), role: 'flight-director', act: { kind: 'setup', team } });
+      if (t.log().length === 0) t.send({ seat: actorFor(team, 'flight-director'), role: 'flight-director', act: { kind: 'setup', team } });
+      else setSession(s);
     },
     [stop],
   );

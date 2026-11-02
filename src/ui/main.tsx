@@ -19,6 +19,7 @@ import './styles/sd-moments.css';
 import './styles/sd-science.css';
 import './styles/sd-postcards.css';
 import './styles/sd-team.css';
+import './styles/sd-online.css';
 
 applyLang();
 

@@ -1,5 +1,5 @@
 // Team mode: the one action log (spec: Team mode). Every entry names the seat, the role it acts as and the action.
-// Local play and (later) online play write the same entries through a Transport; the mission is a function of the
+// Local play and online play (the room's OnlineHost) write the same entries through a Transport; the mission is a function of the
 // base design, the seed and this log (replay.ts).
 import type { ObjectiveId } from '../objectives';
 import type { OpsOp } from '../ops/types';
@@ -27,7 +27,12 @@ export type TeamAct =
   | { kind: 'vote'; decisionId: string; optionId: string }
   | { kind: 'call'; decisionId: string; optionId: string }
   /** A preset quick message (TEAM_RULES.quick): there is no free text. */
-  | { kind: 'say'; quick: string };
+  | { kind: 'say'; quick: string }
+  /**
+   * A role passes to another seat: its holder gives it on, or the Flight Director moves it. The online room sends these
+   * when a phone drops (its roles go to the Flight Director) and when it comes back (they return).
+   */
+  | { kind: 'hand'; role: RoleId; to: SeatId };
 
 export interface TeamAction {
   /** Order in the log, given by the transport. */

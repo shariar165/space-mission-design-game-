@@ -57,9 +57,17 @@ describe('Team Setup (T1)', () => {
     expect(btn(TEAM_WORDS.callSignTitle(SIGNS[4]!))).toBeTruthy();
   });
 
-  it('the online room is not here yet: its key is off', () => {
+  it('ONLINE ROOM is for a team: NEXT then opens a room; SOLO turns the key off (spec: Online room)', () => {
     openTeam();
-    expect((btn(new RegExp(`^${TEAM_WORDS.online}`)) as HTMLButtonElement).disabled).toBe(true);
+    const online = () => btn(new RegExp(`^${TEAM_WORDS.online}`)) as HTMLButtonElement;
+    expect(online().disabled).toBe(false);
+    fireEvent.click(online());
+    expect(online().getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByText(TEAM_WORDS.nextRoomMsg)).toBeTruthy();
+    expect(btn(TEAM_WORDS.nextRoom)).toBeTruthy();
+    fireEvent.click(btn(new RegExp(`^${TEAM_WORDS.solo}`)));
+    expect(online().disabled).toBe(true);
+    expect(btn(TEAM_WORDS.next)).toBeTruthy();
   });
 });
 

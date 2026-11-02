@@ -26,6 +26,13 @@ import type { ObjectiveId } from '../engine/objectives';
 import { useTeam } from './useTeam';
 import { TeamObjective } from './screens/TeamObjective';
 import { TeamSetup } from './screens/TeamSetup';
+import { useRoomHost, useRoomPhone } from './online/useRoom';
+import { OnlineHost } from './screens/OnlineHost';
+import { OnlineJoin } from './screens/OnlineJoin';
+import { Controller } from './screens/Controller';
+import { RoomBar, RoomHold } from './components/online/RoomHold';
+import type { FlightLink } from '../engine/team/online';
+import { cleanRoomCode, validRoomCode, type RoomStage } from '../engine/team/room';
 import { Postcards } from './screens/Postcards';
 import { postcardAlbum, postcardsEarned } from '../engine/postcards';
 import type { Crew } from './components/sd/CrewFile';
@@ -60,6 +67,21 @@ function urlSeed(): number | undefined {
   }
 }
 
+/** #join=MARS-7K2 in the URL: a phone opens straight on JOIN A ROOM with the code typed (spec: Online room). */
+function joinLink(): string | undefined {
+  try {
+    const m = /^#join=([A-Za-z0-9-]+)$/.exec(window.location.hash);
+    const code = m ? cleanRoomCode(m[1]!) : undefined;
+    return code && validRoomCode(code) ? code : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/** The online room's stage for a host screen step (undefined: not a step of the room's mission). */
+const stageOf = (step: Step): RoomStage | undefined =>
+  step === 'objective' ? 'objective' : step === 'build' || step === 'launch' ? 'pack' : step === 'fly' ? 'fly' : step === 'report' ? 'report' : undefined;
+
 function storedMode(): Mode {
   try {
     return localStorage.getItem('mdt.mode') === 'engineer' ? 'engineer' : 'cadet';
@@ -90,7 +112,8 @@ export function App() {
   const [design, setDesign] = useState<Design>(() => starterDesign('mars', today()));
   const [cadet, setCadet] = useState<CadetState>(() => cadetStart(design));
   const [missionName, setMissionName] = useState(() => defaultMissionName('mars'));
-  const [step, setStep] = useState<Step>(() => (mode === 'cadet' ? (firstLaunch(mode) ? 'cold' : 'home') : 'build'));
+  const [linkCode] = useState(joinLink);
+  const [step, setStep] = useState<Step>(() => (linkCode ? 'join' : mode === 'cadet' ? (firstLaunch(mode) ? 'cold' : 'home') : 'build'));
   /** The cold open on show is the first launch's (it goes on to the name screen), not a replay from Home. */
   const coldFirst = useRef(step === 'cold');
   /** The steps visited before this one, for ◂ BACK. */
@@ -137,6 +160,16 @@ export function App() {
   const [teamRun, setTeamRun] = useState(false);
   /** The Mars starter the team packs on (objectives are Mars only), with the Mars level's science targets. */
   const teamBase = useMemo(() => ({ ...starterDesign('mars', today()), ...(levelById('mars')?.targets ? { scienceTargets: true } : {}) }), []);
+  /** Online room (spec: Online room): this screen as a room's host, or this phone in a room. */
+  const roomHost = useRoomHost();
+  const roomPhone = useRoomPhone();
+  const [place, setPlace] = useState<'local' | 'online'>('local');
+  /** The team in play is an online room's, and this screen is its host. */
+  const [online, setOnline] = useState(false);
+  /** A room is coming back from its resume code: rebuild the team from its log once it opens. */
+  const resuming = useRef(false);
+  /** The "role handed" panel closed with RESUME (by seat and role), so play goes on. */
+  const [handSeen, setHandSeen] = useState<string>();
   const nameRobot = (n: string) => {
     setRobotName(n);
     saveRobotName(n);
@@ -378,7 +411,7 @@ export function App() {
   const next = level && cadetMode && (progress[level.id] ?? 0) >= 1 ? nextLevel(level.id) : undefined;
   const home = () => go('home');
   const firstNew = fresh.length ? notebook(facts).find((c) => c.id === fresh[0]) : undefined;
-  const fullScreen = step === 'team' || step === 'objective' || step === 'cold' || step === 'name' || step === 'launch' || step === 'fly' || step === 'report' || step === 'home' || step === 'daily' || step === 'notebook' || step === 'postcards' || (step === 'build' && cadetMode);
+  const fullScreen = step === 'team' || step === 'objective' || step === 'room' || step === 'join' || step === 'controller' || step === 'cold' || step === 'name' || step === 'launch' || step === 'fly' || step === 'report' || step === 'home' || step === 'daily' || step === 'notebook' || step === 'postcards' || (step === 'build' && cadetMode);
 
   /** The mission briefing: what to do on this level (or a free build, or today's Daily). */
   const briefFor = (forDaily: boolean) =>
@@ -398,6 +431,66 @@ export function App() {
   const packedNow = teamNow ? teamNow.packed : (keptPack?.packed ?? starterPack);
   /** The team's flight: launched by its Flight Director. */
   const teamFly = teamNow?.launched ? teamNow : undefined;
+
+  // ---- Online room, host screen (spec: Online room): the room follows this screen; the phones act ----
+  const host = online ? roomHost.host : undefined;
+  const roomView = online && roomHost.view?.started ? roomHost.view : undefined;
+  /** START MISSION: the room's team is the log's first entry, sent through the room (the phones hear it). */
+  const startRoom = () => {
+    const h = roomHost.host;
+    const team = h?.start();
+    if (!h || !team) return;
+    teamPlay.start(team, h.mission.base, h.mission.shelf, { seed: h.mission.seed }, h);
+    setOnline(true);
+    go('objective');
+  };
+  const endRoom = () => {
+    roomHost.close();
+    setOnline(false);
+  };
+  useEffect(() => {
+    const stage = stageOf(step);
+    if (host && stage) host.setStage(stage);
+  }, [host, step]);
+  // The phones lock the objective, then the Flight Director's phone launches: this screen follows.
+  const teamObjective = teamPlay.session?.team.objectiveLocked ? teamPlay.session.team.objective : undefined;
+  useEffect(() => {
+    if (online && step === 'objective' && teamObjective) playLevel(levelById('mars')!, teamObjective, true);
+  }, [online, step, teamObjective]); // eslint-disable-line react-hooks/exhaustive-deps
+  const teamLaunched = teamPlay.session?.team.launched === true;
+  useEffect(() => {
+    if (online && step === 'build' && teamLaunched) launchTeam();
+  }, [online, step, teamLaunched]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Home ends the room.
+  useEffect(() => {
+    if (step === 'home' && (online || roomHost.phase !== 'idle')) endRoom();
+  }, [step]); // eslint-disable-line react-hooks/exhaustive-deps
+  // A room back from its resume code: rebuild the team from its log, then go on to where its mission was.
+  useEffect(() => {
+    const h = roomHost.host;
+    if (!resuming.current || !h || !h.state.started || !h.team) return;
+    resuming.current = false;
+    const m = h.mission;
+    teamPlay.start(h.team, m.base, m.shelf, { seed: m.seed }, h);
+    setOnline(true);
+    const s = teamPlay.current()!.team;
+    if (s.objectiveLocked && s.objective) playLevel(levelById('mars')!, s.objective, true);
+    else go('objective');
+  }, [roomHost.host]); // eslint-disable-line react-hooks/exhaustive-deps
+  /** The host's flight in the room: the phones' orders run through it; its clock is shared. */
+  const flyRoom = useMemo(
+    () => (host ? { link: (fl: FlightLink | undefined) => host.link(fl), clock: (c: { t: number; speed: number; running: boolean }) => host.setClock({ ...c, at: Date.now() }) } : undefined),
+    [host],
+  );
+  const handKey = roomView?.message.kind === 'handed' ? `${roomView.message.callSign}-${roomView.message.role}` : undefined;
+  const roomPanel = roomView && (roomView.message.kind === 'away' || (handKey !== undefined && handKey !== handSeen)) && (
+    <RoomHold
+      view={roomView}
+      {...(teamPlay.session?.ops && teamPlay.session.team.launched ? { day: teamPlay.session.ops.t } : {})}
+      onHand={() => roomView.message.kind === 'away' && host?.handNow(roomView.message.seat)}
+      onResume={() => setHandSeen(handKey)}
+    />
+  );
 
   return (
     <div className={`app${step === 'build' && !cadetMode ? ' fixed' : ''}${cadetMode ? ' is-cadet' : ''}${step === 'fly' ? ' is-fly' : ''}`}>
@@ -448,6 +541,7 @@ export function App() {
           onPostcards={() => go('postcards')}
           onIntro={() => go('cold')}
           onTeam={() => go('team')}
+          onJoin={() => go('join')}
         />
       )}
       {step === 'team' && (
@@ -458,8 +552,66 @@ export function App() {
           onMode={changeMode}
           onBack={back}
           onNext={() => {
+            setOnline(false);
             teamPlay.start(teamDraft, teamBase, shelfFor('mars'), { seed });
             go('objective');
+          }}
+          place={place}
+          onPlace={setPlace}
+          onRoom={() => {
+            roomHost.open({ base: teamBase, shelf: shelfFor('mars'), seed });
+            go('room');
+          }}
+        />
+      )}
+      {step === 'room' && (
+        <OnlineHost
+          room={roomHost}
+          mode={mode}
+          onMode={changeMode}
+          onBack={() => {
+            endRoom();
+            back();
+          }}
+          onStart={startRoom}
+          onLocal={() => {
+            endRoom();
+            setPlace('local');
+            back();
+          }}
+          onResumed={() => {
+            resuming.current = true;
+          }}
+        />
+      )}
+      {step === 'join' && (
+        <OnlineJoin
+          phone={roomPhone}
+          onBack={back}
+          onJoined={() => go('controller')}
+          onLocal={() => {
+            roomPhone.leave();
+            setPlace('local');
+            go('team');
+          }}
+          {...(linkCode ? { code: linkCode } : {})}
+        />
+      )}
+      {step === 'controller' && (
+        <Controller
+          phone={roomPhone}
+          onHome={() => {
+            setTrail([]);
+            setStep('home');
+          }}
+          onLocal={() => {
+            roomPhone.leave();
+            setPlace('local');
+            go('team');
+          }}
+          onChangeRole={() => {
+            roomPhone.pick(undefined);
+            back();
           }}
         />
       )}
@@ -586,7 +738,7 @@ export function App() {
           onLaunchSeen={() => markSeen(launchKey)}
           onPostcards={addPostcards}
           {...(level ? { teaches: level.steps } : {})}
-          {...(teamFly ? { team: { state: teamFly, log: teamPlay.log, send: teamPlay.send, ...(teamFly.objective ? { objective: teamFly.objective } : {}), ...(teamPlay.session?.ops ? { ops: teamPlay.session.ops } : {}) } } : {})}
+          {...(teamFly ? { team: { state: teamFly, log: teamPlay.log, send: teamPlay.send, ...(teamFly.objective ? { objective: teamFly.objective } : {}), ...(teamPlay.session?.ops ? { ops: teamPlay.session.ops } : {}), ...(flyRoom ? { room: { ...flyRoom, held: roomView?.holding === true } } : {}) } } : {})}
         />
       )}
       {step === 'report' && flown && flyDesign && (
@@ -610,13 +762,15 @@ export function App() {
                 },
               }
             : {})}
-          onFlyAgain={dailyRun ? home : flyAgain}
+          onFlyAgain={dailyRun || online ? home : flyAgain}
           onHome={home}
           onBack={back}
           {...(teamFly ? { team: { state: teamFly, log: teamPlay.log } } : {})}
           homeLabel={NAV.home}
         />
       )}
+      {roomView && step !== 'room' && <RoomBar view={roomView} held={roomView.holding} />}
+      {step !== 'room' && roomPanel}
     </div>
   );
 }

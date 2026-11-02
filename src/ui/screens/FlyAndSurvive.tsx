@@ -84,6 +84,7 @@ import type { RealStorm } from '../../engine/spaceWeather';
 import type { ObjectiveId } from '../../engine/objectives';
 import { cardVote, opRole, teamFlightLines } from '../../engine/team/fly';
 import type { TeamAct, TeamAction } from '../../engine/team/log';
+import type { FlightLink } from '../../engine/team/online';
 import type { TeamState } from '../../engine/team/reduce';
 import { TEAM_RULES, type RoleId } from '../../engine/team/roles';
 import { QuickBar } from '../components/team/TeamPanels';
@@ -97,6 +98,18 @@ export interface FlyTeam {
   objective?: ObjectiveId;
   /** The team's flight (useTeam's session): the screen starts from it, so the two are one mission. */
   ops?: OpsState;
+  /** The online room (this screen is its host): the phones' orders, the shared clock, and a hold while a phone is away. */
+  room?: FlyRoom;
+}
+
+/** The host screen's flight in the online room (spec: Online room). */
+export interface FlyRoom {
+  /** A phone is away and its role is still held for it: the clock holds. */
+  held: boolean;
+  /** The screen's flight, so a phone's order runs through this console (undefined when the screen closes). */
+  link: (f: FlightLink | undefined) => void;
+  /** The screen's clock, shared with the phones. */
+  clock: (c: { t: number; speed: number; running: boolean }) => void;
 }
 
 interface Props {
@@ -307,12 +320,47 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
 
   // An eclipse planning card, an overlay, an open postcard or the launch countdown holds the clock like a danger card does.
   // Science Targets holds it too, but lets an OBSERVE order play its trip (and the robot's reply) while the panel is open.
-  const heldAll = eclipseOpen || overlay !== undefined || launching || openPostcard !== undefined || (reply !== undefined && !sciShown);
+  const heldAll = eclipseOpen || overlay !== undefined || launching || openPostcard !== undefined || (reply !== undefined && !sciShown) || team?.room?.held === true;
   const held = heldAll || sciShown;
   const hold = heldAll ? true : sciShown ? 'orders' : false;
   useEffect(() => {
     ops.setHold(hold);
   }, [hold]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ---- Online room (this screen is the host): a phone's order runs through this console, the way a key here sends
+  // it (so it is logged at this flight's time), and the clock is shared with the phones ----
+  const opsNow = useRef(ops);
+  opsNow.current = ops;
+  const room = team?.room;
+  useEffect(() => {
+    if (!room) return;
+    room.link({
+      t: () => opsNow.current.state?.t ?? 0,
+      op: (op) => {
+        const o = opsNow.current;
+        if (!o.state || o.state.status !== 'flying') return false;
+        if (op.kind === 'dsn') {
+          if (op.fromDay !== op.toDay) return false;
+          o.book(op.fromDay, op.booking.dish, op.booking.hours);
+          return true;
+        }
+        if (op.kind === 'decide') {
+          if (op.decisionId !== 'extension') return false;
+          o.extend(op.optionId);
+          return true;
+        }
+        if (op.command.kind === 'power-plan') o.sendPlan(op.command.plan);
+        else if (op.command.kind === 'observe') o.observe(op.command.targetId);
+        else return false;
+        return true;
+      },
+    });
+    return () => room.link(undefined);
+  }, [room?.link]); // eslint-disable-line react-hooks/exhaustive-deps
+  const shareClock = room?.clock;
+  useEffect(() => {
+    if (shareClock && state) shareClock({ t: state.t, speed: ops.speed, running: ops.speed > 0 && !ops.locked });
+  }, [shareClock, state?.t, ops.speed, ops.locked]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ---- Sound: the CRT hums; radio static while an order or its reply crosses space (engine feed) and the clock
   // moves; a beep when an order reaches the robot (its reply's beep is above) ----

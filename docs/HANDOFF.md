@@ -1,8 +1,8 @@
 # Handoff: where Signal Delay stands
 
-State on **Oct 28, 2026**, at the feature freeze, plus Team Mode (engine PRs #47–#50; local co-op UI PRs #52–#57, Nov 1, see below). `main` is clean, CI green, deployed to https://shariar165.github.io/space-mission-design-game-/ .
+State on **Oct 28, 2026**, at the feature freeze, plus Team Mode (engine PRs #47–#50; local co-op UI PRs #52–#57, Nov 1) and the Online Mission Room (PRs #58–#59, Nov 2; see below). `main` is clean, CI green, deployed to https://shariar165.github.io/space-mission-design-game-/ .
 
-Read this first in a new session, then `CLAUDE.md` (commands, architecture, UI rules) and the relevant section of `docs/SCIENCE_SPEC.md` (v1.2, the source of truth for every equation and rule).
+Read this first in a new session, then `CLAUDE.md` (commands, architecture, UI rules) and the relevant section of `docs/SCIENCE_SPEC.md` (v1.4, the source of truth for every equation and rule).
 
 ## Health at the freeze
 
@@ -34,7 +34,7 @@ Every change reached `main` through a pull request with CI green.
 
 ## Team Mode (spec v1.3, Oct 31 – Nov 1, 2026)
 
-The engine is merged (PRs #47–#50). Local co-op, on one shared screen, is built end to end (PRs #52–#57, below); check that each is merged. Next is the Online Mission Room (T6), in a fresh session. The approved plan is in `~/.claude/plans/breezy-pondering-clarke.md`.
+The engine is merged (PRs #47–#50). Local co-op, on one shared screen, is built end to end (PRs #52–#57, below); check that each is merged. The Online Mission Room (T6, T7) followed (PRs #58–#59, below).
 
 **Done (engine):**
 
@@ -73,11 +73,17 @@ The objectives use the instrument-match rule: the objective's targets carry 60% 
    - README: "Judge in 3 minutes" (a timed route, solo then team) and "Team Mode: 2–4 players" (roles, the six steps, one log).
    - Bangla: counter words right after a number (`${n}টি`) are gone from the team words, and `tests/lang.test.ts` now fails on one.
 6. **Done: danger cards fit** (PR #56, from main). At 1440 the solo card's side choices were cut off, and a three-choice card was taller than the map at 900 high. The row now narrows, and the overlay scrolls from its top. `tests/visual/cardfit.spec.ts` checks every text run of the first three solo cards (Cadet and Engineer) at both sizes with `helpers.ts` `clippedText`; `team.spec.ts` checks the team card the same way.
-7. **Next: the Online Mission Room** (mockup T6, in `Signal Delay - Team Setup.dc.html`). Every player joins on their own phone. The engine is ready for it: the mission is (base design, seed, team log), every action goes through `Transport`, and the same log replays to the same mission (`replayTeam`; the screen's flight already joins the log at each entry's mission time). It needs an online `Transport` (room code, seats, ordering of entries, rejoin from the log), a T6 screen, and a decision on hosting; the game is a static GitHub Pages site today.
+7. **Done: the Online Mission Room** (mockups T6, T7 in `Signal Delay - Online Room.dc.html`; spec "Online room" (v1.4), UI rules 53–55, decisions 92–93). PR #58 imports the mockups; PR #59 builds it. Plan: `~/.claude/plans/cheerful-swinging-lark.md`.
+   - **Relay:** Supabase Realtime broadcast and presence on public channels (user choice); only the publishable key, in `src/data/online.json` `relay`. Client `@supabase/realtime-js` 2.117.3, loaded lazily (`src/ui/online/supabaseRelay.ts`).
+   - **Engine:** `team/room.ts` (codes, seats, holds, hand-overs, rate limit, expiry, `roomView`, `clockAt`), `team/relay.ts` (`Relay`, `MemoryHub` for tests), `team/online.ts` (`OnlineHost`, `OnlineClient`, protocol v1), `team/controller.ts` (`cardTurn`, `directorView`, `commsView`), the `hand` act in `reduce.ts`, `sessionAt` in `replay.ts`.
+   - **UI:** `useRoom.ts` (`useRoomHost`, `useRoomPhone`), `screens/OnlineHost.tsx`, `OnlineJoin.tsx`, `Controller.tsx`, `components/online/RoomHold.tsx` (`RoomHold`, `RoomBar`); App steps `room`, `join`, `controller`; Home's JOIN key and `#join=CODE`; `FlyAndSurvive` `team.room`; styles `sd-online.css`; words `ONLINE_WORDS`, `JOIN_WORDS`, `CONTROLLER_WORDS` with Bangla; saves `sd.online` (phone token) and `sd.rooms` (resume codes).
+   - **Tests:** `tests/online.test.ts` (four phones over a jittery relay end with the host's log and mission), `tests/ui/online.test.tsx`, `tests/visual/online.spec.ts` (`npm run shots -- online`: one host and four phone browser contexts play a Mars mission through a bridge in the test process), and the Bangla pair in `bangla.spec.ts`.
+   - **Keep-alive:** `scripts/relay-keepalive.mjs`, a step in `pages.yml`.
 8. **Still open:** the solo objective picker (the Mars Pack briefing and the Engineer Build Bay; today a solo player picks through TEAM → SOLO). In a team flight, FINISH MISSION lets the robot answer the remaining cards with its defaults, and those are not team votes, so the debrief counts only the cards the team voted on.
 
 ## Open items
 
+0. **Set up the room relay (only the user can).** Until `src/data/online.json` has a project, every room says "no room relay set up" and offers local co-op. Steps (README "Online Room"): create a free Supabase project (keep Realtime's "Allow public access" on); in its SQL editor create the `keepalive` table (the four lines at the top of `scripts/relay-keepalive.mjs`); copy the project URL and the publishable key into `online.json` `relay`; open a PR. Then try a real room: `npm run dev`, a host tab and two phones on the same code (decision 92).
 1. **Delete `OpsSummary`.** `src/ui/components/ops/OpsPanels.tsx:269` is dead code from the old operations console: no screen imports it, and its words are English only. Remove the component, its last assertions in `tests/ui/opsDrawers.test.tsx` (the `render(<OpsSummary …>)` lines and the import), and its styles: `.ops-summary` in `src/ui/styles/ops.css` (lines 282, 295–302, 399) and in `sd-fly.css` (lines 149, 260, 261). Keep `.ops-ext` and `.ops-ext-title`, which `ExtensionDecision` still uses. Run `npm test` and the `fly` and `report` shots.
 2. **"Judge in 3 minutes" README section.** Written (PR #57): a timed route through the Daily, a danger card, Engineer mode, the report, then Team Mode and বাংলা. Still to do: add a screenshot (e.g. the team vote or the Team Debrief from `test-results/shots/`) to `docs/images/`.
 3. **Atlas V payload curves are placeholders.** `src/data/launchVehicles.json` `atlas-v-401` and `atlas-v-411` `payloadCurve` are game estimates. NASA's LSP Performance Query (elvperf.ksc.nasa.gov) can only be used interactively, so a person must export 6–8 points per vehicle (C3 −2 to 40 km²/s²). Until then the launch-capacity validation rows are not real evidence. After the export: set `isGameEstimate: false` with the source and URL, then run `npm run test:validation` and `npm run todo-data`.
