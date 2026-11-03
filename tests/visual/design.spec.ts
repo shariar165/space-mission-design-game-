@@ -27,10 +27,10 @@ const SCREENS: { file: string; name: string; desk: string; phone: string; jumps?
   { file: 'Signal Delay - Home.dc.html', name: 'home', desk: '4a', phone: '4b' },
   { file: 'Signal Delay - Home.dc.html', name: 'daily', desk: '5a', phone: '5b' },
   { file: 'Signal Delay - Notebook.dc.html', name: 'notebook', desk: '6a', phone: '6b' },
-  // Team Mode (spec: Team mode): setup, the objective vote, the online room (later), and the team parts of Pack, Fly and the report.
+  // Team Mode (spec: Team mode): setup, the objective vote, and the team parts of Pack, Fly and the report. The online
+  // room (T6, T7) has its own test below.
   { file: 'Signal Delay - Team Setup.dc.html', name: 'team-setup', desk: 't1a', phone: 't1b' },
   { file: 'Signal Delay - Team Setup.dc.html', name: 'team-objective', desk: 't2a', phone: 't2b' },
-  { file: 'Signal Delay - Team Setup.dc.html', name: 'team-online', desk: 't6a', phone: 't6b' },
   { file: 'Signal Delay - Team Play.dc.html', name: 'team-pack', desk: 't3a', phone: 't3b' },
   { file: 'Signal Delay - Team Play.dc.html', name: 'team-fly', desk: 't4a', phone: 't4b' },
   { file: 'Signal Delay - Team Play.dc.html', name: 'team-report', desk: 't5a', phone: 't5b' },
@@ -54,6 +54,40 @@ for (const s of SCREENS) {
     }
   });
 }
+
+// The Online Room (T6, T7; spec: Online room). Desktop: the host lobby once the four joins have played, then the
+// host's three room states. Phone: the join screen, the four role controllers and the four phone room states.
+test('design online room', async ({ page }, info) => {
+  await open(page, 'Signal Delay - Online Room.dc.html');
+  const project = info.project.name;
+  await page.waitForTimeout(8500); // the joins arrive one after another, the last at about 8 s
+  if (project !== 'mobile') {
+    await shoot(page, 't6a', 'team-online', project);
+    for (const [tab, name] of [
+      ['PLAYER RECONNECTING', 'online-reconnecting'],
+      ['HOST RETURNS · RESUME', 'online-resume'],
+      ['RELAY OFFLINE', 'online-offline'],
+    ] as const) {
+      await page.getByRole('button', { name: tab, exact: true }).click();
+      await page.waitForTimeout(tab === 'HOST RETURNS · RESUME' ? 9000 : 1200); // the phones rejoin one by one
+      await shoot(page, 't7a', name, project);
+    }
+    return;
+  }
+  for (const [id, name] of [
+    ['t6b', 'team-online'],
+    ['t6c', 'online-fd'],
+    ['t6d', 'online-eng'],
+    ['t6e', 'online-sci'],
+    ['t6f', 'online-com'],
+    ['t7b', 'online-waiting'],
+    ['t7c', 'online-reconnecting'],
+    ['t7d', 'online-host-left'],
+    ['t7e', 'online-offline'],
+  ] as const) {
+    await shoot(page, id, name, project);
+  }
+});
 
 // Name Your Robot (screen 00): the typed intro, then a suggestion launched and its first words.
 test('design name', async ({ page }, info) => {
