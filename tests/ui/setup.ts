@@ -1,6 +1,7 @@
 // Shared set-up for the component tests (jsdom). Not a test file itself.
 import { cleanup } from '@testing-library/react';
 import { afterEach, beforeEach, vi } from 'vitest';
+import { RELAY_CONFIG } from '../../src/engine/team/room';
 import { setLang } from '../../src/ui/lang';
 import { inlineRunner, setRiskRunner } from '../../src/ui/riskRunner';
 
@@ -8,6 +9,11 @@ import { inlineRunner, setRiskRunner } from '../../src/ui/riskRunner';
 // Mission operations flight through the engine).
 export const TEST_RISK_RUNS = 20;
 setRiskRunner(inlineRunner(), TEST_RISK_RUNS);
+
+// No network in component tests: the Online Room's relay project (online.json) is blanked, so a room is "not set up"
+// unless a test injects an in-memory relay (injectRelay).
+RELAY_CONFIG.url = '';
+RELAY_CONFIG.publishableKey = '';
 
 beforeEach(() => {
   // jsdom has no layout: scrolling is a no-op, and every test starts from empty storage.

@@ -2,6 +2,7 @@
 // Notebook's flight facts and the Daily results. Every read and write survives missing storage.
 import type { DailyGrid } from '../engine/daily';
 import { emptyFacts, type NotebookFacts } from '../engine/notebook';
+import type { RoomSave } from '../engine/team/online';
 import { teamProblem, type Team } from '../engine/team/roles';
 import { cleanRobotName } from './sdWords';
 
@@ -106,3 +107,19 @@ export const loadTeam = (): Team | undefined => {
   }
 };
 export const saveTeam = (team: Team) => write(TEAM_KEY, { seats: team.seats });
+
+/**
+ * Online room, on a phone: this browser's random token (never a name) and the last room it was in, so a reload rejoins
+ * the same seat.
+ */
+const ONLINE_KEY = 'sd.online';
+export const loadOnline = (): { token?: string; code?: string } => {
+  const v = read<{ token?: unknown; code?: unknown }>(ONLINE_KEY, {});
+  return { ...(typeof v.token === 'string' ? { token: v.token } : {}), ...(typeof v.code === 'string' ? { code: v.code } : {}) };
+};
+export const saveOnline = (v: { token: string; code?: string }) => write(ONLINE_KEY, v);
+
+/** Online room, on the host screen: each room's mission under its resume code (the room ends; the code brings it back). */
+const ROOMS_KEY = 'sd.rooms';
+export const loadRooms = (): Record<string, RoomSave> => read<Record<string, RoomSave>>(ROOMS_KEY, {});
+export const saveRooms = (rooms: Record<string, RoomSave>) => write(ROOMS_KEY, rooms);

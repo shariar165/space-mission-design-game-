@@ -1,0 +1,27 @@
+{
+  "_comment": "Online Mission Room (spec: Online room). The relay the phones and the host screen talk through (Supabase Realtime broadcast and presence on public channels; only the project's public publishable key is in the site), and the room's rules: seats, holds, expiry, rate limits, codes. Every number is a game rule, not NASA data. An empty publishableKey means the relay is not set up: the room says OFFLINE and offers local co-op.",
+  "relay": {
+    "provider": "supabase",
+    "url": "https://qhsckmxffdoshkqkkslk.supabase.co",
+    "publishableKey": "sb_publishable_dwXGUzL2lgzsdKPGtfamSA_f0z7oRoF",
+    "source": "Supabase Realtime, free plan (checked Nov 2026: 200 concurrent connections, 100 messages/s, 2 million messages a month, 256 KB payloads)",
+    "docs": "https://supabase.com/docs/guides/realtime/limits"
+  },
+  "protocol": { "value": 1, "unit": "version", "source": "Game rule (Online room): a phone and a host must speak the same protocol version, or the phone is asked to reload", "isGameEstimate": true },
+  "maxSeats": { "value": 4, "unit": "phones", "source": "Game rule (Online room): one phone per role, four roles", "isGameEstimate": true },
+  "seatHold_s": { "value": 45, "unit": "s", "source": "Game rule (Online room, mockup T7c): a dropped phone's role is held, and the clock paused, this long before the role passes to the Flight Director", "isGameEstimate": true },
+  "hostGrace_s": { "value": 20, "unit": "s", "source": "Game rule (Online room): the phones wait this long for a host screen that dropped (a reload) before the room ends with its resume code", "isGameEstimate": true },
+  "roomTtl_h": { "value": 3, "unit": "h", "source": "Game rule (Online room): a room closes this long after it opened (a lesson and a half); its resume code still works", "isGameEstimate": true },
+  "idleClose_min": { "value": 20, "unit": "min", "source": "Game rule (Online room): a room with no phone linked and nothing sent for this long closes", "isGameEstimate": true },
+  "resumeTtl_days": { "value": 7, "unit": "days", "source": "Game rule (Online room): a resume code is kept in the host's browser this long", "isGameEstimate": true },
+  "connectTimeout_s": { "value": 8, "unit": "s", "source": "Game rule (Online room): a relay that has not answered in this long is offline (the room offers local co-op)", "isGameEstimate": true },
+  "retryEvery_s": { "value": 10, "unit": "s", "source": "Game rule (Online room, mockup T7a/T7e): an offline relay is tried again this often", "isGameEstimate": true },
+  "clockResync_s": { "value": 10, "unit": "s", "source": "Game rule (Online room): the host screen repeats its flight clock this often (and at every play, pause, hold and speed change); phones run the clock in between, which keeps a room near one message per phone every ten seconds", "isGameEstimate": true },
+  "clockDrift_days": { "value": 1, "unit": "mission days", "source": "Game rule (Online room): the host shares its clock again whenever it has drifted this far from what the phones are running on (an order in transit runs the clock faster)", "isGameEstimate": true },
+  "beat_s": { "value": 10, "unit": "s", "source": "Game rule (Online room): a phone or host screen that has sent nothing for this long sends a heartbeat, so the others know it is still there (a real relay can keep listing a phone whose network is gone for a minute or more)", "isGameEstimate": true },
+  "silentDrop_s": { "value": 30, "unit": "s", "source": "Game rule (Online room): a phone the host screen has not heard from for this long has dropped (its role is held, the clock holds), and a host screen the phones have not heard from has left (its grace starts)", "isGameEstimate": true },
+  "rate_perS": { "value": 2, "unit": "actions/s", "source": "Game rule (Online room): each phone's steady action rate (a token bucket); faster taps are refused with SLOW DOWN", "isGameEstimate": true },
+  "burst": { "value": 8, "unit": "actions", "source": "Game rule (Online room): how many quick taps a phone may make at once before the steady rate applies", "isGameEstimate": true },
+  "codeWords": { "value": ["MARS", "MOON", "STAR", "NOVA", "LUNA", "VEGA", "DUST", "APEX"], "unit": "room code words", "source": "Game rule (Online room, mockup T6a): a room code is a space word and three characters, e.g. MARS-7K2", "isGameEstimate": true },
+  "codeAlphabet": { "value": "23456789ABCDEFGHJKMNPQRSTUVWXYZ", "unit": "characters", "source": "Game rule (Online room): the code's characters leave out 0, O, 1, I and L, which children mix up when they type", "isGameEstimate": true }
+}

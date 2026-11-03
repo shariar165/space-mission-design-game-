@@ -19,6 +19,7 @@ import { SCIENCE_VIEW_RULES } from '../src/engine/ops/scienceView';
 import targets from '../src/data/targets.json';
 import objectives from '../src/data/objectives.json';
 import team from '../src/data/team.json';
+import online from '../src/data/online.json';
 import moonTargets from '../src/data/moonTargets.json';
 import ranks from '../src/data/ranks.json';
 import orbitalElements from '../src/data/orbitalElements.json';
@@ -95,6 +96,7 @@ const DATA_FILES: Record<string, unknown> = {
   'spaceWeather.json': spaceWeather,
   'targets.json': targets,
   'team.json': team,
+  'online.json': online,
   'moonTargets.json': moonTargets,
 };
 

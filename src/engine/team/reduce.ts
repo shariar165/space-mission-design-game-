@@ -9,7 +9,7 @@ import { defaultResponse } from '../ops/responses';
 import { buildPackDesign, initialPack, onDay, packPart, PACK, unpackPart, type CalendarDay, type Packed, type PartId } from '../pack';
 import type { Design } from '../types';
 import type { TeamAction } from './log';
-import { hazardRole, holderOf, mayActAs, partRole, seatOf, teamProblem, TEAM_RULES, type RoleId, type SeatId, type Team } from './roles';
+import { hazardRole, holderOf, mayActAs, partRole, ROLE_IDS, seatOf, teamProblem, TEAM_RULES, type RoleId, type SeatId, type Team } from './roles';
 
 export type VoteHow = 'call' | 'majority' | 'tie' | 'solo';
 
@@ -68,7 +68,8 @@ export type TeamRefusal =
   | 'no-recommendation'
   | 'already-voted'
   | 'unknown-message'
-  | 'no-director';
+  | 'no-director'
+  | 'already-held';
 
 export interface TeamResult {
   state: TeamState;
@@ -229,6 +230,19 @@ export function applyTeamAction(state: TeamState, a: TeamAction, ops?: OpsState)
       s.day = act.day;
       s.launched = true;
       return done([], true);
+    }
+    case 'hand': {
+      // any time, before launch or in flight: the role's holder gives it on, or the Flight Director moves it
+      if (!seatOf(team, act.to)) return refuse('unknown-seat');
+      const holder = holderOf(team, act.role);
+      const byHolder = a.role === act.role && holder === a.seat;
+      const byDirector = a.role === 'flight-director' && mayActAs(team, a.seat, 'flight-director');
+      if (!byHolder && !byDirector) return refuse(a.role === act.role || a.role === 'flight-director' ? 'not-your-role' : 'wrong-role');
+      if (holder === act.to) return refuse('already-held');
+      s.team = {
+        seats: team.seats.map((x) => ({ ...x, roles: x.id === act.to ? ROLE_IDS.filter((r) => r === act.role || x.roles.includes(r)) : x.roles.filter((r) => r !== act.role) })),
+      };
+      return done();
     }
     case 'say': {
       if (!mayActAs(team, a.seat, a.role)) return refuse('not-your-role');

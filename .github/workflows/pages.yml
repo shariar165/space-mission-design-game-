@@ -44,6 +44,11 @@ jobs:
               echo "::warning::No live snapshot either: the Daily flies offline (simulated weather) until the next run"
             fi
           fi
+      # The Online Room's relay (a free Supabase project) pauses after a week without database activity: one read
+      # keeps it awake. Nothing to do while online.json has no relay; a failure only warns.
+      - name: Keep the room relay awake
+        continue-on-error: true
+        run: node scripts/relay-keepalive.mjs || echo "::warning::Room relay keep-alive failed"
       # The tests include a shape check of the snapshot just fetched, so a malformed one never deploys.
       - run: npm test
       - run: npm run build

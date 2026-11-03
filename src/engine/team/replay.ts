@@ -25,6 +25,14 @@ export function stepSession(sess: TeamSession, a: TeamAction, opts: StartOptions
   return { session: { team: r.state, ...(ops ? { ops } : {}) }, ...(r.refused ? { refused: r.refused } : {}) };
 }
 
+/**
+ * The session's flight flown on to mission time t, with nothing applied (a phone in the online room shows the
+ * host's clock this way). Pure time passing is not an entry, so this never changes what the log rebuilds.
+ */
+export function sessionAt(sess: TeamSession, t: number): TeamSession {
+  return sess.ops && t > sess.ops.t ? { ...sess, ops: advanceTo(sess.ops, t) } : sess;
+}
+
 /** Rebuild a team mission from its log, then fly it to the end the way FINISH MISSION does. */
 export function replayTeam(
   base: Design,

@@ -26,6 +26,7 @@
 - [Judge in 3 minutes](#judge-in-3-minutes)
 - [How to play](#how-to-play)
   - [Team Mode: 2–4 players](#team-mode-24-players)
+  - [Online Room: every player on a phone](#online-room-every-player-on-a-phone)
 - [Real science, not invented numbers](#real-science-not-invented-numbers)
 - [NASA data used in this game](#nasa-data-used-in-this-game)
 - [Validation against real missions](#validation-against-real-missions)
@@ -124,7 +125,7 @@ Each mission earns up to three stars, all for the **science you bring home** (th
 
 ### Team Mode: 2–4 players
 
-A real mission is flown by a team, so Signal Delay can be too. **TEAM** on Home (co-op) puts up to four players around **one shared screen**: a classroom projector or one laptop. The robot goes to Mars. An online room, with every player on their own phone, is planned.
+A real mission is flown by a team, so Signal Delay can be too. **TEAM** on Home (co-op) puts up to four players around **one shared screen**: a classroom projector or one laptop. The robot goes to Mars. Or open an **online room**, and every player joins on their own phone (below).
 
 **The four roles.** Each player takes one or more roles. Each role has a colour, and each player has a call sign (no names are typed).
 
@@ -144,9 +145,27 @@ A real mission is flown by a team, so Signal Delay can be too. **TEAM** on Home 
 5. **Talk.** The team talks only in **preset quick messages** (AGREE, TOO HEAVY, SCIENCE FIRST, WAIT FOR THE SIGNAL, …), since players may be children. The messages print on the teletype beside the robot's own.
 6. **Report.** After the album comes the **TEAM DEBRIEF**. It gives one row per role: the call that mattered most, what it did, and a stamp. Then comes the **team score** out of 100: half for meeting the objective, a quarter for talking out every budget fight, and a quarter for final calls that went with the recommendation. The team score is the team's own and never changes the stars.
 
-**One mission, one log.** Every team action (a vote, an order, a quick message) goes on one log with the mission time it was sent. The same base design, seed and log always replay to exactly the same mission, which is what will let the online room keep every phone in step.
+**One mission, one log.** Every team action (a vote, an order, a quick message) goes on one log with the mission time it was sent. The same base design, seed and log always replay to exactly the same mission, which is what keeps every phone in an online room in step.
 
 **Controls:** ← / → (or swipe) to choose a response, ↓ for a third option, `?` for help. Time runs at 10×, 100× or 1000× mission days a minute, and **FINISH MISSION** lets the robot fly the rest so every flight reaches the report.
+
+### Online Room: every player on a phone
+
+On Team Setup, pick **ONLINE ROOM** and **NEXT · OPEN ROOM**. The big screen shows a room code such as **MARS-7K2**. Each player opens Signal Delay on a phone, taps **JOIN**, types the code and takes a free role (a link like `…/#join=MARS-7K2` fills the code in). The big screen keeps showing the whole game; each phone shows only its own role: the objective vote, its own parts to pack, and in flight the danger card's vote plus the role's panel (the Flight Director's final call, the Engineer's tiles, the Science Lead's targets, Comms & Ops' DSN pass and command queue).
+
+- **The host screen runs the game.** Phones send their role's actions; the host checks each one and puts it on the one log, so every screen shows the same mission.
+- **A phone that drops** keeps its role for 45 seconds while the clock waits; then (or at once with HAND NOW) its role goes to the Flight Director, and comes back when the phone does.
+- **If the host screen closes,** every phone shows a **resume code**. Typed on the big screen (RESUME A MISSION), it reopens the same room and the phones rejoin.
+- **No accounts, no names** (call signs only), **no free text** (quick messages only). Rooms expire after three hours; each phone is rate-limited.
+- **No relay?** The room says so and offers local co-op on one screen.
+
+**Setting up the relay** (once, for whoever deploys the site). The game is a static site, so the messages go through a free [Supabase](https://supabase.com) project's Realtime broadcast; only the project's public publishable key goes in the site, and nothing is stored there.
+
+1. Create a free Supabase project. In Realtime's settings, keep "Allow public access" on.
+2. In the project's SQL editor, run the four lines at the top of `scripts/relay-keepalive.mjs` (a one-row `keepalive` table). The daily Pages build reads it, because a free project pauses after a week without database activity.
+3. Put the project URL and its **publishable** key in `src/data/online.json` → `relay`.
+
+This copy is set up already. To play a room end to end through the real relay (a host and three phones, about a minute): `ONLINE_LIVE=1 npx playwright test online-live --project=desktop`.
 
 ---
 
