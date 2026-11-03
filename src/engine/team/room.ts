@@ -9,10 +9,10 @@ import type { Sourced } from '../types';
 import type { TeamAct } from './log';
 import { holderOf, ROLE_IDS, SEAT_IDS, TEAM_RULES, type RoleId, type SeatId, type Team } from './roles';
 
-const { protocol, maxSeats, seatHold_s, hostGrace_s, roomTtl_h, idleClose_min, resumeTtl_days, connectTimeout_s, retryEvery_s, clockResync_s, clockDrift_days, rate_perS, burst, codeWords, codeAlphabet } = onlineJson;
+const { protocol, maxSeats, seatHold_s, hostGrace_s, roomTtl_h, idleClose_min, resumeTtl_days, connectTimeout_s, retryEvery_s, clockResync_s, clockDrift_days, beat_s, silentDrop_s, rate_perS, burst, codeWords, codeAlphabet } = onlineJson;
 
 /** The room's rules (online.json; every one a game rule, listed in TODO_DATA.md). */
-export const ONLINE_RULES = { protocol, maxSeats, seatHold_s, hostGrace_s, roomTtl_h, idleClose_min, resumeTtl_days, connectTimeout_s, retryEvery_s, clockResync_s, clockDrift_days, rate_perS, burst, codeWords, codeAlphabet } as unknown as {
+export const ONLINE_RULES = { protocol, maxSeats, seatHold_s, hostGrace_s, roomTtl_h, idleClose_min, resumeTtl_days, connectTimeout_s, retryEvery_s, clockResync_s, clockDrift_days, beat_s, silentDrop_s, rate_perS, burst, codeWords, codeAlphabet } as unknown as {
   protocol: Sourced<number>;
   maxSeats: Sourced<number>;
   seatHold_s: Sourced<number>;
@@ -24,6 +24,8 @@ export const ONLINE_RULES = { protocol, maxSeats, seatHold_s, hostGrace_s, roomT
   retryEvery_s: Sourced<number>;
   clockResync_s: Sourced<number>;
   clockDrift_days: Sourced<number>;
+  beat_s: Sourced<number>;
+  silentDrop_s: Sourced<number>;
   rate_perS: Sourced<number>;
   burst: Sourced<number>;
   codeWords: Sourced<string[]>;

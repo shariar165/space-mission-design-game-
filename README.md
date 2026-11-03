@@ -165,6 +165,8 @@ On Team Setup, pick **ONLINE ROOM** and **NEXT · OPEN ROOM**. The big screen sh
 2. In the project's SQL editor, run the four lines at the top of `scripts/relay-keepalive.mjs` (a one-row `keepalive` table). The daily Pages build reads it, because a free project pauses after a week without database activity.
 3. Put the project URL and its **publishable** key in `src/data/online.json` → `relay`.
 
+This copy is set up already. To play a room end to end through the real relay (a host and three phones, about a minute): `ONLINE_LIVE=1 npx playwright test online-live --project=desktop`.
+
 ---
 
 ## Real science, not invented numbers

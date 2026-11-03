@@ -46,7 +46,7 @@ interface Queued<M> {
  * An in-memory relay for tests. Messages wait in a queue until `flush` (or, with `auto`, until the next timer tick),
  * so a test decides when they arrive. Switches: `drop` loses chosen messages, `jitter` delivers each flush in a
  * shuffled order, `cut` takes one end off the network (it leaves presence and its sends are lost) and `heal` brings
- * it back; `offline` makes new ends fail to connect.
+ * it back; `hide` leaves a connected end out of presence (`show` ends it); `offline` makes new ends fail to connect.
  */
 export class MemoryHub<M> {
   private channels = new Map<string, Set<MemoryRelay<M>>>();
@@ -75,9 +75,23 @@ export class MemoryHub<M> {
     return r;
   };
 
+  /** Keys presence leaves out although the end is still connected (a glitch the real relay shows while it settles). */
+  private hidden = new Set<string>();
+
   /** Everyone linked on a channel. */
   peers(channel: string): Peer[] {
-    return [...this.members(channel)].filter((r) => !r.isCut).map((r) => r.me);
+    return [...this.members(channel)].filter((r) => !r.isCut && !this.hidden.has(r.me.key)).map((r) => r.me);
+  }
+
+  /** Leave an end out of presence while its messages still flow (`show` puts it back). */
+  hide(key: string): void {
+    this.hidden.add(key);
+    for (const channel of this.channels.keys()) this.announce(channel);
+  }
+
+  show(key: string): void {
+    this.hidden.delete(key);
+    for (const channel of this.channels.keys()) this.announce(channel);
   }
 
   /** Take an end off the network (a phone in a tunnel): it leaves presence and its messages are lost. */

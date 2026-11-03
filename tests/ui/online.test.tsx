@@ -78,7 +78,7 @@ describe('the host screen (T6a)', () => {
     expect(btn(TEAM_WORDS.next)).toBeTruthy();
   });
 
-  it('with no relay set up (online.json has no key) the room says so', async () => {
+  it('with no relay set up (no key; component tests blank the project in setup.ts) the room says so', async () => {
     openRoom();
     await waitFor(() => expect(screen.getByText(ONLINE_WORDS.msgNotSetUp)).toBeTruthy());
   });

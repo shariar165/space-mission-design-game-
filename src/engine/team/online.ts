@@ -65,7 +65,9 @@ export type PhoneMsg =
   | (Base & { type: 'hello'; since: number; takeOver?: SeatId })
   | (Base & { type: 'pick'; role?: RoleId })
   | (Base & { type: 'act'; nonce: number; role: RoleId; act: TeamAct })
-  | (Base & { type: 'bye' });
+  | (Base & { type: 'bye' })
+  /** A heartbeat: a phone that has sent nothing for beat_s is still here. */
+  | (Base & { type: 'beat' });
 
 export type HostMsg =
   | (Base & { type: 'room'; room: RoomPublic; last: number })
@@ -74,14 +76,16 @@ export type HostMsg =
   | (Base & { type: 'entry'; entry: TeamAction })
   | (Base & { type: 'clock'; clock: RoomClock; last: number })
   | (Base & { type: 'refused'; to: string; nonce?: number; reason: RoomRefusal | TeamRefusal })
-  | (Base & { type: 'closed'; reason: 'expired' | 'ended' });
+  | (Base & { type: 'closed'; reason: 'expired' | 'ended' })
+  /** The host screen's heartbeat, with its log's length (a phone that missed the last entries asks for them). */
+  | (Base & { type: 'pulse'; last: number });
 
 export type RoomMsg = PhoneMsg | HostMsg;
 
 /** A message without its version and sender (the sending end adds them). */
 type Body<T> = T extends unknown ? Omit<T, 'v' | 'from'> : never;
 
-const isHostMsg = (m: RoomMsg): m is HostMsg => m.type === 'room' || m.type === 'welcome' || m.type === 'sync' || m.type === 'entry' || m.type === 'clock' || m.type === 'refused' || m.type === 'closed';
+const isHostMsg = (m: RoomMsg): m is HostMsg => m.type === 'room' || m.type === 'welcome' || m.type === 'sync' || m.type === 'entry' || m.type === 'clock' || m.type === 'refused' || m.type === 'closed' || m.type === 'pulse';
 
 /** The host screen's flight: the mission time now, and how to send an order the way the console sends it. */
 export interface FlightLink {
@@ -129,6 +133,12 @@ export class OnlineHost implements Transport {
   /** The clock the phones run on (the last one shared). */
   private sent: RoomClock | undefined;
   private peers: Peer[] = [];
+  /** Keys presence has shown at least once, and the keys in its last list. */
+  private seen = new Set<string>();
+  private present = new Set<string>();
+  /** When each phone was last heard from (any message), and when the host last sent one. */
+  private heard = new Map<string, number>();
+  private postedAt = 0;
   private changes = new Listeners<void>();
   status: RelayStatus = 'connecting';
 
@@ -247,6 +257,21 @@ export class OnlineHost implements Transport {
 
   /** Called about once a second: holds that ran out hand their roles on. Returns whether the room has expired. */
   tick(): 'open' | 'expired' {
+    const now = this.deps.now();
+    // a phone not heard from for silentDrop_s has dropped, even while the relay still lists it
+    let silent = false;
+    for (const x of this.room.seats) {
+      const at = this.heard.get(x.token);
+      if (x.linked && at !== undefined && now - at >= ONLINE_RULES.silentDrop_s.value * 1000) {
+        this.room = dropPhone(this.room, x.token, now);
+        silent = true;
+      }
+    }
+    if (silent) {
+      this.broadcastRoom();
+      this.changed();
+    }
+    if (now - this.postedAt >= ONLINE_RULES.beat_s.value * 1000) this.post({ type: 'pulse', last: this.local.log().length });
     const v = this.view();
     for (const seat of v.due) this.handNow(seat);
     if (v.closesIn_s <= 0) {
@@ -273,6 +298,7 @@ export class OnlineHost implements Transport {
   }
 
   private post(m: Body<HostMsg>) {
+    this.postedAt = this.deps.now();
     this.relay.send({ ...m, v: PROTOCOL, from: this.key } as HostMsg);
   }
 
@@ -289,28 +315,66 @@ export class OnlineHost implements Transport {
     return this.teamState.launched && this.flight ? { t: this.flight.t() } : {};
   }
 
+  /**
+   * Presence decides who is here, with two allowances for a real relay, whose presence settles in steps: a phone is
+   * dropped only once presence has shown it (its hello can arrive first), and a phone presence shows again (absent
+   * from the list before) is linked again, with its roles back (it may never have noticed it was gone, so it sends no
+   * hello). A phone that went silent (tick) while still listed comes back with its next message instead.
+   */
   private onPeers(peers: Peer[]) {
     this.peers = peers;
     const here = new Set(peers.map((p) => p.key));
+    for (const k of here) this.seen.add(k);
+    const before = this.present;
+    this.present = here;
+    const now = this.deps.now();
     let changed = false;
-    for (const x of this.room.seats)
-      if (x.linked && !here.has(x.token)) {
-        this.room = dropPhone(this.room, x.token, this.deps.now());
+    for (const x of this.room.seats) {
+      if (x.linked && this.seen.has(x.token) && !here.has(x.token)) {
+        this.room = dropPhone(this.room, x.token, now);
+        changed = true;
+      } else if (!x.linked && here.has(x.token) && !before.has(x.token)) {
+        this.relink(x.token, x.seat, now);
         changed = true;
       }
+    }
     if (changed) {
       this.broadcastRoom();
       this.changed();
     }
   }
 
+  /** A phone that was away is here again (heard from, or back in presence). */
+  private relink(token: string, seat: SeatId, now: number) {
+    this.heard.set(token, now);
+    this.room = joinRoom(this.room, token, now).state;
+    this.giveBack(seat);
+  }
+
+  /** A phone back from away gets back the roles handed on while it was gone. */
+  private giveBack(seat: SeatId) {
+    const team = this.teamState.team;
+    if (!team) return;
+    const back = reclaim(this.room, team, seat);
+    this.room = back.state;
+    for (const h of back.hands) this.local.send({ seat: h.seat, role: h.role, act: h.act, ...this.stamp() });
+  }
+
   private onMessage(m: RoomMsg) {
     if (isHostMsg(m)) return; // another host on this code: the UI picks a fresh code when it sees one (peers)
     const now = this.deps.now();
+    this.heard.set(m.from, now);
     if (m.v !== PROTOCOL) return this.post({ type: 'refused', to: m.from, reason: 'protocol' });
     const gate = rateGate(this.room, m.from, now);
     this.room = gate.state;
     if (!gate.ok) return this.post({ type: 'refused', to: m.from, ...(m.type === 'act' ? { nonce: m.nonce } : {}), reason: 'too-fast' });
+    // a phone that went silent is heard from again (a hello handles its own return)
+    const away = this.room.seats.find((x) => x.token === m.from && !x.linked);
+    if (away && m.type !== 'hello' && m.type !== 'bye') {
+      this.relink(away.token, away.seat, now);
+      this.broadcastRoom();
+      this.changed();
+    }
 
     switch (m.type) {
       case 'hello': {
@@ -322,13 +386,7 @@ export class OnlineHost implements Transport {
         this.post({ type: 'welcome', to: m.from, seat: me.seat, callSign: me.callSign });
         const log = this.local.log();
         this.post({ type: 'sync', to: m.from, mission: this.mission, entries: log.filter((a) => a.seq > m.since), ...(this.clock ? { clock: this.clock } : {}) });
-        // a phone back from away gets back the roles handed on while it was gone
-        const team = this.teamState.team;
-        if (team && (!was?.linked || m.takeOver)) {
-          const back = reclaim(this.room, team, me.seat);
-          this.room = back.state;
-          for (const h of back.hands) this.local.send({ seat: h.seat, role: h.role, act: h.act, ...this.stamp() });
-        }
+        if (!was?.linked || m.takeOver) this.giveBack(me.seat);
         this.broadcastRoom();
         return this.changed();
       }
@@ -339,7 +397,10 @@ export class OnlineHost implements Transport {
         this.broadcastRoom();
         return this.changed();
       }
+      case 'beat':
+        return;
       case 'bye': {
+        this.heard.delete(m.from);
         this.room = leaveRoom(this.room, m.from, now);
         this.broadcastRoom();
         return this.changed();
@@ -422,6 +483,10 @@ export class OnlineClient implements Transport {
   private asked = 0;
   private askedAt = 0;
   private hostHere = false;
+  /** When this phone last sent a message and last heard its host; whether the host went silent (not left presence). */
+  private postedAt = 0;
+  private heardHostAt = 0;
+  private hostSilent = false;
   state: PhoneState;
 
   constructor(
@@ -469,8 +534,19 @@ export class OnlineClient implements Transport {
     this.post({ type: 'bye' });
     this.relay.close();
   }
-  /** Called about once a second: a host screen gone longer than its grace ends the room. */
+  /**
+   * Called about once a second: a heartbeat when this phone has sent nothing for beat_s; a host screen not heard from
+   * for silentDrop_s has left (even while the relay still lists it); a host gone longer than its grace ends the room.
+   */
   tick(): void {
+    const now = this.deps.now();
+    if (this.state.status === 'linked') {
+      if (this.state.me && now - this.postedAt >= ONLINE_RULES.beat_s.value * 1000) this.post({ type: 'beat' });
+      if (this.state.room && this.heardHostAt > 0 && this.state.hostAwaySince === undefined && now - this.heardHostAt >= ONLINE_RULES.silentDrop_s.value * 1000) {
+        this.hostSilent = true;
+        this.set({ hostAwaySince: now });
+      }
+    }
     const s = this.state;
     if (s.status !== 'closed' && s.hostAwaySince !== undefined && s.room && hostGone(s.hostAwaySince, this.deps.now())) this.set({ status: 'closed', closed: 'host-left' });
   }
@@ -486,6 +562,7 @@ export class OnlineClient implements Transport {
   }
 
   private post(m: Body<PhoneMsg>) {
+    this.postedAt = this.deps.now();
     this.relay.send({ ...m, v: PROTOCOL, from: this.token } as PhoneMsg);
   }
 
@@ -526,6 +603,15 @@ export class OnlineClient implements Transport {
     // pin the host: the first host that answers is the room's (another key is ignored while it is here)
     if (this.hostKey === undefined) this.hostKey = m.from;
     else if (m.from !== this.hostKey) return;
+    this.heardHostAt = this.deps.now();
+    if (this.hostSilent) {
+      // the host that went silent is heard again: rejoin (the hello catches up what was lost)
+      this.hostSilent = false;
+      const { hostAwaySince: _h, ...rest } = this.state;
+      this.state = this.state.status === 'closed' && this.state.closed === 'host-left' ? { ...rest, status: 'connecting' } : rest;
+      this.hello();
+      this.changes.emit();
+    }
     if ('to' in m && m.to !== this.token) return;
     switch (m.type) {
       case 'room':
@@ -549,6 +635,8 @@ export class OnlineClient implements Transport {
         return this.set({ status: 'refused', refused: m.reason });
       case 'closed':
         return this.set({ status: 'closed', closed: m.reason });
+      case 'pulse':
+        return this.behind(m.last);
     }
   }
 

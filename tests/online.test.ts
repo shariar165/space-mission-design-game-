@@ -211,6 +211,17 @@ function started(seed = 1) {
   return { ...room, box: host };
 }
 
+/** Let time pass the way the screens do: every second each phone and the host screen tick (heartbeats, holds). */
+function pass(room: { clock: { ms: number }; host: OnlineHost; phones: OnlineClient[]; hub: MemoryHub<RoomMsg> }, seconds: number) {
+  for (let i = 0; i < seconds; i++) {
+    room.clock.ms += 1000;
+    for (const p of room.phones) p.tick();
+    room.hub.flush();
+    room.host.tick();
+    room.hub.flush();
+  }
+}
+
 describe('acting from a phone', () => {
   it('the host checks the role: a phone acting as a role it does not hold bounces, and nothing is logged', () => {
     const { phones, hub, host } = started();
@@ -400,14 +411,12 @@ describe('a phone drops out', () => {
     let v = host.view();
     expect(v.holding).toBe(true);
     expect(v.message).toMatchObject({ kind: 'away', role: 'spacecraft-engineer', holdLeft_s: ONLINE_RULES.seatHold_s.value });
-    clock.ms += 20_000;
+    pass({ clock, host, phones, hub }, 20);
     expect(host.view().message).toMatchObject({ kind: 'away', holdLeft_s: ONLINE_RULES.seatHold_s.value - 20 });
     // meanwhile the others keep talking: the dropped phone misses these entries
     phones[0]!.act('flight-director', { kind: 'objective', objective: 'surface' });
     hub.flush();
-    clock.ms += 26_000; // past the 45 s hold
-    expect(host.tick()).toBe('open');
-    hub.flush();
+    pass({ clock, host, phones, hub }, 26); // past the 45 s hold
     v = host.view();
     expect(v.holding).toBe(false);
     expect(holderOf(box.sess.team.team!, 'spacecraft-engineer')).toBe('p1');
@@ -419,6 +428,92 @@ describe('a phone drops out', () => {
     expect(holderOf(box.sess.team.team!, 'spacecraft-engineer')).toBe('p2');
     expect(host.view().message).toEqual({ kind: 'running' });
     expect(eng.log()).toEqual(host.log());
+  });
+
+  it('presence that has not yet shown a phone does not drop it (its hello can arrive first)', () => {
+    const { hub, host, deps } = setup(0);
+    hub.hide('ph-slow');
+    const slow = new OnlineClient(deps, 'MARS-7K2', 'ph-slow');
+    hub.flush();
+    expect(slow.state.status).toBe('linked');
+    // a presence list without it (the relay has not caught up) leaves its seat linked
+    hub.hide('ph-other');
+    hub.flush();
+    expect(host.state.seats.find((x) => x.token === 'ph-slow')?.linked).toBe(true);
+    hub.show('ph-slow');
+    hub.flush();
+    expect(host.state.seats.find((x) => x.token === 'ph-slow')?.linked).toBe(true);
+  });
+
+  it('a presence glitch: a phone left out of one presence list and back in the next keeps its seat and its roles', () => {
+    const { hub, host, phones, clock, box } = started(4);
+    const eng = phones[1]!;
+    hub.hide(eng.token);
+    hub.flush();
+    expect(host.view().holding).toBe(true);
+    // the phone never noticed (it is still connected); presence shows it again
+    hub.show(eng.token);
+    hub.flush();
+    expect(host.view().holding).toBe(false);
+    expect(host.view().message).toEqual({ kind: 'running' });
+    // past a hold (its messages lost too, or its heartbeat would bring it back): its role went to the Flight Director,
+    // and comes back with the phone
+    hub.hide(eng.token);
+    hub.drop = (m) => m.from === eng.token;
+    hub.flush();
+    pass({ clock, host, phones, hub }, ONLINE_RULES.seatHold_s.value + 1);
+    expect(holderOf(box.sess.team.team!, 'spacecraft-engineer')).toBe('p1');
+    hub.drop = undefined;
+    hub.show(eng.token);
+    hub.flush();
+    expect(holderOf(box.sess.team.team!, 'spacecraft-engineer')).toBe('p2');
+    expect(eng.log()).toEqual(host.log());
+    // and its actions go through again
+    const n = host.log().length;
+    eng.act('spacecraft-engineer', { kind: 'say', quick: 'good-call' });
+    hub.flush();
+    expect(host.log().length).toBe(n + 1);
+  });
+
+  it('a phone whose network is gone while the relay still lists it is dropped once it goes silent, and its next word brings it back', () => {
+    const room = started(12);
+    const { hub, host, phones, box } = room;
+    const eng = phones[1]!;
+    // the relay keeps it in presence (as a real one does for a minute or more), but nothing gets through either way
+    hub.drop = (m, to) => m.from === eng.token || to.key === eng.token;
+    pass(room, ONLINE_RULES.silentDrop_s.value - 1);
+    expect(host.view().holding).toBe(false);
+    pass(room, 2);
+    expect(host.view().holding).toBe(true);
+    expect(host.view().message).toMatchObject({ kind: 'away', role: 'spacecraft-engineer' });
+    expect(host.view().linked).toBe(3); // the others' heartbeats keep them linked
+    pass(room, ONLINE_RULES.seatHold_s.value);
+    expect(holderOf(box.sess.team.team!, 'spacecraft-engineer')).toBe('p1');
+    // the network is back: its next heartbeat relinks it, its role comes back, and it catches up
+    hub.drop = undefined;
+    pass(room, ONLINE_RULES.beat_s.value + 1);
+    expect(host.view().holding).toBe(false);
+    expect(holderOf(box.sess.team.team!, 'spacecraft-engineer')).toBe('p2');
+    expect(eng.log()).toEqual(host.log());
+  });
+
+  it('a host screen whose network is gone while the relay still lists it ends the room after the silence and the grace; it comes back when heard again', () => {
+    const room = started(13);
+    const { hub, host, phones } = room;
+    hub.drop = (m) => m.from === host.key;
+    pass(room, ONLINE_RULES.silentDrop_s.value + ONLINE_RULES.hostGrace_s.value - 1);
+    expect(phones[0]!.state.status).toBe('linked');
+    pass(room, 2);
+    for (const p of phones) {
+      expect(p.state.status).toBe('closed');
+      expect(p.state.closed).toBe('host-left');
+    }
+    hub.drop = undefined;
+    pass(room, ONLINE_RULES.beat_s.value + 1);
+    for (const p of phones) {
+      expect(p.state.status).toBe('linked');
+      expect(p.log()).toEqual(host.log());
+    }
   });
 
   it('HAND NOW passes the role at once; a new phone may take over a seat that is away', () => {

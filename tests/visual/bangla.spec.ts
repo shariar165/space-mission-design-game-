@@ -248,11 +248,13 @@ test('Bangla: Team Setup and the Mission Objective', async ({ page }, info) => {
   await shot(page, 'team-report', p);
 });
 
-test('Bangla: the online room with no relay (host screen and a phone’s join)', async ({ page }, info) => {
+test('Bangla: the online room with the relay unreachable (host screen and a phone’s join)', async ({ page }, info) => {
   const p = info.project.name;
+  // the relay's socket is refused (no network needed; the room goes OFFLINE after its connect timeout)
+  await page.routeWebSocket(/\/realtime\/v1\//, (ws) => ws.close());
   await banglaPlayer(page, ['cold-open', 'name']);
   if (p === 'mobile') {
-    // a phone joins: with no relay set up it offers local co-op (T7e)
+    // a phone joins: with the relay unreachable it offers local co-op (T7e)
     await page.getByRole('button', { name: /^যোগ দাও: / }).click();
     await page.getByLabel('ঘরের কোড').fill('MARS-7K2');
     await expect(page.locator('.ol-alarm')).toBeVisible({ timeout: 20_000 });
