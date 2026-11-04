@@ -35,7 +35,7 @@ Voice-over pace: about 140 words a minute. The 240 s script has about 470 words,
 | --- | --- | --- | --- |
 | **0:00–0:05** | The cold open's — NO SIGNAL —, with static. | "In 1999, NASA lost a spacecraft at Mars." | NO SIGNAL |
 | **0:05–0:11** | The Mars plate's light time, then an order pulse crawling from Earth to Mars. | "Out there, every order you send arrives minutes late." | Your order takes … |
-| **0:11–0:20** | Fast cuts: the Pack grid, a solar storm card, four phones voting, the Flight Director's FINAL CALL. | "Pack a robot. Survive the real Sun. Decide as a team, before the danger beats your signal." | Real NASA data · Real orbits |
+| **0:11–0:20** | Fast cuts: the Pack grid, a solar storm card, four phones voting, the Flight Director's FINAL CALL. | "Pack a robot. Survive solar storms. Decide as a team, before the danger beats your signal." | Real NASA data · Real orbits |
 | **0:20–0:26** | The Mars globe and OBSERVE, then the album filling with pictures. | "Then bring the science home." | BRING THE SCIENCE HOME |
 | **0:26–0:30** | End card. | "Signal Delay. Free in your browser." | SIGNAL DELAY · URL |
 
