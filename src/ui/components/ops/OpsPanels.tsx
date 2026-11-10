@@ -1,16 +1,12 @@
 // Console panels from the mockup: command queue (1j), radio blackout (1l), safe mode (1m), mission extension (1p),
-// plus the end-of-operations summary and the receipt toast. Values from consoleView() and operationsDebrief().
+// plus the receipt toast. Values from consoleView().
 import { PARTS } from '../../../engine/data';
 import type { ConsoleBlackout, ConsoleCommand, ConsoleScience, OpsConsoleView } from '../../../engine/ops/console';
-import type { OpsDebrief } from '../../../engine/ops/index';
 import type { ExtensionOption } from '../../../engine/ops/types';
-/** Stars a flight can earn (as the Debrief). */
-const STAR_COUNT = 3;
 import * as f from '../../format';
 import { cssPct } from '../../opsGeometry';
-import { DRAWER_WORDS, EXTENSION_BLOCKER, OPS_PHASE } from '../../opsWords';
+import { DRAWER_WORDS, EXTENSION_BLOCKER } from '../../opsWords';
 import type { Notice } from '../../useOpsSession';
-import { Star } from '../icons';
 import { BlockIcon, ExtendIcon, RadioIcon, RetireIcon, SkipIcon, SunIcon } from './opsIcons';
 
 const instrumentName = (id: string) => PARTS.instruments[id]?.name ?? id;
@@ -259,71 +255,6 @@ export function ExtensionDecision({
             </div>
           );
         })}
-      </div>
-    </section>
-  );
-}
-
-// ---------------------------------------------------------------------------
-
-export function OpsSummary({ debrief, destName, onExit, onRestart }: { debrief: OpsDebrief; destName: string; onExit: () => void; onRestart: () => void }) {
-  const lost = debrief.status === 'lost' && !debrief.completed;
-  const ext = debrief.extension;
-  return (
-    <section className="ops-summary" aria-label="Operations debrief">
-      <span className="ops-label acc">OPERATIONS DEBRIEF</span>
-      <h2 className="ops-ext-title">
-        {lost ? `Contact lost in the ${OPS_PHASE[debrief.failedPhase ?? 'cruise'].toLowerCase()} phase.` : `Prime mission at ${destName} complete.`}
-      </h2>
-      <div className="ops-sum-stars" aria-label={`${debrief.stars} of ${STAR_COUNT} stars`}>
-        {Array.from({ length: STAR_COUNT }, (_, i) => (
-          <Star key={i} filled={i < debrief.stars} size={30} />
-        ))}
-        <span className="mono muted">{f.num(debrief.score)} PTS · PRIME MISSION</span>
-      </div>
-      <div className="ops-sum-grid">
-        <div className="ops-row">
-          <span className="muted">Science sent home</span>
-          <span className="mono">
-            {f.gbit(debrief.downlinked_Gbit)} of {f.gbit(debrief.goal_Gbit)}
-          </span>
-        </div>
-        <div className="ops-row">
-          <span className="muted">Science days</span>
-          <span className="mono">
-            {f.num(debrief.scienceDaysAchieved)} of {f.num(debrief.plannedScienceDays)}
-          </span>
-        </div>
-        <div className="ops-row">
-          <span className="muted">Hazards faced</span>
-          <span className="mono">{f.num(debrief.hazards.length)}</span>
-        </div>
-        <div className="ops-row">
-          <span className="muted">Δv left</span>
-          <span className="mono">{f.speed(debrief.deltaV.left_ms)}</span>
-        </div>
-      </div>
-      <div className="ops-sum-ext">
-        <span className="ops-label bp">EXTENDED MISSION · REPORTED SEPARATELY</span>
-        <span>
-          {ext.outcome === 'not-offered'
-            ? 'No extension was possible.'
-            : ext.outcome === 'declined'
-              ? 'You retired the craft at the end of the prime mission.'
-              : ext.outcome === 'lost'
-                ? `Lost after ${f.days(ext.daysFlown)} of extra flying, with ${f.gbit(ext.downlinked_Gbit)} more science sent home.`
-                : `${f.days(ext.daysFlown)} of extra flying, ${f.gbit(ext.downlinked_Gbit)} more science, ${f.money(ext.cost_M, 1)} of new money.`}
-        </span>
-        <span className="faint">Your stars and score come from the prime mission only, so an extension can never take them away.</span>
-      </div>
-      <p className="muted">{debrief.hint}</p>
-      <div className="actions">
-        <button type="button" className="cta" onClick={onExit}>
-          Back to the debrief
-        </button>
-        <button type="button" className="btn ghost" onClick={onRestart}>
-          Fly operations again
-        </button>
       </div>
     </section>
   );

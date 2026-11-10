@@ -278,8 +278,8 @@
 .ops-end .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--bp); }
 .ops-end .dot.craft { border-radius: 1px; transform: rotate(45deg); background: var(--acc); }
 
-/* ---------- Extension and summary ---------- */
-.ops-ext, .ops-summary { position: absolute; inset: 0; padding: 28px 40px; display: flex; flex-direction: column; gap: 18px; background: rgba(28, 30, 24, 0.95); z-index: 5; overflow-y: auto; }
+/* ---------- Extension ---------- */
+.ops-ext { position: absolute; inset: 0; padding: 28px 40px; display: flex; flex-direction: column; gap: 18px; background: rgba(28, 30, 24, 0.95); z-index: 5; overflow-y: auto; }
 .ops-ext-head { display: flex; flex-direction: column; gap: 8px; align-items: center; text-align: center; }
 .ops-ext-title { margin: 0; font: 600 34px/1.1 var(--display); letter-spacing: -0.02em; text-wrap: balance; }
 .ops-ext-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
@@ -292,14 +292,6 @@
 .ops-ext-rows { display: flex; flex-direction: column; gap: 8px; margin-top: auto; }
 .ops-ext-rows .ops-row { font: 13px/1.2 var(--body); }
 .ops-ext-card .cta, .ops-ext-card .btn { margin-top: auto; }
-.ops-summary { align-items: flex-start; }
-.ops-summary .ops-ext-title { font-size: 30px; }
-.ops-sum-stars { display: flex; align-items: center; gap: 6px; }
-.ops-sum-stars .mono { margin-left: 10px; font-size: 12px; }
-.ops-sum-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 340px)); gap: 10px 28px; }
-.ops-sum-grid .ops-row { font: 14px/1.3 var(--body); }
-.ops-sum-ext { display: flex; flex-direction: column; gap: 6px; max-width: 720px; padding: 14px 16px; border-radius: 14px; border: 1px dashed var(--line2); background: var(--panel); font: 14px/1.45 var(--body); }
-.ops-summary .actions { display: flex; gap: 12px; flex-wrap: wrap; }
 
 /* ---------- Upcoming strip ---------- */
 .ops-upcoming { border-top: 1px solid var(--line); background: var(--panel); padding: 12px 24px 10px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
@@ -396,9 +388,8 @@
   .ops-dock { position: relative; left: auto; right: auto; bottom: auto; grid-template-columns: 1fr; margin: 0 16px; }
   .ops-dock-btn { height: 64px; }
   .ops-dock-text .muted { display: block; }
-  .ops-ext, .ops-summary { position: relative; inset: auto; padding: 20px 16px; background: transparent; }
+  .ops-ext { position: relative; inset: auto; padding: 20px 16px; background: transparent; }
   .ops-ext-title { font-size: 24px; }
-  .ops-sum-grid { grid-template-columns: 1fr; }
   .ops-side { border-left: none; border-top: 1px solid var(--line); }
   .ops-dial-grid { grid-template-columns: 1fr; }
   .ops-dial-svg { max-width: 220px; margin: 0 auto; }

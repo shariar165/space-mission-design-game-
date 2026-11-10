@@ -58,6 +58,19 @@ import { defaultMissionName, starterDesign, today } from './starters';
 
 const newSeed = () => Math.floor(Math.random() * 2 ** 31);
 
+/**
+ * ?play=<level id> in the URL: open that level's Pack straight away (a judge's or a teacher's link), whatever is
+ * unlocked; saved progress is not changed. Unknown ids are ignored.
+ */
+function urlPlay(): Level | undefined {
+  try {
+    const v = new URLSearchParams(window.location.search).get('play');
+    return v ? levelById(v.trim()) : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 /** ?seed=N in the URL: every flight uses that seed, so a demo replays identically. */
 function urlSeed(): number | undefined {
   try {
@@ -116,7 +129,9 @@ export function App() {
   const [cadet, setCadet] = useState<CadetState>(() => cadetStart(design));
   const [missionName, setMissionName] = useState(() => defaultMissionName('mars'));
   const [linkCode] = useState(joinLink);
-  const [step, setStep] = useState<Step>(() => (linkCode ? 'join' : mode === 'cadet' ? (firstLaunch(mode) ? 'cold' : 'home') : 'build'));
+  /** A ?play= link's level, opened once on load (Cadet only; it skips the cold open). */
+  const [linkLevel] = useState(() => (mode === 'cadet' ? urlPlay() : undefined));
+  const [step, setStep] = useState<Step>(() => (linkCode ? 'join' : mode === 'cadet' ? (firstLaunch(mode) && !linkLevel ? 'cold' : 'home') : 'build'));
   /** The cold open on show is the first launch's (it goes on to the name screen), not a replay from Home. */
   const coldFirst = useRef(step === 'cold');
   /** The steps visited before this one, for ◂ BACK. */
@@ -337,6 +352,13 @@ export function App() {
     const orbit = saved.orbit && (orbitPresets(l.destination) as string[]).includes(saved.orbit) ? saved.orbit : undefined;
     return { packed, ...(objective ? { objective } : {}), ...(rocket ? { rocket } : {}), ...(orbit ? { orbit } : {}) };
   };
+
+  const linkOpened = useRef(false);
+  useEffect(() => {
+    if (!linkLevel || linkOpened.current) return;
+    linkOpened.current = true;
+    playLevel(linkLevel);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const playLevel = (l: Level, objective?: ObjectiveId, asTeam = false) => {
     setTeamRun(asTeam);

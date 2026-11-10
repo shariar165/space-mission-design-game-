@@ -62,7 +62,8 @@ export const signedPct = (fraction: number, digits = 1) =>
 /** Data volumes: bits → Gbit (or Mbit when small). */
 export function bits(b: number): string {
   if (!Number.isFinite(b)) return '∞';
-  return b >= 1e9 ? `${num(b / 1e9, 2)} Gbit` : `${num(b / 1e6, 0)} Mbit`;
+  // two decimals for small Gbit amounts, none from 100 Gbit up (the Moon's link: "693,000 Gbit", not "692,999.94")
+  return b >= 1e9 ? `${num(b / 1e9, b >= 1e11 ? 0 : 2)} Gbit` : `${num(b / 1e6, 0)} Mbit`;
 }
 export const signedBits = (b: number) => withSign(b, bits(Math.abs(b)));
 export const gbit = (g: number) => `${num(g, g < 10 ? 2 : 0)} Gbit`;

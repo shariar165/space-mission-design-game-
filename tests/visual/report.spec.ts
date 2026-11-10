@@ -49,6 +49,9 @@ test('report', async ({ page }, info) => {
   await page.getByRole('region', { name: 'Final transmission' }).getByRole('button', { name: /FEED THE PAPER/ }).click();
   await page.waitForTimeout(11_000); // the comic prints panel by panel
   await page.screenshot({ path: `test-results/shots/report-${info.project.name}.png`, fullPage: mobile });
+  // every comic caption has printed in full and fits its panel (the last one once showed half-printed in the README)
+  for (const cap of await page.locator('.rp-caption').all()) await expect(cap).toBeVisible();
+  expect(await clippedText(page, mobile ? '.rp-strip' : '.rp-comic', mobile ? ['.rp-strip'] : [])).toEqual([]);
   if (!mobile) {
     await page.getByRole('switch', { name: 'Engineer mode' }).click();
     await page.waitForTimeout(1500);

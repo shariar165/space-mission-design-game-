@@ -162,7 +162,7 @@
 .fly-ev-when { font: 400 16px/1 var(--sd-crt-font); color: var(--sd-crt-dim); }
 
 /* Drawers reuse the console panels inside the CRT: re-skin their surfaces. */
-.fly .ops-panel, .fly .ops-card, .fly .ops-summary, .fly .ops-ext, .fly .ops-queue { background: var(--sd-panel); border-color: var(--sd-line); }
+.fly .ops-panel, .fly .ops-card, .fly .ops-ext, .fly .ops-queue { background: var(--sd-panel); border-color: var(--sd-line); }
 
 /* ---- Phone: 390 × 844, rows 30 / 70 / 1fr / 168 ---- */
 .fly.phone { height: 100dvh; min-height: 600px; padding: 12px 10px 14px; grid-template-rows: 30px 70px minmax(0, 1fr) 168px; gap: 10px; }
@@ -273,9 +273,9 @@
 .fly-end-v { font: 400 22px/1.1 var(--sd-crt-font); color: var(--sd-crt-hi); }
 
 /* The console's panels inside Fly & Survive drawers: laid out by the drawer, painted in the Signal Delay palette. */
-.fly .ops-panel, .fly .ops-ext, .fly .ops-summary { background: var(--sd-panel); border: 1px solid var(--sd-line); border-radius: 8px; box-shadow: var(--sd-shadow-card); color: var(--sd-ink-2); font-family: var(--sd-body); }
-.fly-drawer > .ops-panel, .fly-drawer > .ops-ext, .fly-drawer > .ops-summary, .fly-drawer > section { position: static; inset: auto; width: auto; max-height: none; }
-.fly .ops-panel-title, .fly .ops-ext h2, .fly .ops-summary h2 { font-family: var(--sd-display); letter-spacing: 0.04em; color: var(--sd-ink); }
+.fly .ops-panel, .fly .ops-ext { background: var(--sd-panel); border: 1px solid var(--sd-line); border-radius: 8px; box-shadow: var(--sd-shadow-card); color: var(--sd-ink-2); font-family: var(--sd-body); }
+.fly-drawer > .ops-panel, .fly-drawer > .ops-ext, .fly-drawer > section { position: static; inset: auto; width: auto; max-height: none; }
+.fly .ops-panel-title, .fly .ops-ext h2 { font-family: var(--sd-display); letter-spacing: 0.04em; color: var(--sd-ink); }
 .fly .ops-label { font-family: var(--sd-mono); color: var(--sd-ink-3); }
 .fly .ops-blackout { border-color: var(--sd-red); }
 .fly .ops-cmd, .fly .ops-warnbox { background: var(--sd-chassis); border-color: var(--sd-line); }

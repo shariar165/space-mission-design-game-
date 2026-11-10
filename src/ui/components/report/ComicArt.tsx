@@ -31,6 +31,8 @@ const STARS = (
   </>
 );
 
+// Sound words are centre-anchored well inside the art: with `slice` a narrow panel crops the sides (report.spec.ts
+// checks every caption and sound word fits its panel at both shot sizes).
 export function ComicArt({ kind, sound, destColor }: { kind: PanelKind; sound?: string; destColor: string }) {
   return (
     <svg viewBox="0 0 340 300" preserveAspectRatio="xMidYMid slice" className="rp-art" aria-hidden="true">
@@ -53,7 +55,7 @@ export function ComicArt({ kind, sound, destColor }: { kind: PanelKind; sound?: 
             <rect x="158" y="128" width="24" height="6" fill="var(--sd-paper-ink)" />
           </g>
           {kind === 'launch-failed' && (
-            <text x="200" y="90" className="rp-sound" transform="rotate(-8 200 90)">
+            <text x="240" y="90" textAnchor="middle" className="rp-sound" transform="rotate(-8 240 90)">
               {COMIC_WORDS.boom}
             </text>
           )}
@@ -67,7 +69,7 @@ export function ComicArt({ kind, sound, destColor }: { kind: PanelKind; sound?: 
           <path d="M170 20 A190 190 0 0 1 170 280" stroke="var(--sd-amber)" strokeOpacity=".6" strokeWidth="6" fill="none" strokeDasharray="12 12" />
           <Craft t="translate(262 150) scale(2.4)" />
           <path d="M240 98 l10 10 -8 4 12 12 M286 196 l-10 -8 8 -4 -12 -12" stroke="var(--sd-alarm)" strokeWidth="4" fill="none" strokeLinejoin="round" />
-          <text x="226" y="250" className="rp-sound" transform="rotate(-8 236 250)">
+          <text x="222" y="250" textAnchor="middle" className="rp-sound" transform="rotate(-8 222 250)">
             {sound ?? COMIC_WORDS.zap}
           </text>
         </>
@@ -79,7 +81,7 @@ export function ComicArt({ kind, sound, destColor }: { kind: PanelKind; sound?: 
           <circle cx="225" cy="180" r="22" fill="rgba(0,0,0,.25)" />
           <circle cx="290" cy="240" r="14" fill="rgba(0,0,0,.25)" />
           <Craft t="translate(96 92) scale(2.1) rotate(-18)" flame={kind === 'arrival'} />
-          <text x="20" y="268" className="rp-sound" transform="rotate(-6 20 268)">
+          <text x="160" y="268" textAnchor="middle" className="rp-sound" transform="rotate(-6 160 268)">
             {kind === 'arrival' ? COMIC_WORDS.whoosh : COMIC_WORDS.beep}
           </text>
         </>

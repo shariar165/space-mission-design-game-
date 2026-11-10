@@ -8,14 +8,13 @@ import {
   advanceOperations,
   consoleView,
   dsnOptions,
-  operationsDebrief,
   powerPlanPreview,
   prepareOps,
   startOperations,
   type OpsState,
 } from '../../src/engine/ops/index';
 import { BookCall } from '../../src/ui/components/ops/BookCall';
-import { BlackoutPanel, ExtensionDecision, OpsSummary } from '../../src/ui/components/ops/OpsPanels';
+import { BlackoutPanel, ExtensionDecision } from '../../src/ui/components/ops/OpsPanels';
 import { PowerDial } from '../../src/ui/components/ops/PowerDial';
 import * as f from '../../src/ui/format';
 import { EXTENSION_BLOCKER } from '../../src/ui/opsWords';
@@ -84,9 +83,5 @@ describe('Drawers: extension and debrief', () => {
     for (const o of opts) for (const b of o.blockedBy) expect(screen.getByText(EXTENSION_BLOCKER[b], { exact: false })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Retire the craft' }));
     expect(onChoose).toHaveBeenCalledWith('end');
-    const d = operationsDebrief(s);
-    render(<OpsSummary debrief={d} destName="Mars" onExit={() => undefined} onRestart={() => undefined} />);
-    expect(screen.getByLabelText(`${d.stars} of 3 stars`)).toBeTruthy();
-    expect(screen.getByText(`${f.num(d.score)} PTS · PRIME MISSION`)).toBeTruthy();
   });
 });
