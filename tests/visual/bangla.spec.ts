@@ -156,6 +156,20 @@ test('Bangla: Cloud Diver’s mission limits, over budget', async ({ page }, inf
   await shot(page, 'limits-over', p);
 });
 
+test('Bangla: the rocket choice on the Moon (the shared ride)', async ({ page }, info) => {
+  test.setTimeout(120_000);
+  const p = info.project.name;
+  await banglaPlayer(page, ['cold-open', 'name', 'coach', 'brief:moon-1', 'launch:moon-1'], 'VOYA');
+  await page.getByRole('button', { name: /^মিশন বাছো/ }).click();
+  await page.getByRole('button', { name: /^First Light/ }).click();
+  const rockets = page.getByRole('radiogroup', { name: 'রকেট' });
+  await expect(rockets).toBeVisible({ timeout: 60_000 });
+  await rockets.getByRole('radio', { name: /যৌথ যাত্রা/ }).click();
+  await page.mouse.move(700, 450);
+  await page.waitForTimeout(800);
+  await shot(page, 'rocket', p);
+});
+
 test('Bangla: switched mid-flight at Mars, the science targets and the power plan', async ({ page }, info) => {
   test.setTimeout(180_000);
   const p = info.project.name;

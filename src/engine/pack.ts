@@ -7,7 +7,8 @@ import packJson from '../data/pack.json';
 import { DISH_SIZES, PACKAGES_FOR, SCIENCE_PACKAGES } from './cadet';
 import { DESTINATIONS, HAZARDS, LAUNCH_VEHICLES, lookup, RIDESHARES } from './data';
 import { evaluateDesign, type FullEvaluation } from './index';
-import { launchMassCheck, rideshareMassCheck } from './launch';
+import { launchMassCheck, rideshareLaunchPrice, rideshareMassCheck } from './launch';
+import { withLauncher, withRideshare } from './designEdits';
 import { marginStatus } from './meter';
 import { stationKeeping } from './propulsion';
 import { SCIENCE_RULES } from './science';
@@ -387,4 +388,82 @@ export function bestLaunchDay(qualities: DayQuality[], preferred: number): numbe
 /** The design flown from a calendar day. */
 export function onDay(design: Design, day: CalendarDay): Design {
   return { ...design, launchDate: day.date, arrivalDate: day.arrivalDate ?? day.date };
+}
+
+// ---------------------------------------------------------------------------
+// Choose the rocket (spec UI rule 58): both Atlas V rockets on every level, plus the Moon's shared ride. A level's
+// standard rocket (Design.standardRocketId) is free; another charges, or refunds, the price difference (massCost.ts).
+
+const RIDE = 'ride:';
+
+/** The rockets a destination offers: every launch vehicle, then each shared ride that goes there. */
+export function rocketOptions(destination: DestinationId): string[] {
+  return [
+    ...Object.keys(LAUNCH_VEHICLES),
+    ...Object.entries(RIDESHARES)
+      .filter(([, r]) => r.destination === destination)
+      .map(([id]) => `${RIDE}${id}`),
+  ];
+}
+
+/** The option a design flies: its shared ride, or its rocket. */
+export const rocketIdOf = (design: Design): string => (design.rideshareId ? `${RIDE}${design.rideshareId}` : design.launchVehicleId);
+
+/** The design flying an option (a shared ride rides on its own rocket). */
+export function withRocket(design: Design, option: string): Design {
+  if (!option.startsWith(RIDE)) return withLauncher(design, option);
+  const id = option.slice(RIDE.length);
+  return withRideshare(design, id, lookup(RIDESHARES, id, 'rideshare').vehicleId);
+}
+
+export interface RocketCard {
+  id: string;
+  /** A shared ride (the secondary slot of someone else's launch). */
+  ride: boolean;
+  /** Its rocket (launchVehicles.json). */
+  vehicleId: string;
+  /** What it lifts to this mission's C3 (a ride: its slot or what the rocket has left, the smaller). */
+  lift_kg: number;
+  /** It lifts this craft (wet mass ≤ lift). */
+  fits: boolean;
+  /** Launch price for this craft ($M; a ride pays a mass share) and the charge against the budget (− = refund). */
+  price_M: number;
+  charge_M: number;
+  flights: number;
+  successes: number;
+  standard: boolean;
+  picked: boolean;
+  /** The payload curve the lift comes from (for its ⓘ: today a placeholder, a game estimate). */
+  curve: Sourced<[number, number][]>;
+}
+
+/** One card per rocket on offer, read against the packed craft (evaluated: its wet mass and C3). */
+export function rocketCards(design: Design, ev: FullEvaluation): RocketCard[] {
+  const c3 = ev.trajectory.c3;
+  const wet = ev.details.wetMass_kg;
+  const standard = design.standardRocketId ? lookup(LAUNCH_VEHICLES, design.standardRocketId, 'launch vehicle') : undefined;
+  const picked = rocketIdOf(design);
+  return rocketOptions(design.destination).map((id) => {
+    const ride = id.startsWith(RIDE) ? lookup(RIDESHARES, id.slice(RIDE.length), 'rideshare') : undefined;
+    const vehicleId = ride ? ride.vehicleId : id;
+    const lv = lookup(LAUNCH_VEHICLES, vehicleId, 'launch vehicle');
+    const check = ride
+      ? rideshareMassCheck(lv.payloadCurve.value, c3, wet, ride.secondarySlot_kg.value, ride.primaryMass_kg.value)
+      : launchMassCheck(lv.payloadCurve.value, c3, wet);
+    const price_M = ride ? rideshareLaunchPrice(lv.price_M.value, wet, ride.primaryMass_kg.value) : lv.price_M.value;
+    return {
+      id,
+      ride: !!ride,
+      vehicleId,
+      lift_kg: check.meter.limit,
+      fits: wet <= check.meter.limit,
+      price_M,
+      charge_M: standard ? price_M - standard.price_M.value : 0,
+      flights: lv.flights.value,
+      successes: lv.successes.value,
+      standard: !ride && vehicleId === design.standardRocketId,
+      picked: id === picked,
+      curve: lv.payloadCurve,
+    };
+  });
 }

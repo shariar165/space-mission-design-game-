@@ -51,8 +51,7 @@ describe('solo objective: the Red Planet briefing', () => {
 
   it('a returning player who has seen the briefing still gets the picker', () => {
     open(/^Red Planet/, ['name', 'brief:mars']);
-    expect(screen.getByRole('dialog', { name: 'Mission briefing' })).toBeTruthy();
-    expect(screen.getAllByRole('radio')).toHaveLength(3);
+    expect(within(screen.getByRole('dialog', { name: 'Mission briefing' })).getAllByRole('radio')).toHaveLength(3);
   });
 
   it('the Moon levels have no objective: no picker, no plate, no checklist item', () => {
@@ -131,7 +130,7 @@ describe('solo objective: a reload keeps the packing and the pick (sd.pack)', ()
     fireEvent.click(screen.getByRole('button', { name: NAV.start }));
     fireEvent.click(screen.getByRole('button', { name: 'Unpack Air sniffer (MAVEN suite)' }));
     fireEvent.click(screen.getByRole('button', { name: 'Pack Camera' }));
-    expect(loadLevelPacks().mars).toEqual({ parts: expect.arrayContaining(['computer', 'engine', 'camera']), objective: 'surface' });
+    expect(loadLevelPacks().mars).toEqual({ parts: expect.arrayContaining(['computer', 'engine', 'camera']), objective: 'surface', rocket: 'atlas-v-401' });
     reload();
     expect(screen.queryByRole('dialog', { name: 'Mission briefing' })).toBeNull();
     expect(within(plate()).getByText(title('surface'))).toBeTruthy();

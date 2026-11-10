@@ -191,6 +191,20 @@ export const PACK_BLOCKER: Record<PackBlockerCode, string> = tr('PACK_BLOCKER', 
   other: 'NOT READY TO LAUNCH',
 });
 
+/** ROCKET on solo Pack (spec UI rule 58): lift, budget charge and flight record of each rocket on offer. */
+export const ROCKET_WORDS = tr('ROCKET_WORDS', {
+  title: 'ROCKET',
+  label: 'Rocket',
+  lifts: (kg: string) => `LIFTS ${kg}`,
+  tooHeavy: 'TOO HEAVY FOR IT',
+  standard: 'STANDARD · NO CHARGE',
+  charge: (money: string) => `${money} ON THE BUDGET`,
+  refund: (money: string) => `${money} ON THE BUDGET: CHEAPER`,
+  record: (ok: string, all: string) => `${ok} OF ${all} FLIGHTS WORKED`,
+  ride: 'SHARED RIDE · ',
+  curveTitle: (name: string) => `${name}: payload to C3`,
+});
+
 /** MISSION LIMITS on solo Pack (spec UI rule 57): weight, budget, power and data as bars. */
 export const LIMIT_WORDS = tr('LIMIT_WORDS', {
   title: 'MISSION LIMITS',

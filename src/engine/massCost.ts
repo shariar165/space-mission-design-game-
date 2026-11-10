@@ -95,13 +95,18 @@ export function developmentCost(design: Design): number {
   return b.bus + b.instruments.reduce((s, i) => s + i.cost_M, 0) + b.engine + b.power + b.comms;
 }
 
-/** Development cost vs cap. Margin = (cap − development)/cap. */
-export function costMeter(development_M: number, cap_M: number, inputs: Record<string, Sourced<number>>): Meter {
+/**
+ * Development cost (plus any rocket change, spec UI rule 58) vs cap. Margin = (cap − charged)/cap. Without a rocket
+ * change, charged = development and the equation reads as before.
+ */
+export function costMeter(charged_M: number, cap_M: number, inputs: Record<string, Sourced<number>>, rocketChange = false): Meter {
   return makeMeter(
-    development_M,
+    charged_M,
     cap_M,
-    (cap_M - development_M) / cap_M,
-    'Development (Phases A–D) = Σ part costs; margin = (cap − development)/cap. Launch and operations are counted separately.',
+    (cap_M - charged_M) / cap_M,
+    rocketChange
+      ? 'Development (Phases A–D) = Σ part costs, plus the rocket change (launch price − the level’s standard rocket’s price, a game rule); margin = (cap − charged)/cap. Operations are counted separately.'
+      : 'Development (Phases A–D) = Σ part costs; margin = (cap − development)/cap. Launch and operations are counted separately.',
     inputs,
   );
 }
@@ -113,6 +118,10 @@ export function costMeter(development_M: number, cap_M: number, inputs: Record<s
 export function costEvaluation(design: Design, opts: { wet_kg?: number } = {}): {
   meter: Meter;
   development_M: number;
+  /** Launch price − the level's standard rocket's price (0 without a standard rocket). */
+  rocketCharge_M: number;
+  /** What counts against the cap: development + the rocket charge. */
+  charged_M: number;
   launch_M: number;
   operations_M: number;
   total_M: number;
@@ -128,9 +137,16 @@ export function costEvaluation(design: Design, opts: { wet_kg?: number } = {}): 
       ? lv.price_M
       : gameEstimate(launch_M, '$M', `Game rule: the secondary pays a mass-proportional share of the ${lv.name} price, price × m_wet / (m_wet + m_primary)`);
   const operations_M = PARTS.operations.opsCost_M_per_year.value * ((design.scienceDays ?? 365) / 365.25);
+  // A level's standard rocket is free; another rocket charges (or refunds) the price difference (spec UI rule 58).
+  const standard = design.standardRocketId ? lookup(LAUNCH_VEHICLES, design.standardRocketId, 'launch vehicle') : undefined;
+  const rocketCharge_M = standard ? launch_M - standard.price_M.value : 0;
+  const charged_M = development_M + rocketCharge_M;
+  const inputs = { cap, launchPrice, opsPerYear: PARTS.operations.opsCost_M_per_year, ...(standard ? { standardPrice: standard.price_M } : {}) };
   return {
-    meter: { ...costMeter(development_M, cap.value, { cap, launchPrice, opsPerYear: PARTS.operations.opsCost_M_per_year }), limitSource: cap },
+    meter: { ...costMeter(charged_M, cap.value, inputs, !!standard), limitSource: cap },
     development_M,
+    rocketCharge_M,
+    charged_M,
     launch_M,
     operations_M,
     total_M: development_M + launch_M + operations_M,

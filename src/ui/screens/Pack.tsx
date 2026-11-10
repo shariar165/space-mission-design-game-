@@ -23,6 +23,7 @@ import {
   unpackPart,
   packLimits,
   packLimitsWith,
+  rocketCards,
   type Packed,
   type PartId,
 } from '../../engine/pack';
@@ -32,6 +33,7 @@ import type { TeamAct, TeamAction } from '../../engine/team/log';
 import { teamSpend } from '../../engine/team/negotiate';
 import { objectiveCards } from '../../engine/team/setup';
 import { MissionLimits } from '../components/sd/MissionLimits';
+import { RocketPicker } from '../components/sd/RocketPicker';
 import type { TeamState } from '../../engine/team/reduce';
 import { partRole, ROLE_IDS, type RoleId } from '../../engine/team/roles';
 import { ConflictBanner, CrewChips, QuickBar, SharedLimits, TeamLine } from '../components/team/TeamPanels';
@@ -102,6 +104,8 @@ interface Props {
   onDays?: () => void;
   /** Team mode: packing goes through the team's log. */
   team?: PackTeam;
+  /** Solo levels: pick the rocket (spec UI rule 58). */
+  rocket?: { onPick: (id: string) => void };
   /** Solo Red Planet: the mission objective the player must pick before launch (spec UI rule 56). */
   objective?: { picked?: ObjectiveId; onPick: (id: ObjectiveId) => void };
 }
@@ -116,7 +120,7 @@ export interface PackTeam {
   objective?: ObjectiveId;
 }
 
-export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLesson, onHome, onLaunch, onBack, brief, onBriefSeen, robotName, onRobotName, packed: kept, onPacked, pick, onDays, team, objective }: Props) {
+export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLesson, onHome, onLaunch, onBack, brief, onBriefSeen, robotName, onRobotName, packed: kept, onPacked, pick, onDays, team, objective, rocket }: Props) {
   const engineer = mode === 'engineer';
   const phone = useIsPhone();
   const dest = DESTINATIONS[base.destination];
@@ -159,6 +163,8 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
     () => (!team && peek && !packed.some((q) => q.id === peek) ? packLimitsWith(base, packed, peek, plan.day) : undefined),
     [team, peek, packed, base, plan.day],
   );
+  // ROCKET (spec UI rule 58): each rocket on offer read against the packed craft on its launch day.
+  const rockets = useMemo(() => (rocket && !team ? rocketCards(design, ev) : undefined), [rocket, team, design, ev]);
   const lessonCard = impossible && blockers.some((b) => b.code === 'too-heavy') ? LESSONS[base.destination] : undefined;
 
   const add = (id: PartId) => {
@@ -417,6 +423,7 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
     />
   );
   const limitsEl = !team && <MissionLimits limits={limits} {...(peekLimits && peek ? { preview: { part: PART_LOOK[peek].name, limits: peekLimits } } : {})} {...(phone ? { compact: true } : {})} />;
+  const rocketEl = rocket && rockets && <RocketPicker cards={rockets} onPick={rocket.onPick} {...(phone ? { compact: true } : {})} />;
   const plate = objective && (
     <div className={`pk-obj${objCard && !objCard.matched ? ' warn' : ''}`} role="status" aria-label={OP.group}>
       <div className="pk-obj-main">
@@ -523,6 +530,7 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
         </div>
         {statusLine}
         {limitsEl}
+        {rocketEl}
         {nameTag}
         {lesson}
         {shelfCards}
@@ -588,6 +596,7 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
           <section className="pk-panel pk-deck" aria-label={PACK_WORDS.deckLabel(dest.name)}>
             {plate}
             {limitsEl}
+            {rocketEl}
             <div className="pk-deck-head">
               <span className="pk-panel-title">{PACK_WORDS.deckOf(dest.name)}</span>
               <span className="pk-deck-sub">{PACK_WORDS.deckSub}</span>

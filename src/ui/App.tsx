@@ -13,7 +13,7 @@ import { badges, newBadges, rankFor, starTotals, type RankDef } from '../engine/
 import { evaluateDesign } from '../engine/index';
 import { flightFacts, mergeFacts, newLessons, NOTEBOOK, notebook, notebookProgress, rescueProgress, type NotebookFacts } from '../engine/notebook';
 import { operationsDebrief, type OpsState } from '../engine/ops/index';
-import { initialPack, levelCostCap, packPart, shelfFor, type Packed, type PartId } from '../engine/pack';
+import { initialPack, levelCostCap, packPart, rocketIdOf, rocketOptions, shelfFor, withRocket, type Packed, type PartId } from '../engine/pack';
 import type { RescueCaseId } from '../engine/rescue';
 import type { Design, DestinationId } from '../engine/types';
 import { TopBar, type Mode, type Step } from './components/TopBar';
@@ -322,24 +322,28 @@ export function App() {
    * A solo level's last packing and objective (saves.ts sd.pack), re-packed through the engine: only the level's shelf
    * parts, in their order, each where packPart puts it; an objective only on a level that asks for one.
    */
-  const restoreLevel = (l: Level, base: Design): { packed?: Packed; objective?: ObjectiveId } => {
+  const restoreLevel = (l: Level, base: Design): { packed?: Packed; objective?: ObjectiveId; rocket?: string } => {
     const saved = loadLevelPacks()[l.id];
     if (!saved) return {};
     const shelf = shelfOf(l);
     let packed = initialPack({ ...base, instrumentIds: [] }, shelf);
     for (const id of saved.parts) if ((shelf as string[]).includes(id)) packed = packPart(packed, id as PartId) ?? packed;
     const objective = l.objective && (OBJECTIVE_IDS as string[]).includes(saved.objective ?? '') ? (saved.objective as ObjectiveId) : undefined;
-    return { packed, ...(objective ? { objective } : {}) };
+    const rocket = saved.rocket && rocketOptions(l.destination).includes(saved.rocket) ? saved.rocket : undefined;
+    return { packed, ...(objective ? { objective } : {}), ...(rocket ? { rocket } : {}) };
   };
 
   const playLevel = (l: Level, objective?: ObjectiveId, asTeam = false) => {
     setTeamRun(asTeam);
     // a level's own budget (Cloud Diver, spec UI rule 57) rides on the design, so every meter and blocker reads it
     const cap = levelCostCap(l.id);
-    const starter = { ...starterDesign(l.destination, today()), ...(l.targets ? { scienceTargets: true } : {}), ...(cap ? { costCap: cap } : {}) };
+    // the starter's rocket is the level's standard one: another charges the difference (spec UI rule 58)
+    const fresh = starterDesign(l.destination, today());
+    const starter: Design = { ...fresh, standardRocketId: fresh.launchVehicleId, ...(l.targets ? { scienceTargets: true } : {}), ...(cap ? { costCap: cap } : {}) };
     const kept = asTeam ? {} : restoreLevel(l, starter);
     const picked = objective ?? kept.objective;
-    const s = { ...starter, ...(picked ? { objective: picked } : {}) };
+    const flown = kept.rocket ? withRocket(starter, kept.rocket) : starter;
+    const s = { ...flown, ...(picked ? { objective: picked } : {}) };
     setCadet(cadetStart(s, l.id));
     setDesign(s);
     setMissionName(defaultMissionName(l.destination));
@@ -443,6 +447,8 @@ export function App() {
   /** Solo Red Planet: the player picks the mission objective (spec UI rule 56); it sits on the level's starter design. */
   const soloObjective = cadetMode && level?.objective === true && !teamRun;
   const pickObjective = (o: ObjectiveId) => setCadet((c) => ({ ...c, base: { ...c.base, objective: o } }));
+  /** Solo levels: the rocket (spec UI rule 58), on the level's design like the objective. */
+  const pickRocket = (id: string) => setCadet((c) => ({ ...c, base: withRocket(c.base, id) }));
   const packBrief = { ...briefFor(false), open: level !== undefined && (!seen.includes(`brief:${level.id}`) || (soloObjective && !cadet.base.objective)) };
   /** In flight, MISSION INFO shows the objective flown (read-only). */
   const flyObjective = flyDesign?.objective && !teamRun && flyDesign.destination === 'mars' ? { cards: objectiveCards(flyDesign), picked: flyDesign.objective } : undefined;
@@ -457,8 +463,8 @@ export function App() {
   // A solo level's packing and objective are kept (sd.pack), so reopening the level, even after a reload, resumes them.
   useEffect(() => {
     if (!cadetMode || teamRun || dailyRun || !level || (step !== 'build' && step !== 'launch')) return;
-    saveLevelPack(level.id, { parts: packedNow.map((p) => p.id), ...(cadet.base.objective ? { objective: cadet.base.objective } : {}) });
-  }, [cadetMode, teamRun, dailyRun, level, step, packedNow, cadet.base.objective]);
+    saveLevelPack(level.id, { parts: packedNow.map((p) => p.id), ...(cadet.base.objective ? { objective: cadet.base.objective } : {}), rocket: rocketIdOf(cadet.base) });
+  }, [cadetMode, teamRun, dailyRun, level, step, packedNow, cadet.base]);
   /** The team's flight: launched by its Flight Director. */
   const teamFly = teamNow?.launched ? teamNow : undefined;
 
@@ -745,6 +751,7 @@ export function App() {
           onPacked={(p) => setPackSave({ key: packKey, packed: p, ...(keptPack?.pick !== undefined ? { pick: keptPack.pick } : {}) })}
           {...(keptPack?.pick !== undefined ? { pick: keptPack.pick } : {})}
           onDays={() => go('launch')}
+          {...(level && !teamRun ? { rocket: { onPick: pickRocket } } : {})}
           {...(soloObjective ? { objective: { ...(cadet.base.objective ? { picked: cadet.base.objective } : {}), onPick: pickObjective } } : {})}
           {...(teamNow ? { team: { state: teamNow, log: teamPlay.log, send: teamPlay.send, ...(teamNow.objective ? { objective: teamNow.objective } : {}) }, onLaunch: launchTeam } : {})}
         />

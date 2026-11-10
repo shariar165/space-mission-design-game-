@@ -2,7 +2,7 @@
 // squares); mass is a separate limit (the launch meter). Every packed part changes the design through
 // evaluateDesign or Mission operations. Hand calculations in comments.
 import { describe, expect, it } from 'vitest';
-import { HAZARDS, PARTS } from '../src/engine/data';
+import { HAZARDS, LAUNCH_VEHICLES, PARTS } from '../src/engine/data';
 import { evaluateDesign } from '../src/engine/index';
 import { advanceOperations, consoleView, runOperations, startOperations } from '../src/engine/ops/index';
 import { effectiveFailureChance } from '../src/engine/ops/responses';
@@ -21,10 +21,17 @@ import {
   packLimits,
   packLimitsWith,
   packPart,
+  rocketCards,
+  rocketIdOf,
+  rocketOptions,
   shelfFor,
   unpackPart,
-  type Packed, bestLaunchDay } from '../src/engine/pack';
+  withRocket,
+  type Packed,
+  type RocketCard,
+  bestLaunchDay } from '../src/engine/pack';
 import { starterDesign } from '../src/ui/starters';
+import type { Design } from '../src/engine/types';
 
 const FROM = '2026-10-05';
 const mars = starterDesign('mars', FROM);
@@ -370,5 +377,113 @@ describe('mission limits and the level budget (spec UI rule 57)', () => {
     expect(codes.slice(0, ev.blockers.length)).not.toContain('over-budget');
     expect(codes).toContain('too-heavy');
     expect(codes[codes.length - 1]).toBe('over-budget');
+  });
+});
+
+describe('choose the rocket (spec UI rule 58)', () => {
+  // Game rule: a level comes with its standard rocket at no charge; flying another charges (or refunds) the launch
+  // price difference against the budget. Prices are game estimates: Atlas V 401 110 $M, 411 130 $M. The Moon levels
+  // also offer LRO's shared ride (slot 1,000 kg fuelled; LRO 1,850 kg; price share = 110 × m / (m + 1,850)).
+  const level = (dest: 'moon' | 'venus' | 'mars' | 'bennu' | 'jupiter', extra: Partial<Design> = {}): Design => {
+    const s = starterDesign(dest, '2028-11-15');
+    return { ...s, standardRocketId: s.launchVehicleId, ...extra };
+  };
+  const packed = (base: Design) => buildPackDesign(base, initialPack(base, shelfFor(base.destination)));
+  const lerp = (curve: [number, number][], c3: number) => {
+    const i = curve.findIndex(([x]) => x >= c3);
+    const [x0, y0] = curve[i - 1]!;
+    const [x1, y1] = curve[i]!;
+    return y0 + ((c3 - x0) / (x1 - x0)) * (y1 - y0);
+  };
+
+  it('every level offers both Atlas V rockets; the Moon levels add the shared ride', () => {
+    expect(rocketOptions('mars')).toEqual(['atlas-v-401', 'atlas-v-411']);
+    expect(rocketOptions('venus')).toEqual(['atlas-v-401', 'atlas-v-411']);
+    expect(rocketOptions('jupiter')).toEqual(['atlas-v-401', 'atlas-v-411']);
+    expect(rocketOptions('moon')).toEqual(['atlas-v-401', 'atlas-v-411', 'ride:lro-lcross-2009']);
+  });
+
+  it('the standard rocket costs nothing; the 411 charges its 20 $M difference on the budget bar', () => {
+    const base = level('venus', { costCap: levelCostCap('venus')! });
+    const std = evaluateDesign(packed(base));
+    const big = evaluateDesign(packed(withRocket(base, 'atlas-v-411')));
+    expect(std.details.cost.rocketCharge_M).toBe(0);
+    // 130 − 110 = +20 $M; Cloud Diver's starter ≈ 328.42 + 20 ≈ 348.42 of 350: still under, nearly full
+    expect(big.details.cost.rocketCharge_M).toBeCloseTo(20, 9);
+    expect(big.meters.cost.used - std.meters.cost.used).toBeCloseTo(20, 9);
+    expect(big.meters.cost.status).toBe('warning');
+    // development cost itself does not change: only what counts against the cap
+    expect(big.details.cost.development_M).toBeCloseTo(std.details.cost.development_M, 9);
+  });
+
+  it('a level without a standard rocket (real missions, the Daily) charges nothing for any rocket', () => {
+    const s = starterDesign('mars', '2028-11-15');
+    const ev = evaluateDesign(buildPackDesign({ ...s, launchVehicleId: 'atlas-v-411' }, initialPack(s, shelfFor('mars'))));
+    expect(ev.details.cost.rocketCharge_M).toBe(0);
+    expect(ev.meters.cost.used).toBeCloseTo(ev.details.cost.development_M, 12);
+  });
+
+  it('rocket cards: lift at this mission’s C3 from each curve, price, charge, flight record, and whether it lifts the craft', () => {
+    const d = packed(level('mars'));
+    const ev = evaluateDesign(d);
+    const c3 = ev.trajectory.c3;
+    const cards = rocketCards(d, ev);
+    expect(cards.map((c) => c.id)).toEqual(['atlas-v-401', 'atlas-v-411']);
+    const [a, b] = cards as [RocketCard, RocketCard];
+    // linear interpolation in the (placeholder) payload table at this C3
+    expect(a.lift_kg).toBeCloseTo(lerp(LAUNCH_VEHICLES['atlas-v-401']!.payloadCurve.value, c3), 6);
+    expect(b.lift_kg).toBeCloseTo(lerp(LAUNCH_VEHICLES['atlas-v-411']!.payloadCurve.value, c3), 6);
+    expect(b.lift_kg).toBeGreaterThan(a.lift_kg);
+    expect(a).toMatchObject({ standard: true, picked: true, price_M: 110, charge_M: 0, flights: 41, successes: 40, fits: true });
+    expect(b).toMatchObject({ standard: false, picked: false, price_M: 130, charge_M: 20, flights: 6, successes: 6 });
+    expect(a.curve.isGameEstimate).toBe(true);
+  });
+
+  it('picking the 411 raises the weight limit by exactly the lift difference', () => {
+    const base = level('mars');
+    const std = evaluateDesign(packed(base));
+    const big = evaluateDesign(packed(withRocket(base, 'atlas-v-411')));
+    const cards = rocketCards(packed(base), std);
+    expect(big.meters.mass.limit - std.meters.mass.limit).toBeCloseTo(cards[1]!.lift_kg - cards[0]!.lift_kg, 6);
+    expect(rocketIdOf(withRocket(base, 'atlas-v-411'))).toBe('atlas-v-411');
+  });
+
+  it('the Moon’s shared ride: a 1,000 kg slot and a mass-share price, refunded against the 401', () => {
+    const base = level('moon');
+    const ride = packed(withRocket(base, 'ride:lro-lcross-2009'));
+    const ev = evaluateDesign(ride);
+    const wet = ev.details.wetMass_kg;
+    expect(rocketIdOf(ride)).toBe('ride:lro-lcross-2009');
+    const card = rocketCards(ride, ev).find((c) => c.id === 'ride:lro-lcross-2009')!;
+    // lift = min(slot 1,000, m_LV(C3) − 1,850); the 401 lifts ~4,400 kg near C3 = −2, so the slot binds
+    expect(card.lift_kg).toBe(1000);
+    // price = 110 × m / (m + 1,850); charge = price − 110 < 0 (a refund)
+    expect(card.price_M).toBeCloseTo((110 * wet) / (wet + 1850), 9);
+    expect(card.charge_M).toBeCloseTo(card.price_M - 110, 9);
+    expect(ev.details.cost.rocketCharge_M).toBeCloseTo(card.charge_M, 9);
+    expect(card.picked).toBe(true);
+    // back to the 401: the ride is dropped
+    expect(withRocket(ride, 'atlas-v-401').rideshareId).toBeUndefined();
+  });
+
+  it('a heavy Moon pack does not fit the shared ride: too heavy, and the card says so', () => {
+    const base = withRocket(level('moon', { scienceTargets: true }), 'ride:lro-lcross-2009');
+    let p = initialPack(base, shelfFor('moon'));
+    for (const id of ['radar', 'dish', 'tank', 'battery'] as const) p = packPart(p, id) ?? p;
+    const d = buildPackDesign(base, p);
+    const ev = evaluateDesign(d);
+    expect(packBlockers(p, ev).map((b) => b.code)).toContain('too-heavy');
+    expect(rocketCards(d, ev).find((c) => c.picked)!.fits).toBe(false);
+    expect(rocketCards(d, ev).find((c) => c.id === 'atlas-v-401')!.fits).toBe(true);
+  });
+
+  it('Giant Leap still teaches it: no offered rocket lifts the Jupiter craft', () => {
+    const d = packed(level('jupiter'));
+    const ev = evaluateDesign(d);
+    expect(rocketCards(d, ev).every((c) => !c.fits)).toBe(true);
+    for (const id of rocketOptions('jupiter')) {
+      const alt = packed(withRocket(level('jupiter'), id));
+      expect(packBlockers(initialPack(alt, shelfFor('jupiter')), evaluateDesign(alt)).map((b) => b.code)).toContain('too-heavy');
+    }
   });
 });

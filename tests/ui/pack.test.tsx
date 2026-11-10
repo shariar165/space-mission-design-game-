@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 // PACK (Signal Delay screen 02): the nose is volume, weight is a separate limit; every number is pack.ts /
 // evaluateDesign output. The Mars level (all parts) and the Moon and Jupiter lessons.
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { evaluateDesign } from '../../src/engine/index';
 import { buildPackDesign, initialPack, levelCostCap, noseSquares, packBlockers, packLimits, packPart, shelfFor } from '../../src/engine/pack';
@@ -9,7 +9,7 @@ import { App } from '../../src/ui/App';
 import * as f from '../../src/ui/format';
 import { LEVELS, loadProgress, shelfOf } from '../../src/ui/levels';
 import { starterDesign, today } from '../../src/ui/starters';
-import { LAUNCH_DAY_WORDS, LIMIT_WORDS, PACK_BLOCKER } from '../../src/ui/sdWords';
+import { LAUNCH_DAY_WORDS, LIMIT_WORDS, PACK_BLOCKER, ROCKET_WORDS } from '../../src/ui/sdWords';
 import { pickObjective } from './setup';
 
 function pass(ms: number, step = 50) {
@@ -215,5 +215,58 @@ describe('MISSION LIMITS on solo Pack (spec UI rule 57): Cloud Diver teaches bud
   it('every other level keeps NASA’s cap: Red Planet’s budget bar is held to 500 $M', () => {
     openLevel(/^Red Planet/, MARS);
     expect(row('budget').querySelector('.ml-v')!.textContent!.endsWith(` OF ${f.money(500)}`)).toBe(true);
+  });
+});
+
+describe('ROCKET on solo Pack (spec UI rule 58)', () => {
+  const group = () => screen.getByRole('radiogroup', { name: ROCKET_WORDS.label });
+  const option = (name: RegExp) => within(group()).getByRole('radio', { name });
+  const limitRow = (key: 'weight' | 'budget') =>
+    within(screen.getByRole('region', { name: LIMIT_WORDS.label })).getByText(LIMIT_WORDS.names[key]).closest<HTMLElement>('.ml-row')!;
+  const liftText = (el: HTMLElement) => el.querySelector('.rk-lift')!.firstChild!.textContent!;
+
+  it('Red Planet: the standard 401 is free; the 411 lifts more for 20 $M on the budget, and picking it moves both bars', () => {
+    openLevel(/^Red Planet/, MARS);
+    expect(within(group()).getAllByRole('radio')).toHaveLength(2);
+    const a = option(/Atlas V 401/);
+    const b = option(/Atlas V 411/);
+    expect(a.getAttribute('aria-checked')).toBe('true');
+    expect(within(a).getByText(ROCKET_WORDS.standard)).toBeTruthy();
+    // 130 − 110 = +20 $M (prices are game estimates)
+    expect(within(b).getByText(ROCKET_WORDS.charge(f.signedMoney(20)))).toBeTruthy();
+    expect(within(a).getByText(ROCKET_WORDS.record(f.num(40), f.num(41)))).toBeTruthy();
+    const budgetBefore = limitRow('budget').querySelector('.ml-v')!.textContent;
+    const lift411 = liftText(b);
+    fireEvent.click(b);
+    expect(option(/Atlas V 411/).getAttribute('aria-checked')).toBe('true');
+    // the weight bar's limit is now what the 411 lifts; the budget bar carries the 20 $M
+    expect(limitRow('weight').querySelector('.ml-v')!.textContent!.endsWith(lift411.replace(ROCKET_WORDS.lifts(''), ''))).toBe(true);
+    expect(limitRow('budget').querySelector('.ml-v')!.textContent).not.toBe(budgetBefore);
+  });
+
+  it('the Moon offers LRO’s shared ride: its 1,000 kg slot becomes the weight limit, and it costs less than the 401', () => {
+    openLevel(/^First Light/, {});
+    expect(within(group()).getAllByRole('radio')).toHaveLength(3);
+    const ride = option(/SHARED RIDE/);
+    expect(liftText(ride)).toBe(ROCKET_WORDS.lifts(f.kg(1000)));
+    expect(ride.querySelector('.rk-cost.down')).toBeTruthy();
+    fireEvent.click(ride);
+    expect(limitRow('weight').querySelector('.ml-v')!.textContent!.endsWith(` OF ${f.kg(1000)}`)).toBe(true);
+  });
+
+  it('the pick is saved with the packing: reopening the level after a reload keeps the 411', () => {
+    openLevel(/^Red Planet/, MARS);
+    fireEvent.click(option(/Atlas V 411/));
+    cleanup();
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: 'CHOOSE A MISSION ▸' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Red Planet/ }));
+    pass(100);
+    expect(option(/Atlas V 411/).getAttribute('aria-checked')).toBe('true');
+  });
+
+  it('Giant Leap: neither rocket lifts the Jupiter craft', () => {
+    openLevel(/^Giant Leap/, { 'moon-1': 1, 'moon-2': 1, 'moon-3': 1, mars: 1, venus: 1, bennu: 1 });
+    for (const r of within(group()).getAllByRole('radio')) expect(within(r).getByText(ROCKET_WORDS.tooHeavy)).toBeTruthy();
   });
 });

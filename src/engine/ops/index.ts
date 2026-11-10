@@ -317,7 +317,7 @@ export function operationsDebrief(s: OpsState): OpsDebrief {
   const scores: Record<Category, number> = {
     science: sciScore,
     success: missionSuccessScore(phasesCompleted, tl.length),
-    budget: budgetScore(d.cost.development_M + s.dsnExtra_M + s.responseBudget_M, d.cost.cap_M),
+    budget: budgetScore(d.cost.charged_M + s.dsnExtra_M + s.responseBudget_M, d.cost.cap_M),
     deltaV: marginBandScore(endMargins.deltaV),
     power: marginBandScore(endMargins.power),
     mass: marginBandScore(endMargins.mass),

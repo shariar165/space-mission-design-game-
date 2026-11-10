@@ -90,3 +90,38 @@ test('pack: Cloud Diver budget', async ({ page }, info) => {
   await page.screenshot({ path: `test-results/shots/limits-over-${p}.png`, fullPage: p === 'mobile' });
   expect(await clippedText(page, '.ml')).toEqual([]);
 });
+
+// ROCKET (spec UI rule 58): Red Planet with the 411 picked (the weight limit rises, the budget pays 20 $M), then the
+// Moon's shared ride on First Light. Run: npm run shots -- pack
+test('pack: rocket choice', async ({ page }, info) => {
+  const p = info.project.name;
+  await page.addInitScript(() => {
+    try {
+      localStorage.setItem('mdt.mode', 'cadet');
+      localStorage.setItem('sd.seen', JSON.stringify(['coach', 'name', 'brief:mars', 'brief:moon-1', 'launch:mars']));
+      localStorage.setItem('sd.pack', JSON.stringify({ mars: { parts: ['computer', 'engine', 'sniffer'], objective: 'atmosphere' } }));
+      localStorage.setItem('mdt.progress', JSON.stringify({ 'moon-1': 1, 'moon-2': 1, 'moon-3': 1 }));
+    } catch {
+      /* ignore */
+    }
+  });
+  await page.goto('/?seed=2013');
+  await page.getByRole('button', { name: 'CHOOSE A MISSION ▸' }).click();
+  await page.getByRole('button', { name: /^Red Planet/ }).click();
+  await expect(page.getByRole('button', { name: 'CHANGE ▸' })).toBeEnabled({ timeout: 60_000 });
+  const rockets = page.getByRole('radiogroup', { name: 'Rocket' });
+  await rockets.getByRole('radio', { name: /Atlas V 411/ }).click();
+  await page.mouse.move(700, 450);
+  await page.evaluate(() => document.fonts.ready);
+  await page.waitForTimeout(500);
+  await page.screenshot({ path: `test-results/shots/rocket-${p}.png`, fullPage: p === 'mobile' });
+  expect(await clippedText(page, '.rk')).toEqual([]);
+  await page.getByRole('button', { name: 'Back' }).first().click();
+  await page.getByRole('button', { name: /^First Light/ }).click();
+  await expect(page.getByRole('button', { name: 'CHANGE ▸' })).toBeEnabled({ timeout: 60_000 });
+  await page.getByRole('radiogroup', { name: 'Rocket' }).getByRole('radio', { name: /SHARED RIDE/ }).click();
+  await page.mouse.move(700, 450);
+  await page.waitForTimeout(500);
+  await page.screenshot({ path: `test-results/shots/rocket-ride-${p}.png`, fullPage: p === 'mobile' });
+  expect(await clippedText(page, '.rk')).toEqual([]);
+});
