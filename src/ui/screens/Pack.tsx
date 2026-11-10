@@ -21,6 +21,8 @@ import {
   packPart,
   partsCovering,
   unpackPart,
+  packLimits,
+  packLimitsWith,
   type Packed,
   type PartId,
 } from '../../engine/pack';
@@ -29,6 +31,7 @@ import type { ObjectiveId } from '../../engine/objectives';
 import type { TeamAct, TeamAction } from '../../engine/team/log';
 import { teamSpend } from '../../engine/team/negotiate';
 import { objectiveCards } from '../../engine/team/setup';
+import { MissionLimits } from '../components/sd/MissionLimits';
 import type { TeamState } from '../../engine/team/reduce';
 import { partRole, ROLE_IDS, type RoleId } from '../../engine/team/roles';
 import { ConflictBanner, CrewChips, QuickBar, SharedLimits, TeamLine } from '../components/team/TeamPanels';
@@ -130,6 +133,8 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
   const [armed, setArmed] = useState(false);
   const [noRoom, setNoRoom] = useState<PartId>();
   const [briefOpen, setBriefOpen] = useState(!!brief?.open);
+  /** The shelf part under the pointer (or focus): MISSION LIMITS previews it (solo only). */
+  const [peek, setPeek] = useState<PartId>();
 
   // The launch day: the best one (engine bestLaunchDay) unless the player picked one on the Launch Day step.
   const plan = useLaunchPlan(base, packed, pick);
@@ -148,6 +153,12 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
   const objCards = useMemo(() => (objective ? objectiveCards(design) : undefined), [objective, design]);
   const objCard = objCards?.find((c) => c.id === objective?.picked);
   const objParts = objCard ? objCard.parts.map((id) => PART_LOOK[id].short).join(OBJECTIVE_WORDS.or) : '';
+  // MISSION LIMITS (spec UI rule 57): the four meters, and where they would go with the part under the pointer.
+  const limits = useMemo(() => packLimits(ev), [ev]);
+  const peekLimits = useMemo(
+    () => (!team && peek && !packed.some((q) => q.id === peek) ? packLimitsWith(base, packed, peek, plan.day) : undefined),
+    [team, peek, packed, base, plan.day],
+  );
   const lessonCard = impossible && blockers.some((b) => b.code === 'too-heavy') ? LESSONS[base.destination] : undefined;
 
   const add = (id: PartId) => {
@@ -254,9 +265,20 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
             type="button"
             className={`pk-tray-card${fits ? '' : ' nofit'}${lit(id) ? ' lit' : ''}`}
             aria-label={PACK_WORDS.pack(look.name, fits)}
-            onClick={() => add(id)}
-            onMouseEnter={() => hoverPart(id)}
-            onMouseLeave={() => setHl(undefined)}
+            onClick={() => {
+              setPeek(undefined);
+              add(id);
+            }}
+            onMouseEnter={() => {
+              hoverPart(id);
+              setPeek(id);
+            }}
+            onMouseLeave={() => {
+              setHl(undefined);
+              setPeek(undefined);
+            }}
+            onFocus={() => setPeek(id)}
+            onBlur={() => setPeek(undefined)}
           >
             <span className="pk-mini-well">
               <span className="pk-mini" style={{ gridTemplateColumns: `repeat(${fp.w}, var(--mini))`, gridTemplateRows: `repeat(${fp.h}, var(--mini))` }}>
@@ -394,6 +416,7 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
       onClose={closeBrief}
     />
   );
+  const limitsEl = !team && <MissionLimits limits={limits} {...(peekLimits && peek ? { preview: { part: PART_LOOK[peek].name, limits: peekLimits } } : {})} {...(phone ? { compact: true } : {})} />;
   const plate = objective && (
     <div className={`pk-obj${objCard && !objCard.matched ? ' warn' : ''}`} role="status" aria-label={OP.group}>
       <div className="pk-obj-main">
@@ -499,6 +522,7 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
           {scale}
         </div>
         {statusLine}
+        {limitsEl}
         {nameTag}
         {lesson}
         {shelfCards}
@@ -563,6 +587,7 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
         ) : (
           <section className="pk-panel pk-deck" aria-label={PACK_WORDS.deckLabel(dest.name)}>
             {plate}
+            {limitsEl}
             <div className="pk-deck-head">
               <span className="pk-panel-title">{PACK_WORDS.deckOf(dest.name)}</span>
               <span className="pk-deck-sub">{PACK_WORDS.deckSub}</span>

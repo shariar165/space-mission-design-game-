@@ -71,6 +71,8 @@ export interface Design {
   kit?: DesignKit;
   /** The Moon 3 level: the science is the Moon's targets (Mars always flies its targets). */
   scienceTargets?: boolean;
+  /** A level's own development budget (pack.json levelBudgets, a game rule); none = the mission class cap. */
+  costCap?: Sourced<number>;
   /** Mars only: the mission objective that sets the targets' science weights (objectives.ts). None = balanced. */
   objective?: 'atmosphere' | 'surface' | 'moons';
 }

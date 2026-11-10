@@ -48,6 +48,14 @@
       "isGameEstimate": true
     }
   },
+  "levelBudgets": {
+    "venus": {
+      "value": 350,
+      "unit": "$M (development)",
+      "source": "Game rule (Cloud Diver, spec UI rule 57): the level's budget is 70% of NASA's Discovery cap (500 $M), so a full set of instruments does not fit the wallet; not a NASA figure",
+      "isGameEstimate": true
+    }
+  },
   "parts": {
     "computer": {
       "kind": "bus",

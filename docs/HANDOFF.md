@@ -88,6 +88,8 @@ The objectives use the instrument-match rule: the objective's targets carry 60% 
 2. **"Judge in 3 minutes" README section.** Written (PR #57): a timed route through the Daily, a danger card, Engineer mode, the report, then Team Mode and বাংলা. Still to do: add a screenshot (e.g. the team vote or the Team Debrief from `test-results/shots/`) to `docs/images/`.
 3. **Atlas V payload curves are placeholders.** `src/data/launchVehicles.json` `atlas-v-401` and `atlas-v-411` `payloadCurve` are game estimates. NASA's LSP Performance Query (elvperf.ksc.nasa.gov) can only be used interactively, so a person must export 6–8 points per vehicle (C3 −2 to 40 km²/s²). Until then the launch-capacity validation rows are not real evidence. After the export: set `isGameEstimate: false` with the source and URL, then run `npm run test:validation` and `npm run todo-data`.
 
+**Mission limits (spec v1.6, UI rule 57; `docs/SPACE_APPS_PLAN.md` PR 2):** solo Pack shows weight, budget, power and data bars with a hover preview; over budget blocks launch; Cloud Diver has its own 350 $M budget (game rule).
+
 Smaller follow-ups, not blocking:
 - The real-history texts in `src/data/hazards.json` and `crisisCards.json` are marked **"to verify"** until checked against NASA's Lessons Learned Information System or the official failure reports. In Bangla they keep the tag.
 - Still English by design: the Engineer Build Bay, the Engineer readouts and the engine's blockers. Any of these that moves to Bangla goes through `sdWords.ts` / `sdWords.bn.ts` like the rest.

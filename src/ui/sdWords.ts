@@ -2,7 +2,8 @@
 // formatted here, through format.ts. Cadet reads short uppercase lines; Engineer adds the numbers.
 import type { FailureEffect, OpsPhase } from '../engine/data';
 import type { ComingUpKind, ConsoleOutcome, FlyChip, RobotMessage, VoiceKind } from '../engine/ops/index';
-import type { DeckCard, FuelFix, PackBlockerCode, PartId } from '../engine/pack';
+import type { DeckCard, FuelFix, LimitKey, PackBlockerCode, PartId } from '../engine/pack';
+import type { MeterStatus } from '../engine/types';
 import type { FinalTransmission, Hurt, ReportPanel, Saved } from '../engine/ops/report';
 import type { TargetBody } from '../engine/targets';
 import type { ObjectiveId } from '../engine/objectives';
@@ -186,7 +187,24 @@ export const PACK_BLOCKER: Record<PackBlockerCode, string> = tr('PACK_BLOCKER', 
   'no-capture': 'THIS ENGINE CANNOT BRAKE INTO ORBIT',
   'flight-too-long': 'THAT FLIGHT IS TOO LONG FOR THE GAME',
   'no-science': 'PACK AT LEAST ONE INSTRUMENT',
+  'over-budget': 'OVER BUDGET: TAKE SOMETHING OUT',
   other: 'NOT READY TO LAUNCH',
+});
+
+/** MISSION LIMITS on solo Pack (spec UI rule 57): weight, budget, power and data as bars. */
+export const LIMIT_WORDS = tr('LIMIT_WORDS', {
+  title: 'MISSION LIMITS',
+  label: 'Mission limits',
+  names: { weight: 'WEIGHT', budget: 'BUDGET', power: 'POWER', data: 'DATA' } as Record<LimitKey, string>,
+  value: {
+    weight: (used: string, limit: string) => `${used} OF ${limit}`,
+    budget: (used: string, limit: string) => `${used} OF ${limit}`,
+    power: (used: string, limit: string) => `NEEDS ${used} · HAS ${limit}`,
+    data: (used: string, limit: string) => `${used} OF ${limit} A DAY`,
+  } as Record<LimitKey, (used: string, limit: string) => string>,
+  status: { ok: 'FINE', warning: 'NEARLY FULL', over: 'OVER' } as Record<MeterStatus, string>,
+  preview: (part: string) => `IF YOU PACK: ${part.toUpperCase()}`,
+  bar: (name: string, value: string, status: string) => `${name}: ${value}, ${status}`,
 });
 
 export const PACK_WORDS = tr('PACK_WORDS', {
@@ -604,7 +622,7 @@ export const BRIEFING: Record<string, Briefing> = tr('BRIEFING', {
   },
   venus: {
     job: 'Send a radar robot to cloudy Venus without running out of money.',
-    tip: 'Every choice costs coins. Cheap is good, but a robot that breaks earns nothing.',
+    tip: 'This level’s budget is small: not every instrument fits it. Watch the BUDGET bar; a robot that breaks earns nothing.',
   },
   bennu: {
     job: 'Meet a small asteroid, study it and bring a pebble sample home.',
@@ -741,7 +759,7 @@ export const LEVEL_WORDS = tr('LEVEL_WORDS', {
     'moon-2': 'Every kilogram of fuel must be lifted too.',
     'moon-3': 'Build the whole craft yourself.',
     mars: 'Too far to steer live: give your craft orders.',
-    venus: 'Big radar, small wallet. Watch the coin jar.',
+    venus: 'Big radar, small wallet. Watch the budget bar.',
     bennu: 'Meet an asteroid and bring a sample home.',
     jupiter: 'Can any rocket reach Jupiter straight from Earth?',
   } as Record<string, string>,

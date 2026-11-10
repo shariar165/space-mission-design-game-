@@ -52,3 +52,41 @@ test('pack', async ({ page }, info) => {
   await page.waitForTimeout(600);
   await page.screenshot({ path: `test-results/shots/launch-day-${info.project.name}.png`, fullPage: info.project.name === 'mobile' });
 });
+
+// MISSION LIMITS on Cloud Diver (spec UI rule 57): the starter nearly at its budget, the camera previewed (it would go
+// over), then packed (over budget: launch blocked). Run: npm run shots -- pack
+test('pack: Cloud Diver budget', async ({ page }, info) => {
+  const p = info.project.name;
+  await page.addInitScript(() => {
+    try {
+      localStorage.setItem('mdt.mode', 'cadet');
+      localStorage.setItem('sd.seen', JSON.stringify(['coach', 'name', 'brief:venus', 'launch:venus']));
+      localStorage.setItem('mdt.progress', JSON.stringify({ 'moon-1': 1, 'moon-2': 1, 'moon-3': 1, mars: 1 }));
+    } catch {
+      /* ignore */
+    }
+  });
+  await page.goto('/?seed=2013');
+  await page.getByRole('button', { name: 'CHOOSE A MISSION ▸' }).click();
+  await page.getByRole('button', { name: /^Cloud Diver/ }).click();
+  await expect(page.getByRole('button', { name: 'CHANGE ▸' })).toBeEnabled({ timeout: 60_000 });
+  await expect(page.getByRole('region', { name: 'Mission limits' })).toBeVisible();
+  await page.evaluate(() => document.fonts.ready);
+  await page.waitForTimeout(500);
+  await page.screenshot({ path: `test-results/shots/limits-${p}.png`, fullPage: p === 'mobile' });
+  expect(await clippedText(page, '.ml')).toEqual([]);
+  const camera = page.getByRole('button', { name: 'Pack Camera', exact: true });
+  if (p !== 'mobile') {
+    await camera.hover();
+    await expect(page.getByText('IF YOU PACK: CAMERA')).toBeVisible();
+    await page.waitForTimeout(300);
+    await page.screenshot({ path: `test-results/shots/limits-preview-${p}.png` });
+    expect(await clippedText(page, '.ml')).toEqual([]);
+  }
+  await camera.click();
+  await page.mouse.move(700, 450);
+  await expect(page.getByText('OVER BUDGET: TAKE SOMETHING OUT')).toBeVisible();
+  await page.waitForTimeout(300);
+  await page.screenshot({ path: `test-results/shots/limits-over-${p}.png`, fullPage: p === 'mobile' });
+  expect(await clippedText(page, '.ml')).toEqual([]);
+});

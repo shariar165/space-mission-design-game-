@@ -4,7 +4,7 @@
 import { describe, expect, it } from 'vitest';
 import { HAZARDS, PARTS } from '../src/engine/data';
 import { evaluateDesign } from '../src/engine/index';
-import { advanceOperations, consoleView, startOperations } from '../src/engine/ops/index';
+import { advanceOperations, consoleView, runOperations, startOperations } from '../src/engine/ops/index';
 import { effectiveFailureChance } from '../src/engine/ops/responses';
 import {
   buildPackDesign,
@@ -13,12 +13,16 @@ import {
   dayQuality,
   fitPart,
   initialPack,
+  levelCostCap,
   noseSquares,
   onDay,
   PACK,
   packBlockers,
+  packLimits,
+  packLimitsWith,
   packPart,
   shelfFor,
+  unpackPart,
   type Packed, bestLaunchDay } from '../src/engine/pack';
 import { starterDesign } from '../src/ui/starters';
 
@@ -268,5 +272,103 @@ describe('Moon 3 flies its science targets (spec: Moon orbit, Targets)', () => {
     expect(onDay(d, day).scienceTargets).toBe(true);
     expect(hasTargets(prepareOps(d))).toBe(true);
     expect(hasTargets(prepareOps(starterDesign('moon', FROM)))).toBe(false);
+  });
+});
+
+describe('mission limits and the level budget (spec UI rule 57)', () => {
+  // Cloud Diver teaches budget: its level budget is a game rule below NASA's Discovery cap, so not every instrument
+  // fits the wallet. Part costs (development, $M) from the Venus probe of the catalogue: radar 60, spectrometer 35,
+  // camera 25, big dish 11.8, extra solar 6; the kit parts cost nothing. Venus starter = bus etc. ≈ 233.42 + radar 60
+  // + spectrometer 35 ≈ 328.42.
+  const venus = { ...starterDesign('venus', '2028-11-15'), costCap: levelCostCap('venus')! };
+  const shelf = shelfFor('venus');
+  const p0 = initialPack(venus, shelf);
+  const limits = (p: Packed, base = venus) => packLimits(evaluateDesign(buildPackDesign(base, p)));
+  const of = (p: Packed, key: string) => limits(p).find((l) => l.key === key)!;
+
+  it('Cloud Diver’s budget is a sourced game rule: 350 $M, 70% of the Discovery cap; no other level has one', () => {
+    const cap = levelCostCap('venus')!;
+    expect(cap.value).toBe(350);
+    expect(cap.isGameEstimate).toBe(true);
+    for (const id of ['moon-1', 'moon-2', 'moon-3', 'mars', 'bennu', 'jupiter']) expect(levelCostCap(id)).toBeUndefined();
+  });
+
+  it('the design carries the cap into the cost meter (and the ⓘ shows the level rule, not NASA’s)', () => {
+    const ev = evaluateDesign(buildPackDesign(venus, p0));
+    expect(ev.meters.cost.limit).toBe(350);
+    expect(ev.meters.cost.limitSource).toBe(levelCostCap('venus'));
+    // without the level budget the Discovery cap stays: 500 $M
+    expect(evaluateDesign(buildPackDesign(starterDesign('venus', '2028-11-15'), p0)).meters.cost.limit).toBe(500);
+  });
+
+  it('four limits from the meters: weight, budget, power, data, each with used, limit, fill and status', () => {
+    const l = limits(p0);
+    expect(l.map((x) => x.key)).toEqual(['weight', 'budget', 'power', 'data']);
+    const ev = evaluateDesign(buildPackDesign(venus, p0));
+    expect(l.map((x) => x.meter)).toEqual(['mass', 'cost', 'power', 'data']);
+    for (const x of l) {
+      const m = ev.meters[x.meter];
+      expect(x.used).toBe(m.used);
+      expect(x.limit).toBe(m.limit);
+      expect(x.status).toBe(m.status);
+      expect(x.fill).toBeCloseTo(Math.min(1, m.used / m.limit), 12);
+    }
+    // budget: ≈ 328.42 of 350, margin (350 − 328.42) / 350 ≈ 0.062 < 10% → nearly over ("warning")
+    expect(of(p0, 'budget').used).toBeCloseTo(328.42, 2);
+    expect(of(p0, 'budget').status).toBe('warning');
+  });
+
+  it('adding the camera on Cloud Diver goes over budget and blocks launch; swapping out the spectrometer pays for it', () => {
+    const withCamera = packPart(p0, 'camera')!;
+    // 328.42 + 25 = 353.42 > 350
+    expect(of(withCamera, 'budget').used - of(p0, 'budget').used).toBeCloseTo(25, 9);
+    expect(of(withCamera, 'budget').used).toBeGreaterThan(350);
+    expect(of(withCamera, 'budget').status).toBe('over');
+    expect(of(withCamera, 'budget').fill).toBe(1);
+    const ev = evaluateDesign(buildPackDesign(venus, withCamera));
+    expect(packBlockers(withCamera, ev).map((b) => b.code)).toEqual(['over-budget']);
+    // 353.42 − 35 = 318.42 ≤ 350: launchable
+    const swapped = unpackPart(withCamera, 'spectrometer');
+    expect(of(swapped, 'budget').used).toBeCloseTo(318.42, 2);
+    expect(packBlockers(swapped, evaluateDesign(buildPackDesign(venus, swapped)))).toEqual([]);
+  });
+
+  it('the preview says what a shelf part would do before it is packed, and nothing when it does not fit', () => {
+    const before = limits(p0);
+    const after = packLimitsWith(venus, p0, 'camera')!;
+    expect(after.find((l) => l.key === 'budget')!.used - before.find((l) => l.key === 'budget')!.used).toBeCloseTo(25, 6);
+    expect(after).toEqual(limits(packPart(p0, 'camera')!));
+    // an extra solar panel raises the power limit (available W), not what the craft needs
+    const solar = packLimitsWith(venus, p0, 'solar')!.find((l) => l.key === 'power')!;
+    expect(solar.limit).toBeGreaterThan(before.find((l) => l.key === 'power')!.limit);
+    let full = p0;
+    for (const id of shelf) full = packPart(full, id) ?? full;
+    const noRoom = shelf.find((id) => !full.some((q) => q.id === id) && !fitPart(full, id));
+    if (noRoom) expect(packLimitsWith(venus, full, noRoom)).toBeUndefined();
+  });
+
+  it('every level can still earn three stars with the budget enforced (seed 2013, safest answers)', () => {
+    // Cloud Diver: the starter (radar and spectrometer) is under the level budget and earns three stars on its data.
+    const ev = evaluateDesign(buildPackDesign(venus, p0));
+    expect(packBlockers(p0, ev)).toEqual([]);
+    expect(runOperations(buildPackDesign(venus, p0), { seed: 2013, policy: 'safe' }).debrief.stars).toBe(3);
+    // Every other flyable level keeps NASA's cap, and even a full nose stays under it (Mars 390, Bennu 315 of 850 $M).
+    for (const dest of ['moon', 'mars', 'bennu'] as const) {
+      const base = starterDesign(dest, '2028-11-15');
+      let full = initialPack(base, shelfFor(dest));
+      for (const id of shelfFor(dest)) full = packPart(full, id) ?? full;
+      expect(evaluateDesign(buildPackDesign(base, full)).meters.cost.status).not.toBe('over');
+    }
+  });
+
+  it('over budget comes after the engine’s own blockers: Jupiter still leads with them (and is too heavy)', () => {
+    const jup = starterDesign('jupiter', '2028-11-15');
+    const p = initialPack(jup, shelfFor('jupiter'));
+    const ev = evaluateDesign(buildPackDesign(jup, p));
+    const codes = packBlockers(p, ev).map((b) => b.code);
+    // 715 $M of the 500 $M Discovery cap: over, but the engine's blockers (power, then the rocket) come first
+    expect(codes.slice(0, ev.blockers.length)).not.toContain('over-budget');
+    expect(codes).toContain('too-heavy');
+    expect(codes[codes.length - 1]).toBe('over-budget');
   });
 });
