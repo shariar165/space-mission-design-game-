@@ -123,6 +123,22 @@ export function reportVerdict(s: OpsState): { saved: Saved; hurt: Hurt } {
   return { saved, hurt };
 }
 
+/**
+ * The Pack part that would have helped against the danger that hurt (spec UI rule 60): an unpacked part on the level's
+ * shelf that guards against it directly (its hazard factor), else one that covers it on the danger deck. None when
+ * nothing went badly, or no such part is left on the shelf.
+ */
+export function packHint(s: OpsState, shelf: readonly PartId[]): { part: PartId; hazardType: string } | undefined {
+  const hurt = reportVerdict(s).hurt;
+  if (hurt.code !== 'bad-outcome') return undefined;
+  const packed = new Set(s.env.design.packedParts ?? []);
+  const free = shelf.filter((id) => !packed.has(id));
+  const direct = free.find((id) => PACK.parts[id].hazardFactor?.[hurt.hazardType] !== undefined);
+  const covering = free.find((id) => PACK.parts[id].covers.includes(hurt.hazardType));
+  const part = direct ?? covering;
+  return part ? { part, hazardType: hurt.hazardType } : undefined;
+}
+
 export interface ReportCompare {
   missionId: MissionId;
   label: string;

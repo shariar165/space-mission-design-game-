@@ -13,7 +13,8 @@ import { badges, newBadges, rankFor, starTotals, type RankDef } from '../engine/
 import { evaluateDesign } from '../engine/index';
 import { flightFacts, mergeFacts, newLessons, NOTEBOOK, notebook, notebookProgress, rescueProgress, type NotebookFacts } from '../engine/notebook';
 import { operationsDebrief, type OpsState } from '../engine/ops/index';
-import { initialPack, levelCostCap, packPart, rocketIdOf, rocketOptions, shelfFor, withRocket, type Packed, type PartId } from '../engine/pack';
+import { initialPack, levelCostCap, packLimits, packPart, rocketIdOf, rocketOptions, shelfFor, withRocket, type Packed, type PackLimit, type PartId } from '../engine/pack';
+import { scienceReturned } from '../engine/ops/observe';
 import type { RescueCaseId } from '../engine/rescue';
 import type { Design, DestinationId } from '../engine/types';
 import { TopBar, type Mode, type Step } from './components/TopBar';
@@ -178,6 +179,8 @@ export function App() {
   };
 
   const cadetMode = mode === 'cadet';
+  /** This session's last solo flight, by level (spec UI rule 60). */
+  const [lastFlight, setLastFlight] = useState<{ levelId: string; stars: number; science: number; limits: PackLimit[] }>();
   /** The packing and the picked launch day, kept while the player goes between Pack and the Launch Day step. */
   const [packSave, setPackSave] = useState<{ key: string; packed?: Packed; pick?: number }>();
   /** Name Your Robot comes first: a Cadet who has never named the robot (nor skipped the screen). */
@@ -403,6 +406,9 @@ export function App() {
 
   const finish = (s: OpsState) => {
     const stars = operationsDebrief(s).stars;
+    // Change one thing and fly again (spec UI rule 60): Pack compares each limit with this flight.
+    if (cadetMode && level && !dailyRun && !teamRun && flyDesign)
+      setLastFlight({ levelId: level.id, stars, science: scienceReturned(s), limits: packLimits(evaluateDesign(flyDesign)) });
     const nextProgress = cadetMode && level && !dailyRun ? withStars(progress, level.id, stars) : progress;
     const nextFacts = mergeFacts(facts, flightFacts(s));
     const { progress: _p, ...flightOnly } = nextFacts;
@@ -757,6 +763,7 @@ export function App() {
           {...(keptPack?.pick !== undefined ? { pick: keptPack.pick } : {})}
           onDays={() => go('launch')}
           {...(level && !teamRun ? { rocket: { onPick: pickRocket } } : {})}
+          {...(lastFlight && level && lastFlight.levelId === level.id && !teamRun ? { last: lastFlight } : {})}
           {...(level && !teamRun && orbitPresets(level.destination).length ? { orbit: { onPick: pickOrbit } } : {})}
           {...(soloObjective ? { objective: { ...(cadet.base.objective ? { picked: cadet.base.objective } : {}), onPick: pickObjective } } : {})}
           {...(teamNow ? { team: { state: teamNow, log: teamPlay.log, send: teamPlay.send, ...(teamNow.objective ? { objective: teamNow.objective } : {}) }, onLaunch: launchTeam } : {})}
@@ -810,6 +817,7 @@ export function App() {
           onHome={home}
           onBack={back}
           {...(teamFly ? { team: { state: teamFly, log: teamPlay.log } } : {})}
+          {...(cadetMode && level && !dailyRun && !teamRun ? { shelf: shelfOf(level) } : {})}
           homeLabel={NAV.home}
         />
       )}

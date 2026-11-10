@@ -158,6 +158,15 @@
 .ml-bar.over .ml-fill { background: var(--sd-coral); }
 .ml-ghost { background: repeating-linear-gradient(135deg, var(--sd-amber) 0 4px, transparent 4px 8px); opacity: 0.85; }
 .ml-ghost.over { background: repeating-linear-gradient(135deg, var(--sd-coral) 0 4px, transparent 4px 8px); }
+/* LAST FLIGHT (spec UI rule 60): the last result over the bars, a tick where each bar stood, the change since */
+.lf { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; padding-bottom: 6px; border-bottom: 1px dashed var(--sd-line); }
+.lf-k { font: 700 10.5px/1 var(--sd-mono); letter-spacing: 0.16em; color: var(--sd-amber); }
+.lf-stars { display: inline-flex; gap: 2px; }
+.lf-sci { font: 700 11.5px/1.2 var(--sd-mono); color: var(--sd-ink-2); }
+.ml-last { position: absolute; top: -2px; bottom: -2px; left: calc(var(--fill, 0) * 100%); width: 2px; margin-left: -1px; background: var(--sd-ink); opacity: 0.85; }
+.ml-bar:has(.ml-last) { overflow: visible; }
+.ml-change { font: 700 10.5px/1.2 var(--sd-mono); letter-spacing: 0.04em; color: var(--sd-ink-3); }
+.ml.compact .lf { grid-column: 1 / -1; }
 .ml.compact { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; padding: 8px 10px; }
 .ml.compact .ml-top { grid-column: 1 / -1; }
 .ml.compact .ml-head { flex-wrap: wrap; gap: 2px 6px; font-size: 10px; }

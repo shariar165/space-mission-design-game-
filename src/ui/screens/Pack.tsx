@@ -23,6 +23,8 @@ import {
   unpackPart,
   packLimits,
   packLimitsWith,
+  limitChanges,
+  type PackLimit,
   rocketCards,
   type Packed,
   type PartId,
@@ -107,6 +109,8 @@ interface Props {
   onDays?: () => void;
   /** Team mode: packing goes through the team's log. */
   team?: PackTeam;
+  /** The last flight of this level (spec UI rule 60): MISSION LIMITS compares each bar with it. */
+  last?: { stars: number; science: number; limits: PackLimit[] };
   /** Solo Mars: pick the science orbit (spec UI rule 59). */
   orbit?: { onPick: (id: string) => void };
   /** Solo levels: pick the rocket (spec UI rule 58). */
@@ -125,7 +129,7 @@ export interface PackTeam {
   objective?: ObjectiveId;
 }
 
-export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLesson, onHome, onLaunch, onBack, brief, onBriefSeen, robotName, onRobotName, packed: kept, onPacked, pick, onDays, team, objective, rocket, orbit }: Props) {
+export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLesson, onHome, onLaunch, onBack, brief, onBriefSeen, robotName, onRobotName, packed: kept, onPacked, pick, onDays, team, objective, rocket, orbit, last }: Props) {
   const engineer = mode === 'engineer';
   const phone = useIsPhone();
   const dest = DESTINATIONS[base.destination];
@@ -431,7 +435,8 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
       onClose={closeBrief}
     />
   );
-  const limitsEl = !team && <MissionLimits limits={limits} {...(peekLimits && peek ? { preview: { part: PART_LOOK[peek].name, limits: peekLimits } } : {})} {...(phone ? { compact: true } : {})} />;
+  const changes = useMemo(() => (last ? limitChanges(limits, last.limits) : undefined), [last, limits]);
+  const limitsEl = !team && <MissionLimits limits={limits} {...(last && changes ? { last: { stars: last.stars, science: last.science, changes } } : {})} {...(peekLimits && peek ? { preview: { part: PART_LOOK[peek].name, limits: peekLimits } } : {})} {...(phone ? { compact: true } : {})} />;
   const rocketEl = rocket && rockets && <RocketPicker cards={rockets} onPick={rocket.onPick} {...(phone ? { compact: true } : {})} />;
   const orbitEl = orbit && orbits && orbits.length > 0 && <OrbitPicker cards={orbits} onPick={orbit.onPick} {...(phone ? { compact: true } : {})} />;
   const sideTabs = ['dangers', ...(rocketEl ? ['rocket'] : []), ...(orbitEl ? ['orbit'] : [])] as ('dangers' | 'rocket' | 'orbit')[];

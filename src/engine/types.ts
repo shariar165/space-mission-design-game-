@@ -76,6 +76,8 @@ export interface Design {
    * against the budget (game rule, spec UI rule 58). None (real missions, the Daily): launch stays outside the cap.
    */
   standardRocketId?: string;
+  /** Signal Delay Pack: the part ids packed, in packing order (the report names a part that would have helped). */
+  packedParts?: string[];
   /** A level's own development budget (pack.json levelBudgets, a game rule); none = the mission class cap. */
   costCap?: Sourced<number>;
   /** Mars only: the mission objective that sets the targets' science weights (objectives.ts). None = balanced. */

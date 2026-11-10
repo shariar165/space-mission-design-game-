@@ -64,6 +64,7 @@ export function bits(b: number): string {
   if (!Number.isFinite(b)) return '∞';
   return b >= 1e9 ? `${num(b / 1e9, 2)} Gbit` : `${num(b / 1e6, 0)} Mbit`;
 }
+export const signedBits = (b: number) => withSign(b, bits(Math.abs(b)));
 export const gbit = (g: number) => `${num(g, g < 10 ? 2 : 0)} Gbit`;
 
 export const days = (d: number) => `${num(d)} days`;

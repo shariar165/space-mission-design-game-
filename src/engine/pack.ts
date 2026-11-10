@@ -147,7 +147,7 @@ export function buildPackDesign(base: Design, packed: Packed): Design {
   const has = (id: PartId) => packed.some((q) => q.id === id);
   const ids = packed.map((q) => q.id);
   const instrumentIds = ids.map((id) => part(id).instrumentId).filter((x): x is string => !!x);
-  let d: Design = { ...base, instrumentIds, power: { ...base.power }, comms: { ...base.comms } };
+  let d: Design = { ...base, instrumentIds, packedParts: ids, power: { ...base.power }, comms: { ...base.comms } };
   // Cadet Mars flies a short prime campaign of science targets, so a run lasts about five minutes (spec: Science targets).
   if (base.destination === 'mars') d.scienceDays = SCIENCE_RULES.cadetCampaign_days.value;
   if (has('dish')) d.comms.dishDiameter_m = DISH_SIZES.large.value;
@@ -262,6 +262,23 @@ export function packLimits(ev: FullEvaluation): PackLimit[] {
   return LIMIT_METERS.map(([key, meter]) => {
     const m = ev.meters[meter];
     return { key, meter, used: m.used, limit: m.limit, fill: m.limit > 0 ? Math.max(0, Math.min(1, m.used / m.limit)) : 1, status: m.status };
+  });
+}
+
+export interface LimitChange {
+  key: LimitKey;
+  /** Change in what is used, and in the limit, since the last flight (now − last). */
+  used: number;
+  limit: number;
+  /** The last flight's fill of this bar, 0–1 (Pack marks it). */
+  lastFill: number;
+}
+
+/** Each mission limit against the last flight's (spec UI rule 60). */
+export function limitChanges(now: PackLimit[], last: PackLimit[]): LimitChange[] {
+  return now.map((n) => {
+    const l = last.find((x) => x.key === n.key) ?? n;
+    return { key: n.key, used: n.used - l.used, limit: n.limit - l.limit, lastFill: l.fill };
   });
 }
 

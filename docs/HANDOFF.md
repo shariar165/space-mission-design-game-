@@ -94,6 +94,8 @@ The objectives use the instrument-match rule: the objective's targets carry 60% 
 
 **Choose the science orbit (spec v1.8, UI rule 59; `docs/SPACE_APPS_PLAN.md` PR 4):** Mars Pack offers three orbits (stay where you arrive, MAVEN's, high), on the right column's ORBIT tab; the plan's low orbit was dropped (decision 98).
 
+**Change one thing and fly again (spec v1.9, UI rule 60; `docs/SPACE_APPS_PLAN.md` PR 6):** LAST FLIGHT strip and per-bar changes on Pack after FLY AGAIN; NEXT TIME: PACK THE <PART> on the report (dangers only).
+
 Smaller follow-ups, not blocking:
 - **Real history checked (Nov 11, 2026; `docs/SPACE_APPS_PLAN.md` PR 5, spec decision 99):** all nine hazard texts and five of the six crisis-card texts were read against an official NASA page, corrected where they differed, and given that source and link (no TO VERIFY badge). **Still to verify:** the crisis card `solar-storm` ("Solar particle events can trigger spacecraft safe mode."); the one NASA source found is a PDF that could not be read here (NTRS 20050175726, Mars Odyssey's safe mode in October 2003). A person should check it or cut the line.
 - Still English by design: the Engineer Build Bay, the Engineer readouts and the engine's blockers. Any of these that moves to Bangla goes through `sdWords.ts` / `sdWords.bn.ts` like the rest.

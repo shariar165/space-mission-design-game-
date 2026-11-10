@@ -230,6 +230,17 @@ export const ROCKET_WORDS = tr('ROCKET_WORDS', {
   curveTitle: (name: string) => `${name}: payload to C3`,
 });
 
+/** LAST FLIGHT on solo Pack and the report's NEXT TIME line (spec UI rule 60): change one thing and fly again. */
+export const LAST_WORDS = tr('LAST_WORDS', {
+  title: 'LAST FLIGHT',
+  label: 'Last flight',
+  stars: (n: string) => `${n} of 3 stars`,
+  science: (pct: string) => `${pct} OF THE SCIENCE HOME`,
+  change: (signed: string) => `${signed} VS LAST`,
+  limitChange: (signed: string) => `LIMIT ${signed}`,
+  nextTime: (part: string) => `NEXT TIME: PACK THE ${part.toUpperCase()}.`,
+});
+
 /** MISSION LIMITS on solo Pack (spec UI rule 57): weight, budget, power and data as bars. */
 export const LIMIT_WORDS = tr('LIMIT_WORDS', {
   title: 'MISSION LIMITS',
