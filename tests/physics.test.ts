@@ -876,10 +876,18 @@ describe('crisis', () => {
     expect(CR.phaseOnDay(tl, 672)).toBe('science');
   });
 
-  it('every card has its real-history summary flagged for checking against NASA LLIS', () => {
+  it('every card’s real history is either checked against an official page or still flagged to verify', () => {
     for (const card of CR.CRISIS_CARDS) {
-      expect(card.realHistory.isGameEstimate, card.id).toBe(true);
-      expect(card.realHistory.url, card.id).toBe('https://llis.nasa.gov/');
+      const h = card.realHistory;
+      if (h.isGameEstimate) {
+        // not yet checked: the generic solar-storm line has no official page that could be read (PR 5 report)
+        expect(card.id).toBe('solar-storm');
+        expect(h.source, card.id).toMatch(/verify|check/i);
+      } else {
+        expect(h.source, card.id).toMatch(/read Nov 11, 2026/);
+        expect(h.url, card.id).toMatch(/^https:\/\/[a-z.]*nasa\.gov\/./);
+        expect(h.url, card.id).not.toBe('https://llis.nasa.gov/');
+      }
       expect(card.options.length, card.id).toBeGreaterThanOrEqual(2);
     }
   });

@@ -140,7 +140,7 @@ There is no lint step.
 - `timeline.ts` `prepareOps(design)` precomputes the fixed day-by-day environment: distances, light time, Sun–Earth–probe angle, eclipses, power, link rates and dose. The clock then runs in days, split part-way through a day when a command arrives.
 - **Determinism:** each hazard has its own seeded stream (`subRng`), and every random number is drawn at the start (Poisson thinning). Tests rely on the same seed giving the same mission, and on decisions never reshuffling later draws. `rng: () => 0.999999` means no bad luck.
 - **Separate from the prime score:** in Ops the hazards replace the generic cruise and science base rates. The extension is reported separately and never changes the prime score.
-- Data: `operations.json` (parameters) and `hazards.json` (hazards, responses, real history marked "to verify").
+- Data: `operations.json` (parameters) and `hazards.json` (hazards, responses, and real history checked against official NASA pages, each with its source and link; spec decision 99).
 
 **Module responsibilities that span files:**
 - **Margins → risk → score.** `meter.ts` sets status: below 0 is over, below 10% is a warning.

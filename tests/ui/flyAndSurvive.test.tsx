@@ -75,7 +75,8 @@ describe('Fly & Survive: danger card', () => {
     const v = consoleView(at);
     const c = flyCard(at, v)!;
     expect(within(card).getByRole('heading').textContent).toBe(v.alert!.title.toUpperCase());
-    expect(within(card).getByText('TO VERIFY')).toBeTruthy();
+    // the card's real history was checked against NASA (PR 5): no TO VERIFY badge
+    expect(within(card).queryByText('TO VERIFY')).toBeNull();
     expect(within(card).getByText(f.durationWords(v.alert!.oneWay_s))).toBeTruthy();
     expect(within(card).getByText(c.onsetIn_s < 60 ? 'NOW' : `IN ${f.durationWords(c.onsetIn_s)}`)).toBeTruthy();
     // time is locked while the card waits

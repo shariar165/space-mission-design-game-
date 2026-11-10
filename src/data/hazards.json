@@ -34,11 +34,11 @@
       "isGameEstimate": true
     },
     "realHistory": {
-      "value": "2001 Mars Odyssey: the MARIE radiation instrument stopped working after the large solar storms of October–November 2003.",
+      "value": "2001 Mars Odyssey: the MARIE radiation instrument stopped working when a large solar event hit the spacecraft on Oct. 28, 2003, and controllers could not restore it.",
       "unit": "",
-      "source": "Summary from general knowledge; to verify against NASA source",
-      "isGameEstimate": true,
-      "url": "https://science.nasa.gov/mission/mars-odyssey/"
+      "source": "NASA Science, Mars Odyssey science instruments (MARIE: \"unable to collect data since that time\"); JPL, Mars Odyssey Mission Status, Nov. 26, 2003; read Nov 11, 2026",
+      "isGameEstimate": false,
+      "url": "https://science.nasa.gov/mission/odyssey/science-instruments/"
     },
     "prompt": "Energetic particles from the Sun are on their way: a solar radiation storm. Protect the instruments?",
     "options": [
@@ -107,11 +107,11 @@
       "isGameEstimate": true
     },
     "realHistory": {
-      "value": "In September 2017 a strong CME reached Mars. MAVEN saw a global aurora, and the radiation dose at the surface measured by Curiosity doubled.",
+      "value": "In September 2017 a strong CME reached Mars. MAVEN saw a global aurora, and the radiation Curiosity measured at the surface was more than double any level it had seen before.",
       "unit": "",
-      "source": "Summary from general knowledge; to verify against NASA source",
-      "isGameEstimate": true,
-      "url": "https://science.nasa.gov/mission/maven/"
+      "source": "NASA/JPL news, \"Large Solar Storm Sparks Global Aurora and Doubles Radiation Levels on the Martian Surface\" (Sept. 2017); read Nov 11, 2026",
+      "isGameEstimate": false,
+      "url": "https://www.jpl.nasa.gov/news/large-solar-storm-sparks-global-aurora-and-doubles-radiation-levels-on-the-martian-surface/"
     },
     "prompt": "A coronal mass ejection is heading for Mars. NASA's model predicts when its shock arrives. Ride it out?",
     "options": [
@@ -179,9 +179,9 @@
     "realHistory": {
       "value": "Mariner 9 reached Mars in November 1971 during a planet-wide dust storm and waited for the dust to clear before mapping. A global storm in 2018 ended the solar-powered Opportunity rover.",
       "unit": "",
-      "source": "Summary from general knowledge; to verify against NASA source",
-      "isGameEstimate": true,
-      "url": "https://science.nasa.gov/mission/mariner-9/"
+      "source": "NASA History, \"50 Years Ago: Mariner 9 Enters Mars Orbit\" (arrival Nov. 13, 1971; the storm cleared after a few weeks); NASA Science, Opportunity mission page (last signal June 10, 2018, during a Mars-wide dust storm; mission declared complete Feb. 13, 2019); read Nov 11, 2026",
+      "isGameEstimate": false,
+      "url": "https://www.nasa.gov/history/50-years-ago-mariner-9-enters-mars-orbit/"
     },
     "prompt": "Dust is covering the whole planet and the upper atmosphere is swelling. What should the orbiter do?",
     "options": [
@@ -269,11 +269,11 @@
       "isGameEstimate": true
     },
     "realHistory": {
-      "value": "Comet Siding Spring passed close to Mars on Oct. 19, 2014. MAVEN, MRO and Mars Odyssey changed their orbit timing to shelter behind Mars when its dust was expected.",
+      "value": "Comet Siding Spring passed close to Mars on Oct. 19, 2014. MAVEN, MRO and Mars Odyssey took shelter behind Mars during the period of risk from its dust.",
       "unit": "",
-      "source": "Summary from general knowledge; to verify against NASA source",
-      "isGameEstimate": true,
-      "url": "https://science.nasa.gov/solar-system/comets/c-2013-a1-siding-spring/"
+      "source": "NASA/JPL news, \"All Three NASA Mars Orbiters Healthy After Comet Flyby\" (Oct. 2014); read Nov 11, 2026",
+      "isGameEstimate": false,
+      "url": "https://www.jpl.nasa.gov/news/all-three-nasa-mars-orbiters-healthy-after-comet-flyby/"
     },
     "prompt": "A comet will pass close by and its dust could hit the craft. How do you protect it?",
     "options": [
@@ -366,9 +366,9 @@
     "realHistory": {
       "value": "Kepler lost one reaction wheel in 2012 and a second in 2013. Engineers found a new way to point it using sunlight pressure, which became the K2 mission.",
       "unit": "",
-      "source": "Summary from general knowledge; to verify against NASA source",
-      "isGameEstimate": true,
-      "url": "https://science.nasa.gov/mission/kepler/"
+      "source": "NASA Science, Kepler / K2 In Depth (a wheel failed in July 2012, wheel 4 in 2013; thrusters and solar pressure control pointing in K2); read Nov 11, 2026",
+      "isGameEstimate": false,
+      "url": "https://science.nasa.gov/mission/kepler/in-depth/"
     },
     "prompt": "Too few reaction wheels are left to point the craft. How will it point now?",
     "options": [
@@ -467,11 +467,11 @@
       "isGameEstimate": true
     },
     "realHistory": {
-      "value": "In February 2013 Curiosity's main computer had a memory problem, and the team switched the rover to its backup computer. In 2023–24 a failed memory chip garbled Voyager 1's data until engineers moved the code, with a day-long light-time each way.",
+      "value": "In February 2013 Curiosity's main computer had a memory problem, and the team switched the rover to its backup computer. From November 2023 a failed memory chip garbled Voyager 1's data until engineers moved the code in April 2024; each command took about 22.5 hours to arrive.",
       "unit": "",
-      "source": "Summary from general knowledge; to verify against NASA source",
-      "isGameEstimate": true,
-      "url": "https://science.nasa.gov/mission/msl-curiosity/"
+      "source": "NASA/JPL news, \"Computer Swap on Curiosity Rover\" (Feb. 28, 2013); NASA Science Voyager blog, \"NASA’s Voyager 1 Resumes Sending Engineering Updates to Earth\" (Apr. 22, 2024); read Nov 11, 2026",
+      "isGameEstimate": false,
+      "url": "https://www.jpl.nasa.gov/news/computer-swap-on-curiosity-rover/"
     },
     "prompt": "The flight computer's memory is corrupted. How do you fix it?",
     "options": [
@@ -576,9 +576,9 @@
     "realHistory": {
       "value": "In 2016 Juno's main-engine helium valves did not work as expected. NASA kept Juno in its 53-day orbit instead of firing the engine again to reach the planned 14-day orbit.",
       "unit": "",
-      "source": "Summary from general knowledge; to verify against NASA source",
-      "isGameEstimate": true,
-      "url": "https://science.nasa.gov/mission/juno/"
+      "source": "NASA news release, \"NASA’s Juno Mission to Remain in Current Orbit at Jupiter\" (helium check valves, October 2016; the 14-day burn was not made); read Nov 11, 2026",
+      "isGameEstimate": false,
+      "url": "https://www.nasa.gov/news-release/nasas-juno-mission-to-remain-in-current-orbit-at-jupiter/"
     },
     "prompt": "The arrival burn did not go as planned. What now?",
     "options": [
@@ -665,9 +665,9 @@
     "realHistory": {
       "value": "Juno carries its electronics in a titanium radiation vault, and its orbits were planned to limit the dose from Jupiter's radiation belts.",
       "unit": "",
-      "source": "Summary from general knowledge; to verify against NASA source",
-      "isGameEstimate": true,
-      "url": "https://science.nasa.gov/mission/juno/"
+      "source": "NASA/JPL news, \"Juno Armored Up to Go to Jupiter\" (the titanium vault; a polar path that spends as little time as possible in the radiation belts); read Nov 11, 2026",
+      "isGameEstimate": false,
+      "url": "https://www.jpl.nasa.gov/news/juno-armored-up-to-go-to-jupiter/"
     },
     "prompt": "The electronics have taken more radiation than they were built for.",
     "options": []
@@ -702,11 +702,11 @@
       "isGameEstimate": true
     },
     "realHistory": {
-      "value": "Mars Global Surveyor began aerobraking in 1997 with a solar panel damaged at launch. When the panel bent on a low pass through the air, the team raised the periapsis, paused for a month and then dipped more gently, finishing in 1999.",
+      "value": "Mars Global Surveyor began aerobraking in 1997 with a solar panel that had not latched properly. When the panel moved past its deployed position, the team raised the periapsis from 110 to about 172 km, paused for about a month, then went on more gently at 120 km, finishing in February 1999.",
       "unit": "",
-      "source": "Summary from general knowledge; to verify against NASA source",
-      "isGameEstimate": true,
-      "url": "https://science.nasa.gov/mission/mars-global-surveyor/"
+      "source": "NASA NSSDCA, Mars Global Surveyor (the panel failed to latch and moved past its deployed position; aerobraking ended February 1999); NASA PDS, MGS Science Sampler AAREADME (periapsis raised from 110 to about 172 km on Oct. 13, 1997; resumed Nov. 8 at 120 km); read Nov 11, 2026",
+      "isGameEstimate": false,
+      "url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1996-062A"
     },
     "prompt": "A low pass through the air is heating the craft. Climb out, or stay low and finish the picture?",
     "options": [

@@ -5,7 +5,7 @@
     "missionTypes": ["orbiter", "rendezvous"],
     "needsReturn": false,
     "marginThatMatters": "deltaV",
-    "realHistory": { "value": "Mars Climate Orbiter, 1999: one team used imperial units, the other metric; the craft flew too low and was lost.", "unit": "", "source": "Summary from general knowledge (spec); check against NASA LLIS or the official failure report before release", "url": "https://llis.nasa.gov/", "isGameEstimate": true },
+    "realHistory": { "value": "Mars Climate Orbiter, 1999: one team used English units, the other metric, for a key spacecraft operation, and the craft was lost.", "unit": "", "source": "NASA/JPL news, \"Mars Climate Orbiter Team Finds Likely Cause of Loss\" (Sept. 30, 1999); read Nov 11, 2026", "url": "https://www.jpl.nasa.gov/news/mars-climate-orbiter-team-finds-likely-cause-of-loss/", "isGameEstimate": false },
     "prompt": "Navigation numbers from two teams don't quite agree. Check again?",
     "options": [
       { "id": "nav-check", "label": "Spend propellant on an extra navigation check", "cost": { "deltaV_ms": { "value": 15, "unit": "m/s", "source": "Game estimate", "isGameEstimate": true } }, "failureChance": { "value": 0.005, "unit": "probability", "source": "Game estimate", "isGameEstimate": true }, "affects": "arrival" },
@@ -19,7 +19,7 @@
     "missionTypes": ["rendezvous", "lander"],
     "needsReturn": true,
     "marginThatMatters": "budget",
-    "realHistory": { "value": "Genesis, 2004: deceleration sensors were installed backwards; the parachute never opened.", "unit": "", "source": "Summary from general knowledge (spec); check against NASA LLIS or the official failure report before release", "url": "https://llis.nasa.gov/", "isGameEstimate": true },
+    "realHistory": { "value": "Genesis, 2004: its deceleration sensors had been installed incorrectly, so the parachute never opened and the capsule crashed.", "unit": "", "source": "NASA NSSDCA, Genesis (\"The parachute never deployed\"; \"incorrectly installed accelerometers\"); read Nov 11, 2026", "url": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2001-034A", "isGameEstimate": false },
     "prompt": "Before launch: the capsule's sensors have only been checked on paper. Pay for an extra test?",
     "options": [
       { "id": "extra-test", "label": "Pay for an extra test before launch", "cost": { "budget_M": { "value": 5, "unit": "$M", "source": "Game estimate", "isGameEstimate": true } }, "failureChance": { "value": 0.005, "unit": "probability", "source": "Game estimate", "isGameEstimate": true }, "affects": "return" },
@@ -32,7 +32,7 @@
     "missionTypes": ["lander"],
     "needsReturn": false,
     "marginThatMatters": "none",
-    "realHistory": { "value": "Mars Polar Lander, 1999: likely shut its engine early after reading leg vibration as touchdown.", "unit": "", "source": "Summary from general knowledge (spec); check against NASA LLIS or the official failure report before release", "url": "https://llis.nasa.gov/", "isGameEstimate": true },
+    "realHistory": { "value": "Mars Polar Lander, 1999: most likely a false signal that it had landed shut its engines off too early.", "unit": "", "source": "NASA Science, Mars Polar Lander / Deep Space 2 (the investigation found it was most likely a false signal that the spacecraft had landed); read Nov 11, 2026", "url": "https://science.nasa.gov/mission/mars-polar-lander-deep-space-2/", "isGameEstimate": false },
     "prompt": "Not used for orbiters; kept for future lander missions.",
     "options": [
       { "id": "add-logic", "label": "Add a software check that ignores early leg signals", "cost": { "budget_M": { "value": 3, "unit": "$M", "source": "Game estimate", "isGameEstimate": true } }, "failureChance": { "value": 0.01, "unit": "probability", "source": "Game estimate", "isGameEstimate": true }, "affects": "arrival" },
@@ -45,7 +45,7 @@
     "missionTypes": ["orbiter", "rendezvous"],
     "needsReturn": false,
     "marginThatMatters": "data",
-    "realHistory": { "value": "Spirit rover, 2004: too many files filled flash memory and caused reboots; fixed from Earth.", "unit": "", "source": "Summary from general knowledge (spec); check against NASA LLIS or the official failure report before release", "url": "https://llis.nasa.gov/", "isGameEstimate": true },
+    "realHistory": { "value": "Spirit rover, 2004: too many files filled flash memory and caused reboots; fixed from Earth.", "unit": "", "source": "NASA/JPL news, \"Mars Rover Spirit Restored to Health\" (2004: thousands of files deleted from flash memory; the computer had been resetting itself about once an hour); read Nov 11, 2026", "url": "https://www.jpl.nasa.gov/news/mars-rover-spirit-restored-to-health/", "isGameEstimate": false },
     "prompt": "The onboard memory is full and the computer keeps rebooting.",
     "options": [
       { "id": "pause-fix", "label": "Pause science to fix it", "cost": { "scienceDays": { "value": 14, "unit": "days", "source": "Game estimate", "isGameEstimate": true } }, "failureChance": { "value": 0.005, "unit": "probability", "source": "Game estimate", "isGameEstimate": true }, "affects": "science" },
@@ -58,7 +58,7 @@
     "missionTypes": ["orbiter", "rendezvous"],
     "needsReturn": false,
     "marginThatMatters": "power, deltaV",
-    "realHistory": { "value": "SOHO, 1998: lost attitude control and contact; recovered months later.", "unit": "", "source": "Summary from general knowledge (spec); check against NASA LLIS or the official failure report before release", "url": "https://llis.nasa.gov/", "isGameEstimate": true },
+    "realHistory": { "value": "SOHO, 1998: lost attitude control and contact; recovered months later.", "unit": "", "source": "SOHO (NASA/ESA), \"A Diary of the Recovery\" (contact lost June 24, 1998; re-established Aug. 3; attitude recovered Sept. 16); read Nov 11, 2026", "url": "https://soho.nascom.nasa.gov/operations/Recovery/recovery_diary.html", "isGameEstimate": false },
     "prompt": "The craft is tumbling and has lost its lock on the Sun.",
     "options": [
       { "id": "recover-now", "label": "Spend propellant and power to recover now", "cost": { "deltaV_ms": { "value": 20, "unit": "m/s", "source": "Game estimate", "isGameEstimate": true } }, "requires": { "powerMargin": { "value": 0.05, "unit": "fraction", "source": "Game estimate: power margin needed to run recovery", "isGameEstimate": true } }, "failureChance": { "value": 0.01, "unit": "probability", "source": "Game estimate", "isGameEstimate": true }, "affects": "cruise" },
