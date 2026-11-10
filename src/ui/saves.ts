@@ -134,15 +134,21 @@ const PACK_KEY = 'sd.pack';
 export interface LevelPackSave {
   parts: string[];
   objective?: string;
+  /** The rocket option picked (pack.ts rocketIdOf; spec UI rule 58). */
+  rocket?: string;
 }
 export const loadLevelPacks = (): Record<string, LevelPackSave> => {
   const v = read<Record<string, unknown>>(PACK_KEY, {});
   const out: Record<string, LevelPackSave> = {};
   for (const [id, x] of Object.entries(v)) {
     if (!x || typeof x !== 'object') continue;
-    const { parts, objective } = x as { parts?: unknown; objective?: unknown };
+    const { parts, objective, rocket } = x as { parts?: unknown; objective?: unknown; rocket?: unknown };
     if (!Array.isArray(parts)) continue;
-    out[id] = { parts: parts.filter((p): p is string => typeof p === 'string'), ...(typeof objective === 'string' ? { objective } : {}) };
+    out[id] = {
+      parts: parts.filter((p): p is string => typeof p === 'string'),
+      ...(typeof objective === 'string' ? { objective } : {}),
+      ...(typeof rocket === 'string' ? { rocket } : {}),
+    };
   }
   return out;
 };

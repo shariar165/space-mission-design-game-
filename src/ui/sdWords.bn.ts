@@ -1017,6 +1017,18 @@ export const BN: Bangla = {
     'over-budget': 'বাজেটের বাইরে: কিছু বাদ দাও',
     other: 'উৎক্ষেপণের জন্য তৈরি নয়',
   },
+  ROCKET_WORDS: {
+    title: 'রকেট',
+    label: 'রকেট',
+    lifts: (kg) => `বইতে পারে ${kg}`,
+    tooHeavy: 'এর জন্য খুব ভারী',
+    standard: 'সাধারণ · খরচ নেই',
+    charge: (money) => `বাজেটে ${money}`,
+    refund: (money) => `বাজেটে ${money}: সস্তা`,
+    record: (ok, all) => `${all} উড়ানের মধ্যে ${ok} সফল`,
+    ride: 'যৌথ যাত্রা · ',
+    curveTitle: (name) => `${name}: C3-তে বহনক্ষমতা`,
+  },
   LIMIT_WORDS: {
     title: 'মিশনের সীমা',
     label: 'মিশনের সীমা',

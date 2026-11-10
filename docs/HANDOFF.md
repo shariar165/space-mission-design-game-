@@ -90,6 +90,8 @@ The objectives use the instrument-match rule: the objective's targets carry 60% 
 
 **Mission limits (spec v1.6, UI rule 57; `docs/SPACE_APPS_PLAN.md` PR 2):** solo Pack shows weight, budget, power and data bars with a hover preview; over budget blocks launch; Cloud Diver has its own 350 $M budget (game rule).
 
+**Choose the rocket (spec v1.7, UI rule 58; `docs/SPACE_APPS_PLAN.md` PR 3):** solo Pack offers both Atlas V rockets (plus LRO's shared ride on the Moon). The level's standard rocket is free; another charges or refunds the price difference on the budget. The curves and prices are still placeholders (open item 3): replace them when the LSP export arrives, then run `npm run test:validation` and `npm run todo-data`.
+
 Smaller follow-ups, not blocking:
 - The real-history texts in `src/data/hazards.json` and `crisisCards.json` are marked **"to verify"** until checked against NASA's Lessons Learned Information System or the official failure reports. In Bangla they keep the tag.
 - Still English by design: the Engineer Build Bay, the Engineer readouts and the engine's blockers. Any of these that moves to Bangla goes through `sdWords.ts` / `sdWords.bn.ts` like the rest.

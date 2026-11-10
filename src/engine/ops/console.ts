@@ -388,7 +388,7 @@ function gauges(s: OpsState): ConsoleGauges {
   };
 
   // Budget reserve: (cap − development) − extras (the crisis-card convention).
-  const reserve = ev.details.cost.cap_M - ev.details.cost.development_M;
+  const reserve = ev.details.cost.cap_M - ev.details.cost.charged_M;
   const spare = spareNow(s).budget_M;
   const extras = s.dsnExtra_M + s.responseBudget_M;
   const bMargin = reserve > 0 ? spare / reserve : spare >= 0 ? 0 : -1;
@@ -398,10 +398,11 @@ function gauges(s: OpsState): ConsoleGauges {
     margin: bMargin,
     status: marginStatus(bMargin),
     fill: clamp01(reserve > 0 ? spare / reserve : 0),
-    equation: 'spare = (cap − development) − DSN extras − response costs',
+    equation: 'spare = (cap − development − rocket change) − DSN extras − response costs',
     inputs: {
       cap_M: derived(ev.details.cost.cap_M, '$M (FY2019)', 'the mission class cost cap'),
       development_M: derived(ev.details.cost.development_M, '$M (FY2019)', 'development cost (Budget meter)'),
+      rocketCharge_M: derived(ev.details.cost.rocketCharge_M, '$M', 'rocket change against the level’s standard rocket (game rule)'),
       dsnExtra_M: derived(s.dsnExtra_M, '$M', 'DSN passes booked beyond the daily one'),
       responses_M: derived(s.responseBudget_M, '$M', 'hazard responses paid so far'),
     },

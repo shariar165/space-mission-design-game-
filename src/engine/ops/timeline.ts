@@ -428,7 +428,7 @@ export function spareNow(s: OpsState): Spare {
   const sciEnd = isExtended(s, day) && s.extension ? s.extension.endDay : s.env.timeline.find((w) => w.phase === 'science')!.endDay;
   return {
     deltaV_ms: deltaVLeft_ms(s) - deltaVStillNeeded_ms(s),
-    budget_M: d.cost.cap_M - d.cost.development_M - s.dsnExtra_M - s.responseBudget_M,
+    budget_M: d.cost.cap_M - d.cost.charged_M - s.dsnExtra_M - s.responseBudget_M,
     powerMargin: powerMarginNow(s),
     scienceDays: Math.max(0, sciEnd - Math.max(day, s.pausedUntil)),
   };

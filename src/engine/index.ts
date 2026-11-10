@@ -44,7 +44,8 @@ export interface FullEvaluation extends Evaluation {
       battery: PowerProfile['battery'];
     };
     data: { producedPerDay_bits: number; downlinkedPerDayAtArrival_bits: number };
-    cost: { development_M: number; launch_M: number; operations_M: number; cap_M: number };
+    /** charged_M = development + rocketCharge_M: what counts against the cap (spec UI rule 58). */
+    cost: { development_M: number; rocketCharge_M: number; charged_M: number; launch_M: number; operations_M: number; cap_M: number };
     /** Development cost of each part group ($M). */
     costBreakdown: CostBreakdown;
     /**
@@ -292,7 +293,7 @@ export function evaluateDesign(design: Design): FullEvaluation {
         battery: profile.battery,
       },
       data: { producedPerDay_bits: produced, downlinkedPerDayAtArrival_bits: downlinked },
-      cost: { development_M: cost.development_M, launch_M: cost.launch_M, operations_M: cost.operations_M, cap_M: cost.meter.limit },
+      cost: { development_M: cost.development_M, rocketCharge_M: cost.rocketCharge_M, charged_M: cost.charged_M, launch_M: cost.launch_M, operations_M: cost.operations_M, cap_M: cost.meter.limit },
       costBreakdown: costBreakdown(design),
       massBreakdown: {
         bus: components.bus,
@@ -417,7 +418,7 @@ function setUpCrisis(p: Prepared, rng: () => number): { tl: PhaseWindow[]; drawn
   const drawn = drawCrisis(tl, DESTINATIONS[p.design.destination].missionType, d.sampleReturn, rng);
   const options = availableOptions(drawn.card, {
     deltaV_ms: d.deltaVCapability_ms - d.deltaVRequired_ms,
-    budget_M: d.cost.cap_M - d.cost.development_M,
+    budget_M: d.cost.cap_M - d.cost.charged_M,
     powerMargin: p.ev.meters.power.margin,
   });
   return { tl, drawn, options };
@@ -437,7 +438,7 @@ export function massInPhase(ev: FullEvaluation, phase: Phase): number {
 function run(p: Prepared, rng: () => number, policy: CrisisPolicy): SimulationResult {
   const { ev, design } = p;
   const d = ev.details;
-  let devCost_M = d.cost.development_M;
+  let devCost_M = d.cost.charged_M;
   const massMargin = ev.meters.mass.margin;
   // Power is scored on the worst day of the mission, eclipses included: the Power meter (spec: Scoring, v0.5).
   const endPowerMargin = ev.meters.power.margin;
@@ -626,7 +627,7 @@ export function crisisOrders(design: Design): CrisisOrder[] {
   const d = ev.details;
   const spare = {
     deltaV_ms: d.deltaVCapability_ms - d.deltaVRequired_ms,
-    budget_M: d.cost.cap_M - d.cost.development_M,
+    budget_M: d.cost.cap_M - d.cost.charged_M,
     powerMargin: ev.meters.power.margin,
   };
   return applicableCards(DESTINATIONS[design.destination].missionType, d.sampleReturn).map((card) => {
