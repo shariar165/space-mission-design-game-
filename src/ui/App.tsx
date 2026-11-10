@@ -13,17 +13,17 @@ import { badges, newBadges, rankFor, starTotals, type RankDef } from '../engine/
 import { evaluateDesign } from '../engine/index';
 import { flightFacts, mergeFacts, newLessons, NOTEBOOK, notebook, notebookProgress, rescueProgress, type NotebookFacts } from '../engine/notebook';
 import { operationsDebrief, type OpsState } from '../engine/ops/index';
-import { initialPack, shelfFor, type Packed } from '../engine/pack';
+import { initialPack, packPart, shelfFor, type Packed, type PartId } from '../engine/pack';
 import type { RescueCaseId } from '../engine/rescue';
 import type { Design, DestinationId } from '../engine/types';
 import { TopBar, type Mode, type Step } from './components/TopBar';
 import { LEVELS, levelById, loadProgress, maxStars, nextLevel, saveProgress, shelfOf, withStars, type Level, type Progress } from './levels';
-import { loadDaily, loadFlights, loadPostcards, loadRobotName, loadSeen, loadTeam, saveDaily, saveFlights, savePostcards, saveRobotName, saveSeen, saveTeam, type DailySave } from './saves';
+import { loadDaily, loadFlights, loadLevelPacks, loadPostcards, loadRobotName, loadSeen, loadTeam, saveDaily, saveFlights, saveLevelPack, savePostcards, saveRobotName, saveSeen, saveTeam, type DailySave } from './saves';
 import { defaultTeam } from '../engine/team/setup';
 import { teamDesign } from '../engine/team/reduce';
 import { objectiveCards } from '../engine/team/setup';
 import type { Team } from '../engine/team/roles';
-import type { ObjectiveId } from '../engine/objectives';
+import { OBJECTIVE_IDS, type ObjectiveId } from '../engine/objectives';
 import { useTeam } from './useTeam';
 import { TeamObjective } from './screens/TeamObjective';
 import { TeamSetup } from './screens/TeamSetup';
@@ -318,15 +318,32 @@ export function App() {
     setMode(m);
   };
 
+  /**
+   * A solo level's last packing and objective (saves.ts sd.pack), re-packed through the engine: only the level's shelf
+   * parts, in their order, each where packPart puts it; an objective only on a level that asks for one.
+   */
+  const restoreLevel = (l: Level, base: Design): { packed?: Packed; objective?: ObjectiveId } => {
+    const saved = loadLevelPacks()[l.id];
+    if (!saved) return {};
+    const shelf = shelfOf(l);
+    let packed = initialPack({ ...base, instrumentIds: [] }, shelf);
+    for (const id of saved.parts) if ((shelf as string[]).includes(id)) packed = packPart(packed, id as PartId) ?? packed;
+    const objective = l.objective && (OBJECTIVE_IDS as string[]).includes(saved.objective ?? '') ? (saved.objective as ObjectiveId) : undefined;
+    return { packed, ...(objective ? { objective } : {}) };
+  };
+
   const playLevel = (l: Level, objective?: ObjectiveId, asTeam = false) => {
     setTeamRun(asTeam);
-    const s = { ...starterDesign(l.destination, today()), ...(l.targets ? { scienceTargets: true } : {}), ...(objective ? { objective } : {}) };
+    const starter = { ...starterDesign(l.destination, today()), ...(l.targets ? { scienceTargets: true } : {}) };
+    const kept = asTeam ? {} : restoreLevel(l, starter);
+    const picked = objective ?? kept.objective;
+    const s = { ...starter, ...(picked ? { objective: picked } : {}) };
     setCadet(cadetStart(s, l.id));
     setDesign(s);
     setMissionName(defaultMissionName(l.destination));
     setFlown(undefined);
     setDailyRun(false);
-    setPackSave(undefined);
+    setPackSave(kept.packed ? { key: `${l.id}-${l.destination}`, packed: kept.packed } : undefined);
     if (needsName) {
       afterName.current = 'build';
       go('name');
@@ -435,6 +452,11 @@ export function App() {
   const starterPack = useMemo(() => initialPack(cadet.base, level ? shelfOf(level) : shelfFor(cadet.base.destination)), [cadet.base, level]);
   const teamNow = teamRun ? teamPlay.session?.team : undefined;
   const packedNow = teamNow ? teamNow.packed : (keptPack?.packed ?? starterPack);
+  // A solo level's packing and objective are kept (sd.pack), so reopening the level, even after a reload, resumes them.
+  useEffect(() => {
+    if (!cadetMode || teamRun || dailyRun || !level || (step !== 'build' && step !== 'launch')) return;
+    saveLevelPack(level.id, { parts: packedNow.map((p) => p.id), ...(cadet.base.objective ? { objective: cadet.base.objective } : {}) });
+  }, [cadetMode, teamRun, dailyRun, level, step, packedNow, cadet.base.objective]);
   /** The team's flight: launched by its Flight Director. */
   const teamFly = teamNow?.launched ? teamNow : undefined;
 

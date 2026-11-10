@@ -2,10 +2,11 @@
 // SOLO OBJECTIVE (spec UI rule 56): on Red Planet a solo player picks the mission objective in the briefing before
 // packing. START waits for the pick; Pack shows the objective and whether a part for it is on board (engine
 // objectiveCards on the packed craft); the launch checklist starts with it; in flight MISSION INFO shows it read-only.
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { App } from '../../src/ui/App';
 import { LAUNCH_CHECKS, NAV, OBJECTIVE_PICK_WORDS as OP, OBJECTIVE_WORDS } from '../../src/ui/sdWords';
+import { loadLevelPacks } from '../../src/ui/saves';
 import './setup';
 
 function pass(ms: number, step = 50) {
@@ -111,5 +112,42 @@ describe('solo objective: Pack', () => {
     expect(shown).toHaveLength(1);
     expect(within(shown[0]!).getByText(title('moons'))).toBeTruthy();
     expect(shown[0]!.tagName).not.toBe('BUTTON');
+  });
+});
+
+describe('solo objective: a reload keeps the packing and the pick (sd.pack)', () => {
+  /** A reload: the app is gone, the browser's storage stays, and the player opens Red Planet again from Home. */
+  function reload() {
+    cleanup();
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: 'CHOOSE A MISSION ▸' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Red Planet/ }));
+    pass(100);
+  }
+
+  it('reopening Red Planet after a reload restores the objective and the packed parts; no picker in the way', () => {
+    open(/^Red Planet/);
+    fireEvent.click(radio('surface'));
+    fireEvent.click(screen.getByRole('button', { name: NAV.start }));
+    fireEvent.click(screen.getByRole('button', { name: 'Unpack Air sniffer (MAVEN suite)' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Pack Camera' }));
+    expect(loadLevelPacks().mars).toEqual({ parts: expect.arrayContaining(['computer', 'engine', 'camera']), objective: 'surface' });
+    reload();
+    expect(screen.queryByRole('dialog', { name: 'Mission briefing' })).toBeNull();
+    expect(within(plate()).getByText(title('surface'))).toBeTruthy();
+    expect(within(plate()).getByText(OP.onBoard)).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Unpack Camera' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Pack Air sniffer (MAVEN suite)' })).toBeTruthy();
+  });
+
+  it('a stale or edited save cannot break Pack: unknown parts and objectives are dropped, the rest re-packed', () => {
+    localStorage.setItem('sd.pack', JSON.stringify({ mars: { parts: ['computer', 'engine', 'warp-drive', 7, 'camera'], objective: 'party' }, junk: 3 }));
+    expect(loadLevelPacks()).toEqual({ mars: { parts: ['computer', 'engine', 'warp-drive', 'camera'], objective: 'party' } });
+    open(/^Red Planet/);
+    // the objective was not one of the three: the picker asks again; the camera is packed, the unknown part is not
+    expect(screen.getByRole('dialog', { name: 'Mission briefing' })).toBeTruthy();
+    fireEvent.click(radio('atmosphere'));
+    fireEvent.click(screen.getByRole('button', { name: NAV.start }));
+    expect(screen.getByRole('button', { name: 'Unpack Camera' })).toBeTruthy();
   });
 });
