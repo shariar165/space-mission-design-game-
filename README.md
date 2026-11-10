@@ -4,7 +4,7 @@
 
 ### A deep-space mission game built on real NASA data and real orbital physics
 
-*You don't fly the rocket. You keep a robot alive millions of kilometres away, and every order you send arrives minutes late.*
+*Design a NASA-style mission against real limits, then keep the robot alive millions of kilometres away, where every order you send arrives minutes late.*
 
 **[▶ Play in your browser](https://shariar165.github.io/space-mission-design-game-/)** · no install, no account
 
@@ -49,37 +49,39 @@
 
 The game turns the work of a NASA mission team into three steps:
 
-1. **Pack.** Choose which parts fit in the rocket's nose and which dangers to prepare for.
+1. **Design (Pack).** Define the mission objective, pick the rocket and the science orbit, and pack the parts that fit the rocket's nose, against four limits shown as you design: **weight, budget, power and data**. Every choice is a trade: a bigger rocket lifts more but costs more, a high orbit saves fuel and reaches Deimos but makes Phobos expensive, the camera maps the surface but may not fit the budget.
 2. **Fly & Survive.** The mission runs day by day. Danger cards stop the clock, you choose a response, and your order travels to the spacecraft at the speed of light. At Mars the robot asks **what it should look at**: six science targets, each picture costing fuel, battery or risk, each one coming home through a DSN pass and printing on the teletype.
-3. **Mission Report.** It opens with the **mission album** of the pictures that made it home, then the robot's final transmission; your flight is printed as a comic strip, scored, compared with the real NASA mission to the same place, and turned into a real engineering lesson.
+3. **Mission Report.** It opens with the **mission album** of the pictures that made it home and whether your objective was met, then the robot's final transmission; your flight is printed as a comic strip, scored, compared with the real NASA mission to the same place, and turned into a real engineering lesson. It names the part that would have helped (**NEXT TIME: PACK THE SHIELD**), and **FLY AGAIN** returns to your design with each limit compared with the last flight: change one thing and fly again.
 
 It is designed for students and curious players first (**Cadet mode**), and for anyone who wants to see the physics underneath (**Engineer mode**, where every number can be opened to show its equation, its inputs and its source).
 
 ### What makes it different
 
+- **Mission design is a real trade-off, not a shopping list.** The objective decides which instrument counts; the rocket sets the weight limit and charges its price difference to the budget; the science orbit changes the fuel left, which moons are in reach, the drag on low passes and the longest shadow. The bars move before you commit, and two players with the same parts but different orbits get different science.
+- **Light delay is the core mechanic.** Commands obey `t = d / c` using the real Earth–spacecraft distance on that mission day. Solar conjunctions black out the radio for about two weeks, as they do for real Mars missions.
 - **Every number comes from physics or a cited source.** Distances come from JPL planetary positions, power from the inverse-square law calibrated on MAVEN, data rates from a link budget anchored to Mars Reconnaissance Orbiter, launch energy from a Lambert solver.
 - **Real missions are flown through the same model as the player.** MAVEN and OSIRIS-REx are loaded as ordinary designs and must reproduce their published numbers. If the model can't, the model is fixed, not the mission.
-- **Honest about guesses.** All physics and mission data are sourced. Values with no public source (failure chances, part costs, hazard rates) are labelled **game estimate** in the game itself and listed in [`TODO_DATA.md`](TODO_DATA.md).
-- **Light delay is the core mechanic.** Commands obey `t = d / c` using the real Earth–spacecraft distance on that mission day. Solar conjunctions black out the radio for about two weeks, as they do for real Mars missions.
+- **Honest about guesses.** All physics and mission data are sourced, and every real-history story on a danger card was checked against an official NASA page. Values with no public source (failure chances, part costs, hazard rates, the Atlas V placeholder curves) are labelled **game estimate** in the game itself and listed in [`TODO_DATA.md`](TODO_DATA.md).
 
 ---
 
 ## Judge in 3 minutes
 
-Open **[the game](https://shariar165.github.io/space-mission-design-game-/)** (desktop or phone, no install) and follow this route. Each step says what to look for.
+Open **[the judge link](https://shariar165.github.io/space-mission-design-game-/?play=mars&seed=2013)** (desktop is best for this route; a phone works too, with no install). It opens the Mars level, **Red Planet**, straight away, on a fixed flight (seed 2013) whose first danger card comes early. Normal players unlock Red Planet by earning a star on each Moon level first; the link changes no saved progress. Each step says what to look for.
 
 | Time | Do this | Look for |
 | --- | --- | --- |
-| 0:00 | Watch the cold open (about 15 s) or press **SKIP**, then name the robot or skip. | The opening is Mars Climate Orbiter's real last night (Sept. 23, 1999), told only from cited facts. |
-| 0:20 | On Home, look at the Mars plate, then press **DAILY**: today's Mars mission launches straight away. | The plate's Earth–Mars distance and light time are today's, from the planets' real orbits. The Daily is the same flight for every player that day. |
-| 0:40 | In flight, press **100×** (or **NEXT EVENT ▸**) until the first danger card opens. | "Danger arrives in …" against "your order takes …": the order really crosses space at the speed of light, at that day's Earth–Mars distance. |
-| 1:10 | Choose with **←** or **→** (or swipe), then flip the **CADET / ENGINEER** lever. | The order crawling out and the reply crawling back. In Engineer mode, every readout shows its equation, and **ⓘ** shows the source, with a **game estimate** badge where there is no public source. |
-| 1:40 | Press **FINISH MISSION ▸▸**, then **SEE MISSION REPORT ▸**. | The album of pictures that came home, the robot's final transmission, the flight as a comic, and you against the real MAVEN. |
-| 2:10 | Click the **SIGNAL DELAY** wordmark to go Home, press **TEAM** (co-op), choose **TEAM** with **4** players, and press **NEXT · OBJECTIVE**. | Four roles (Flight Director, Spacecraft Engineer, Science Lead, Comms & Ops), each with a colour and a call sign. The Flight Director picks the mission objective, and every other role can agree or object. |
-| 2:40 | Tap AGREE for each role, press **LOCK OBJECTIVE** and **NEXT · PACK**, flip **ARM**, press **LAUNCH**, then **NEXT EVENT ▸** until a danger card opens. | The team vote: the related role recommends, the others tap their tokens, and the Flight Director makes the final call. Only then does the order leave. |
-| 3:00 | Press **EN / বাংলা** in any top bar. | The whole game in Bangla, with the English original kept behind every cited text. |
+| 0:00 | Press **SKIP** on Name Your Robot. | Red Planet's Pack opens with its mission briefing. (`?play=<level>` works for any level: `moon-1`, `venus`, `jupiter` and so on.) |
+| 0:15 | The briefing asks for a **mission objective**. Pick **MAP THE SURFACE**, then **GOT IT ▸**. | Each objective names the instrument that does its science. The briefing won't start without a pick. |
+| 0:30 | On Pack, read the objective plate (**✗ NOT PACKED**), hover the **Camera** on the shelf, then click it. | **MISSION LIMITS**: weight, budget, power and data from the engine. Hovering previews every bar before you pack; the plate turns to **✓ ON BOARD**. |
+| 0:55 | Open the **ROCKET** tab and pick the **Atlas V 411**; open the **ORBIT** tab and compare the three orbits. | The bigger rocket raises the weight limit by about 680 kg and puts +$20M on the budget bar. Each orbit shows its orbit-change fuel, fuel margin, the trip to each moon, air drag and longest shadow (vis-viva and eclipse geometry). |
+| 1:20 | Flip **ARM**, press **LAUNCH** (a first flight shows a countdown and HOW TO FLY: press **SKIP**), then **NEXT EVENT ▸** until the first danger card (a solar storm). Choose with **←** or **→**. | "Danger arrives in …" against "your order takes …": the order really crosses space at light speed, at that day's Earth–Mars distance. **REAL HISTORY** cites its NASA source in **ⓘ**. |
+| 1:50 | Press **FINISH MISSION ▸▸**, then **SEE MISSION REPORT ▸**. (Finishing early skips the science, so the album shows 0% and the objective MISSED. With a minute to spare, keep pressing **NEXT EVENT ▸** to Mars instead, where the robot asks what to look at: tap **OBSERVE** on two or three targets, then finish.) | The album and **OBJECTIVE · MET / MISSED**, the robot's final transmission, the comic, **NEXT TIME: PACK THE …** if a danger went badly, and you against the real MAVEN. |
+| 2:15 | Press **FLY AGAIN**. | Pack keeps the whole design, and **LAST FLIGHT** shows the last stars and science over the bars, with each bar's change since. |
+| 2:30 | Click the **SIGNAL DELAY** wordmark, press **TEAM** (four players by default), **NEXT · OBJECTIVE**, pick an objective, **AGREE** for the three other roles, **LOCK OBJECTIVE**, **NEXT · PACK**, **ARM**, **LAUNCH**, then **NEXT EVENT ▸** to the first card. | The team vote: the related role recommends, the others tap their tokens, and the Flight Director makes the final call. Only then does the order leave. |
+| 2:55 | Press **EN / বাংলা** in any top bar. | The whole game in Bangla, with the English original kept behind every cited text. |
 
-For the code: `npm test` runs about 800 tests, including the validation of the model against MAVEN and OSIRIS-REx ([`docs/VALIDATION_RESULTS.md`](docs/VALIDATION_RESULTS.md)). The rules are in [`docs/SCIENCE_SPEC.md`](docs/SCIENCE_SPEC.md), and every value that is a guess is listed in [`TODO_DATA.md`](TODO_DATA.md).
+The route is played end to end by `tests/visual/judge.spec.ts` (`npx playwright test judge --project=desktop`), so it stays true. For the code: `npm test` runs about 900 tests, including the validation of the model against MAVEN and OSIRIS-REx ([`docs/VALIDATION_RESULTS.md`](docs/VALIDATION_RESULTS.md)). The rules are in [`docs/SCIENCE_SPEC.md`](docs/SCIENCE_SPEC.md), and every value that is a guess is listed in [`TODO_DATA.md`](TODO_DATA.md).
 
 ---
 
@@ -91,12 +93,21 @@ For the code: `npm test` runs about 800 tests, including the validation of the m
 <td width="50%"><img src="docs/images/fly-danger-card.png" alt="Fly and Survive: a solar storm danger card with two responses"></td>
 </tr>
 <tr>
-<td><b>Pack.</b> The nose is a 6 × 6 grid (volume) and the scale is the rocket's lift (weight): two separate limits. The danger deck shows what is coming at this destination, and the launch calendar shows which days the planets line up.</td>
+<td><b>Pack.</b> The objective plate says which instrument counts. MISSION LIMITS shows weight, budget, power and data as you pack; the tabs hold the danger deck, the rocket and the science orbit. The nose is a 6 × 6 grid (volume), and the launch calendar shows which days the planets line up.</td>
 <td><b>Fly & Survive.</b> A danger card shows when the danger arrives and how long your order takes to get there. Pick a response, or let the robot use its default.</td>
 </tr>
 </table>
 
-<p align="center"><img src="docs/images/report.png" alt="Mission Report: comic strip of the flight, stars, comparison with MAVEN and a new notebook card" width="860"></p>
+<table>
+<tr>
+<td width="50%"><img src="docs/images/report.png" alt="Mission Report: comic strip of the flight, stars, badges and postcards"></td>
+<td width="50%"><img src="docs/images/team-vote.png" alt="Team Mode: a danger card with the team's votes and the Flight Director's final call"></td>
+</tr>
+<tr>
+<td><b>Mission Report.</b> The flight as a comic, the stars for the science that came home, and what saved or hurt you, with the part to pack next time.</td>
+<td><b>Team Mode.</b> The related role recommends, the others vote with their tokens, and the Flight Director makes the final call before the order leaves.</td>
+</tr>
+</table>
 
 ### Missions
 
@@ -105,8 +116,8 @@ For the code: `npm test` runs about 800 tests, including the validation of the m
 | 1 | First Light | Moon | Power: solar wings that keep the craft charged |
 | 2 | Heavy Lifting | Moon | Fuel and weight: every kilogram of fuel must be lifted too |
 | 3 | Full Build | Moon | Science and radio: build the whole craft |
-| 4 | Red Planet | Mars | Light delay: too far to steer live |
-| 5 | Cloud Diver | Venus | Budget: big radar, small wallet |
+| 4 | Red Planet | Mars | Light delay, and the full design: objective, rocket, science orbit |
+| 5 | Cloud Diver | Venus | Budget: a 350 $M level budget (a game rule), so not every instrument fits |
 | 6 | Pebble Catcher | Bennu (asteroid) | Rendezvous and sample return |
 | 7 | Giant Leap | Jupiter | Rocket limits: why real missions to Jupiter need gravity assists |
 
@@ -344,7 +355,17 @@ See [`game_engine.md`](game_engine.md) for the engine rules and [`docs/SCIENCE_S
 
 ## Getting started
 
-Everything, including Node itself, lives in a Python virtual environment, so nothing is installed globally. Node 22.16.0 is placed inside `.venv` by [nodeenv](https://github.com/ekalinin/nodeenv).
+**Quick start (macOS, Linux or Windows, with Node 22 already installed):**
+
+```bash
+git clone https://github.com/shariar165/space-mission-design-game-.git
+cd space-mission-design-game-
+npm install
+npm run dev          # http://localhost:5173
+npm test             # about 900 tests
+```
+
+**The maintainers' setup.** Here everything, including Node itself, lives in a Python virtual environment, so nothing is installed globally. Node 22.16.0 is placed inside `.venv` by [nodeenv](https://github.com/ekalinin/nodeenv).
 
 ```powershell
 python -m venv .venv
@@ -394,6 +415,7 @@ src/
     science.ts / targets.ts   what a picture costs (vis-viva, MAVEN-fitted drag); the six Mars targets
     pack.ts / daily.ts / notebook.ts / rescue.ts   game modes
     objectives.ts  the three Mars mission objectives (objectives.json)
+    orbitPresets.ts  the three Mars science-orbit presets (capture, MAVEN, high)
     team/          Team Mode: roles and permissions, the one action log, votes, replay,
                    shared limits and conflicts, the team report and score, LocalTransport
   ui/              React screens (Home, Pack, FlyAndSurvive, MissionReport, Daily, Notebook,
@@ -413,7 +435,8 @@ The models are simplified on purpose, using the standard first-order methods of 
 - **Approximate ephemeris.** JPL's approximate elements (valid 1800–2050), the Earth–Moon barycentre for Earth, and two-body propagation for Bennu.
 - **Communications.** Close-range data rates are optimistic, because coding and decoder caps aren't modelled. The 34 m station behind MRO's anchor figure is inferred.
 - **Operations.** Science orbits are fixed in inertial space (no J2 precession), shadows are cylindrical, hazards are independent Poisson processes, and the Moon has no conjunctions.
-- **Placeholder launch curves** for the Atlas V, as noted above.
+- **Placeholder launch curves and prices** for the Atlas V (game estimates until NASA's Launch Services Program numbers are exported by hand). The rocket choice works on them, labelled as estimates.
+- **Design rules that are the game's.** Cloud Diver's 350 $M budget, the high orbit's altitudes and the rule that a level's standard rocket is free while another charges its price difference are game rules, labelled in the data.
 - **The live Daily** uses that day's DONKI snapshot. DONKI sometimes adds or revises records later, and a snapshot deployed mid-day can differ from the morning's. Each browser keeps the first snapshot it reads for the whole day. Players without the file fly the offline Daily, which has different storms. The storm cards are real events replayed on a game timeline; the model does not predict how a CME propagates.
 - **Science targets.** The camera's resolution, the science weights and the drag-heating rate are game estimates. Orbit changes are coplanar (no plane change to reach the moons), the upper atmosphere is a single exponential fitted to two MAVEN densities, and the Cadet Mars campaign is shortened to 100 days so a run lasts about five minutes.
 - **The Moon.** No lunar ephemeris: the Earth–Moon distance is the mean 384,400 km, and Earth's direction leaves out libration. Loss of signal is the cylinder test, and the downlink and image passes are scaled by each day's visible fraction rather than lined up with single orbits. Trim burns are LRO's published pair, not a mascon gravity model, and Earth's shadow (a lunar eclipse) is not modelled.

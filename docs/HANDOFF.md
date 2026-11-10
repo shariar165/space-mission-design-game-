@@ -1,6 +1,6 @@
 # Handoff: where Signal Delay stands
 
-State on **Oct 28, 2026**, at the feature freeze, plus Team Mode (engine PRs #47–#50; local co-op UI PRs #52–#57, Nov 1) and the Online Mission Room (PRs #58–#59, Nov 2; see below). `main` is clean, CI green, deployed to https://shariar165.github.io/space-mission-design-game-/ .
+State on **Oct 28, 2026**, at the feature freeze, plus Team Mode (engine PRs #47–#50; local co-op UI PRs #52–#57, Nov 1), the Online Mission Room (PRs #58–#59, Nov 2) and the Space Apps plan (`docs/SPACE_APPS_PLAN.md`, PRs #60–#66, Nov 10–11: objective, mission limits, rocket, science orbit, verified real history, the design loop, polish; see below). `main` is clean, CI green, deployed to https://shariar165.github.io/space-mission-design-game-/ .
 
 Read this first in a new session, then `CLAUDE.md` (commands, architecture, UI rules) and the relevant section of `docs/SCIENCE_SPEC.md` (v1.4, the source of truth for every equation and rule).
 
@@ -9,7 +9,7 @@ Read this first in a new session, then `CLAUDE.md` (commands, architecture, UI r
 | Check | Result |
 | --- | --- |
 | `npm run typecheck` | clean |
-| `npm test` | 716 tests pass (engine, validation, data audit, jsdom components) |
+| `npm test` | 905 tests pass (engine, validation, data audit, jsdom components; Nov 11) |
 | `npm run shots` (full suite, both sizes) | 75 pass, 1 skipped by design (the throttled-globe check runs only on the phone project) |
 | Bangla shots | no page scrolls sideways; `test-results/shots/bn-spills.txt` empty |
 | Validation | every `validation` row passes within ±10% (`docs/VALIDATION_RESULTS.md`) |
@@ -84,8 +84,8 @@ The objectives use the instrument-match rule: the objective's targets carry 60% 
 ## Open items
 
 0. **The room relay is set up** (Nov 3: the user's Supabase project, its URL and publishable key in `online.json` `relay`; the `keepalive` table answers). `ONLINE_LIVE=1 npx playwright test online-live --project=desktop` plays a host and three phones through it (about a minute); it found the presence gaps fixed by heartbeats (decision 94). Still to try by hand: real phones on a classroom network. Component tests blank the project (`tests/ui/setup.ts`), so they never reach it.
-1. **Delete `OpsSummary`.** `src/ui/components/ops/OpsPanels.tsx:269` is dead code from the old operations console: no screen imports it, and its words are English only. Remove the component, its last assertions in `tests/ui/opsDrawers.test.tsx` (the `render(<OpsSummary …>)` lines and the import), and its styles: `.ops-summary` in `src/ui/styles/ops.css` (lines 282, 295–302, 399) and in `sd-fly.css` (lines 149, 260, 261). Keep `.ops-ext` and `.ops-ext-title`, which `ExtensionDecision` still uses. Run `npm test` and the `fly` and `report` shots.
-2. **"Judge in 3 minutes" README section.** Written (PR #57): a timed route through the Daily, a danger card, Engineer mode, the report, then Team Mode and বাংলা. Still to do: add a screenshot (e.g. the team vote or the Team Debrief from `test-results/shots/`) to `docs/images/`.
+1. **Done (Nov 11, PR 7):** `OpsSummary` and its styles are deleted.
+2. **Done (Nov 11, PR 7):** "Judge in 3 minutes" now starts from the judge link (`?play=mars&seed=2013`) and walks the design (objective, limits, rocket, orbit), a danger card, the report, FLY AGAIN, the team vote and বাংলা; `tests/visual/judge.spec.ts` plays it end to end. The README pictures (`docs/images/`: pack, danger card, report, team vote) come from `tests/visual/readme.spec.ts` and `team.spec.ts`.
 3. **Atlas V payload curves are placeholders.** `src/data/launchVehicles.json` `atlas-v-401` and `atlas-v-411` `payloadCurve` are game estimates. NASA's LSP Performance Query (elvperf.ksc.nasa.gov) can only be used interactively, so a person must export 6–8 points per vehicle (C3 −2 to 40 km²/s²). Until then the launch-capacity validation rows are not real evidence. After the export: set `isGameEstimate: false` with the source and URL, then run `npm run test:validation` and `npm run todo-data`.
 
 **Mission limits (spec v1.6, UI rule 57; `docs/SPACE_APPS_PLAN.md` PR 2):** solo Pack shows weight, budget, power and data bars with a hover preview; over budget blocks launch; Cloud Diver has its own 350 $M budget (game rule).

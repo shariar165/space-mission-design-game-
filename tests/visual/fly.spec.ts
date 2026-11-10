@@ -1,6 +1,7 @@
 // Game shots of FLY & SURVIVE in the design's four states (cruise, danger card, signal in flight, result),
 // at the project's size. Run: npm run shots -- fly
 import { expect, test, type Page } from '@playwright/test';
+import { clippedText } from './helpers';
 
 const OUT = 'test-results/shots/';
 
@@ -41,6 +42,8 @@ test('fly states', async ({ page }, info) => {
   await page.getByRole('button', { name: 'Pause' }).click();
   await page.waitForTimeout(1500);
   await page.screenshot({ path: `${OUT}fly-cruise-${p}.png` });
+  // the goal line sits on the map (desktop); it once ran under the top bar and was cut off ("UNTIL THE MIS")
+  if (!mobile) expect(await clippedText(page, '.fly-goal')).toEqual([]);
   await toDanger(page);
   await page.waitForTimeout(1500);
   await page.screenshot({ path: `${OUT}fly-danger-card-${p}.png` });
