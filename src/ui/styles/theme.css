@@ -196,7 +196,7 @@ body { background: var(--sd-room); color: var(--sd-ink-2); font-family: var(--sd
 .sd-history { padding-top: 14px; border-top: 2px dashed var(--sd-paper-line); display: flex; flex-direction: column; gap: 6px; }
 .sd-history-k { font: 700 11px/1 var(--sd-mono); letter-spacing: 0.18em; color: var(--sd-red-ink); display: flex; align-items: center; gap: 8px; }
 .sd-history-v { font: 400 16px/1.45 var(--sd-body); color: var(--sd-paper-ink-2); text-wrap: pretty; }
-.sd-source { font: 400 11px/1.4 var(--sd-mono); color: var(--sd-paper-mute); }
+.sd-source { font: 400 11px/1.4 var(--sd-mono); color: var(--sd-paper-mute); overflow-wrap: anywhere; }
 .sd-verify { padding: 2px 5px; border: 1px solid var(--sd-red-ink); border-radius: 2px; font: 700 9px/1 var(--sd-mono); letter-spacing: 0.12em; color: var(--sd-red-ink); }
 
 /* Loading */

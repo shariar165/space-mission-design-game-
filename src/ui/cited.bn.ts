@@ -5,31 +5,31 @@
 // on any Bangla left over for an English text that is gone. Latin digits; NASA mission and target names in English.
 export const CITED_BN: Readonly<Record<string, string>> = {
   // Danger cards: real history (hazards.json)
-  '2001 Mars Odyssey: the MARIE radiation instrument stopped working after the large solar storms of October–November 2003.':
-    '2001 Mars Odyssey: 2003 সালের অক্টোবর–নভেম্বরের বড় সৌরঝড়গুলোর পর এর MARIE বিকিরণ-যন্ত্রটি কাজ করা বন্ধ করে দেয়।',
-  'In September 2017 a strong CME reached Mars. MAVEN saw a global aurora, and the radiation dose at the surface measured by Curiosity doubled.':
-    '2017 সালের সেপ্টেম্বরে একটা শক্তিশালী CME মঙ্গলে পৌঁছায়। MAVEN পুরো গ্রহজুড়ে মেরুজ্যোতি দেখে, আর Curiosity-র মাপা ভূপৃষ্ঠের বিকিরণের মাত্রা দ্বিগুণ হয়ে যায়।',
+  '2001 Mars Odyssey: the MARIE radiation instrument stopped working when a large solar event hit the spacecraft on Oct. 28, 2003, and controllers could not restore it.':
+    '2001 Mars Odyssey: 28 অক্টোবর 2003-এ এক বড় সৌর ঘটনা মহাকাশযানে আঘাত হানলে এর MARIE বিকিরণ-যন্ত্রটি কাজ করা বন্ধ করে দেয়, আর নিয়ন্ত্রকেরা সেটি আর চালু করতে পারেননি।',
+  'In September 2017 a strong CME reached Mars. MAVEN saw a global aurora, and the radiation Curiosity measured at the surface was more than double any level it had seen before.':
+    '2017 সালের সেপ্টেম্বরে একটা শক্তিশালী CME মঙ্গলে পৌঁছায়। MAVEN পুরো গ্রহজুড়ে মেরুজ্যোতি দেখে, আর Curiosity ভূপৃষ্ঠে যে বিকিরণ মাপে তা আগে মাপা যেকোনো মাত্রার দ্বিগুণেরও বেশি।',
   'Mariner 9 reached Mars in November 1971 during a planet-wide dust storm and waited for the dust to clear before mapping. A global storm in 2018 ended the solar-powered Opportunity rover.':
     'Mariner 9 মঙ্গলে পৌঁছায় 1971 সালের নভেম্বরে, যখন পুরো গ্রহজুড়ে ধুলোঝড় চলছিল; ধুলো না সরা পর্যন্ত সে মানচিত্র আঁকা শুরু না করে অপেক্ষা করে। 2018 সালের এক বিশ্বজোড়া ঝড়ে সৌরশক্তিতে চলা Opportunity রোভারের অভিযান শেষ হয়ে যায়।',
-  'Comet Siding Spring passed close to Mars on Oct. 19, 2014. MAVEN, MRO and Mars Odyssey changed their orbit timing to shelter behind Mars when its dust was expected.':
-    '2014 সালের 19 অক্টোবর ধূমকেতু Siding Spring মঙ্গলের খুব কাছ দিয়ে যায়। এর ধুলো যখন আসার কথা, তখন মঙ্গলের আড়ালে থাকতে MAVEN, MRO আর Mars Odyssey তাদের কক্ষপথের সময় বদলে নেয়।',
+  'Comet Siding Spring passed close to Mars on Oct. 19, 2014. MAVEN, MRO and Mars Odyssey took shelter behind Mars during the period of risk from its dust.':
+    '2014 সালের 19 অক্টোবর ধূমকেতু Siding Spring মঙ্গলের খুব কাছ দিয়ে যায়। এর ধুলোর ঝুঁকির সময়টায় MAVEN, MRO আর Mars Odyssey মঙ্গলের আড়ালে আশ্রয় নেয়।',
   'Kepler lost one reaction wheel in 2012 and a second in 2013. Engineers found a new way to point it using sunlight pressure, which became the K2 mission.':
     'Kepler 2012 সালে একটা রিঅ্যাকশন হুইল হারায়, 2013 সালে আরেকটা। প্রকৌশলীরা সূর্যের আলোর চাপ দিয়ে তাকে তাক করার নতুন উপায় বের করেন; সেটাই হয়ে ওঠে K2 মিশন।',
-  'In February 2013 Curiosity\'s main computer had a memory problem, and the team switched the rover to its backup computer. In 2023–24 a failed memory chip garbled Voyager 1\'s data until engineers moved the code, with a day-long light-time each way.':
-    '2013 সালের ফেব্রুয়ারিতে Curiosity-র প্রধান কম্পিউটারে মেমরির গোলমাল দেখা দেয়, আর দলটি রোভারকে তার ব্যাকআপ কম্পিউটারে চালায়। 2023–24 সালে একটা নষ্ট মেমরি-চিপ Voyager 1 যানের তথ্য এলোমেলো করে দেয়, যতক্ষণ না প্রকৌশলীরা কোডটি সরিয়ে নেন; প্রতি দিকে আলো যেতে লাগত প্রায় এক দিন।',
+  'In February 2013 Curiosity\'s main computer had a memory problem, and the team switched the rover to its backup computer. From November 2023 a failed memory chip garbled Voyager 1\'s data until engineers moved the code in April 2024; each command took about 22.5 hours to arrive.':
+    '2013 সালের ফেব্রুয়ারিতে Curiosity-র প্রধান কম্পিউটারে মেমরির গোলমাল দেখা দেয়, আর দলটি রোভারকে তার ব্যাকআপ কম্পিউটারে চালায়। 2023 সালের নভেম্বর থেকে একটা নষ্ট মেমরি-চিপ Voyager 1 যানের তথ্য এলোমেলো করে দেয়, যতক্ষণ না 2024 সালের এপ্রিলে প্রকৌশলীরা কোডটি সরিয়ে নেন; প্রতিটি আদেশ পৌঁছাতে লাগত প্রায় 22.5 ঘণ্টা।',
   'In 2016 Juno\'s main-engine helium valves did not work as expected. NASA kept Juno in its 53-day orbit instead of firing the engine again to reach the planned 14-day orbit.':
     '2016 সালে Juno-র প্রধান ইঞ্জিনের হিলিয়াম ভালভ ঠিকমতো কাজ করেনি। পরিকল্পিত 14 দিনের কক্ষপথে যেতে ইঞ্জিন আবার চালানোর বদলে NASA, Juno-কে তার 53 দিনের কক্ষপথেই রেখে দেয়।',
   'Juno carries its electronics in a titanium radiation vault, and its orbits were planned to limit the dose from Jupiter\'s radiation belts.':
     'Juno তার ইলেকট্রনিক যন্ত্রাংশ রাখে টাইটানিয়ামের একটা বিকিরণ-ভল্টে, আর তার কক্ষপথগুলো এমনভাবে সাজানো হয়েছিল যাতে বৃহস্পতির বিকিরণ-বলয় থেকে পাওয়া মাত্রা সীমার মধ্যে থাকে।',
-  'Mars Global Surveyor began aerobraking in 1997 with a solar panel damaged at launch. When the panel bent on a low pass through the air, the team raised the periapsis, paused for a month and then dipped more gently, finishing in 1999.':
-    'Mars Global Surveyor 1997 সালে এয়ারোব্রেকিং শুরু করে, উৎক্ষেপণের সময় ক্ষতিগ্রস্ত একটা সৌর প্যানেল নিয়ে। বাতাসের ভেতর দিয়ে এক নিচু পাসে প্যানেলটি বেঁকে গেলে দলটি কক্ষপথের সবচেয়ে নিচু বিন্দু উঁচু করে, এক মাস থামে, তারপর আরও আলতো করে নামে; কাজ শেষ হয় 1999 সালে।',
+  'Mars Global Surveyor began aerobraking in 1997 with a solar panel that had not latched properly. When the panel moved past its deployed position, the team raised the periapsis from 110 to about 172 km, paused for about a month, then went on more gently at 120 km, finishing in February 1999.':
+    'Mars Global Surveyor 1997 সালে এয়ারোব্রেকিং শুরু করে এমন একটা সৌর প্যানেল নিয়ে, যেটা ঠিকমতো আটকায়নি। প্যানেলটি তার খোলা অবস্থান ছাড়িয়ে সরে গেলে দলটি কক্ষপথের সবচেয়ে নিচু বিন্দু 110 থেকে প্রায় 172 km-এ তোলে, প্রায় এক মাস থামে, তারপর 120 km-এ আরও আলতো করে চালিয়ে যায়; কাজ শেষ হয় 1999 সালের ফেব্রুয়ারিতে।',
   // The old crisis cards: real history (crisisCards.json; Notebook lessons point at them)
-  'Mars Climate Orbiter, 1999: one team used imperial units, the other metric; the craft flew too low and was lost.':
-    'Mars Climate Orbiter, 1999: এক দল ব্যবহার করেছিল ইম্পেরিয়াল একক, অন্য দল মেট্রিক; মহাকাশযানটি খুব নিচ দিয়ে উড়ে হারিয়ে যায়।',
-  'Genesis, 2004: deceleration sensors were installed backwards; the parachute never opened.':
-    'Genesis, 2004: গতি কমার সেন্সরগুলো উল্টো করে বসানো হয়েছিল; প্যারাশুট আর খোলেনি।',
-  'Mars Polar Lander, 1999: likely shut its engine early after reading leg vibration as touchdown.':
-    'Mars Polar Lander, 1999: পায়ের কাঁপুনিকে মাটি ছোঁয়া ভেবে সম্ভবত আগেভাগেই ইঞ্জিন বন্ধ করে দেয়।',
+  'Mars Climate Orbiter, 1999: one team used English units, the other metric, for a key spacecraft operation, and the craft was lost.':
+    'Mars Climate Orbiter, 1999: মহাকাশযানের একটা জরুরি কাজে এক দল ব্যবহার করেছিল ইংরেজি একক, অন্য দল মেট্রিক, আর মহাকাশযানটি হারিয়ে যায়।',
+  'Genesis, 2004: its deceleration sensors had been installed incorrectly, so the parachute never opened and the capsule crashed.':
+    'Genesis, 2004: এর গতি কমার সেন্সরগুলো ভুলভাবে বসানো হয়েছিল, তাই প্যারাশুট আর খোলেনি, আর ক্যাপসুলটি আছড়ে পড়ে।',
+  'Mars Polar Lander, 1999: most likely a false signal that it had landed shut its engines off too early.':
+    'Mars Polar Lander, 1999: খুব সম্ভবত নেমে পড়ার একটা ভুল সংকেত পেয়ে এটি আগেভাগেই ইঞ্জিন বন্ধ করে দেয়।',
   'Spirit rover, 2004: too many files filled flash memory and caused reboots; fixed from Earth.':
     'Spirit রোভার, 2004: অনেক বেশি ফাইলে ফ্ল্যাশ মেমরি ভরে গিয়ে বারবার রিবুট হয়; পৃথিবী থেকে ঠিক করা হয়।',
   'SOHO, 1998: lost attitude control and contact; recovered months later.':

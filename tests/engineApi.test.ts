@@ -1173,7 +1173,10 @@ describe('Operations console view', () => {
     // a response leaves once the team has reacted, and pays one light time
     expect(a.sendAt).toBeCloseTo(Math.max(s.t, dec.earliestSend), 12);
     expect(a.arrivesIfSent).toBeCloseTo(commandArrival(s.env, a.sendAt), 12);
-    expect(a.realHistory.isGameEstimate).toBe(true); // "to verify against NASA source"
+    // checked against an official NASA page (Space Apps plan PR 5): not an estimate, with its source and link
+    expect(a.realHistory.isGameEstimate).toBe(false);
+    expect(a.realHistory.source).toMatch(/read Nov 11, 2026/);
+    expect(a.realHistory.url).toMatch(/^https:\/\/[a-z.]*nasa\.gov\//);
     // risk bars: a higher failure chance never gets a lower bar
     const bounds = CONSOLE_RULES.riskLevelBounds.value;
     expect(bounds.length).toBe(4);
