@@ -136,18 +136,21 @@ export interface LevelPackSave {
   objective?: string;
   /** The rocket option picked (pack.ts rocketIdOf; spec UI rule 58). */
   rocket?: string;
+  /** The science-orbit preset picked (orbitPresets.ts orbitIdOf; spec UI rule 59). */
+  orbit?: string;
 }
 export const loadLevelPacks = (): Record<string, LevelPackSave> => {
   const v = read<Record<string, unknown>>(PACK_KEY, {});
   const out: Record<string, LevelPackSave> = {};
   for (const [id, x] of Object.entries(v)) {
     if (!x || typeof x !== 'object') continue;
-    const { parts, objective, rocket } = x as { parts?: unknown; objective?: unknown; rocket?: unknown };
+    const { parts, objective, rocket, orbit } = x as { parts?: unknown; objective?: unknown; rocket?: unknown; orbit?: unknown };
     if (!Array.isArray(parts)) continue;
     out[id] = {
       parts: parts.filter((p): p is string => typeof p === 'string'),
       ...(typeof objective === 'string' ? { objective } : {}),
       ...(typeof rocket === 'string' ? { rocket } : {}),
+      ...(typeof orbit === 'string' ? { orbit } : {}),
     };
   }
   return out;

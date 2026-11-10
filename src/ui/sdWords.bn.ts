@@ -1017,6 +1017,28 @@ export const BN: Bangla = {
     'over-budget': 'বাজেটের বাইরে: কিছু বাদ দাও',
     other: 'উৎক্ষেপণের জন্য তৈরি নয়',
   },
+  ORBIT_WORDS: {
+    title: 'বিজ্ঞানের কক্ষপথ',
+    label: 'বিজ্ঞানের কক্ষপথ',
+    names: { capture: 'যেখানে পৌঁছাও সেখানেই থাকো', maven: 'MAVEN-এর কক্ষপথ', high: 'উঁচু কক্ষপথ' },
+    lines: {
+      capture: 'পৌঁছানোর পর কোনো দহন নেই: সবচেয়ে বেশি জ্বালানি বাকি, আর Deimos কাছে। Phobos অনেক নিচে।',
+      maven: 'MAVEN-এর মতো ওপরের বাতাসে ডুব দেয়। Phobos কাছে; Deimos-এ যেতে অনেক জ্বালানি লাগে।',
+      high: 'বেশির ভাগ বাতাসের ওপরে, Deimos-এর কাছাকাছি। Deimos কাছে; Phobos-এ যেতে বেশি লাগে।',
+    },
+    size: (low, high) => `${low} × ${high}`,
+    change: (dv) => `কক্ষপথ বদলাতে ${dv}`,
+    fuel: (pct) => `জ্বালানির বাড়তি ${pct}`,
+    moons: (phobos, deimos) => `Phobos ${phobos} · Deimos ${deimos}`,
+    drag: (x) => `বাতাসের টান ×${x}`,
+    shadow: (t) => `সবচেয়ে লম্বা ছায়া ${t}`,
+  },
+  SIDE_TABS: {
+    label: 'মিশনের পছন্দ',
+    dangers: 'বিপদ',
+    rocket: 'রকেট',
+    orbit: 'কক্ষপথ',
+  },
   ROCKET_WORDS: {
     title: 'রকেট',
     label: 'রকেট',

@@ -244,10 +244,11 @@ describe('third star per objective (Space Apps plan, PR 1 follow-up)', () => {
     expect(ops.operationsDebrief(s).stars).toBe(3);
   });
 
-  it('moons: FINDING, no Cadet pack earns the third star (Deimos is out of fuel reach); star rules unchanged', () => {
-    // Even the lightest moons pack (spectrometer and the extra tank, nothing else; about 40% Δv margin) cannot pay
+  it('moons from MAVEN’s orbit: no Cadet pack earns the third star (Deimos is out of fuel reach); the high orbit does', () => {
+    // From MAVEN's orbit even the lightest moons pack (spectrometer and the extra tank, about 40% Δv margin) cannot pay
     // Deimos' ~750 m/s, so it is refused for fuel and the ceiling is Phobos 0.375 + the rest (0.4 / 0.68) × 0.68 = 0.775,
-    // two stars. Reported to the user (Nov 10, 2026). When the balance changes, this test should flip to 3 stars.
+    // two stars. The star rules are unchanged: the HIGH ORBIT preset (spec UI rule 59) brings Deimos within reach and
+    // earns the third star (tests/orbitPresets.test.ts).
     const d = pack('moons', ['spectrometer', 'tank'], ['sniffer']);
     const s = flySensibly(d);
     expect(s.status).toBe('complete');

@@ -109,6 +109,8 @@ test('pack: rocket choice', async ({ page }, info) => {
   await page.getByRole('button', { name: 'CHOOSE A MISSION ▸' }).click();
   await page.getByRole('button', { name: /^Red Planet/ }).click();
   await expect(page.getByRole('button', { name: 'CHANGE ▸' })).toBeEnabled({ timeout: 60_000 });
+  const tab = (name: string) => page.getByRole('tab', { name });
+  if (await tab('ROCKET').isVisible()) await tab('ROCKET').click();
   const rockets = page.getByRole('radiogroup', { name: 'Rocket' });
   await rockets.getByRole('radio', { name: /Atlas V 411/ }).click();
   await page.mouse.move(700, 450);
@@ -119,9 +121,37 @@ test('pack: rocket choice', async ({ page }, info) => {
   await page.getByRole('button', { name: 'Back' }).first().click();
   await page.getByRole('button', { name: /^First Light/ }).click();
   await expect(page.getByRole('button', { name: 'CHANGE ▸' })).toBeEnabled({ timeout: 60_000 });
+  if (await tab('ROCKET').isVisible()) await tab('ROCKET').click();
   await page.getByRole('radiogroup', { name: 'Rocket' }).getByRole('radio', { name: /SHARED RIDE/ }).click();
   await page.mouse.move(700, 450);
   await page.waitForTimeout(500);
   await page.screenshot({ path: `test-results/shots/rocket-ride-${p}.png`, fullPage: p === 'mobile' });
   expect(await clippedText(page, '.rk')).toEqual([]);
+});
+
+// SCIENCE ORBIT (spec UI rule 59): the three Mars orbits, the high one picked. Run: npm run shots -- pack
+test('pack: science orbit', async ({ page }, info) => {
+  const p = info.project.name;
+  await page.addInitScript(() => {
+    try {
+      localStorage.setItem('mdt.mode', 'cadet');
+      localStorage.setItem('sd.seen', JSON.stringify(['coach', 'name', 'brief:mars', 'launch:mars']));
+      localStorage.setItem('sd.pack', JSON.stringify({ mars: { parts: ['computer', 'engine', 'spectrometer', 'tank'], objective: 'moons' } }));
+      localStorage.setItem('mdt.progress', JSON.stringify({ 'moon-1': 1, 'moon-2': 1, 'moon-3': 1 }));
+    } catch {
+      /* ignore */
+    }
+  });
+  await page.goto('/?seed=2013');
+  await page.getByRole('button', { name: 'CHOOSE A MISSION ▸' }).click();
+  await page.getByRole('button', { name: /^Red Planet/ }).click();
+  await expect(page.getByRole('button', { name: 'CHANGE ▸' })).toBeEnabled({ timeout: 60_000 });
+  const tab = page.getByRole('tab', { name: 'ORBIT' });
+  if (await tab.isVisible()) await tab.click();
+  await page.getByRole('radiogroup', { name: 'Science orbit' }).getByRole('radio', { name: /^HIGH ORBIT/ }).click();
+  await page.mouse.move(700, 450);
+  await page.evaluate(() => document.fonts.ready);
+  await page.waitForTimeout(500);
+  await page.screenshot({ path: `test-results/shots/orbit-${p}.png`, fullPage: p === 'mobile' });
+  expect(await clippedText(page, '.ob2')).toEqual([]);
 });

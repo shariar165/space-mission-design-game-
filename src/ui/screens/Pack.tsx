@@ -34,6 +34,8 @@ import { teamSpend } from '../../engine/team/negotiate';
 import { objectiveCards } from '../../engine/team/setup';
 import { MissionLimits } from '../components/sd/MissionLimits';
 import { RocketPicker } from '../components/sd/RocketPicker';
+import { OrbitPicker } from '../components/sd/OrbitPicker';
+import { orbitCards } from '../../engine/orbitPresets';
 import type { TeamState } from '../../engine/team/reduce';
 import { partRole, ROLE_IDS, type RoleId } from '../../engine/team/roles';
 import { ConflictBanner, CrewChips, QuickBar, SharedLimits, TeamLine } from '../components/team/TeamPanels';
@@ -67,6 +69,7 @@ import {
   STAMP,
   OBJECTIVE_WORDS,
   OBJECTIVE_PICK_WORDS as OP,
+  SIDE_TABS,
   ROLE_WORDS,
   TEAM_PACK_WORDS,
   WEIGHT_WORDS,
@@ -104,6 +107,8 @@ interface Props {
   onDays?: () => void;
   /** Team mode: packing goes through the team's log. */
   team?: PackTeam;
+  /** Solo Mars: pick the science orbit (spec UI rule 59). */
+  orbit?: { onPick: (id: string) => void };
   /** Solo levels: pick the rocket (spec UI rule 58). */
   rocket?: { onPick: (id: string) => void };
   /** Solo Red Planet: the mission objective the player must pick before launch (spec UI rule 56). */
@@ -120,7 +125,7 @@ export interface PackTeam {
   objective?: ObjectiveId;
 }
 
-export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLesson, onHome, onLaunch, onBack, brief, onBriefSeen, robotName, onRobotName, packed: kept, onPacked, pick, onDays, team, objective, rocket }: Props) {
+export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLesson, onHome, onLaunch, onBack, brief, onBriefSeen, robotName, onRobotName, packed: kept, onPacked, pick, onDays, team, objective, rocket, orbit }: Props) {
   const engineer = mode === 'engineer';
   const phone = useIsPhone();
   const dest = DESTINATIONS[base.destination];
@@ -165,6 +170,10 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
   );
   // ROCKET (spec UI rule 58): each rocket on offer read against the packed craft on its launch day.
   const rockets = useMemo(() => (rocket && !team ? rocketCards(design, ev) : undefined), [rocket, team, design, ev]);
+  // SCIENCE ORBIT (spec UI rule 59): each preset flown through the engine with this packing.
+  const orbits = useMemo(() => (orbit && !team ? orbitCards(design) : undefined), [orbit, team, design]);
+  /** Desktop: the right column's tab under MISSION LIMITS (the danger deck, the rocket or the orbit). */
+  const [sideTab, setSideTab] = useState<'dangers' | 'rocket' | 'orbit'>('dangers');
   const lessonCard = impossible && blockers.some((b) => b.code === 'too-heavy') ? LESSONS[base.destination] : undefined;
 
   const add = (id: PartId) => {
@@ -424,6 +433,8 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
   );
   const limitsEl = !team && <MissionLimits limits={limits} {...(peekLimits && peek ? { preview: { part: PART_LOOK[peek].name, limits: peekLimits } } : {})} {...(phone ? { compact: true } : {})} />;
   const rocketEl = rocket && rockets && <RocketPicker cards={rockets} onPick={rocket.onPick} {...(phone ? { compact: true } : {})} />;
+  const orbitEl = orbit && orbits && orbits.length > 0 && <OrbitPicker cards={orbits} onPick={orbit.onPick} {...(phone ? { compact: true } : {})} />;
+  const sideTabs = ['dangers', ...(rocketEl ? ['rocket'] : []), ...(orbitEl ? ['orbit'] : [])] as ('dangers' | 'rocket' | 'orbit')[];
   const plate = objective && (
     <div className={`pk-obj${objCard && !objCard.matched ? ' warn' : ''}`} role="status" aria-label={OP.group}>
       <div className="pk-obj-main">
@@ -531,6 +542,7 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
         {statusLine}
         {limitsEl}
         {rocketEl}
+        {orbitEl}
         {nameTag}
         {lesson}
         {shelfCards}
@@ -596,12 +608,26 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
           <section className="pk-panel pk-deck" aria-label={PACK_WORDS.deckLabel(dest.name)}>
             {plate}
             {limitsEl}
-            {rocketEl}
-            <div className="pk-deck-head">
-              <span className="pk-panel-title">{PACK_WORDS.deckOf(dest.name)}</span>
-              <span className="pk-deck-sub">{PACK_WORDS.deckSub}</span>
-            </div>
-            {deckList}
+            {sideTabs.length > 1 && (
+              <div className="pk-tabs" role="tablist" aria-label={SIDE_TABS.label}>
+                {sideTabs.map((t) => (
+                  <button key={t} type="button" role="tab" aria-selected={sideTab === t} className={`pk-tab${sideTab === t ? ' on' : ''}`} onClick={() => setSideTab(t)}>
+                    {SIDE_TABS[t]}
+                  </button>
+                ))}
+              </div>
+            )}
+            {sideTab === 'rocket' && rocketEl}
+            {sideTab === 'orbit' && orbitEl}
+            {(sideTab === 'dangers' || sideTabs.length < 2) && (
+              <>
+                <div className="pk-deck-head">
+                  <span className="pk-panel-title">{PACK_WORDS.deckOf(dest.name)}</span>
+                  <span className="pk-deck-sub">{PACK_WORDS.deckSub}</span>
+                </div>
+                {deckList}
+              </>
+            )}
           </section>
         )}
       </div>

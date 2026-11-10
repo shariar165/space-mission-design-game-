@@ -162,12 +162,33 @@ test('Bangla: the rocket choice on the Moon (the shared ride)', async ({ page },
   await banglaPlayer(page, ['cold-open', 'name', 'coach', 'brief:moon-1', 'launch:moon-1'], 'VOYA');
   await page.getByRole('button', { name: /^মিশন বাছো/ }).click();
   await page.getByRole('button', { name: /^First Light/ }).click();
+  await expect(page.getByRole('region', { name: 'মিশনের সীমা' })).toBeVisible({ timeout: 60_000 });
+  const tab = page.getByRole('tab', { name: 'রকেট' });
+  if (await tab.isVisible()) await tab.click();
   const rockets = page.getByRole('radiogroup', { name: 'রকেট' });
-  await expect(rockets).toBeVisible({ timeout: 60_000 });
+  await expect(rockets).toBeVisible();
   await rockets.getByRole('radio', { name: /যৌথ যাত্রা/ }).click();
   await page.mouse.move(700, 450);
   await page.waitForTimeout(800);
   await shot(page, 'rocket', p);
+});
+
+test('Bangla: the Mars science orbit', async ({ page }, info) => {
+  test.setTimeout(120_000);
+  const p = info.project.name;
+  await page.addInitScript(() => {
+    localStorage.setItem('mdt.progress', JSON.stringify({ 'moon-1': 1, 'moon-2': 1, 'moon-3': 1 }));
+    localStorage.setItem('sd.pack', JSON.stringify({ mars: { parts: ['computer', 'engine', 'sniffer'], objective: 'atmosphere' } }));
+  });
+  await banglaPlayer(page, ['cold-open', 'name', 'coach', 'brief:mars', 'launch:mars'], 'VOYA');
+  await page.getByRole('button', { name: /^মিশন বাছো/ }).click();
+  await page.getByRole('button', { name: /^Red Planet/ }).click();
+  const tab = page.getByRole('tab', { name: 'কক্ষপথ' });
+  await expect(page.getByRole('region', { name: 'মিশনের সীমা' })).toBeVisible({ timeout: 60_000 });
+  if (await tab.isVisible()) await tab.click();
+  await expect(page.getByRole('radiogroup', { name: 'বিজ্ঞানের কক্ষপথ' })).toBeVisible();
+  await page.waitForTimeout(800);
+  await shot(page, 'orbit', p);
 });
 
 test('Bangla: switched mid-flight at Mars, the science targets and the power plan', async ({ page }, info) => {

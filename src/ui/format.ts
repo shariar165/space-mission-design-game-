@@ -35,6 +35,9 @@ export const meters = (m: number) => `${num(m, m < 10 ? 1 : 0)} m`;
 /** A distance for Cadet screens: km below a million km (the Moon), million km beyond. */
 export const distance = (m: number) => (Math.abs(m) < 1e9 ? `${num(m / 1000)} km` : millionKm(m));
 
+/** A ratio shown as a factor ("2.0", "0.35"; "<0.01" for one too small to read). */
+export const factor = (x: number) => (x < 0.01 ? '<0.01' : num(x, x < 1 ? 2 : 1));
+
 /** Light delay in minutes. */
 export const minutes = (s: number) => `${num(s / 60, 1)} min`;
 

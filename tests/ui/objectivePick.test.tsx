@@ -130,7 +130,7 @@ describe('solo objective: a reload keeps the packing and the pick (sd.pack)', ()
     fireEvent.click(screen.getByRole('button', { name: NAV.start }));
     fireEvent.click(screen.getByRole('button', { name: 'Unpack Air sniffer (MAVEN suite)' }));
     fireEvent.click(screen.getByRole('button', { name: 'Pack Camera' }));
-    expect(loadLevelPacks().mars).toEqual({ parts: expect.arrayContaining(['computer', 'engine', 'camera']), objective: 'surface', rocket: 'atlas-v-401' });
+    expect(loadLevelPacks().mars).toEqual({ parts: expect.arrayContaining(['computer', 'engine', 'camera']), objective: 'surface', rocket: 'atlas-v-401', orbit: 'maven' });
     reload();
     expect(screen.queryByRole('dialog', { name: 'Mission briefing' })).toBeNull();
     expect(within(plate()).getByText(title('surface'))).toBeTruthy();

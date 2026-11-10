@@ -24,6 +24,7 @@ import { teamDesign } from '../engine/team/reduce';
 import { objectiveCards } from '../engine/team/setup';
 import type { Team } from '../engine/team/roles';
 import { OBJECTIVE_IDS, type ObjectiveId } from '../engine/objectives';
+import { orbitIdOf, orbitPresets, withOrbit } from '../engine/orbitPresets';
 import { useTeam } from './useTeam';
 import { TeamObjective } from './screens/TeamObjective';
 import { TeamSetup } from './screens/TeamSetup';
@@ -322,7 +323,7 @@ export function App() {
    * A solo level's last packing and objective (saves.ts sd.pack), re-packed through the engine: only the level's shelf
    * parts, in their order, each where packPart puts it; an objective only on a level that asks for one.
    */
-  const restoreLevel = (l: Level, base: Design): { packed?: Packed; objective?: ObjectiveId; rocket?: string } => {
+  const restoreLevel = (l: Level, base: Design): { packed?: Packed; objective?: ObjectiveId; rocket?: string; orbit?: string } => {
     const saved = loadLevelPacks()[l.id];
     if (!saved) return {};
     const shelf = shelfOf(l);
@@ -330,7 +331,8 @@ export function App() {
     for (const id of saved.parts) if ((shelf as string[]).includes(id)) packed = packPart(packed, id as PartId) ?? packed;
     const objective = l.objective && (OBJECTIVE_IDS as string[]).includes(saved.objective ?? '') ? (saved.objective as ObjectiveId) : undefined;
     const rocket = saved.rocket && rocketOptions(l.destination).includes(saved.rocket) ? saved.rocket : undefined;
-    return { packed, ...(objective ? { objective } : {}), ...(rocket ? { rocket } : {}) };
+    const orbit = saved.orbit && (orbitPresets(l.destination) as string[]).includes(saved.orbit) ? saved.orbit : undefined;
+    return { packed, ...(objective ? { objective } : {}), ...(rocket ? { rocket } : {}), ...(orbit ? { orbit } : {}) };
   };
 
   const playLevel = (l: Level, objective?: ObjectiveId, asTeam = false) => {
@@ -342,7 +344,8 @@ export function App() {
     const starter: Design = { ...fresh, standardRocketId: fresh.launchVehicleId, ...(l.targets ? { scienceTargets: true } : {}), ...(cap ? { costCap: cap } : {}) };
     const kept = asTeam ? {} : restoreLevel(l, starter);
     const picked = objective ?? kept.objective;
-    const flown = kept.rocket ? withRocket(starter, kept.rocket) : starter;
+    const withKeptRocket = kept.rocket ? withRocket(starter, kept.rocket) : starter;
+    const flown = kept.orbit ? withOrbit(withKeptRocket, kept.orbit) : withKeptRocket;
     const s = { ...flown, ...(picked ? { objective: picked } : {}) };
     setCadet(cadetStart(s, l.id));
     setDesign(s);
@@ -449,6 +452,8 @@ export function App() {
   const pickObjective = (o: ObjectiveId) => setCadet((c) => ({ ...c, base: { ...c.base, objective: o } }));
   /** Solo levels: the rocket (spec UI rule 58), on the level's design like the objective. */
   const pickRocket = (id: string) => setCadet((c) => ({ ...c, base: withRocket(c.base, id) }));
+  /** Solo Mars: the science orbit (spec UI rule 59). */
+  const pickOrbit = (id: string) => setCadet((c) => ({ ...c, base: withOrbit(c.base, id) }));
   const packBrief = { ...briefFor(false), open: level !== undefined && (!seen.includes(`brief:${level.id}`) || (soloObjective && !cadet.base.objective)) };
   /** In flight, MISSION INFO shows the objective flown (read-only). */
   const flyObjective = flyDesign?.objective && !teamRun && flyDesign.destination === 'mars' ? { cards: objectiveCards(flyDesign), picked: flyDesign.objective } : undefined;
@@ -463,7 +468,7 @@ export function App() {
   // A solo level's packing and objective are kept (sd.pack), so reopening the level, even after a reload, resumes them.
   useEffect(() => {
     if (!cadetMode || teamRun || dailyRun || !level || (step !== 'build' && step !== 'launch')) return;
-    saveLevelPack(level.id, { parts: packedNow.map((p) => p.id), ...(cadet.base.objective ? { objective: cadet.base.objective } : {}), rocket: rocketIdOf(cadet.base) });
+    saveLevelPack(level.id, { parts: packedNow.map((p) => p.id), ...(cadet.base.objective ? { objective: cadet.base.objective } : {}), rocket: rocketIdOf(cadet.base), ...(orbitIdOf(cadet.base) ? { orbit: orbitIdOf(cadet.base)! } : {}) });
   }, [cadetMode, teamRun, dailyRun, level, step, packedNow, cadet.base]);
   /** The team's flight: launched by its Flight Director. */
   const teamFly = teamNow?.launched ? teamNow : undefined;
@@ -752,6 +757,7 @@ export function App() {
           {...(keptPack?.pick !== undefined ? { pick: keptPack.pick } : {})}
           onDays={() => go('launch')}
           {...(level && !teamRun ? { rocket: { onPick: pickRocket } } : {})}
+          {...(level && !teamRun && orbitPresets(level.destination).length ? { orbit: { onPick: pickOrbit } } : {})}
           {...(soloObjective ? { objective: { ...(cadet.base.objective ? { picked: cadet.base.objective } : {}), onPick: pickObjective } } : {})}
           {...(teamNow ? { team: { state: teamNow, log: teamPlay.log, send: teamPlay.send, ...(teamNow.objective ? { objective: teamNow.objective } : {}) }, onLaunch: launchTeam } : {})}
         />

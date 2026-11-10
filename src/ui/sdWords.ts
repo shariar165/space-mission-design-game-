@@ -191,6 +191,31 @@ export const PACK_BLOCKER: Record<PackBlockerCode, string> = tr('PACK_BLOCKER', 
   other: 'NOT READY TO LAUNCH',
 });
 
+/** SCIENCE ORBIT on the Mars Pack (spec UI rule 59) and the desktop tabs beside MISSION LIMITS. */
+export const ORBIT_WORDS = tr('ORBIT_WORDS', {
+  title: 'SCIENCE ORBIT',
+  label: 'Science orbit',
+  names: { capture: 'STAY WHERE YOU ARRIVE', maven: 'MAVEN’S ORBIT', high: 'HIGH ORBIT' } as Record<string, string>,
+  lines: {
+    capture: 'No burn after arrival: the most fuel left, and Deimos is close. Phobos is far below.',
+    maven: 'Dips through the upper air, like MAVEN. Phobos is close; Deimos costs a lot of fuel.',
+    high: 'Above most of the air, up near Deimos. Deimos is close; Phobos costs more.',
+  } as Record<string, string>,
+  size: (low: string, high: string) => `${low} × ${high}`,
+  change: (dv: string) => `ORBIT CHANGE ${dv}`,
+  fuel: (pct: string) => `FUEL MARGIN ${pct}`,
+  moons: (phobos: string, deimos: string) => `PHOBOS ${phobos} · DEIMOS ${deimos}`,
+  drag: (x: string) => `AIR DRAG ×${x}`,
+  shadow: (t: string) => `LONGEST SHADOW ${t}`,
+});
+
+export const SIDE_TABS = tr('SIDE_TABS', {
+  label: 'Mission choices',
+  dangers: 'DANGERS',
+  rocket: 'ROCKET',
+  orbit: 'ORBIT',
+});
+
 /** ROCKET on solo Pack (spec UI rule 58): lift, budget charge and flight record of each rocket on offer. */
 export const ROCKET_WORDS = tr('ROCKET_WORDS', {
   title: 'ROCKET',
