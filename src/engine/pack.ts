@@ -55,8 +55,13 @@ export const PACK = packJson as unknown as {
   grid: { cols: S; rows: S };
   coverage: { covered: S; some: S };
   calendar: { days: S; before: S; searchStep: S };
+  /** A level's own development budget (game rule), by level id. */
+  levelBudgets: Record<string, S>;
   parts: Record<PartId, PartBase>;
 };
+
+/** The level's own budget, if it has one (Cloud Diver); every other level keeps the mission class cap. */
+export const levelCostCap = (levelId: string): S | undefined => PACK.levelBudgets[levelId];
 
 export interface Placed {
   id: PartId;
@@ -169,7 +174,7 @@ export function buildPackDesign(base: Design, packed: Packed): Design {
 // ---------------------------------------------------------------------------
 // Blockers: each one names the limit that failed
 
-export type PackBlockerCode = 'too-heavy' | 'no-power' | 'no-fuel' | 'no-capture' | 'flight-too-long' | 'no-science' | 'other';
+export type PackBlockerCode = 'too-heavy' | 'no-power' | 'no-fuel' | 'no-capture' | 'flight-too-long' | 'no-science' | 'over-budget' | 'other';
 export interface PackBlocker {
   code: PackBlockerCode;
   /** The engine's own sentence (with its numbers), for Engineer mode. */
@@ -224,7 +229,47 @@ export function packBlockers(packed: Packed, ev: FullEvaluation, ctx?: FixContex
     if (code === 'no-fuel' && ctx && fix === null) fix = fuelFix(packed, ctx);
     out.push({ code, engine: b, ...(code === 'no-fuel' && fix ? { fix } : {}) });
   }
+  // Over the budget blocks launch like too much weight (spec UI rule 57); listed after the engine's own blockers.
+  if (ev.meters.cost.status === 'over') out.push({ code: 'over-budget' });
   return out;
+}
+
+// ---------------------------------------------------------------------------
+// Mission limits (spec UI rule 57): the four limits the player packs against, straight from the meters
+
+export type LimitKey = 'weight' | 'budget' | 'power' | 'data';
+export interface PackLimit {
+  key: LimitKey;
+  meter: 'mass' | 'cost' | 'power' | 'data';
+  /** What the craft uses (kg, $M, W needed, bits a day produced) and the limit it is held to. */
+  used: number;
+  limit: number;
+  /** used / limit, 0–1 (a bar never draws past full; `status` says over). */
+  fill: number;
+  status: MeterStatus;
+}
+
+const LIMIT_METERS: [LimitKey, PackLimit['meter']][] = [
+  ['weight', 'mass'],
+  ['budget', 'cost'],
+  ['power', 'power'],
+  ['data', 'data'],
+];
+
+/** The four mission limits of an evaluated craft. */
+export function packLimits(ev: FullEvaluation): PackLimit[] {
+  return LIMIT_METERS.map(([key, meter]) => {
+    const m = ev.meters[meter];
+    return { key, meter, used: m.used, limit: m.limit, fill: m.limit > 0 ? Math.max(0, Math.min(1, m.used / m.limit)) : 1, status: m.status };
+  });
+}
+
+/** The limits if a shelf part were packed too (on the launch day, if given); undefined when it does not fit. */
+export function packLimitsWith(base: Design, packed: Packed, id: PartId, day?: CalendarDay): PackLimit[] | undefined {
+  const next = packPart(packed, id);
+  if (!next) return undefined;
+  const d = buildPackDesign(base, next);
+  return packLimits(evaluateDesign(day ? onDay(d, day) : d));
 }
 
 // ---------------------------------------------------------------------------

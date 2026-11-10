@@ -117,7 +117,7 @@ export function costEvaluation(design: Design, opts: { wet_kg?: number } = {}): 
   operations_M: number;
   total_M: number;
 } {
-  const cap = COST_CAPS[design.missionClass ?? 'discovery'];
+  const cap = design.costCap ?? COST_CAPS[design.missionClass ?? 'discovery'];
   const development_M = developmentCost(design);
   const lv = lookup(LAUNCH_VEHICLES, design.launchVehicleId, 'launch vehicle');
   const ride = design.rideshareId ? RIDESHARES[design.rideshareId] : undefined;

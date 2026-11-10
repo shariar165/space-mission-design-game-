@@ -4,12 +4,12 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { evaluateDesign } from '../../src/engine/index';
-import { buildPackDesign, initialPack, noseSquares, packBlockers, shelfFor } from '../../src/engine/pack';
+import { buildPackDesign, initialPack, levelCostCap, noseSquares, packBlockers, packLimits, packPart, shelfFor } from '../../src/engine/pack';
 import { App } from '../../src/ui/App';
 import * as f from '../../src/ui/format';
 import { LEVELS, loadProgress, shelfOf } from '../../src/ui/levels';
 import { starterDesign, today } from '../../src/ui/starters';
-import { LAUNCH_DAY_WORDS } from '../../src/ui/sdWords';
+import { LAUNCH_DAY_WORDS, LIMIT_WORDS, PACK_BLOCKER } from '../../src/ui/sdWords';
 import { pickObjective } from './setup';
 
 function pass(ms: number, step = 50) {
@@ -172,5 +172,48 @@ describe('Pack: "no fuel" says which part fixes it', () => {
     pass(100);
     expect(screen.queryByText(/NOT ENOUGH FUEL/)).toBeNull();
     expect(screen.queryByText(/PACK THE EXTRA FUEL TANK/)).toBeNull();
+  });
+});
+
+describe('MISSION LIMITS on solo Pack (spec UI rule 57): Cloud Diver teaches budget', () => {
+  const VENUS = { 'moon-1': 1, 'moon-2': 1, 'moon-3': 1, mars: 1 };
+  const venus = () => ({ ...starterDesign('venus', today()), costCap: levelCostCap('venus')! });
+  const limitsOf = (p: ReturnType<typeof initialPack>) => packLimits(evaluateDesign(buildPackDesign(venus(), p)));
+  const panel = () => screen.getByRole('region', { name: LIMIT_WORDS.label });
+  const row = (key: 'weight' | 'budget' | 'power' | 'data') => within(panel()).getByText(LIMIT_WORDS.names[key]).closest<HTMLElement>('.ml-row')!;
+
+  it('four bars from the engine, the budget held to the level’s 350 $M and nearly full with the starter', () => {
+    openLevel(/^Cloud Diver/, VENUS);
+    const budget = limitsOf(initialPack(venus(), shelfFor('venus'))).find((l) => l.key === 'budget')!;
+    expect(budget.limit).toBe(350);
+    for (const k of ['weight', 'budget', 'power', 'data'] as const) expect(row(k)).toBeTruthy();
+    expect(within(row('budget')).getByText(LIMIT_WORDS.value.budget(f.money(budget.used), f.money(350)))).toBeTruthy();
+    expect(within(row('budget')).getByText(LIMIT_WORDS.status.warning)).toBeTruthy();
+  });
+
+  it('hovering the camera previews it going over budget; packing it blocks launch; dropping the spectrometer pays for it', () => {
+    openLevel(/^Cloud Diver/, VENUS);
+    const p0 = initialPack(venus(), shelfFor('venus'));
+    const camera = screen.getByRole('button', { name: 'Pack Camera' });
+    fireEvent.mouseEnter(camera);
+    expect(within(panel()).getByText(LIMIT_WORDS.preview('Camera'))).toBeTruthy();
+    const after = limitsOf(packPart(p0, 'camera')!).find((l) => l.key === 'budget')!;
+    expect(within(row('budget')).getByText(LIMIT_WORDS.value.budget(f.money(after.used), f.money(350)))).toBeTruthy();
+    expect(within(row('budget')).getByText(LIMIT_WORDS.status.over)).toBeTruthy();
+    fireEvent.mouseLeave(camera);
+    expect(within(panel()).queryByText(LIMIT_WORDS.preview('Camera'))).toBeNull();
+
+    fireEvent.click(camera);
+    expect(screen.getByText(`· ${PACK_BLOCKER['over-budget']}`)).toBeTruthy();
+    fireEvent.click(screen.getByRole('switch', { name: 'Arm' }));
+    expect((screen.getByRole('button', { name: 'LAUNCH' }) as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(screen.getByRole('button', { name: 'Unpack Spectrometer' }));
+    expect(screen.queryByText(`· ${PACK_BLOCKER['over-budget']}`)).toBeNull();
+    expect((screen.getByRole('button', { name: 'LAUNCH' }) as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it('every other level keeps NASA’s cap: Red Planet’s budget bar is held to 500 $M', () => {
+    openLevel(/^Red Planet/, MARS);
+    expect(row('budget').querySelector('.ml-v')!.textContent!.endsWith(` OF ${f.money(500)}`)).toBe(true);
   });
 });

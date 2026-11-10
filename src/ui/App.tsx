@@ -13,7 +13,7 @@ import { badges, newBadges, rankFor, starTotals, type RankDef } from '../engine/
 import { evaluateDesign } from '../engine/index';
 import { flightFacts, mergeFacts, newLessons, NOTEBOOK, notebook, notebookProgress, rescueProgress, type NotebookFacts } from '../engine/notebook';
 import { operationsDebrief, type OpsState } from '../engine/ops/index';
-import { initialPack, packPart, shelfFor, type Packed, type PartId } from '../engine/pack';
+import { initialPack, levelCostCap, packPart, shelfFor, type Packed, type PartId } from '../engine/pack';
 import type { RescueCaseId } from '../engine/rescue';
 import type { Design, DestinationId } from '../engine/types';
 import { TopBar, type Mode, type Step } from './components/TopBar';
@@ -334,7 +334,9 @@ export function App() {
 
   const playLevel = (l: Level, objective?: ObjectiveId, asTeam = false) => {
     setTeamRun(asTeam);
-    const starter = { ...starterDesign(l.destination, today()), ...(l.targets ? { scienceTargets: true } : {}) };
+    // a level's own budget (Cloud Diver, spec UI rule 57) rides on the design, so every meter and blocker reads it
+    const cap = levelCostCap(l.id);
+    const starter = { ...starterDesign(l.destination, today()), ...(l.targets ? { scienceTargets: true } : {}), ...(cap ? { costCap: cap } : {}) };
     const kept = asTeam ? {} : restoreLevel(l, starter);
     const picked = objective ?? kept.objective;
     const s = { ...starter, ...(picked ? { objective: picked } : {}) };

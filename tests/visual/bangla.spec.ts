@@ -142,6 +142,20 @@ test('Bangla: Red Planet asks for the objective, and Pack shows it', async ({ pa
   await shot(page, 'objective-pack', p);
 });
 
+test('Bangla: Cloud Diver’s mission limits, over budget', async ({ page }, info) => {
+  test.setTimeout(120_000);
+  const p = info.project.name;
+  await page.addInitScript(() => localStorage.setItem('mdt.progress', JSON.stringify({ 'moon-1': 1, 'moon-2': 1, 'moon-3': 1, mars: 1 })));
+  await banglaPlayer(page, ['cold-open', 'name', 'coach', 'brief:venus', 'launch:venus'], 'VOYA');
+  await page.getByRole('button', { name: /^মিশন বাছো/ }).click();
+  await page.getByRole('button', { name: /^Cloud Diver/ }).click();
+  await expect(page.getByRole('region', { name: 'মিশনের সীমা' })).toBeVisible({ timeout: 60_000 });
+  await page.getByRole('button', { name: /ক্যামেরা/ }).first().click();
+  await page.mouse.move(700, 450);
+  await page.waitForTimeout(800);
+  await shot(page, 'limits-over', p);
+});
+
 test('Bangla: switched mid-flight at Mars, the science targets and the power plan', async ({ page }, info) => {
   test.setTimeout(180_000);
   const p = info.project.name;
