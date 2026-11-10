@@ -21,6 +21,7 @@ import { LEVELS, levelById, loadProgress, maxStars, nextLevel, saveProgress, she
 import { loadDaily, loadFlights, loadPostcards, loadRobotName, loadSeen, loadTeam, saveDaily, saveFlights, savePostcards, saveRobotName, saveSeen, saveTeam, type DailySave } from './saves';
 import { defaultTeam } from '../engine/team/setup';
 import { teamDesign } from '../engine/team/reduce';
+import { objectiveCards } from '../engine/team/setup';
 import type { Team } from '../engine/team/roles';
 import type { ObjectiveId } from '../engine/objectives';
 import { useTeam } from './useTeam';
@@ -420,7 +421,12 @@ export function App() {
       : level
         ? { title: level.title, briefing: BRIEFING[level.id] ?? FREE_BRIEFING, concept: LEVEL_WORDS.teaches[level.id] ?? '' }
         : { title: BRIEF_WORDS.free, briefing: FREE_BRIEFING };
-  const packBrief = { ...briefFor(false), open: level !== undefined && !seen.includes(`brief:${level.id}`) };
+  /** Solo Red Planet: the player picks the mission objective (spec UI rule 56); it sits on the level's starter design. */
+  const soloObjective = cadetMode && level?.objective === true && !teamRun;
+  const pickObjective = (o: ObjectiveId) => setCadet((c) => ({ ...c, base: { ...c.base, objective: o } }));
+  const packBrief = { ...briefFor(false), open: level !== undefined && (!seen.includes(`brief:${level.id}`) || (soloObjective && !cadet.base.objective)) };
+  /** In flight, MISSION INFO shows the objective flown (read-only). */
+  const flyObjective = flyDesign?.objective && !teamRun && flyDesign.destination === 'mars' ? { cards: objectiveCards(flyDesign), picked: flyDesign.objective } : undefined;
   /** The launch countdown plays on the first flight of each level (and of the Daily, and of a free build). */
   const launchKey = `launch:${dailyRun ? 'daily' : (level?.id ?? 'free')}`;
   /** One packing per level: a new level (or destination) starts from its own starter. */
@@ -715,6 +721,7 @@ export function App() {
           onPacked={(p) => setPackSave({ key: packKey, packed: p, ...(keptPack?.pick !== undefined ? { pick: keptPack.pick } : {}) })}
           {...(keptPack?.pick !== undefined ? { pick: keptPack.pick } : {})}
           onDays={() => go('launch')}
+          {...(soloObjective ? { objective: { ...(cadet.base.objective ? { picked: cadet.base.objective } : {}), onPick: pickObjective } } : {})}
           {...(teamNow ? { team: { state: teamNow, log: teamPlay.log, send: teamPlay.send, ...(teamNow.objective ? { objective: teamNow.objective } : {}) }, onLaunch: launchTeam } : {})}
         />
       )}
@@ -732,7 +739,7 @@ export function App() {
           onBack={back}
           coach={!seen.includes('coach')}
           onCoachSeen={() => markSeen('coach')}
-          brief={briefFor(dailyRun)}
+          brief={{ ...briefFor(dailyRun), ...(flyObjective ? { objective: flyObjective } : {}) }}
           robotName={robotName}
           launchMoment={!seen.includes(launchKey)}
           onLaunchSeen={() => markSeen(launchKey)}

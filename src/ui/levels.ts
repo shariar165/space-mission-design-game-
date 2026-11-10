@@ -19,6 +19,8 @@ export interface Level {
   shelf?: PartId[];
   /** The science is the destination's targets (Moon 3; Mars always flies its own). */
   targets?: boolean;
+  /** A solo player must pick a mission objective in the briefing before launch (spec UI rule 56; Mars only). */
+  objective?: boolean;
 }
 
 /** The parts a level puts on the shelf. */
@@ -30,7 +32,7 @@ export const LEVELS: Level[] = [
   { id: 'moon-1', destination: 'moon', title: 'First Light', steps: ['power'], orders: false, shelf: ['computer', 'engine', 'camera', 'solar', 'battery'] },
   { id: 'moon-2', destination: 'moon', title: 'Heavy Lifting', steps: ['power', 'fuel', 'rocket'], orders: false, shelf: ['computer', 'engine', 'camera', 'spectrometer', 'solar', 'battery', 'tank', 'dish'] },
   { id: 'moon-3', destination: 'moon', title: 'Full Build', steps: ALL, orders: false, targets: true },
-  { id: 'mars', destination: 'mars', title: 'Red Planet', steps: ALL, orders: true },
+  { id: 'mars', destination: 'mars', title: 'Red Planet', steps: ALL, orders: true, objective: true },
   { id: 'venus', destination: 'venus', title: 'Cloud Diver', steps: ALL, orders: true },
   { id: 'bennu', destination: 'bennu', title: 'Pebble Catcher', steps: ALL, orders: true },
   { id: 'jupiter', destination: 'jupiter', title: 'Giant Leap', steps: ALL, orders: true, impossible: true },

@@ -28,6 +28,7 @@ import type { Design } from '../../engine/types';
 import type { ObjectiveId } from '../../engine/objectives';
 import type { TeamAct, TeamAction } from '../../engine/team/log';
 import { teamSpend } from '../../engine/team/negotiate';
+import { objectiveCards } from '../../engine/team/setup';
 import type { TeamState } from '../../engine/team/reduce';
 import { partRole, ROLE_IDS, type RoleId } from '../../engine/team/roles';
 import { ConflictBanner, CrewChips, QuickBar, SharedLimits, TeamLine } from '../components/team/TeamPanels';
@@ -60,6 +61,7 @@ import {
   shortDate,
   STAMP,
   OBJECTIVE_WORDS,
+  OBJECTIVE_PICK_WORDS as OP,
   ROLE_WORDS,
   TEAM_PACK_WORDS,
   WEIGHT_WORDS,
@@ -97,6 +99,8 @@ interface Props {
   onDays?: () => void;
   /** Team mode: packing goes through the team's log. */
   team?: PackTeam;
+  /** Solo Red Planet: the mission objective the player must pick before launch (spec UI rule 56). */
+  objective?: { picked?: ObjectiveId; onPick: (id: ObjectiveId) => void };
 }
 
 type Hl = { dangers: string[]; parts: PartId[] } | undefined;
@@ -109,7 +113,7 @@ export interface PackTeam {
   objective?: ObjectiveId;
 }
 
-export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLesson, onHome, onLaunch, onBack, brief, onBriefSeen, robotName, onRobotName, packed: kept, onPacked, pick, onDays, team }: Props) {
+export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLesson, onHome, onLaunch, onBack, brief, onBriefSeen, robotName, onRobotName, packed: kept, onPacked, pick, onDays, team, objective }: Props) {
   const engineer = mode === 'engineer';
   const phone = useIsPhone();
   const dest = DESTINATIONS[base.destination];
@@ -139,7 +143,11 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
   const tray = shelf.filter((id) => !packedIds.has(id) && id !== 'computer' && id !== 'engine');
   const trayFits = tray.map((id) => ({ id, fits: fitPart(packed, id) !== undefined }));
   const full = trayFits.length > 0 && !trayFits.some((t) => t.fits);
-  const ready = armed && q !== undefined && q.quality !== 'bad' && blockers.length === 0;
+  const ready = armed && q !== undefined && q.quality !== 'bad' && blockers.length === 0 && (!objective || !!objective.picked);
+  // The objective cards read the packed craft: does it carry a part that does the objective's science?
+  const objCards = useMemo(() => (objective ? objectiveCards(design) : undefined), [objective, design]);
+  const objCard = objCards?.find((c) => c.id === objective?.picked);
+  const objParts = objCard ? objCard.parts.map((id) => PART_LOOK[id].short).join(OBJECTIVE_WORDS.or) : '';
   const lessonCard = impossible && blockers.some((b) => b.code === 'too-heavy') ? LESSONS[base.destination] : undefined;
 
   const add = (id: PartId) => {
@@ -354,6 +362,7 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
 
   // The launch checklist: each step ticks itself off; the first one still to do is lit, so a greyed LAUNCH explains itself.
   const checks = [
+    ...(objective ? [{ id: 'objective', text: LAUNCH_CHECKS.objective, done: !!objective.picked }] : []),
     { id: 'packed', text: LAUNCH_CHECKS.packed, done: blockers.length === 0 },
     { id: 'day', text: LAUNCH_CHECKS.day, done: q !== undefined && q.quality !== 'bad' },
     { id: 'arm', text: LAUNCH_CHECKS.arm, done: armed },
@@ -376,7 +385,31 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
     onBriefSeen?.();
   };
   const briefing = briefOpen && brief && (
-    <MissionBriefing title={brief.title} destination={base.destination} briefing={brief.briefing} {...(brief.concept ? { concept: brief.concept } : {})} onClose={closeBrief} />
+    <MissionBriefing
+      title={brief.title}
+      destination={base.destination}
+      briefing={brief.briefing}
+      {...(brief.concept ? { concept: brief.concept } : {})}
+      {...(objective && objCards ? { objective: { cards: objCards, onPick: objective.onPick, ...(objective.picked ? { picked: objective.picked } : {}), ...(onBack ? { onBack } : {}) } } : {})}
+      onClose={closeBrief}
+    />
+  );
+  const plate = objective && (
+    <div className={`pk-obj${objCard && !objCard.matched ? ' warn' : ''}`} role="status" aria-label={OP.group}>
+      <div className="pk-obj-main">
+        <span className="pk-obj-k">{OP.plate}</span>
+        <span className="pk-obj-title">{objective.picked ? OBJECTIVE_WORDS.objectives[objective.picked].title : LAUNCH_CHECKS.objective}</span>
+        {objCard && (
+          <span className="pk-obj-needs">
+            {OP.needs(objParts)} <span className={objCard.matched ? 'on' : 'off'}>{objCard.matched ? OP.onBoard : OP.notOnBoard}</span>
+          </span>
+        )}
+        {objCard && !objCard.matched && !phone && <span className="pk-obj-warn">{OP.warn(objParts)}</span>}
+      </div>
+      <button type="button" className="sd-ghost-btn pk-obj-change" aria-label={OP.changeLabel} onClick={() => setBriefOpen(true)}>
+        {OP.change}
+      </button>
+    </div>
   );
   const infoKey = brief && (
     <button type="button" className="sd-ghost-btn pk-info" onClick={() => setBriefOpen(true)}>
@@ -456,6 +489,7 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
           </>
         ) : (
           <div className="pk-deck-phone">
+            {plate}
             <span className="sd-label">{PACK_WORDS.deckOf(dest.name)}</span>
             {deckList}
           </div>
@@ -528,6 +562,7 @@ export function Pack({ base, shelf, mode, onMode, missionName, impossible, onLes
           </div>
         ) : (
           <section className="pk-panel pk-deck" aria-label={PACK_WORDS.deckLabel(dest.name)}>
+            {plate}
             <div className="pk-deck-head">
               <span className="pk-panel-title">{PACK_WORDS.deckOf(dest.name)}</span>
               <span className="pk-deck-sub">{PACK_WORDS.deckSub}</span>

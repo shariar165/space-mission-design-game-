@@ -10,7 +10,7 @@ import * as f from '../../src/ui/format';
 import { LEVELS, loadProgress, shelfOf } from '../../src/ui/levels';
 import { starterDesign, today } from '../../src/ui/starters';
 import { LAUNCH_DAY_WORDS } from '../../src/ui/sdWords';
-import './setup';
+import { pickObjective } from './setup';
 
 function pass(ms: number, step = 50) {
   for (let t = 0; t < ms; t += step) act(() => vi.advanceTimersByTime(step));
@@ -23,6 +23,7 @@ function openLevel(title: RegExp, progress: Record<string, number>) {
   fireEvent.click(screen.getByRole('button', { name: 'CHOOSE A MISSION ▸' }));
   fireEvent.click(screen.getByRole('button', { name: title }));
   pass(100); // the calendar is worked out one tick after the screen paints
+  if (title.source.includes('Red Planet')) pickObjective();
 }
 
 const MARS = { 'moon-1': 1, 'moon-2': 1, 'moon-3': 1 };

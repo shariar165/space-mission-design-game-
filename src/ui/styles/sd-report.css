@@ -184,6 +184,9 @@
 .al.lost .al-big-2 { color: var(--sd-paper-ink); }
 .al.extended .al-big-2 { color: var(--sd-soso); }
 .al-sub { font: 700 18px/1.2 var(--sd-mono); letter-spacing: 0.04em; }
+.al-obj { align-self: flex-start; padding: 6px 10px; border: 2px solid currentColor; border-radius: 3px; font: 700 13px/1.25 var(--sd-mono); letter-spacing: 0.06em; }
+.al-obj.met { color: var(--sd-ok); }
+.al-obj.missed { color: var(--sd-red-ink); }
 .al-bar-wrap { display: flex; flex-direction: column; gap: 6px; }
 .al-bar { display: flex; gap: 4px; height: 22px; }
 .al-block { flex: 1 1 0; box-sizing: border-box; border: 2px dashed var(--sd-paper-line); }
@@ -217,6 +220,7 @@
 .rp.phone .al-meta { font-size: 9px; letter-spacing: 0.14em; }
 .rp.phone .al-big { font-size: 22px; }
 .rp.phone .al-sub { font-size: 11px; }
+.rp.phone .al-obj { font-size: 10px; padding: 4px 6px; }
 .rp.phone .al-bar { height: 14px; gap: 3px; }
 .rp.phone .al-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: none; gap: 14px 12px; }
 .rp.phone .al-mount { flex: none; height: 120px; min-height: 0; padding: 8px; }

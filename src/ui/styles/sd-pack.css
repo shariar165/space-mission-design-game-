@@ -82,6 +82,18 @@
 
 /* Danger deck */
 .pk-deck-head { display: flex; flex-direction: column; gap: 4px; }
+/* The solo objective plate (spec UI rule 56): what the mission is for, and whether a part for it is packed */
+.pk-obj { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 6px; border: 1px solid var(--sd-line); border-left: 4px solid var(--sd-crt-hi); background: var(--sd-chassis); flex: none; }
+.pk-obj.warn { border-left-color: var(--sd-coral); }
+.pk-obj-main { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; }
+.pk-obj-k { font: 700 11px/1 var(--sd-mono); letter-spacing: 0.18em; color: var(--sd-ink-3); }
+.pk-obj-title { font: 800 15px/1.15 var(--sd-display); letter-spacing: 0.05em; color: var(--sd-ink); overflow-wrap: anywhere; }
+.pk-obj-needs { font: 700 12px/1.3 var(--sd-mono); letter-spacing: 0.04em; color: var(--sd-ink-2); }
+.pk-obj-needs .on, .pk-obj-needs .off { white-space: nowrap; }
+.pk-obj-needs .on { color: var(--sd-crt-hi); }
+.pk-obj-needs .off { color: var(--sd-coral); }
+.pk-obj-warn { font: 500 12px/1.3 var(--sd-body); color: var(--sd-coral); text-wrap: pretty; }
+.pk-obj-change { flex: none; }
 .pk-deck-sub { font: 400 13px/1.3 var(--sd-body); color: var(--sd-ink-3); }
 .pk-deck-list { display: flex; flex-direction: column; gap: 8px; overflow: auto; min-height: 0; scrollbar-width: thin; }
 .pk-danger { position: relative; display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 10px 12px 10px 10px; border-radius: 7px; background: var(--sd-paper); box-shadow: 0 2px 0 var(--sd-deep); overflow: hidden; flex: none; }
@@ -130,6 +142,11 @@
 .pk.phone .sd-lever-word, .pk.phone .sd-lever-switch { display: none; }
 .pk.phone .sd-lever-short { display: inline-block; }
 .pk-deck-phone { display: flex; flex-direction: column; gap: 6px; }
+.pk.phone .pk-obj { padding: 7px 10px; gap: 8px; }
+.pk.phone .pk-obj-k { font-size: 9px; }
+.pk.phone .pk-obj-title { font-size: 12px; }
+.pk.phone .pk-obj-needs { font-size: 10px; }
+.pk.phone .pk-obj-change { padding: 7px 9px; font-size: 10px; }
 .pk-deck-phone .sd-label { font-size: 10px; padding-left: 2px; }
 .pk.phone .pk-deck-list { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; overflow: visible; }
 .pk.phone .pk-danger { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 7px 3px 6px; border-radius: 6px; }

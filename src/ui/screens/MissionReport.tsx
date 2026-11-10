@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { DESTINATIONS, HAZARDS, LAUNCH_VEHICLES, RIDESHARES } from '../../engine/data';
 import { heardMessages, missionAlbum, operationsDebrief, VOICE_RULES, type OpsState } from '../../engine/ops/index';
 import { finalTransmission, reportCompare, reportPanels, reportVerdict } from '../../engine/ops/report';
+import { objectiveResult } from '../../engine/ops/observe';
 import { MAX_SCORE, MARGIN_BAND, scoreGrade, STAR_RULES } from '../../engine/scoring';
 import type { CompareMetric } from '../../engine/compare';
 import type { Design } from '../../engine/types';
@@ -31,7 +32,7 @@ import { SDIcon } from '../components/sd/SDIcon';
 import { useReducedMotion } from '../opsGeometry';
 import { useOpsRisk } from '../riskRunner';
 import { useIsPhone } from '../sdGeometry';
-import { BADGE_WORDS, BRAND_WORDS, dayCount, fullDate, CATEGORY_NAME, CREW_WORDS, dangerLook, finalLines, FLY_WORDS, GAME_NAME, hurtWords, optionShort, PANEL_SOUND, panelWords, POSTCARD_WORDS, RANK_WORDS, REPORT_STAMP, REPORT_WORDS, ROBOT_WORDS, robotNameOr, robotSays, savedWords, STAR_WORDS } from '../sdWords';
+import { BADGE_WORDS, BRAND_WORDS, OBJECTIVE_PICK_WORDS, OBJECTIVE_WORDS, dayCount, fullDate, CATEGORY_NAME, CREW_WORDS, dangerLook, finalLines, FLY_WORDS, GAME_NAME, hurtWords, optionShort, PANEL_SOUND, panelWords, POSTCARD_WORDS, RANK_WORDS, REPORT_STAMP, REPORT_WORDS, ROBOT_WORDS, robotNameOr, robotSays, savedWords, STAR_WORDS } from '../sdWords';
 import * as f from '../format';
 import { voiceContext } from '../voiceContext';
 import { said } from '../cited';
@@ -82,6 +83,14 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
   const ft = useMemo(() => finalTransmission(state), [state]);
   // At Mars the album comes first (spec: UI rule 43); FEED THE PAPER brings the final transmission (desktop).
   const album = useMemo(() => missionAlbum(state), [state]);
+  // A solo flight's objective (spec UI rule 56): met or missed, from the engine. A team's is in its debrief.
+  const objective = useMemo(() => (team ? undefined : objectiveResult(state)), [team, state]);
+  const objectiveLine = objective && {
+    met: objective.met,
+    text: !objective.matched
+      ? OBJECTIVE_PICK_WORDS.result.noPart(OBJECTIVE_WORDS.objectives[objective.objective].title)
+      : (objective.met ? OBJECTIVE_PICK_WORDS.result.met : OBJECTIVE_PICK_WORDS.result.missed)(OBJECTIVE_WORDS.objectives[objective.objective].title, f.pct(objective.favouredHome, 0)),
+  };
   const [albumFed, setAlbumFed] = useState(!album || phone);
   // A team's debrief comes next (desktop: its NEXT brings the final transmission; a phone shows both in turn).
   const tr = useMemo(() => (team ? teamReport(team.log, { team: team.state, ops: state }) : undefined), [team?.state, team?.log, state]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -305,7 +314,7 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
   const name = robotNameOr(robotName);
   // The final transmission holds the robot's last words; only a robot that never flew has just its pad message here.
   const last = ft ? undefined : heardMessages(state).latest;
-  const albumEl = album && <MissionAlbum album={album} name={name.toUpperCase()} phone={phone} onFeed={() => setAlbumFed(true)} />;
+  const albumEl = album && <MissionAlbum album={album} name={name.toUpperCase()} phone={phone} {...(objectiveLine ? { objective: objectiveLine } : {})} onFeed={() => setAlbumFed(true)} />;
   const teamEl = tr && team && albumFed && (
     <TeamDebrief
       report={tr}

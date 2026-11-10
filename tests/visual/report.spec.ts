@@ -1,6 +1,6 @@
 // Game shots of the MISSION REPORT after a whole flown mission (Mars, seed 2013): the final transmission, then the report. Run: npm run shots -- report
 import { expect, test } from '@playwright/test';
-import { flyToEnd } from './helpers';
+import { clippedText, flyToEnd } from './helpers';
 
 test('report', async ({ page }, info) => {
   test.setTimeout(420_000);
@@ -19,6 +19,10 @@ test('report', async ({ page }, info) => {
   await page.getByRole('button', { name: 'CHOOSE A MISSION ▸' }).click();
   await page.getByRole('button', { name: /^Red Planet/ }).click();
   await expect(page.getByRole('button', { name: 'CHANGE ▸' })).toBeEnabled({ timeout: 60_000 }); // the launch days are worked out
+  // Red Planet's objective (spec UI rule 56): atmosphere, which the starter's sniffer does; the album says if it was met
+  const brief = page.getByRole('dialog', { name: 'Mission briefing' });
+  await brief.getByRole('radio', { name: /^STUDY THE ATMOSPHERE/ }).click();
+  await brief.getByRole('button', { name: 'GOT IT ▸' }).click();
   for (const name of ['Pack Radiation shield', 'Pack Extra solar panel', 'Pack Big battery', 'Pack Autopilot chip']) {
     const b = page.getByRole('button', { name, exact: true });
     if (await b.isVisible()) await b.click();
@@ -34,6 +38,8 @@ test('report', async ({ page }, info) => {
   if (await album.isVisible()) {
     await page.waitForTimeout(1500);
     await page.screenshot({ path: `test-results/shots/report-album-flight-${info.project.name}.png` });
+    await expect(album.locator('.al-obj')).toBeVisible();
+    expect(await clippedText(page, '.al-head')).toEqual([]);
     const feed = album.getByRole('button', { name: /FEED THE PAPER/ });
     if (await feed.count()) await feed.click();
   }

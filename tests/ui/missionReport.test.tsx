@@ -9,7 +9,12 @@ import { reportCompare, reportPanels } from '../../src/engine/ops/report';
 import type { Mode } from '../../src/ui/components/sd/ModeLever';
 import * as f from '../../src/ui/format';
 import { MissionReport, PANEL_STEP_MS } from '../../src/ui/screens/MissionReport';
-import { ALBUM, CATEGORY_NAME, panelWords, FINAL_WORDS } from '../../src/ui/sdWords';
+import { ALBUM, CATEGORY_NAME, panelWords, FINAL_WORDS, OBJECTIVE_PICK_WORDS, OBJECTIVE_WORDS } from '../../src/ui/sdWords';
+import { objectiveResult } from '../../src/engine/ops/observe';
+import { buildPackDesign, initialPack, packPart, shelfFor, unpackPart } from '../../src/engine/pack';
+import { starterDesign } from '../../src/ui/starters';
+import type { ObjectiveId } from '../../src/engine/objectives';
+import type { Design } from '../../src/engine/types';
 import './setup';
 
 const maven = presetDesign('maven');
@@ -105,5 +110,43 @@ describe('Mission Album (spec: UI rule 43)', () => {
     expect(screen.queryByRole('region', { name: FINAL_WORDS.label })).toBeNull();
     fireEvent.click(within(album).getByRole('button', { name: ALBUM.feed }));
     expect(screen.getByRole('region', { name: FINAL_WORDS.label })).toBeTruthy();
+  });
+});
+
+describe('Mission Report: a solo flight’s objective (spec UI rule 56)', () => {
+  /** A Cadet Mars craft flown calm with every target ordered (as tests/objectives.test.ts flyAll). */
+  function flyObjective(objective: ObjectiveId, swap?: 'camera') {
+    const base: Design = { ...starterDesign('mars', '2028-11-15'), scienceTargets: true, objective };
+    const p0 = initialPack(base, shelfFor('mars'));
+    const d = buildPackDesign(base, swap ? packPart(unpackPart(p0, 'sniffer'), swap)! : p0);
+    let s = startOperations(d, { seed: 7, rng: () => 0.999999 });
+    s = advanceOperations(s, { until: s.env.timeline.find((x) => x.phase === 'science')!.startDay + 0.1 });
+    for (const id of ['phobos', 'deimos', 'limb', 'olympus-mons', 'valles-marineris', 'north-polar-cap'])
+      s = advanceOperations(sendCommand(s, { kind: 'observe', targetId: id }).state, { days: 0.5 });
+    return { d, s: finishOperations(s) };
+  }
+  const show = (d: Design, s: ReturnType<typeof flyObjective>['s']) =>
+    render(<MissionReport state={s} design={d} mode="cadet" onMode={vi.fn()} missionName="Orbiter-1" onFlyAgain={vi.fn()} onHome={vi.fn()} homeLabel="MISSION MAP" />);
+
+  it('met: the album head says how much of the objective’s science came home', () => {
+    const { d, s } = flyObjective('surface', 'camera');
+    const r = objectiveResult(s)!;
+    expect(r.met).toBe(true);
+    show(d, s);
+    const line = document.querySelector('.al-obj')!;
+    expect(line.textContent).toBe(OBJECTIVE_PICK_WORDS.result.met(OBJECTIVE_WORDS.objectives.surface.title, f.pct(r.favouredHome, 0)));
+    expect(line.className).toContain('met');
+  });
+
+  it('missed for want of a part: the starter (sniffer only) flown for surface', () => {
+    const { d, s } = flyObjective('surface');
+    show(d, s);
+    expect(document.querySelector('.al-obj')!.textContent).toBe(OBJECTIVE_PICK_WORDS.result.noPart(OBJECTIVE_WORDS.objectives.surface.title));
+    expect(document.querySelector('.al-obj')!.className).toContain('missed');
+  });
+
+  it('no objective (a real mission, the Daily): no line', () => {
+    open();
+    expect(document.querySelector('.al-obj')).toBeNull();
   });
 });
