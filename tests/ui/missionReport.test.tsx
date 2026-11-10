@@ -9,7 +9,7 @@ import { reportCompare, reportPanels } from '../../src/engine/ops/report';
 import type { Mode } from '../../src/ui/components/sd/ModeLever';
 import * as f from '../../src/ui/format';
 import { MissionReport, PANEL_STEP_MS } from '../../src/ui/screens/MissionReport';
-import { ALBUM, CATEGORY_NAME, panelWords, FINAL_WORDS, OBJECTIVE_PICK_WORDS, OBJECTIVE_WORDS } from '../../src/ui/sdWords';
+import { ALBUM, CATEGORY_NAME, panelWords, FINAL_WORDS, LAST_WORDS, OBJECTIVE_PICK_WORDS, OBJECTIVE_WORDS, PART_LOOK } from '../../src/ui/sdWords';
 import { objectiveResult } from '../../src/engine/ops/observe';
 import { buildPackDesign, initialPack, packPart, shelfFor, unpackPart } from '../../src/engine/pack';
 import { starterDesign } from '../../src/ui/starters';
@@ -148,5 +148,24 @@ describe('Mission Report: a solo flight’s objective (spec UI rule 56)', () => 
   it('no objective (a real mission, the Daily): no line', () => {
     open();
     expect(document.querySelector('.al-obj')).toBeNull();
+  });
+});
+
+describe('Mission Report: NEXT TIME names a Pack part (spec UI rule 60)', () => {
+  // rng 0.05, safest answers: the memory corruption goes badly; the spare computer guards against it (packHint)
+  const base = starterDesign('mars', '2028-11-15');
+  const d = buildPackDesign(base, initialPack(base, shelfFor('mars')));
+  const unlucky = runOperations(d, { seed: 1, rng: () => 0.05, policy: 'safe' }).state;
+  const show = (shelf?: ReturnType<typeof shelfFor>) =>
+    render(<MissionReport state={unlucky} design={d} mode="cadet" onMode={vi.fn()} missionName="Orbiter-1" onFlyAgain={vi.fn()} onHome={vi.fn()} homeLabel="MISSION MAP" {...(shelf ? { shelf } : {})} />);
+
+  it('a solo level’s report says which part to pack next time', () => {
+    show(shelfFor('mars'));
+    expect(screen.getByText(LAST_WORDS.nextTime(PART_LOOK.spare.name))).toBeTruthy();
+  });
+
+  it('without a shelf (a team, the Daily, a real mission) there is no NEXT TIME line', () => {
+    show();
+    expect(document.querySelector('.rp-verdict-hint')).toBeNull();
   });
 });

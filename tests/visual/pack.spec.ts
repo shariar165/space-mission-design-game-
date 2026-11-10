@@ -155,3 +155,46 @@ test('pack: science orbit', async ({ page }, info) => {
   await page.screenshot({ path: `test-results/shots/orbit-${p}.png`, fullPage: p === 'mobile' });
   expect(await clippedText(page, '.ob2')).toEqual([]);
 });
+
+// Change one thing and fly again (spec UI rule 60): fly Red Planet, let the robot finish, the report's NEXT TIME,
+// then FLY AGAIN: the last flight over the bars, and the camera added. Run: npm run shots -- pack
+test('pack: last flight', async ({ page }, info) => {
+  test.setTimeout(180_000);
+  const p = info.project.name;
+  await page.addInitScript(() => {
+    try {
+      localStorage.setItem('mdt.mode', 'cadet');
+      localStorage.setItem('sd.seen', JSON.stringify(['coach', 'name', 'brief:mars', 'launch:mars']));
+      localStorage.setItem('sd.pack', JSON.stringify({ mars: { parts: ['computer', 'engine', 'sniffer'], objective: 'atmosphere' } }));
+      localStorage.setItem('mdt.progress', JSON.stringify({ 'moon-1': 1, 'moon-2': 1, 'moon-3': 1 }));
+    } catch {
+      /* ignore */
+    }
+  });
+  await page.goto('/?seed=2013');
+  await page.getByRole('button', { name: 'CHOOSE A MISSION ▸' }).click();
+  await page.getByRole('button', { name: /^Red Planet/ }).click();
+  await expect(page.getByRole('button', { name: 'CHANGE ▸' })).toBeEnabled({ timeout: 60_000 });
+  await page.getByRole('switch', { name: 'Arm' }).click();
+  await page.getByRole('button', { name: 'LAUNCH', exact: true }).click();
+  await expect(page.getByRole('img', { name: /Map: your robot/ })).toBeVisible({ timeout: 60_000 });
+  await page.getByRole('button', { name: /^FINISH MISSION/ }).first().click();
+  await page.getByRole('dialog').getByRole('button', { name: /FINISH/ }).last().click();
+  await page.getByRole('button', { name: 'SEE MISSION REPORT ▸' }).click({ timeout: 60_000 });
+  const fly = page.getByRole('button', { name: 'FLY AGAIN' }).first();
+  await fly.scrollIntoViewIfNeeded();
+  await page.waitForTimeout(800);
+  if (await page.locator('.rp-verdicts').isVisible()) {
+    await page.locator('.rp-verdicts').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: `test-results/shots/report-verdict-${p}.png` });
+    expect(await clippedText(page, '.rp-verdicts')).toEqual([]);
+  }
+  await fly.click();
+  await expect(page.getByRole('group', { name: 'Last flight' })).toBeVisible({ timeout: 60_000 });
+  await page.getByRole('button', { name: 'Pack Camera', exact: true }).click();
+  await page.mouse.move(700, 450);
+  await page.evaluate(() => document.fonts.ready);
+  await page.waitForTimeout(500);
+  await page.screenshot({ path: `test-results/shots/last-flight-${p}.png`, fullPage: p === 'mobile' });
+  expect(await clippedText(page, '.ml')).toEqual([]);
+});

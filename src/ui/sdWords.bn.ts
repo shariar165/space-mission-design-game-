@@ -1051,6 +1051,15 @@ export const BN: Bangla = {
     ride: 'যৌথ যাত্রা · ',
     curveTitle: (name) => `${name}: C3-তে বহনক্ষমতা`,
   },
+  LAST_WORDS: {
+    title: 'গত উড়ান',
+    label: 'গত উড়ান',
+    stars: (n) => `3-এর মধ্যে ${n} তারা`,
+    science: (pct) => `বিজ্ঞানের ${pct} ঘরে এসেছে`,
+    change: (signed) => `গতবারের চেয়ে ${signed}`,
+    limitChange: (signed) => `সীমা ${signed}`,
+    nextTime: (part) => `পরের বার: ${part} গোছাও।`,
+  },
   LIMIT_WORDS: {
     title: 'মিশনের সীমা',
     label: 'মিশনের সীমা',

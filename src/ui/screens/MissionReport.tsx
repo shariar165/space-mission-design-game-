@@ -6,7 +6,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { DESTINATIONS, HAZARDS, LAUNCH_VEHICLES, RIDESHARES } from '../../engine/data';
 import { heardMessages, missionAlbum, operationsDebrief, VOICE_RULES, type OpsState } from '../../engine/ops/index';
-import { finalTransmission, reportCompare, reportPanels, reportVerdict } from '../../engine/ops/report';
+import { finalTransmission, packHint, reportCompare, reportPanels, reportVerdict } from '../../engine/ops/report';
+import type { PartId } from '../../engine/pack';
 import { objectiveResult } from '../../engine/ops/observe';
 import { MAX_SCORE, MARGIN_BAND, scoreGrade, STAR_RULES } from '../../engine/scoring';
 import type { CompareMetric } from '../../engine/compare';
@@ -32,7 +33,7 @@ import { SDIcon } from '../components/sd/SDIcon';
 import { useReducedMotion } from '../opsGeometry';
 import { useOpsRisk } from '../riskRunner';
 import { useIsPhone } from '../sdGeometry';
-import { BADGE_WORDS, BRAND_WORDS, OBJECTIVE_PICK_WORDS, OBJECTIVE_WORDS, dayCount, fullDate, CATEGORY_NAME, CREW_WORDS, dangerLook, finalLines, FLY_WORDS, GAME_NAME, hurtWords, optionShort, PANEL_SOUND, panelWords, POSTCARD_WORDS, RANK_WORDS, REPORT_STAMP, REPORT_WORDS, ROBOT_WORDS, robotNameOr, robotSays, savedWords, STAR_WORDS } from '../sdWords';
+import { BADGE_WORDS, BRAND_WORDS, LAST_WORDS, OBJECTIVE_PICK_WORDS, OBJECTIVE_WORDS, PART_LOOK, dayCount, fullDate, CATEGORY_NAME, CREW_WORDS, dangerLook, finalLines, FLY_WORDS, GAME_NAME, hurtWords, optionShort, PANEL_SOUND, panelWords, POSTCARD_WORDS, RANK_WORDS, REPORT_STAMP, REPORT_WORDS, ROBOT_WORDS, robotNameOr, robotSays, savedWords, STAR_WORDS } from '../sdWords';
 import * as f from '../format';
 import { voiceContext } from '../voiceContext';
 import { said } from '../cited';
@@ -67,9 +68,11 @@ interface Props {
   promotion?: { rank?: RankDef; badges: string[] };
   /** A team's flight: the TEAM DEBRIEF comes after the album, before FINAL TRANSMISSION (spec UI rule 52). */
   team?: { state: TeamState; log: readonly TeamAction[] };
+  /** The level's shelf (solo Cadet): "what hurt you" names a part from it that would have helped (spec UI rule 60). */
+  shelf?: PartId[];
 }
 
-export function MissionReport({ state, design, mode, onMode, missionName, next, newCard, onFlyAgain, onHome, onBack, homeLabel, robotName, promotion, team }: Props) {
+export function MissionReport({ state, design, mode, onMode, missionName, next, newCard, onFlyAgain, onHome, onBack, homeLabel, robotName, promotion, team, shelf }: Props) {
   const engineer = mode === 'engineer';
   const phone = useIsPhone();
   const still = useReducedMotion();
@@ -78,6 +81,7 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
   const d = useMemo(() => operationsDebrief(state), [state]);
   const panels = useMemo(() => reportPanels(state), [state]);
   const verdict = useMemo(() => reportVerdict(state), [state]);
+  const hint = useMemo(() => (shelf ? packHint(state, shelf) : undefined), [state, shelf]);
   const compare = useMemo(() => reportCompare(design, ev), [design, ev]);
   const risk = useOpsRisk(design);
   const ft = useMemo(() => finalTransmission(state), [state]);
@@ -210,6 +214,7 @@ export function MissionReport({ state, design, mode, onMode, missionName, next, 
             <b>{hurt.strong}</b>
             {hurt.rest}
           </span>
+          {hint && <span className="rp-verdict-hint">{LAST_WORDS.nextTime(PART_LOOK[hint.part].name)}</span>}
         </div>
       </div>
     </div>
