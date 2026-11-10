@@ -9,7 +9,9 @@ import { App } from '../../src/ui/App';
 import * as f from '../../src/ui/format';
 import { LEVELS, loadProgress, shelfOf } from '../../src/ui/levels';
 import { starterDesign, today } from '../../src/ui/starters';
-import { LAUNCH_DAY_WORDS, LIMIT_WORDS, PACK_BLOCKER, ROCKET_WORDS } from '../../src/ui/sdWords';
+import { LAUNCH_DAY_WORDS, LIMIT_WORDS, ORBIT_WORDS, PACK_BLOCKER, ROCKET_WORDS, SIDE_TABS } from '../../src/ui/sdWords';
+import { orbitCards } from '../../src/engine/orbitPresets';
+import { loadLevelPacks } from '../../src/ui/saves';
 import { pickObjective } from './setup';
 
 function pass(ms: number, step = 50) {
@@ -219,7 +221,12 @@ describe('MISSION LIMITS on solo Pack (spec UI rule 57): Cloud Diver teaches bud
 });
 
 describe('ROCKET on solo Pack (spec UI rule 58)', () => {
-  const group = () => screen.getByRole('radiogroup', { name: ROCKET_WORDS.label });
+  /** Desktop: the rocket sits behind its tab under MISSION LIMITS. */
+  const group = () => {
+    const tab = screen.queryByRole('tab', { name: SIDE_TABS.rocket });
+    if (tab && tab.getAttribute('aria-selected') !== 'true') fireEvent.click(tab);
+    return screen.getByRole('radiogroup', { name: ROCKET_WORDS.label });
+  };
   const option = (name: RegExp) => within(group()).getByRole('radio', { name });
   const limitRow = (key: 'weight' | 'budget') =>
     within(screen.getByRole('region', { name: LIMIT_WORDS.label })).getByText(LIMIT_WORDS.names[key]).closest<HTMLElement>('.ml-row')!;
@@ -268,5 +275,43 @@ describe('ROCKET on solo Pack (spec UI rule 58)', () => {
   it('Giant Leap: neither rocket lifts the Jupiter craft', () => {
     openLevel(/^Giant Leap/, { 'moon-1': 1, 'moon-2': 1, 'moon-3': 1, mars: 1, venus: 1, bennu: 1 });
     for (const r of within(group()).getAllByRole('radio')) expect(within(r).getByText(ROCKET_WORDS.tooHeavy)).toBeTruthy();
+  });
+});
+
+describe('SCIENCE ORBIT on the Mars Pack (spec UI rule 59)', () => {
+  const orbitGroup = () => {
+    const tab = screen.queryByRole('tab', { name: SIDE_TABS.orbit });
+    if (tab && tab.getAttribute('aria-selected') !== 'true') fireEvent.click(tab);
+    return screen.getByRole('radiogroup', { name: ORBIT_WORDS.label });
+  };
+  const card = (id: 'capture' | 'maven' | 'high') => within(orbitGroup()).getByRole('radio', { name: new RegExp(`^${ORBIT_WORDS.names[id]}`) });
+
+  it('three orbits; the starter flies MAVEN’s; each card’s orbit-change fuel is the engine’s', () => {
+    openLevel(/^Red Planet/, MARS);
+    expect(within(orbitGroup()).getAllByRole('radio')).toHaveLength(3);
+    expect(card('maven').getAttribute('aria-checked')).toBe('true');
+    // the orbit change depends only on the two orbits, not on the packing or the day
+    const cards = orbitCards(buildPackDesign(starterDesign('mars', today()), initialPack(starterDesign('mars', today()), shelfFor('mars'))));
+    for (const c of cards) expect(within(card(c.id)).getByText(ORBIT_WORDS.change(f.speed(c.orbitChange_ms)))).toBeTruthy();
+    expect(within(card('capture')).getByText(ORBIT_WORDS.change(f.speed(0)))).toBeTruthy();
+  });
+
+  it('picking the high orbit flies it, and a reload keeps it', () => {
+    openLevel(/^Red Planet/, MARS);
+    fireEvent.click(card('high'));
+    expect(card('high').getAttribute('aria-checked')).toBe('true');
+    expect(loadLevelPacks().mars?.orbit).toBe('high');
+    cleanup();
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: 'CHOOSE A MISSION ▸' }));
+    fireEvent.click(screen.getByRole('button', { name: /^Red Planet/ }));
+    pass(100);
+    expect(card('high').getAttribute('aria-checked')).toBe('true');
+  });
+
+  it('the Moon keeps LRO’s orbit: no orbit choice there', () => {
+    openLevel(/^First Light/, {});
+    expect(screen.queryByRole('tab', { name: SIDE_TABS.orbit })).toBeNull();
+    expect(screen.queryByRole('radiogroup', { name: ORBIT_WORDS.label })).toBeNull();
   });
 });

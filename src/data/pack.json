@@ -56,6 +56,22 @@
       "isGameEstimate": true
     }
   },
+  "orbitPresets": {
+    "high": {
+      "periapsis_km": {
+        "value": 400,
+        "unit": "km altitude",
+        "source": "Game rule (Mars science-orbit presets, spec UI rule 59): a high orbit whose low point stays above most of the air",
+        "isGameEstimate": true
+      },
+      "apoapsis_km": {
+        "value": 20000,
+        "unit": "km altitude",
+        "source": "Game rule (Mars science-orbit presets, spec UI rule 59): a high point near Deimos' orbit (a = 23,460 km from the centre, about 20,070 km up), so both moons can be reached",
+        "isGameEstimate": true
+      }
+    }
+  },
   "parts": {
     "computer": {
       "kind": "bus",
