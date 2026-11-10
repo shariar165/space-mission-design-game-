@@ -123,3 +123,27 @@ export const saveOnline = (v: { token: string; code?: string }) => write(ONLINE_
 const ROOMS_KEY = 'sd.rooms';
 export const loadRooms = (): Record<string, RoomSave> => read<Record<string, RoomSave>>(ROOMS_KEY, {});
 export const saveRooms = (rooms: Record<string, RoomSave>) => write(ROOMS_KEY, rooms);
+
+/**
+ * Each solo Cadet level's last packing and mission objective (spec UI rule 56), so opening the level again, even after
+ * a reload, picks up where the player left off. Part ids only, in packing order: App re-packs them through the engine
+ * (packPart), so a stale or edited save can never place a part that does not fit. The launch-day pick is not kept (it
+ * indexes a calendar built around today).
+ */
+const PACK_KEY = 'sd.pack';
+export interface LevelPackSave {
+  parts: string[];
+  objective?: string;
+}
+export const loadLevelPacks = (): Record<string, LevelPackSave> => {
+  const v = read<Record<string, unknown>>(PACK_KEY, {});
+  const out: Record<string, LevelPackSave> = {};
+  for (const [id, x] of Object.entries(v)) {
+    if (!x || typeof x !== 'object') continue;
+    const { parts, objective } = x as { parts?: unknown; objective?: unknown };
+    if (!Array.isArray(parts)) continue;
+    out[id] = { parts: parts.filter((p): p is string => typeof p === 'string'), ...(typeof objective === 'string' ? { objective } : {}) };
+  }
+  return out;
+};
+export const saveLevelPack = (levelId: string, save: LevelPackSave) => write(PACK_KEY, { ...loadLevelPacks(), [levelId]: save });

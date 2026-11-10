@@ -9,7 +9,7 @@ import { App } from '../../src/ui/App';
 import * as f from '../../src/ui/format';
 import { FlyAndSurvive } from '../../src/ui/screens/FlyAndSurvive';
 import { BRIEFING, COACH, endsInWords, FINISH_CONFIRM, LAUNCH_CHECKS, LEAVE_CONFIRM, NAV } from '../../src/ui/sdWords';
-import './setup';
+import { pickObjective } from './setup';
 
 const maven = presetDesign('maven');
 
@@ -186,6 +186,7 @@ describe('◂ BACK on every step', () => {
     fireEvent.click(screen.getByRole('button', { name: 'CHOOSE A MISSION ▸' }));
     fireEvent.click(screen.getByRole('button', { name: /^Red Planet/ }));
     pass(100);
+    pickObjective(); // Red Planet: the objective comes first, even with the briefing seen
     // arm and launch on the best day (picked for the Cadet)
     fireEvent.click(screen.getByRole('switch', { name: 'Arm' }));
     fireEvent.click(screen.getByRole('button', { name: 'LAUNCH' }));

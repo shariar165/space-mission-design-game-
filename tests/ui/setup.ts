@@ -1,8 +1,10 @@
 // Shared set-up for the component tests (jsdom). Not a test file itself.
-import { cleanup } from '@testing-library/react';
+import { cleanup, fireEvent, screen } from '@testing-library/react';
 import { afterEach, beforeEach, vi } from 'vitest';
 import { RELAY_CONFIG } from '../../src/engine/team/room';
+import type { ObjectiveId } from '../../src/engine/objectives';
 import { setLang } from '../../src/ui/lang';
+import { NAV, OBJECTIVE_WORDS } from '../../src/ui/sdWords';
 import { inlineRunner, setRiskRunner } from '../../src/ui/riskRunner';
 
 // jsdom has no Web Worker: the Risk meter's Monte Carlo runs inline, with fewer runs (each one is still a full
@@ -45,4 +47,14 @@ export function openMarsLevel(render: () => void, click: (el: Element) => void, 
   render();
   click(getByRole('button', { name: /^CHOOSE A MISSION/ }));
   click(getByRole('button', { name: /^Red Planet/ }));
+}
+
+/**
+ * Red Planet asks a solo player for the mission objective before launch (spec UI rule 56): pick it in the briefing
+ * and close it. Atmosphere is the default: the starter craft carries the sniffer, so the packing plays as before.
+ */
+export function pickObjective(id: ObjectiveId = 'atmosphere') {
+  const title = OBJECTIVE_WORDS.objectives[id].title;
+  fireEvent.click(screen.getByRole('radio', { name: new RegExp(`^${title}`) }));
+  fireEvent.click(screen.getByRole('button', { name: NAV.start }));
 }

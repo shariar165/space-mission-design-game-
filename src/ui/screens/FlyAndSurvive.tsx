@@ -32,7 +32,7 @@ import { useArrivalZoom, type ZoomDirection } from '../components/fly/arrivalZoo
 import { ScienceTargets } from '../components/fly/ScienceTargets';
 import { BackButton } from '../components/sd/BackButton';
 import { CoachCard } from '../components/sd/CoachCard';
-import { MissionBriefing } from '../components/sd/MissionBriefing';
+import { MissionBriefing, type BriefObjective } from '../components/sd/MissionBriefing';
 import { ModeLever, type Mode } from '../components/sd/ModeLever';
 import { SDIcon } from '../components/sd/SDIcon';
 import { Segments } from '../components/sd/Segments';
@@ -130,7 +130,7 @@ interface Props {
   /** The coach panels were closed. */
   onCoachSeen?: () => void;
   /** The mission briefing behind MISSION INFO. */
-  brief?: { title: string; briefing: Briefing; concept?: string };
+  brief?: { title: string; briefing: Briefing; concept?: string; objective?: BriefObjective };
   /** The launch countdown opens the flight (the first flight of a level). */
   launchMoment?: boolean;
   onLaunchSeen?: () => void;
@@ -1070,7 +1070,7 @@ export function FlyAndSurvive({ design, seed, storms, mode, onMode, missionName,
       {openPostcard && <PostcardView card={openPostcard} onClose={() => setCardOpen(undefined)} closeLabel={POSTCARD_WORDS.keep} />}
       {overlay === 'coach' && !launching && <CoachCard onClose={closeOverlay} />}
       {overlay === 'info' && brief && (
-        <MissionBriefing title={brief.title} destination={design.destination} briefing={brief.briefing} {...(brief.concept ? { concept: brief.concept } : {})} onClose={closeOverlay} />
+        <MissionBriefing title={brief.title} destination={design.destination} briefing={brief.briefing} {...(brief.concept ? { concept: brief.concept } : {})} {...(brief.objective ? { objective: brief.objective } : {})} onClose={closeOverlay} />
       )}
       {confirm}
     </>

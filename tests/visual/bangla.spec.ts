@@ -125,6 +125,23 @@ test('Bangla: the first mission’s briefing, Pack, Launch Day, countdown, coach
   await shot(page, 'order', p);
 });
 
+test('Bangla: Red Planet asks for the objective, and Pack shows it', async ({ page }, info) => {
+  test.setTimeout(120_000);
+  const p = info.project.name;
+  await page.addInitScript(() => localStorage.setItem('mdt.progress', JSON.stringify({ 'moon-1': 1, 'moon-2': 1, 'moon-3': 1 })));
+  await banglaPlayer(page, ['cold-open', 'name', 'coach', 'brief:mars', 'launch:mars'], 'VOYA');
+  await page.getByRole('button', { name: /^মিশন বাছো/ }).click();
+  await page.getByRole('button', { name: /^Red Planet/ }).click();
+  const brief = page.getByRole('dialog', { name: 'মিশনের ব্রিফিং' });
+  await expect(brief.getByRole('radio')).toHaveCount(3);
+  await page.waitForTimeout(800);
+  await shot(page, 'objective-brief', p);
+  await brief.getByRole('radio', { name: /^মাটির মানচিত্র/ }).click();
+  await brief.getByRole('button', { name: 'বুঝেছি ▸' }).click();
+  await page.waitForTimeout(800);
+  await shot(page, 'objective-pack', p);
+});
+
 test('Bangla: switched mid-flight at Mars, the science targets and the power plan', async ({ page }, info) => {
   test.setTimeout(180_000);
   const p = info.project.name;

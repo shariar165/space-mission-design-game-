@@ -6,10 +6,13 @@ import * as ops from '../src/engine/ops/index';
 import { objectiveResult, scienceReturned, targetScience } from '../src/engine/ops/observe';
 import { missionAlbum, scienceTargetsView } from '../src/engine/ops/scienceView';
 import { OBJECTIVE_IDS, OBJECTIVE_RULES, objectiveOf, targetWeight, type ObjectiveId } from '../src/engine/objectives';
-import { buildPackDesign, initialPack, packPart, shelfFor, unpackPart, type Packed, type PartId } from '../src/engine/pack';
+import { buildPackDesign, initialPack, onDay, packBlockers, packPart, shelfFor, unpackPart, type CalendarDay, type Packed, type PartId } from '../src/engine/pack';
+import { objectiveCards } from '../src/engine/team/setup';
 import { presetDesign } from '../src/engine/missions';
 import { TARGETS } from '../src/engine/targets';
 import { starterDesign } from '../src/ui/starters';
+import { evaluateDesign } from '../src/engine/index';
+import { STAR_RULES } from '../src/engine/scoring';
 import type { Design } from '../src/engine/types';
 import type { OpsState } from '../src/engine/ops/types';
 
@@ -146,5 +149,112 @@ describe('mission objectives: met', () => {
     const s = ops.startOperations(moon, calm);
     expect(objectiveResult(s)).toBeUndefined();
     expect(targetScience(s).fraction).toBe(0);
+  });
+});
+
+describe('solo Pack objective (spec UI rule 56)', () => {
+  // A solo Red Planet player picks in the briefing; the pick sits on the level's starter design (App `cadet.base`)
+  // and every later step builds on that base, so the flown craft carries it with no extra plumbing.
+  const base = (objective: ObjectiveId): Design => ({ ...starterDesign('mars', '2028-11-15'), scienceTargets: true, objective });
+  const starter = (b: Design) => initialPack(b, shelfFor('mars'));
+
+  it('the pick on the base survives packing and the launch day', () => {
+    const b = base('surface');
+    const d = buildPackDesign(b, starter(b));
+    expect(d.objective).toBe('surface');
+    expect(onDay(d, { date: '2028-11-20', c3: 10 } as CalendarDay).objective).toBe('surface');
+  });
+
+  it('the objective cards read the packed craft: the starter carries the sniffer, the camera matches surface', () => {
+    const b = base('surface');
+    const sniffer = objectiveCards(buildPackDesign(b, starter(b)));
+    expect(sniffer.find((c) => c.id === 'atmosphere')!.matched).toBe(true);
+    expect(sniffer.find((c) => c.id === 'surface')!.matched).toBe(false);
+    expect(sniffer.find((c) => c.id === 'surface')!.parts).toEqual(['camera', 'radar']);
+    const camera = objectiveCards(buildPackDesign(b, packPart(starter(b), 'camera')!));
+    expect(camera.find((c) => c.id === 'surface')!.matched).toBe(true);
+  });
+
+  it('a calm flight of the solo craft scores through targetWeight and says the objective was met', () => {
+    const b = base('surface');
+    const d = buildPackDesign(b, packPart(unpackPart(starter(b), 'sniffer'), 'camera')!);
+    const s = flyAll(d);
+    // Same five targets home as every calm pack (Deimos is out of reach): surface 0.48 of balanced weight, all home.
+    // w′: the three surface targets 0.6 × w / 0.48 (sum 0.6); Phobos and the limb 0.4 × w / 0.52 (sum 0.4 × 0.40 / 0.52)
+    // science = 0.6 + 0.4 × 0.40 / 0.52 ≈ 0.907692
+    const home = missionAlbum(s)!.frames.filter((f) => f.status === 'home').map((f) => f.targetId);
+    expect(scienceReturned(s)).toBeCloseTo(home.reduce((a, id) => a + w(d, id), 0), 12);
+    expect(scienceReturned(s)).toBeCloseTo(0.6 + (0.4 * 0.4) / 0.52, 9);
+    expect(objectiveResult(s)).toMatchObject({ objective: 'surface', matched: true, met: true });
+  });
+
+  it('the starter (sniffer only) flown for surface misses it for want of an instrument', () => {
+    const b = base('surface');
+    const r = objectiveResult(flyAll(buildPackDesign(b, starter(b))))!;
+    expect(r).toMatchObject({ objective: 'surface', matched: false, met: false });
+  });
+});
+
+describe('third star per objective (Space Apps plan, PR 1 follow-up)', () => {
+  // A Cadet Red Planet pack with a matching instrument, flown on a fixed seed with a sensible player: every danger
+  // card answered with its safest option (en route and after), every target ordered at the start of the science
+  // phase, the mission ended at the extension decision. Third star = science ≥ STAR_RULES 80%.
+  const SEED = 2013;
+  function flySensibly(d: Design): OpsState {
+    let s = ops.startOperations(d, { seed: SEED });
+    const until = s.env.timeline.find((x) => x.phase === 'science')!.startDay + 0.1;
+    while (s.status === 'flying' && s.t < until) {
+      const t0 = s.t;
+      s = ops.advanceOperations(s, { until });
+      for (const id of s.newDecisions) {
+        const dec = s.decisions.find((x) => x.id === id)!;
+        if (dec.kind === 'hazard' && !dec.commanded) s = ops.decide(s, id, dec.safestOptionId!).state;
+      }
+      if (s.t <= t0 && s.newDecisions.length === 0) break;
+    }
+    for (const id of ORDER) if (s.status === 'flying') s = ops.advanceOperations(ops.sendCommand(s, { kind: 'observe', targetId: id }).state, { days: 0.5 });
+    return ops.finishOperations(s, { policy: 'safe' });
+  }
+  /** The level's starter with the objective picked, plus and minus shelf parts; it must be launchable. */
+  function pack(objective: ObjectiveId, add: PartId[], remove: PartId[] = []): Design {
+    const base: Design = { ...starterDesign('mars', '2028-11-15'), scienceTargets: true, objective };
+    let p = initialPack(base, shelfFor('mars'));
+    for (const id of remove) p = unpackPart(p, id);
+    for (const id of add) p = packPart(p, id)!;
+    const d = buildPackDesign(base, p);
+    expect(packBlockers(p, evaluateDesign(d), { base, shelf: shelfFor('mars') })).toEqual([]);
+    return d;
+  }
+  const third = STAR_RULES.scienceForThirdStar.value / 100;
+
+  it('atmosphere: the starter (sniffer) earns the third star', () => {
+    const s = flySensibly(pack('atmosphere', []));
+    // limb 0.60 + the other four home 0.5 × (0.88 − 0.20) = 0.94 ≥ 0.80
+    expect(s.status).toBe('complete');
+    expect(scienceReturned(s)).toBeCloseTo(0.94, 9);
+    expect(scienceReturned(s)).toBeGreaterThanOrEqual(third);
+    expect(ops.operationsDebrief(s).stars).toBe(3);
+  });
+
+  it('surface: the starter plus the camera earns the third star', () => {
+    const s = flySensibly(pack('surface', ['camera']));
+    // the three surface targets 0.6 + Phobos and the limb 0.4 × 0.40 / 0.52 ≈ 0.907692 ≥ 0.80
+    expect(s.status).toBe('complete');
+    expect(scienceReturned(s)).toBeCloseTo(0.6 + (0.4 * 0.4) / 0.52, 9);
+    expect(ops.operationsDebrief(s).stars).toBe(3);
+  });
+
+  it('moons: FINDING, no Cadet pack earns the third star (Deimos is out of fuel reach); star rules unchanged', () => {
+    // Even the lightest moons pack (spectrometer and the extra tank, nothing else; about 40% Δv margin) cannot pay
+    // Deimos' ~750 m/s, so it is refused for fuel and the ceiling is Phobos 0.375 + the rest (0.4 / 0.68) × 0.68 = 0.775,
+    // two stars. Reported to the user (Nov 10, 2026). When the balance changes, this test should flip to 3 stars.
+    const d = pack('moons', ['spectrometer', 'tank'], ['sniffer']);
+    const s = flySensibly(d);
+    expect(s.status).toBe('complete');
+    expect(missionAlbum(s)!.frames.find((f) => f.targetId === 'deimos')).toMatchObject({ status: 'missing', why: 'refused-fuel' });
+    expect(scienceReturned(s)).toBeCloseTo(0.775, 9);
+    expect(scienceReturned(s)).toBeLessThan(third);
+    expect(ops.operationsDebrief(s).stars).toBe(2);
+    expect(objectiveResult(s)!.met).toBe(true);
   });
 });

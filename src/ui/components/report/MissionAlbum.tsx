@@ -12,11 +12,13 @@ interface Props {
   album: Album;
   name: string;
   phone: boolean;
+  /** A solo flight's objective, met or missed (spec UI rule 56). */
+  objective?: { text: string; met: boolean };
   /** FEED THE PAPER: on to the final transmission. */
   onFeed: () => void;
 }
 
-export function MissionAlbum({ album, name, phone, onFeed }: Props) {
+export function MissionAlbum({ album, name, phone, objective, onFeed }: Props) {
   const day = f.dayPad(album.day);
   const pct = f.pct(album.science, 0);
   const n = f.num(album.returned);
@@ -38,6 +40,7 @@ export function MissionAlbum({ album, name, phone, onFeed }: Props) {
           <span className="al-big-2">{big2}</span>
         </h2>
         <span className="al-sub">{sub}</span>
+        {objective && <span className={`al-obj ${objective.met ? 'met' : 'missed'}`}>{objective.text}</span>}
       </div>
       <div className="al-bar-wrap">
         <div className="al-bar" role="img" aria-label={ALBUM.barPct(pct)}>

@@ -788,6 +788,7 @@ export const MARS_NOW = tr('MARS_NOW', {
 
 /** The Pack launch checklist, in order. */
 export const LAUNCH_CHECKS = tr('LAUNCH_CHECKS', {
+  objective: 'PICK AN OBJECTIVE',
   packed: 'PACK PARTS THAT FIT',
   day: 'PICK A GREEN LAUNCH DAY',
   arm: 'FLIP THE ARM SWITCH',
@@ -1788,6 +1789,27 @@ export const OBJECTIVE_WORDS = tr('OBJECTIVE_WORDS', {
     surface: { title: 'MAP THE SURFACE', line: 'Shoot the biggest landmarks on the planet as sharp as the camera allows.' },
     moons: { title: 'VISIT THE MOONS', line: 'Swing close to Phobos and Deimos and find out what they are made of.' },
   } as Record<ObjectiveId, { title: string; line: string }>,
+});
+
+/** A solo player's objective (spec UI rule 56): picked in the Red Planet briefing, shown on Pack and in the report. */
+export const OBJECTIVE_PICK_WORDS = tr('OBJECTIVE_PICK_WORDS', {
+  heading: 'PICK YOUR OBJECTIVE',
+  sub: 'What is this mission for? Its targets carry most of the science, but only with a part for that science on board.',
+  yours: 'YOUR OBJECTIVE',
+  group: 'Mission objective',
+  needs: (parts: string) => `NEEDS: ${parts}`,
+  onBoard: '✓ ON BOARD',
+  notOnBoard: '✗ NOT PACKED',
+  startLocked: 'PICK ONE TO START',
+  plate: 'OBJECTIVE',
+  change: 'CHANGE ▸',
+  changeLabel: 'Change the objective',
+  warn: (parts: string) => `PACK ${parts}, OR THIS OBJECTIVE CANNOT BE MET.`,
+  result: {
+    met: (title: string, pct: string) => `OBJECTIVE · ${title} · MET: ${pct} OF ITS SCIENCE CAME HOME`,
+    missed: (title: string, pct: string) => `OBJECTIVE · ${title} · MISSED: ONLY ${pct} OF ITS SCIENCE CAME HOME`,
+    noPart: (title: string) => `OBJECTIVE · ${title} · MISSED: NO PART FOR IT WAS ON BOARD`,
+  },
 });
 
 /** The preset quick messages (team.json `quick`): the only way the team talks, since players may be children. */

@@ -241,11 +241,27 @@ body { background: var(--sd-room); color: var(--sd-ink-2); font-family: var(--sd
 .sd-brief-starrow { display: inline-flex; gap: 2px; width: 50px; flex: none; }
 .sd-brief-num { flex: none; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: var(--sd-paper-ink); color: var(--sd-amber); font: 700 12px/1 var(--sd-display); }
 .sd-brief-steps b { font: 700 13px/1 var(--sd-display); letter-spacing: 0.06em; color: var(--sd-paper-ink); margin-right: 4px; }
-.sd-brief-foot { display: flex; justify-content: flex-end; }
+.sd-brief-foot { display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
+.sd-brief-foot .sd-back { margin-right: auto; }
+/* The solo objective (spec UI rule 56): three radio cards, the pick in red ink */
+.sd-brief-obj-sub { margin: 0; font: 500 14px/1.4 var(--sd-body); color: var(--sd-paper-ink-2); text-wrap: pretty; }
+.sd-brief-objs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.sd-brief-obj .sd-brief-objs:has(> :only-child) { grid-template-columns: minmax(0, 1fr); }
+.sd-brief-objcard { cursor: pointer; display: flex; flex-direction: column; gap: 6px; padding: 10px; border-radius: 5px; border: 2px solid var(--sd-paper-line); border-bottom-width: 4px; background: var(--sd-paper-2); color: var(--sd-paper-ink); text-align: left; font: inherit; min-width: 0; }
+.sd-brief-objcard:hover { border-color: var(--sd-red-ink); }
+.sd-brief-objcard.on { border-color: var(--sd-red-ink); background: var(--sd-paper); box-shadow: inset 0 0 0 1px var(--sd-red-ink); }
+div.sd-brief-objcard { cursor: default; }
+.sd-brief-obj-title { font: 800 13px/1.15 var(--sd-display); letter-spacing: 0.05em; color: var(--sd-paper-ink); overflow-wrap: anywhere; }
+.sd-brief-objcard.on .sd-brief-obj-title { color: var(--sd-red-ink); }
+.sd-brief-obj-line { font: 500 13px/1.35 var(--sd-body); color: var(--sd-paper-ink-2); text-wrap: pretty; }
+.sd-brief-obj-needs { display: flex; flex-wrap: wrap; gap: 4px 8px; margin-top: auto; font: 700 11px/1.25 var(--sd-mono); letter-spacing: 0.06em; color: var(--sd-paper-mute); }
+.sd-brief-obj-on { color: var(--sd-ok); }
 @media (max-width: 600px) {
   .sd-coach, .sd-brief, .sd-confirm { padding: 18px 16px; }
   .sd-coach-body { grid-template-columns: 48px minmax(0, 1fr); }
   .sd-coach-icon { width: 48px; height: 48px; }
   .sd-coach-title, .sd-brief-title { font-size: 18px; }
   .sd-coach-text, .sd-brief-job { font-size: 15px; }
+  .sd-brief-objs { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .sd-brief-objcard { padding: 8px 10px; gap: 4px; }
 }
