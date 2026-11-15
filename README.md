@@ -1,469 +1,224 @@
-<div align="center">
+# 📡 Signal Delay – NASA Space Apps Challenge 2026
 
-# 🛰️ Signal Delay
+**Challenge:** NASA Space Apps Challenge 2026 – Space Mission Design Game
 
-### A deep-space mission game built on real NASA data and real orbital physics
+Welcome to the official repository of **Signal Delay**, our project for the NASA Space Apps Challenge 2026.
 
-*Design a NASA-style mission against real limits, then keep the robot alive millions of kilometres away, where every order you send arrives minutes late.*
+![Signal Delay home screen](docs/images/screens/01-home.png)
 
-**[▶ Play in your browser](https://shariar165.github.io/space-mission-design-game-/)** · no install, no account
+## 🚀 About the Name: Why "Signal Delay"?
 
-[![Deploy to GitHub Pages](https://github.com/shariar165/space-mission-design-game-/actions/workflows/pages.yml/badge.svg)](https://github.com/shariar165/space-mission-design-game-/actions/workflows/pages.yml)
-![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6)
-![React](https://img.shields.io/badge/React-19-61dafb)
-![Vite](https://img.shields.io/badge/Vite-8-646cff)
-![Tests](https://img.shields.io/badge/tests-vitest-6e9f18)
+**Signal delay** is the time a command or message needs to travel between Earth and a spacecraft far away in space.
 
-<img src="docs/images/home.png" alt="Signal Delay home screen: an order crawls from Earth to a spacecraft at Mars at the speed of light" width="860">
+Radio signals move at the speed of light, which is very fast, but space is very big. A spacecraft at Mars can be between **3 and 22 light-minutes** from Earth. That means a command sent from Earth can take many minutes to arrive, and the answer takes just as long to come back.
 
-</div>
+Our project is named after this challenge. In **Signal Delay**, players learn how real mission teams plan, make decisions and wait for their commands to reach spacecraft.
 
----
+## 🌍 About the Challenge
 
-## Contents
+**NASA Space Apps Challenge 2026 – Space Mission Design Game**
 
-- [About the game](#about-the-game)
-- [Judge in 3 minutes](#judge-in-3-minutes)
-- [How to play](#how-to-play)
-  - [Team Mode: 2–4 players](#team-mode-24-players)
-  - [Online Room: every player on a phone](#online-room-every-player-on-a-phone)
-- [Real science, not invented numbers](#real-science-not-invented-numbers)
-- [NASA data used in this game](#nasa-data-used-in-this-game)
-- [Validation against real missions](#validation-against-real-missions)
-- [Architecture](#architecture)
-- [Getting started](#getting-started)
-- [Project structure](#project-structure)
-- [Known limitations](#known-limitations)
-- [Contributing](#contributing)
-- [Acknowledgements and disclaimer](#acknowledgements-and-disclaimer)
-- [License](#license)
+We created this project to make space exploration and science more accessible and exciting for everyone. Our audience includes **kids who dream of exploring space, students who want to apply what they learn, and curious people interested in science and engineering**.
 
----
+Instead of keeping scientific knowledge only in textbooks and papers, we give players an opportunity to explore it through an interactive simulator based on real-life principles. They can design missions, send commands across space, make important decisions and discover the results of their choices.
 
-## About the game
+## 👥 Our Team
 
-> **Keep a robot you'll never touch alive, under the real sky, with words that arrive too late.**
-> **Keep it alive long enough to bring the science home.**
+We are here to **learn, have fun, share ideas, meet new people and enjoy the networking experience** while building something meaningful. 🌟
 
-**Signal Delay** is a browser game about the hardest part of robotic space exploration: you are not there. A spacecraft at Mars is between 3 and 22 light-minutes from Earth. When a solar storm is coming, the team on the ground has to decide, send the order, and hope it crosses space before the danger arrives.
-
-The game turns the work of a NASA mission team into three steps:
-
-1. **Design (Pack).** Define the mission objective, pick the rocket and the science orbit, and pack the parts that fit the rocket's nose, against four limits shown as you design: **weight, budget, power and data**. Every choice is a trade: a bigger rocket lifts more but costs more, a high orbit saves fuel and reaches Deimos but makes Phobos expensive, the camera maps the surface but may not fit the budget.
-2. **Fly & Survive.** The mission runs day by day. Danger cards stop the clock, you choose a response, and your order travels to the spacecraft at the speed of light. At Mars the robot asks **what it should look at**: six science targets, each picture costing fuel, battery or risk, each one coming home through a DSN pass and printing on the teletype.
-3. **Mission Report.** It opens with the **mission album** of the pictures that made it home and whether your objective was met, then the robot's final transmission; your flight is printed as a comic strip, scored, compared with the real NASA mission to the same place, and turned into a real engineering lesson. It names the part that would have helped (**NEXT TIME: PACK THE SHIELD**), and **FLY AGAIN** returns to your design with each limit compared with the last flight: change one thing and fly again.
-
-It is designed for students and curious players first (**Cadet mode**), and for anyone who wants to see the physics underneath (**Engineer mode**, where every number can be opened to show its equation, its inputs and its source).
-
-### What makes it different
-
-- **Mission design is a real trade-off, not a shopping list.** The objective decides which instrument counts; the rocket sets the weight limit and charges its price difference to the budget; the science orbit changes the fuel left, which moons are in reach, the drag on low passes and the longest shadow. The bars move before you commit, and two players with the same parts but different orbits get different science.
-- **Light delay is the core mechanic.** Commands obey `t = d / c` using the real Earth–spacecraft distance on that mission day. Solar conjunctions black out the radio for about two weeks, as they do for real Mars missions.
-- **Every number comes from physics or a cited source.** Distances come from JPL planetary positions, power from the inverse-square law calibrated on MAVEN, data rates from a link budget anchored to Mars Reconnaissance Orbiter, launch energy from a Lambert solver.
-- **Real missions are flown through the same model as the player.** MAVEN and OSIRIS-REx are loaded as ordinary designs and must reproduce their published numbers. If the model can't, the model is fixed, not the mission.
-- **Honest about guesses.** All physics and mission data are sourced, and every real-history story on a danger card was checked against an official NASA page. Values with no public source (failure chances, part costs, hazard rates, the Atlas V placeholder curves) are labelled **game estimate** in the game itself and listed in [`TODO_DATA.md`](TODO_DATA.md).
-
----
-
-## Judge in 3 minutes
-
-Open **[the judge link](https://shariar165.github.io/space-mission-design-game-/?play=mars&seed=2013)** (desktop is best for this route; a phone works too, with no install). It opens the Mars level, **Red Planet**, straight away, on a fixed flight (seed 2013) whose first danger card comes early. Normal players unlock Red Planet by earning a star on each Moon level first; the link changes no saved progress. Each step says what to look for.
-
-| Time | Do this | Look for |
-| --- | --- | --- |
-| 0:00 | Press **SKIP** on Name Your Robot. | Red Planet's Pack opens with its mission briefing. (`?play=<level>` works for any level: `moon-1`, `venus`, `jupiter` and so on.) |
-| 0:15 | The briefing asks for a **mission objective**. Pick **MAP THE SURFACE**, then **GOT IT ▸**. | Each objective names the instrument that does its science. The briefing won't start without a pick. |
-| 0:30 | On Pack, read the objective plate (**✗ NOT PACKED**), hover the **Camera** on the shelf, then click it. | **MISSION LIMITS**: weight, budget, power and data from the engine. Hovering previews every bar before you pack; the plate turns to **✓ ON BOARD**. |
-| 0:55 | Open the **ROCKET** tab and pick the **Atlas V 411**; open the **ORBIT** tab and compare the three orbits. | The bigger rocket raises the weight limit by about 680 kg and puts +$20M on the budget bar. Each orbit shows its orbit-change fuel, fuel margin, the trip to each moon, air drag and longest shadow (vis-viva and eclipse geometry). |
-| 1:20 | Flip **ARM**, press **LAUNCH** (a first flight shows a countdown and HOW TO FLY: press **SKIP**), then **NEXT EVENT ▸** until the first danger card (a solar storm). Choose with **←** or **→**. | "Danger arrives in …" against "your order takes …": the order really crosses space at light speed, at that day's Earth–Mars distance. **REAL HISTORY** cites its NASA source in **ⓘ**. |
-| 1:50 | Press **FINISH MISSION ▸▸**, then **SEE MISSION REPORT ▸**. (Finishing early skips the science, so the album shows 0% and the objective MISSED. With a minute to spare, keep pressing **NEXT EVENT ▸** to Mars instead, where the robot asks what to look at: tap **OBSERVE** on two or three targets, then finish.) | The album and **OBJECTIVE · MET / MISSED**, the robot's final transmission, the comic, **NEXT TIME: PACK THE …** if a danger went badly, and you against the real MAVEN. |
-| 2:15 | Press **FLY AGAIN**. | Pack keeps the whole design, and **LAST FLIGHT** shows the last stars and science over the bars, with each bar's change since. |
-| 2:30 | Click the **SIGNAL DELAY** wordmark, press **TEAM** (four players by default), **NEXT · OBJECTIVE**, pick an objective, **AGREE** for the three other roles, **LOCK OBJECTIVE**, **NEXT · PACK**, **ARM**, **LAUNCH**, then **NEXT EVENT ▸** to the first card. | The team vote: the related role recommends, the others tap their tokens, and the Flight Director makes the final call. Only then does the order leave. |
-| 2:55 | Press **EN / বাংলা** in any top bar. | The whole game in Bangla, with the English original kept behind every cited text. |
-
-The route is played end to end by `tests/visual/judge.spec.ts` (`npx playwright test judge --project=desktop`), so it stays true. For the code: `npm test` runs about 900 tests, including the validation of the model against MAVEN and OSIRIS-REx ([`docs/VALIDATION_RESULTS.md`](docs/VALIDATION_RESULTS.md)). The rules are in [`docs/SCIENCE_SPEC.md`](docs/SCIENCE_SPEC.md), and every value that is a guess is listed in [`TODO_DATA.md`](TODO_DATA.md).
-
----
-
-## How to play
-
-<table>
-<tr>
-<td width="50%"><img src="docs/images/pack.png" alt="Pack screen: rocket nose grid, parts shelf, danger deck and launch calendar"></td>
-<td width="50%"><img src="docs/images/fly-danger-card.png" alt="Fly and Survive: a solar storm danger card with two responses"></td>
-</tr>
-<tr>
-<td><b>Pack.</b> The objective plate says which instrument counts. MISSION LIMITS shows weight, budget, power and data as you pack; the tabs hold the danger deck, the rocket and the science orbit. The nose is a 6 × 6 grid (volume), and the launch calendar shows which days the planets line up.</td>
-<td><b>Fly & Survive.</b> A danger card shows when the danger arrives and how long your order takes to get there. Pick a response, or let the robot use its default.</td>
-</tr>
+<table width="100%">
+  <tr>
+    <td align="center" valign="top" width="33%">
+      <img src="assets/team/walid.jpg" alt="Walid Ben Slimane" width="100%">
+      <br><br>
+      <b>Walid Ben Slimane</b>
+      <br>
+      Team Leader &amp; Technical Documentation
+    </td>
+    <td align="center" valign="top" width="33%">
+      <img src="assets/team/mourtada.jpg" alt="Mourtada Taidi Laamiri" width="100%">
+      <br><br>
+      <b>Mourtada Taidi Laamiri</b>
+      <br>
+      Graphic Designer &amp; Documentation Lead
+    </td>
+    <td align="center" valign="top" width="33%">
+      <img src="assets/team/taha.jpg" alt="Mohamed Taha Hayati" width="100%">
+      <br><br>
+      <b>Mohamed Taha Hayati</b>
+      <br>
+      Vid Editor
+    </td>
+  </tr>
+  <tr>
+    <td align="center" valign="top" width="33%">
+      <img src="assets/team/ahmad.jpg" alt="Ahmed Nayma" width="100%">
+      <br><br>
+      <b>Ahmed Nayma</b>
+      <br>
+      Storytelling Responsible
+    </td>
+    <td align="center" valign="top" width="33%">
+      <img src="assets/team/mohamed.jpg" alt="Mohamed Mbarki" width="100%">
+      <br><br>
+      <b>Mohamed Mbarki</b>
+      <br>
+      Developer
+    </td>
+    <td align="center" valign="top" width="33%">
+      <img src="assets/team/asrar.jpg" alt="Asrar Ben Hammouch" width="100%">
+      <br><br>
+      <b>Asrar Ben Hammouch</b>
+      <br>
+      Presentation &amp; Data Analyst
+    </td>
+  </tr>
 </table>
 
-<table>
-<tr>
-<td width="50%"><img src="docs/images/report.png" alt="Mission Report: comic strip of the flight, stars, badges and postcards"></td>
-<td width="50%"><img src="docs/images/team-vote.png" alt="Team Mode: a danger card with the team's votes and the Flight Director's final call"></td>
-</tr>
-<tr>
-<td><b>Mission Report.</b> The flight as a comic, the stars for the science that came home, and what saved or hurt you, with the part to pack next time.</td>
-<td><b>Team Mode.</b> The related role recommends, the others vote with their tokens, and the Flight Director makes the final call before the order leaves.</td>
-</tr>
-</table>
+## 🌌 Project Overview
 
-### Missions
+**Signal Delay** is a browser game about the hardest part of robotic space exploration: **you are not there.**
 
-| # | Mission | Destination | What it teaches |
-| --- | --- | --- | --- |
-| 1 | First Light | Moon | Power: solar wings that keep the craft charged |
-| 2 | Heavy Lifting | Moon | Fuel and weight: every kilogram of fuel must be lifted too |
-| 3 | Full Build | Moon | Science and radio: build the whole craft |
-| 4 | Red Planet | Mars | Light delay, and the full design: objective, rocket, science orbit |
-| 5 | Cloud Diver | Venus | Budget: a 350 $M level budget (a game rule), so not every instrument fits |
-| 6 | Pebble Catcher | Bennu (asteroid) | Rendezvous and sample return |
-| 7 | Giant Leap | Jupiter | Rocket limits: why real missions to Jupiter need gravity assists |
+A spacecraft at Mars is between 3 and 22 light-minutes from Earth. When a solar storm is coming, the team on the ground has to decide, send the order, and hope it crosses space before the danger arrives.
 
-Each mission earns up to three stars, all for the **science you bring home** (the main score): the **first science home**, **half of it**, and **80% of it**. At Mars that is the weight of the target pictures that came home (pictures already home count even if the robot is lost later); elsewhere it is the data sent home against the goal. One star opens the next mission. Margins in the healthy 10–30% band still score in Engineer mode.
+The game turns the work of a NASA mission team into three stages, allowing players of different ages and backgrounds to discover how space missions work.
 
-### More ways to play
+### 1️⃣ Design (Pack)
 
-- **বাংলা.** EN / বাংলা in every top bar switches the game's words to Bangla (numbers and units stay the same; NASA mission and target names stay in English). The data's cited texts (real history, what each target teaches, postcard captions, Rescue History) are shown in Bangla too, with the English original and its source in ⓘ. Level titles stay English, with a Bangla line saying what each teaches. The Engineer Build Bay stays English.
-- **Cold open.** A first launch opens on a single key, ▶ RECEIVE TRANSMISSION (it lets the sound start), then the night Mars Climate Orbiter went silent (Sept. 23, 1999), in about 15 seconds told only from the game's cited facts, then you name your robot. SKIP anytime; INTRO on Home replays it.
-- **Sound.** Synthesised in the browser (no audio files): teletype clack, CRT hum, radio static while a signal is in transit, beeps when an order or reply arrives, the danger alert and the printer's rattle. It starts after your first click or key, is quiet by default, and the 🔊 key in every top bar mutes it.
-- **Team Mode.** Up to four players fly one robot to Mars on one shared screen, with four roles, votes on danger cards and a team score. See [Team Mode](#team-mode-24-players) below.
-- **Daily mission.** The same Mars flight for every player each day, with a spoiler-free share card (like a word-puzzle grid).
-- **Rescue History.** Investigate a real lost mission from its published failure report. The first case is Mars Climate Orbiter (1999), lost to a pound-force versus newton mix-up.
-- **Engineer's Notebook.** Lessons unlocked by what you do in flight. Each one points at a real event already cited in the game's data.
-- **Engineer mode.** Design the whole spacecraft in the Build Bay (bus, instruments, arrays or RTGs, antenna, engine, propellant, orbits, launch dates), then fly it with live readouts and an EQUATIONS drawer.
+First, you plan your mission:
 
-### Team Mode: 2–4 players
-
-A real mission is flown by a team, so Signal Delay can be too. **TEAM** on Home (co-op) puts up to four players around **one shared screen**: a classroom projector or one laptop. The robot goes to Mars. Or open an **online room**, and every player joins on their own phone (below).
-
-**The four roles.** Each player takes one or more roles. Each role has a colour, and each player has a call sign (no names are typed).
-
-| Role | Owns | Recommends on |
-| --- | --- | --- |
-| **Flight Director** | the mission objective, the launch, the extension, every final call | (decides) |
-| **Spacecraft Engineer** | power and the craft's own parts | the craft's own faults |
-| **Science Lead** | the instruments and the pictures (OBSERVE) | dangers to the science (dust storms, drag) |
-| **Comms & Ops** | the radio and the DSN bookings | dangers seen from Earth (solar storms, debris) |
-
-**How a team plays.**
-
-1. **Team Setup.** Choose 1–4 players. Tap a role's HELD BY chip to hand it to the next player. With two or three players, someone holds two roles. One player alone holds all four, and every call is theirs.
-2. **Mission Objective.** The Flight Director picks one of three Mars objectives: study the atmosphere, map the surface, or visit the moons. Each other role says AGREE or OBJECT. The Flight Director locks it, or overrules an objection.
-3. **Pack.** Everyone packs into one nose against the real mass and budget limits. Each role's spend shows on the shared bars. When the team goes over a limit, a banner (TOO HEAVY · NEGOTIATE) names the roles whose parts collide, until one cut fixes it. Only the Flight Director can launch.
-4. **Fly.** A danger card stops the clock for a vote. The related role taps a card to recommend it, every other player taps their token on the choice they want, and the Flight Director makes the final call (and may call early). Each console key belongs to a role: POWER PLAN to the Engineer, CALL HOME to Comms & Ops, OBSERVE to the Science Lead.
-5. **Talk.** The team talks only in **preset quick messages** (AGREE, TOO HEAVY, SCIENCE FIRST, WAIT FOR THE SIGNAL, …), since players may be children. The messages print on the teletype beside the robot's own.
-6. **Report.** After the album comes the **TEAM DEBRIEF**. It gives one row per role: the call that mattered most, what it did, and a stamp. Then comes the **team score** out of 100: half for meeting the objective, a quarter for talking out every budget fight, and a quarter for final calls that went with the recommendation. The team score is the team's own and never changes the stars.
-
-**One mission, one log.** Every team action (a vote, an order, a quick message) goes on one log with the mission time it was sent. The same base design, seed and log always replay to exactly the same mission, which is what keeps every phone in an online room in step.
+- Choose the **mission objective**.
+- Pick the **rocket** and the **science orbit** (the path the spacecraft follows around its target).
+- **Pack the parts** that fit inside the nose of the rocket.
 
-**Controls:** ← / → (or swipe) to choose a response, ↓ for a third option, `?` for help. Time runs at 10×, 100× or 1000× mission days a minute, and **FINISH MISSION** lets the robot fly the rest so every flight reaches the report.
-
-### Online Room: every player on a phone
-
-On Team Setup, pick **ONLINE ROOM** and **NEXT · OPEN ROOM**. The big screen shows a room code such as **MARS-7K2**. Each player opens Signal Delay on a phone, taps **JOIN**, types the code and takes a free role (a link like `…/#join=MARS-7K2` fills the code in). The big screen keeps showing the whole game; each phone shows only its own role: the objective vote, its own parts to pack, and in flight the danger card's vote plus the role's panel (the Flight Director's final call, the Engineer's tiles, the Science Lead's targets, Comms & Ops' DSN pass and command queue).
-
-- **The host screen runs the game.** Phones send their role's actions; the host checks each one and puts it on the one log, so every screen shows the same mission.
-- **A phone that drops** keeps its role for 45 seconds while the clock waits; then (or at once with HAND NOW) its role goes to the Flight Director, and comes back when the phone does.
-- **If the host screen closes,** every phone shows a **resume code**. Typed on the big screen (RESUME A MISSION), it reopens the same room and the phones rejoin.
-- **No accounts, no names** (call signs only), **no free text** (quick messages only). Rooms expire after three hours; each phone is rate-limited.
-- **No relay?** The room says so and offers local co-op on one screen.
+While you design, four limits are shown on screen: **weight, budget, power and data**.
 
-**Setting up the relay** (once, for whoever deploys the site). The game is a static site, so the messages go through a free [Supabase](https://supabase.com) project's Realtime broadcast; only the project's public publishable key goes in the site, and nothing is stored there.
+Every choice is a trade-off. A bigger rocket can carry more, but it costs more. A different orbit changes how much fuel you use and which moons the spacecraft can reach. Scientific instruments also have different costs and benefits.
 
-1. Create a free Supabase project. In Realtime's settings, keep "Allow public access" on.
-2. In the project's SQL editor, run the four lines at the top of `scripts/relay-keepalive.mjs` (a one-row `keepalive` table). The daily Pages build reads it, because a free project pauses after a week without database activity.
-3. Put the project URL and its **publishable** key in `src/data/online.json` → `relay`.
-
-This copy is set up already. To play a room end to end through the real relay (a host and three phones, about a minute): `ONLINE_LIVE=1 npx playwright test online-live --project=desktop`.
-
----
-
-## Real science, not invented numbers
-
-The game follows three rules from its science specification ([`docs/SCIENCE_SPEC.md`](docs/SCIENCE_SPEC.md)):
-
-1. **One model for everyone.** The player's craft and real missions run through the same equations.
-2. **Sourced inputs.** Every constant and catalogue value is stored as a `Sourced<T>` record: value, unit, source, link, and an `isGameEstimate` flag. A test fails the build if any number in the data files is not wrapped this way.
-3. **Show the working.** In Engineer mode every meter opens to its equation and inputs, and the ⓘ button shows where each input came from.
+![Pack: the parts shelf, the rocket nose and the mission limits](docs/images/screens/02-pack.png)
 
-The interface never calculates anything. It asks the engine and only formats units, and an automated test rejects any digits typed into the UI.
+### 2️⃣ Fly & Survive
 
-The full rule book of the simulation (equations, constants, how hazards are drawn, how the score is computed) is in **[`game_engine.md`](game_engine.md)**.
+Now the mission runs **day by day**. When danger appears, you must choose how to respond.
 
----
+Your commands travel through space at the speed of light, so the spacecraft **cannot receive them immediately**. You must think ahead.
 
-## NASA data used in this game
+![Fly & Survive: a danger card during the flight](docs/images/screens/03-fly-danger-card.png)
 
-All values below are stored in `src/data/*.json` or `src/engine/*.ts` with their source and link, and can be opened in the game with ⓘ.
+At Mars, the robot asks what it should observe. There are **six science targets**, and each observation has its own costs and risks. The pictures you take must also be sent back to Earth during communication opportunities with NASA's **Deep Space Network (DSN)**, the large antennas that talk to far-away spacecraft.
 
-### Planets, the Moon and Bennu
-
-| Data | Used for | Source |
-| --- | --- | --- |
-| Mars semimajor axis, orbit and synodic periods, radius, GM, distance from Earth (54.6–401.4 million km), solar irradiance, pole of rotation | Mars orbit, light delay, power, eclipses, dust-storm season | [NASA NSSDC Mars Fact Sheet](https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html) |
-| Earth GM, equatorial radius, sidereal year; solar irradiance at 1 AU (1361 W/m²) | Launch and power calculations | [NASA NSSDC Earth/Mars Fact Sheets](https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html) |
-| Venus GM, radius, solar irradiance (2601.3 W/m²), pole of rotation | Venus missions | [NASA NSSDC Venus Fact Sheet](https://nssdc.gsfc.nasa.gov/planetary/factsheet/venusfact.html) |
-| Jupiter GM, radius, solar irradiance (50.26 W/m²), pole of rotation | Jupiter missions | [NASA NSSDC Jupiter Fact Sheet](https://nssdc.gsfc.nasa.gov/planetary/factsheet/jupiterfact.html) |
-| Moon semimajor axis, orbit period, GM, radius | Lunar missions | [NASA NSSDC Moon Fact Sheet](https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html) |
-| Orbit and size summary for all destinations | Destination catalogue | [NASA Planetary Fact Sheet](https://nssdc.gsfc.nasa.gov/planetary/factsheet/index.html) |
-| Keplerian elements and rates, Table 1 (1800–2050) for Earth–Moon barycentre, Venus, Mars, Jupiter; obliquity at J2000 | Planet positions on every mission day | [JPL Approximate Positions of the Planets](https://ssd.jpl.nasa.gov/planets/approx_pos.html) |
-| 101955 Bennu osculating elements (orbit solution 118) and GM | Asteroid position and rendezvous | [JPL Small-Body Database](https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=101955) |
-| Mars perihelion solar longitude, Lₛ = 251.000° + 0.0064891° × (year − 2000) | Mars seasons and dust storms | [NASA GISS Mars24 technical notes](https://www.giss.nasa.gov/tools/mars24/help/notes.html) |
-
-### Real missions
-
-| Mission | Data used | Source |
-| --- | --- | --- |
-| **MAVEN** (Mars, 2013–2025) | 2,454 kg wet / 809 kg dry, hydrazine, 12 m² arrays producing 1,150–1,700 W, 2 m high-gain antenna, 65 kg science payload, Atlas V 401, launch Nov 18 2013, orbit insertion Sept 21 2014 | [NASA Science: MAVEN](https://science.nasa.gov/mission/maven/) |
-| | Capture orbit (35 h, 380 km), science orbit (150 × 6,300 km, 4.5 h), insertion burn uses more than half the fuel, one-year prime mission | [NASAfacts: MAVEN Orbit Insertion](https://science.nasa.gov/wp-content/uploads/2024/03/44740_MAVEN-Fact-Sheet.pdf) |
-| | Launch period Nov 18 – Dec 7 2013, planned insertion Sept 22 2014 | [NASA: The 2013 MAVEN Mission to Mars](https://mars.nasa.gov/files/resources/MAVENPresentation2013.pdf) |
-| | Science orbit inclination 75° | [L. J. Wood, AAS 21-211 (JPL DESCANSO)](https://descanso.jpl.nasa.gov/evolution/AAS%2021-211.pdf) |
-| **OSIRIS-REx** (Bennu, 2016) | Launch Sept 8 2016, launch C3 = 29.29678 km²/s², 2,105 kg, Earth flyby route, deep-space manoeuvre Dec 28 2016, approach Aug 13 2018, 1,226–2,500 W arrays, hydrazine | [Lauretta et al. 2017, OSIRIS-REx mission description (arXiv 1702.06981)](https://arxiv.org/pdf/1702.06981) |
-| **LRO and LCROSS** (Moon, 2009) | LRO 1,850 kg on Atlas V 401 AV-020, June 18 2009; LCROSS as the secondary payload, limited to 1,000 kg fuelled | [NASA Science: LRO](https://science.nasa.gov/mission/lro/about/), [NASA Science: LCROSS](https://science.nasa.gov/mission/lcross/), [NTRS 20100028203](https://ntrs.nasa.gov/citations/20100028203) |
-| **Juno** (Jupiter, 2011) | Atlas V launch Aug 5 2011, Earth flyby 26 months later, Jupiter arrival July 4 2016 (the "Giant Leap" lesson) | [NASA Science: Juno](https://science.nasa.gov/mission/juno/) |
-| **Mars Climate Orbiter** (1999) | Launch, masses, solar array, main engine, arrival distance and light time | [NASA/JPL MCO Arrival press kit](https://mars.nasa.gov/internal_resources/812/), [NASA Science: MCO](https://science.nasa.gov/mission/mars-climate-orbiter/) |
-| | Root cause (impulse in lbf·s instead of N·s), planned 226 km periapsis, 80 km survivable, 57 km actual, contributing causes | [MCO Mishap Investigation Board Phase I Report](https://discovery.larc.nasa.gov/PDF_FILES/MCO_report_2.pdf) |
-
-### Spacecraft systems, communications and operations
-
-| Data | Used for | Source |
-| --- | --- | --- |
-| MMRTG: about 110 W at launch, about 45 kg | Nuclear power option | [NASA MMRTG fact sheet](https://science.nasa.gov/wp-content/uploads/2024/02/mmrtg-factsheet-updated-5-18-20-1.pdf) |
-| Li-ion cycle life at 30% depth of discharge | Battery sizing rule | [JPL D-101146, Energy Storage Technologies for Future Planetary Science Missions](https://solarsystem.nasa.gov/system/downloadable_items/716_Energy_Storage_Tech_Report_FINAL.PDF) |
-| MRO X-band design point: ≥ 500 kbps at 400 million km, 100 W TWTA, 3 m antenna | Anchor of the communications model | [DESCANSO Article 12: MRO Telecommunications](https://descanso.jpl.nasa.gov/DPSummary/MRO_092106.pdf) |
-| DSN X-band receive gains: 70 m (74.55 dBi) and 34 m BWG (68.24 dBi) | Small vs big dish data rates | [DSN 810-005 module 101](https://deepspace.jpl.nasa.gov/dsndocs/810-005/101/101I.pdf), [module 104](https://deepspace.jpl.nasa.gov/dsndocs/810-005/104/104Q.pdf) |
-| DSN aperture fee formula, $1,057/h (FY09), aperture weights 1 (34 m) and 4 (70 m), pass set-up and tear-down | Cost of booking a call home | [NASA Mission Operations and Communications Services (JPL D-22674)](https://deepspace.jpl.nasa.gov/files/6_NASA_MOCS_2014_10_01_14.pdf) |
-| No commanding while the Sun is within 2° of Mars in Earth's sky | Solar conjunction blackouts | [JPL news, 2015](https://www.jpl.nasa.gov/news/mars-missions-to-pause-commanding-in-june-due-to-sun/) |
-| Discovery cost cap, $500M (FY2019), excluding launch and operations | Mission budget | [NASA Discovery 2019 AO overview](https://discovery.larc.nasa.gov/PDF_FILES/03a_Brown_Overview.pdf) |
-| Payload vs launch energy (C3) curves for Atlas V 401 and 411 | Rocket lift | [NASA Launch Services Program performance site](https://elvperf.ksc.nasa.gov/) (see the note below) |
-
-### Space weather and Mars dust storms
-
-| Data | Used for | Source |
-| --- | --- | --- |
-| Strong (S3) and severe (S4) solar radiation storms: 10 + 3 per 11-year cycle | Solar storm hazard rate | [NOAA Space Weather Scales](https://www.spaceweather.gov/noaa-scales-explanation) |
-| Solar cycle 24 (minimum Dec 2008, maximum Apr 2014) and cycle 25 (minimum Dec 2019, maximum Oct 2024) | Storms are likelier near solar maximum | [NOAA SWPC](https://www.swpc.noaa.gov/news/sun-solar-maximum-solar-cycle-24-seeing-second-higher-peak-sunspot-number-updated), [NASA/NOAA 2024](https://science.nasa.gov/science-research/heliophysics/nasa-noaa-sun-reaches-maximum-phase-in-11-year-solar-cycle/) |
-| Global dust storms about once every three Mars years | Mars dust-storm hazard rate | [NASA: The Fact and Fiction of Martian Dust Storms](https://www.nasa.gov/solar-system/the-fact-and-fiction-of-martian-dust-storms/) |
-
-### Live NASA data
-
-Two features follow the real sky day by day. Both stay deterministic and fully tested.
-
-| Feature | Data | How it works | Source |
-| --- | --- | --- | --- |
-| **Mars right now** (Home) | Today's Earth–Mars distance, one-way light time (d / c), and the next solar conjunction (Sun within 2° of Mars in Earth's sky) with its closest day | Computed in the browser from the JPL approximate elements above, for today's date. No API call. The closest day of the Jan 2026 conjunction (computed: Jan 9) falls inside NASA's published commanding pause, Dec 29, 2025 – Jan 16, 2026 | [JPL Approximate Positions of the Planets](https://ssd.jpl.nasa.gov/planets/approx_pos.html), [NASA MAVEN blog, Dec 2025](https://science.nasa.gov/blogs/maven/2025/12/23/nasa-works-maven-spacecraft-issue-ahead-of-solar-conjunction/) |
-| **The Daily's real Sun** | NASA DONKI solar energetic particle events (SEP), coronal mass ejections (CME) with NASA's WSA-ENLIL arrival predictions, and solar flares (FLR) from the 7 whole UTC days before today | See the steps below the table | [CCMC DONKI-API](https://ccmc.gsfc.nasa.gov/news/major-updates/) (base `https://ccmc.gsfc.nasa.gov/DONKI-API/get/`, no API key), [NOAA flare classes](https://www.swpc.noaa.gov/phenomena/solar-flares-radio-blackouts) |
-
-How the Daily's real Sun works:
-1. **The snapshot.** The site's deploy build ([`pages.yml`](.github/workflows/pages.yml)) runs on every change and daily at 00:20 UTC (GitHub sometimes starts it hours late). It fetches the week from DONKI and publishes it with the site as `data/donki-latest.json`, with the fetch time and source URLs; the file is never committed. The game reads only that file and never calls NASA from your browser.
-2. **Which events are dangers.** Every SEP event is a **solar radiation storm** (DONKI logs one record per instrument, so records linked to the same flare count once). A CME is a danger only when NASA's **WSA-ENLIL** model predicts it reaches Mars; it becomes a **CME shock**. Flares are never cards themselves: a flare DONKI links to an SEP or CME is named on that card. The 4 most severe are kept.
-3. **When they strike.** The real week is replayed across your flight: an event a fraction f into the week happens the same fraction of the way from the start of cruise to the end of the prime mission. A CME's shock then arrives after its real ENLIL transit time, so "danger arrives in" is NASA's predicted travel time. ENLIL's glancing-blow and minor-impact flags make a hit less dangerous (×0.5 and ×0.25 on the failure chance, game estimates).
-4. **What you see.** Each card names the real event and its flare, and its ⓘ opens the DONKI record. On a CME card a second ⓘ, beside "danger arrives", shows the arrival as a **NASA WSA-ENLIL model prediction**, not an observation.
-5. **The seed.** It is the date plus the DONKI event IDs, so everyone with the same snapshot flies the same Daily.
-6. **When the file can't be used.** If it is missing, unreadable or more than 2 days old, the Daily flies seeded storms and says **"offline — simulated weather"**.
-7. **The game rules.** The severity factors, the cap of 4, the 7-day window and the 2-day staleness limit are game rules, listed in [`TODO_DATA.md`](TODO_DATA.md).
-
-DONKI moved from `api.nasa.gov` to CCMC on Sept 30, 2026; the old URLs now redirect to CCMC's announcement.
-
-### Mars science targets and their pictures
-
-At Mars the science is six targets. What each picture costs comes from the same physics as the rest of the game: lowering the periapsis (vis-viva burns there and back) for a sharper view, drag on the low passes from an upper atmosphere fitted to MAVEN's published periapsis densities, a deep dip for the limb (MAVEN's campaigns), an orbit change to reach Phobos or Deimos, and camera power (repeat passes for dusty targets). Each picture comes down on a DSN pass at that day's link rate and is home one light time later. The pictures are real NASA images, checked against their catalogue pages; optimised copies ship in `public/targets/` (made by [`scripts/fetch-targets.py`](scripts/fetch-targets.py)).
-
-| Target | NASA picture | Credit | Use |
-| --- | --- | --- | --- |
-| Olympus Mons | [PIA02982 Color Mosaic of Olympus Mons](https://science.nasa.gov/photojournal/color-mosaic-of-olympus-mons/) (Viking 1 Orbiter, 1978) | NASA/JPL | JPL Image Use Policy: any purpose |
-| Valles Marineris | [PIA00422 Valles Marineris](https://pds-rings.seti.org/press_releases/pages/PIA00xxx/PIA00422.html) (Viking mosaic) | NASA/JPL/USGS | JPL Image Use Policy: any purpose |
-| North Polar Cap | [PIA00161 MC-1 Mare Boreum Region](https://science.nasa.gov/photojournal/mc-1-mare-boreum-region) (Viking Orbiter 1) | NASA/JPL/USGS | JPL Image Use Policy: any purpose |
-| Phobos | [PIA10368 Phobos from 6,800 Kilometers](https://science.nasa.gov/photojournal/phobos-from-6800-kilometers-color/) (MRO HiRISE, 2008) | NASA/JPL-Caltech/University of Arizona | Third-party: educational and personal use |
-| Deimos | [PIA11826 Martian Moon Deimos in High Resolution](https://science.nasa.gov/resource/martian-moon-deimos-in-high-resolution/) (MRO HiRISE, 2009) | NASA/JPL/University of Arizona | Third-party: educational and personal use |
-| Thin Air at the Limb | [PIA26203 Odyssey's THEMIS Views the Horizon of Mars](https://science.nasa.gov/photojournal/odysseys-themis-views-the-horizon-of-mars) (false colour, 2023) | NASA/JPL-Caltech/ASU | Third-party: educational and personal use |
-| The Mars globe | [Mars Viking Colorized Global Mosaic 232 m](https://astrogeology.usgs.gov/search/map/mars_viking_colorized_global_mosaic_232m) | NASA/USGS Astrogeology | Public domain |
-
-Usage terms follow the [JPL Image Use Policy](https://www.jpl.nasa.gov/jpl-image-use-policy). Olympus Mons is about 2.5 times taller than Everest (21.9 km against 29,032 ft, [PIA26055](https://science.nasa.gov/photojournal/pj-olympus-mons-26/)). The science weights, the camera and the atmosphere fit are labelled game estimates in [`TODO_DATA.md`](TODO_DATA.md). The globe is the game's only 3D element (three.js, loaded on demand; a flat globe takes over without WebGL or when the frame rate drops).
-
-### The Moon: far side, trim burns and four targets
-
-The Moon levels fly the Lunar Reconnaissance Orbiter's mission orbit: 50 km up, circular, over the poles. Flying that low over a body that always shows Earth the same face has three real consequences, all in the engine and on the Moon globe:
-
-- **Behind the Moon.** The near side faces Earth by construction (the IAU rotation angle W = W₀ + Ẇ·d turns the prime meridian, the mean sub-Earth point). For part of every orbit the Moon hides the craft from Earth: up to 48 of every 113 minutes when Earth lies in the orbit plane, none when it is face-on. Orders and pictures wait for the link instead of being refused, and the robot says BEHIND THE MOON and LINK BACK. Light time is 1.28 s from the mean Earth–Moon distance (384,400 km).
-- **Station-keeping.** Mascons pull low orbits down. LRO held 50 ± 20 km with one pair of burns every sidereal month, 5.46 + 5.34 = 10.81 m/s, inside a 150 m/s per year allocation ([Beckman & Lamb, NTRS 20080012683](https://ntrs.nasa.gov/citations/20080012683)). A year of pairs is 144.5 m/s, a validation row. A heavy Moon 3 pack without the extra tank runs out of fuel, and Pack says so: "PACK THE EXTRA FUEL TANK — THE 50 KM ORBIT NEEDS TRIM BURNS EVERY MONTH".
-- **Eclipses.** The same cylinder test with the Sun: up to 48 minutes on battery each orbit.
-
-The globe shows it: Earth over the near side at a shortened distance (NOT TO SCALE · // EARTH DISTANCE SHORTENED), the signal line solid while linked and broken behind the Moon, the ring dashed where the far side hides the craft, the shadow arc and the trim burns, all from the engine. Moon 1 and Moon 2 show the orbit; Moon 3 adds four targets, scored with the Mars rules. The camera is LROC's Narrow Angle Camera (10 µrad, so 0.5 m per pixel from 50 km). Coordinates are from the [IAU Gazetteer of Planetary Nomenclature](https://planetarynames.wr.usgs.gov/) (the Apollo 11 site from LROC/NSSDC). The pictures are cropped by [`scripts/fetch-targets.py`](scripts/fetch-targets.py) from public-domain LROC frames in the PDS archive, each checked on its catalogue page.
-
-| Target | Picture (LROC NAC frame) | Credit | Use |
-| --- | --- | --- | --- |
-| The Apollo 11 site (0.674°N 23.473°E) | [M175124932R](https://data.lroc.im-ldi.com/lroc/view_lroc/LRO-L-LROC-3-CDR-V1.0/M175124932RC), Tranquility Base from 24 km | NASA/GSFC/Arizona State University | Public domain (PDS) |
-| Tycho (43.30°S 11.22°W) | [M162350671L](https://data.lroc.im-ldi.com/lroc/view_lroc/LRO-L-LROC-3-CDR-V1.0/M162350671LC)/R, the central peak at sunrise | NASA/GSFC/Arizona State University | Public domain (PDS) |
-| Shackleton (89.67°S 129.78°E) | [M1346257675L](https://data.lroc.im-ldi.com/lroc/view_lroc/LRO-L-LROC-3-CDR-V1.0/M1346257675LC), oblique across the south pole, squeezed by cos 66.7° to undo the slant | NASA/GSFC/Arizona State University | Public domain (PDS) |
-| Tsiolkovskiy (20.38°S 128.97°E, far side) | [M113107391L](https://data.lroc.im-ldi.com/lroc/view_lroc/LRO-L-LROC-3-CDR-V1.0/M113107391LC), the crater floor | NASA/GSFC/Arizona State University | Public domain (PDS) |
-| The Moon globe | [CGI Moon Kit](https://svs.gsfc.nasa.gov/4720), LROC colour map 2048 × 1024 (the LROC WAC mosaic) | NASA's Scientific Visualization Studio | NASA media guidelines: educational use with credit |
-
-The science weights and the image sizes are labelled game estimates in [`TODO_DATA.md`](TODO_DATA.md). Earth's direction leaves out the libration terms (several degrees), a labelled simplification.
-
-### Physical constants
-
-Standard gravity, speed of light (SI definitions), the astronomical unit (IAU 2012), and the unit conversion behind the Mars Climate Orbiter case ([NIST SP 811](https://www.nist.gov/pml/special-publication-811)).
-
-> **Note on data quality.** Some NSSDC fact sheets were read from Internet Archive copies (Sept 28 – Oct 3, 2026) because the live site refused connections; each record says so. The **Atlas V payload curves are placeholders**: NASA's LSP site is an interactive tool that can't be exported by script, so the launch-capacity checks are not yet real evidence. The real-history texts on danger cards are marked **"to verify"** until checked against NASA's Lessons Learned system or official failure reports. Everything without a public source (failure chances, part costs, hazard rates, Isp ranges) is a labelled **game estimate**, listed in [`TODO_DATA.md`](TODO_DATA.md).
-
----
-
-## Validation against real missions
-
-`tests/validation.test.ts` loads real missions as ordinary player designs and checks the engine against independent published values (±10%). The full, auto-generated table is in [`docs/VALIDATION_RESULTS.md`](docs/VALIDATION_RESULTS.md). Highlights:
-
-| Check | Engine | Published | Result |
-| --- | --- | --- | --- |
-| MAVEN Δv capability (rocket equation) | 2,449 m/s | ≈ 2,450 m/s | ✅ −0.1% |
-| MAVEN transfer time (best Lambert arrival) | 300 days | 307 days | ✅ −2.3% |
-| MAVEN best launch date lies in the published launch period | Dec 6, 2013 | Nov 18 – Dec 7, 2013 | ✅ |
-| MAVEN science-orbit period from published altitudes | 4.5 h | 4.5 h | ✅ |
-| MAVEN insertion burn uses more than half the propellant | 60% | > 50% | ✅ |
-| Mars solar conjunctions 2015, 2017, 2019 (centre of the command moratorium) | within 0.6 days | JPL moratorium dates | ✅ |
-| 2015 conjunction blackout length at 2° | 13.9 days | 14 days | ✅ |
-| Mars perihelion Lₛ (2022) | 251.15° | 251.15° (Mars24) | ✅ |
-| MAVEN solar power at perihelion / aphelion | 1,712 W / 1,177 W | 1,700 W / 1,150 W | calibration* |
-
-\* The system efficiency η = 0.20 was fitted to these MAVEN figures, so agreement is by construction and is labelled *calibration*, not evidence. The rule for this project: when a validation check fails, the model or data is fixed, never the expected value.
-
----
-
-## Architecture
-
-```
-src/data/*.json  ──►  src/engine (pure TypeScript)  ──►  src/ui (React + Vite)
- Sourced values        physics, missions, operations       displays only, formats units
-```
-
-- **Engine** (`src/engine`): no UI imports, fully unit-tested. `evaluateDesign` sizes a design (trajectory, power, batteries, mass, Δv, launch, comms, cost). The Mission Operations engine (`src/engine/ops`) flies it day by day with seeded hazards, light-delayed commands, DSN bookings, eclipses and conjunctions.
-- **UI** (`src/ui`): React 19 screens built from the Claude Design "Signal Delay" mockups (`docs/design/signal-delay/`). The Risk meter's 500-run Monte Carlo runs in a Web Worker.
-- **Deterministic:** a mission is a function of (design, seed, command log), so any flight can be replayed exactly.
-
-| Area | Technology |
-| --- | --- |
-| Language | TypeScript 7 (strict, `noUncheckedIndexedAccess`) |
-| UI | React 19, Vite 8, plain CSS with design tokens |
-| Tests | Vitest 5, Testing Library + jsdom, Playwright screenshots |
-| Hosting | GitHub Pages via GitHub Actions (tests must pass before deploy) |
-
-See [`game_engine.md`](game_engine.md) for the engine rules and [`docs/SCIENCE_SPEC.md`](docs/SCIENCE_SPEC.md) for the full specification and decision log.
-
----
-
-## Getting started
-
-**Quick start (macOS, Linux or Windows, with Node 22 already installed):**
-
-```bash
-git clone https://github.com/shariar165/space-mission-design-game-.git
-cd space-mission-design-game-
-npm install
-npm run dev          # http://localhost:5173
-npm test             # about 900 tests
-```
-
-**The maintainers' setup.** Here everything, including Node itself, lives in a Python virtual environment, so nothing is installed globally. Node 22.16.0 is placed inside `.venv` by [nodeenv](https://github.com/ekalinin/nodeenv).
-
-```powershell
-python -m venv .venv
-.\.venv\Scripts\python -m pip install -r requirements.txt
-.\.venv\Scripts\nodeenv -p --node=22.16.0   # puts node/npm into .venv\Scripts
-.\.venv\Scripts\Activate.ps1                # Git Bash: export PATH="$PWD/.venv/Scripts:$PATH"
-npm install
-npm run dev                                 # http://localhost:5173
-```
-
-| Command | What it does |
-| --- | --- |
-| `npm run dev` | Start the game at http://localhost:5173 |
-| `npm run build` | Typecheck, then build the static site into `dist/` |
-| `npm test` | All tests: physics, validation, data audit, engine API, UI guards, component tests |
-| `npx vitest run tests/ui` | Component tests only |
-| `npm run test:validation` | Real-mission validation; rewrites `docs/VALIDATION_RESULTS.md` |
-| `npm run todo-data` | Data audit; rewrites `TODO_DATA.md` |
-| `npm run typecheck` | `tsc --noEmit` |
-| `npm run shots` | Playwright screenshots at 1440 × 900 and 390 × 844 (browsers live in `.venv/ms-playwright`) |
-
-Every push to `main` runs the tests, builds with the Pages base path and publishes to GitHub Pages.
-
----
-
-## Project structure
-
-```
-src/
-  data/            Sourced catalogues: destinations, orbitalElements, launchVehicles, rideshares, parts,
-                   missions, hazards, operations, pack, crisisCards, lessons, rescueCases, notebook, targets,
-                   objectives, team
-  engine/          Simulation engine (pure TypeScript, no UI)
-    ephemeris.ts   JPL approximate planet positions; Bennu from the JPL SBDB
-    trajectory.ts  Hohmann, Lambert, capture Δv, orbit changes, launch windows
-    propulsion.ts  rocket equation, Δv budget
-    launch.ts      payload(C3) curves, rideshare, launch reliability
-    power.ts       solar and RTG power, eclipses, batteries
-    comms.ts       scaled link budget (MRO anchor, DSN gains), light delay
-    massCost.ts    mass roll-up, cost against the mission-class cap
-    risk.ts / scoring.ts   margins → risk → score and stars
-    index.ts       evaluateDesign, simulateMission, monteCarloMission
-    ops/           Mission Operations: day-by-day clock, hazards, commands, DSN, extension,
-                   Fly & Survive view (fly.ts), Mission Report (report.ts), science targets
-                   (observe.ts: OBSERVE orders, pictures, science returned; scienceView.ts: panel,
-                   downlink, album)
-    science.ts / targets.ts   what a picture costs (vis-viva, MAVEN-fitted drag); the six Mars targets
-    pack.ts / daily.ts / notebook.ts / rescue.ts   game modes
-    objectives.ts  the three Mars mission objectives (objectives.json)
-    orbitPresets.ts  the three Mars science-orbit presets (capture, MAVEN, high)
-    team/          Team Mode: roles and permissions, the one action log, votes, replay,
-                   shared limits and conflicts, the team report and score, LocalTransport
-  ui/              React screens (Home, Pack, FlyAndSurvive, MissionReport, Daily, Notebook,
-                   Rescue, BuildBay, TeamSetup, TeamObjective), components, words (sdWords.ts), styles
-tests/             physics, validation, data audit, engine API, UI guards, ui/ component tests,
-                   visual/ Playwright screenshot specs
-docs/              SCIENCE_SPEC.md, VALIDATION_RESULTS.md, design/ (mockup copies), images/
-```
-
----
-
-## Known limitations
-
-The models are simplified on purpose, using the standard first-order methods of early mission concept studies. The main limits:
-
-- **Patched conics and a zero-revolution Lambert solver.** Gravity assists are not simulated. Direct transfers are capped below twice the Hohmann time (518 days to Mars, 399 to Bennu). The real OSIRIS-REx route is offered as a fixed, labelled option.
-- **Approximate ephemeris.** JPL's approximate elements (valid 1800–2050), the Earth–Moon barycentre for Earth, and two-body propagation for Bennu.
-- **Communications.** Close-range data rates are optimistic, because coding and decoder caps aren't modelled. The 34 m station behind MRO's anchor figure is inferred.
-- **Operations.** Science orbits are fixed in inertial space (no J2 precession), shadows are cylindrical, hazards are independent Poisson processes, and the Moon has no conjunctions.
-- **Placeholder launch curves and prices** for the Atlas V (game estimates until NASA's Launch Services Program numbers are exported by hand). The rocket choice works on them, labelled as estimates.
-- **Design rules that are the game's.** Cloud Diver's 350 $M budget, the high orbit's altitudes and the rule that a level's standard rocket is free while another charges its price difference are game rules, labelled in the data.
-- **The live Daily** uses that day's DONKI snapshot. DONKI sometimes adds or revises records later, and a snapshot deployed mid-day can differ from the morning's. Each browser keeps the first snapshot it reads for the whole day. Players without the file fly the offline Daily, which has different storms. The storm cards are real events replayed on a game timeline; the model does not predict how a CME propagates.
-- **Science targets.** The camera's resolution, the science weights and the drag-heating rate are game estimates. Orbit changes are coplanar (no plane change to reach the moons), the upper atmosphere is a single exponential fitted to two MAVEN densities, and the Cadet Mars campaign is shortened to 100 days so a run lasts about five minutes.
-- **The Moon.** No lunar ephemeris: the Earth–Moon distance is the mean 384,400 km, and Earth's direction leaves out libration. Loss of signal is the cylinder test, and the downlink and image passes are scaled by each day's visible fraction rather than lined up with single orbits. Trim burns are LRO's published pair, not a mascon gravity model, and Earth's shadow (a lunar eclipse) is not modelled.
-- **Scoring** uses `Σ wᵢsᵢ` on a 0–100 scale (the spec's `100 Σ wᵢsᵢ` was read this way); since v0.8 the headline and the stars use the science returned.
-
-The full list is in the *Assumptions* section of [`docs/SCIENCE_SPEC.md`](docs/SCIENCE_SPEC.md) and in [`game_engine.md`](game_engine.md).
-
----
-
-## Contributing
-
-The most valuable contributions are **better sources**:
-
-- Export the NASA LSP payload-vs-C3 points for the Atlas V 401 and 411 into `src/data/launchVehicles.json`.
-- Replace a game estimate in [`TODO_DATA.md`](TODO_DATA.md) with a published NASA value (and set `isGameEstimate: false`).
-- Check a danger card's real-history text against NASA's [Lessons Learned Information System](https://llis.nasa.gov/) or the official failure report.
-
-Code rules: write the physics test first (with the hand calculation in a comment), wrap every new value in `Sourced<T>`, keep numbers out of the UI, and run `npm test` before opening a pull request.
-
----
-
-## Acknowledgements and disclaimer
-
-This game is built on public data from NASA, JPL, the NSSDC, the Deep Space Network, NOAA and the published literature cited above. Thanks to the scientists and engineers whose fact sheets, mission papers and failure reports make a game like this possible.
-
-**Signal Delay is an independent educational project. It is not affiliated with, sponsored by or endorsed by NASA, JPL or NOAA.** It does not use the NASA insignia or logotype. Mission names are used only to identify the real missions whose published data the game cites. The game's results are simplified models for learning, not mission analysis.
-
-## License
-
-The code is released under the [MIT License](LICENSE). Teachers and students may use, copy and adapt it freely. The NASA pictures in `public/postcards/` are public domain (see `src/data/postcards.json`), and NASA's own data keep their original terms.
+![Science targets: choosing what the robot should observe](docs/images/screens/04-science-targets.webp)
+
+### 3️⃣ Mission Report
+
+When the mission ends, you get a report that shows:
+
+- Which pictures **reached Earth**.
+- Whether you **completed your mission objective**.
+
+![Mission album: the pictures that reached Earth](docs/images/screens/05-mission-album.webp)
+
+Your journey is shown as a **comic-style mission history**, with a **score** and a **comparison to a real NASA mission**.
+
+![The robot's final transmission](docs/images/screens/06-final-transmission.png)
+
+![Mission report: the comic-style mission history and the stars](docs/images/screens/07-mission-report.png)
+
+The report also explains **what you could have done better**. Then you can redesign your mission, **fly again**, and compare your new decisions with your previous mission.
+
+![Debrief: what saved you, what hurt you, and the real lesson](docs/images/screens/08-debrief.png)
+
+### 🎓 Two Learning Modes
+
+- **🎒 Cadet Mode:** For students, younger learners and curious players who want to discover space missions through a simple and interactive experience.
+- **⚙️ Engineer Mode:** For students, science enthusiasts and anyone who wants to explore the science and mathematics behind the simulation, including equations, inputs and data sources.
+
+## 🧒 Space Kids – Discover the Universe!
+
+**Space Kids** is a dedicated section of Signal Delay created for younger explorers who are inspired by space, science and the mysteries of the universe.
+
+We believe curiosity about space can start at any age. This section aims to introduce kids to the fascinating world of space exploration and encourage them to discover, ask questions and develop an interest in science and technology.
+
+Our goal is to make space feel closer to the next generation of explorers, scientists and engineers.
+
+**Because today's curious kids could become tomorrow's space explorers!** 🚀
+
+## ⚡ What Makes It Different?
+
+Signal Delay is not an ordinary space game. Here is why.
+
+### 🧩 Real Mission Decisions
+
+Designing a mission is a real trade-off, not a shopping list. Your **objective** decides which instrument is useful. The **rocket** sets the weight limit, and a more expensive rocket takes money from your budget. The **science orbit** changes how much fuel is left, which moons you can reach, how much drag the spacecraft feels on low passes, and how long it spends in shadow.
+
+The bars on screen move **before** you commit, so you can see the effect of each choice. Two players with the same parts but different orbits will get different science.
+
+### 🕒 Communication Takes Time
+
+Light delay is the core of the game. The delay of a command follows a simple rule: **time = distance ÷ speed of light** (`t = d / c`). The game uses the real distance between Earth and the spacecraft on each mission day.
+
+Communication can also be interrupted. When the Sun is between Earth and the spacecraft (a *solar conjunction*), the radio signal is blocked for about two weeks. This also happens to real Mars missions.
+
+### 🔬 Science Behind the Simulation
+
+The numbers in the game come from physics or from a cited source, not from imagination:
+
+- **Distances** come from JPL planetary positions.
+- **Solar power** follows the inverse-square law (power drops quickly as you move away from the Sun), calibrated on the MAVEN mission.
+- **Data rates** come from a link budget anchored to the Mars Reconnaissance Orbiter.
+- **Launch energy** is calculated with a Lambert solver, a method for finding the path between two points in space.
+
+### 🚀 Learning From Real Missions
+
+Real NASA missions are flown through the same model as the player. **MAVEN** and **OSIRIS-REx** are loaded as ordinary designs, and they must reproduce their published numbers. If the model cannot do this, we fix the model, not the mission.
+
+## 🛰️ Data Sources
+
+Signal Delay uses scientific and planetary data to make its space mission simulation more realistic.
+
+| Data | Used for | Link |
+|---|---|---|
+| Mars semimajor axis, orbit and synodic periods, radius, GM, distance from Earth (54.6–401.4 million km), solar irradiance, pole of rotation | Mars orbit, light delay, power, eclipses, dust-storm season | [Explore Data](https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html) |
+| Earth GM, equatorial radius, sidereal year; solar irradiance at 1 AU (1361 W/m²) | Launch and power calculations | [Explore Data](https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html) |
+| Venus GM, radius, solar irradiance (2601.3 W/m²), pole of rotation | Venus missions | [Explore Data](https://nssdc.gsfc.nasa.gov/planetary/factsheet/venusfact.html) |
+| Jupiter GM, radius, solar irradiance (50.26 W/m²), pole of rotation | Jupiter missions | [Explore Data](https://nssdc.gsfc.nasa.gov/planetary/factsheet/jupiterfact.html) |
+| Moon semimajor axis, orbit period, GM, radius | Lunar missions | [Explore Data](https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html) |
+| Orbit and size summary for all destinations | Destination catalogue | [Explore Data](https://nssdc.gsfc.nasa.gov/planetary/factsheet/index.html) |
+| Keplerian elements and rates, Table 1 (1800–2050) for Earth–Moon barycentre, Venus, Mars, Jupiter; obliquity at J2000 | Planet positions on every mission day | [Explore Data](https://ssd.jpl.nasa.gov/planets/approx_pos.html) |
+| 101955 Bennu osculating elements (orbit solution 118) and GM | Asteroid position and rendezvous | [Explore Data](https://ssd.jpl.nasa.gov/tools/sbdb_lookup.html#/?sstr=101955) |
+| Mars perihelion solar longitude, Lₛ = 251.000° + 0.0064891° × (year − 2000) | Mars seasons and dust storms | [Explore Data](https://www.giss.nasa.gov/tools/mars24/help/notes.html) |
+
+## 🎯 Our Goals
+
+- ✅ **Connect Theory With Practice:** Help students apply what they learn in school through a simulator based on real-life principles.
+
+- ✅ **Inspire the Next Generation:** Encourage kids to explore space, develop their curiosity and discover the possibilities of science and engineering through Space Kids.
+
+- ✅ **Teach Real Mission Design:** Introduce players to how a real mission is built, from the objective to the rocket, orbit, instruments and the limits of weight, budget, power and data.
+
+- ✅ **Show Why Communication Delay Matters:** Help players understand that commands take time to arrive, signals can be blocked, and mission teams must plan ahead.
+
+- ✅ **Link Objectives to Engineering Decisions:** Show how every choice has a cost and a benefit, and how mission goals influence spacecraft design and scientific results.
+
+- ✅ **Explore Instruments, Orbits and Constraints:** Help players discover what spacecraft, scientific instruments and orbits can and cannot do.
+
+- ✅ **Encourage Experimentation and Problem-Solving:** Give players the opportunity to fly again, try different designs and compare mission results.
+
+- ✅ **Make Space Science Accessible:** Create an experience for kids, students and anyone curious about space, regardless of their previous knowledge.
+
+- ✅ **Show How NASA Data Supports Learning:** Use real NASA data and mission references to make the simulation more realistic and educational.
+
+## 📬 Contact Us
+
+| Name | Email |
+|---|---|
+| Walid Ben Slimane | 📧 `walid.benslimane3@gmail.com` |
+| Mourtada Taidi Laamiri | 📧 `taidimortada@gmail.com` |
+| Mohamed Taha Hayati | 📧 `medtahahayati6@gmail.com` |
+| Ahmed Nayma | 📧 `Ahmadnayma92@gmail.com` |
+| Mohamed Mbarki | 📧 `mbarkimohamed000@gmail.com` |
+| Asrar Ben Hammouch | 📧 `Asrar.BenHammouch7@gmail.com` |
+
+### ✨ DISTANCE DELAYS THE SIGNAL. DECISIONS SHAPE THE MISSION.
+
+**Explore. Learn. Imagine. Discover the universe! 🚀**
